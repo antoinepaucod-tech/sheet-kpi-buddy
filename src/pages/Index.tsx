@@ -247,12 +247,36 @@ const Index = () => {
               month: m.month_name,
               totalExpenses: m.total_expenses,
               adSpend: m.ad_spend,
+              rent: m.rent,
+              repairs: m.repairs_maintenance,
+              software: m.computer_software,
+              internet: m.internet_telephone,
+              stationary: m.stationary,
+              utilities: m.utilities,
+              advertising: m.advertising_promotion,
+              legal: m.legal_professional,
+              donations: m.charitable_donations,
+              subscriptions: m.subscriptions,
+              bankCharges: m.bank_finance_charges,
+              insurance: m.insurance,
             }))}
             title="Dépenses Mensuelles"
             type="bar"
             dataKeys={[
               { key: 'totalExpenses', name: 'Dépenses Totales', color: 'hsl(var(--destructive))' },
-              { key: 'adSpend', name: 'Publicité', color: 'hsl(var(--warning))' },
+              { key: 'adSpend', name: 'Publicité', color: 'hsl(var(--chart-1))' },
+              { key: 'rent', name: 'Loyer', color: 'hsl(var(--chart-2))' },
+              { key: 'repairs', name: 'Réparations', color: 'hsl(var(--chart-3))' },
+              { key: 'software', name: 'Logiciels', color: 'hsl(var(--chart-4))' },
+              { key: 'internet', name: 'Internet/Téléphone', color: 'hsl(var(--chart-5))' },
+              { key: 'stationary', name: 'Papeterie', color: '#8b5cf6' },
+              { key: 'utilities', name: 'Services publics', color: '#ec4899' },
+              { key: 'advertising', name: 'Promotion', color: '#f97316' },
+              { key: 'legal', name: 'Juridique', color: '#84cc16' },
+              { key: 'donations', name: 'Dons', color: '#06b6d4' },
+              { key: 'subscriptions', name: 'Abonnements', color: '#eab308' },
+              { key: 'bankCharges', name: 'Frais bancaires', color: '#f43f5e' },
+              { key: 'insurance', name: 'Assurance', color: '#10b981' },
             ]}
           />
         </section>
