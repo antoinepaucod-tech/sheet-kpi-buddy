@@ -12,9 +12,9 @@ const getYoutubeId = (url?: string): string | null => {
   if (!url) return null;
   // Match youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
   const patterns = [
-    /youtu\.be\/([a-zA-Z0-9_-]{6,})/,
-    /youtube\.com\/(?:watch\?v=|embed\/)\s*([a-zA-Z0-9_-]{6,})/,
-    /youtube\.com.*[?&]v=([a-zA-Z0-9_-]{6,})/
+    /youtu\.be\/([a-zA-Z0-9_-]+)/,
+    /youtube\.com\/(?:watch\?v=|embed\/)([a-zA-Z0-9_-]+)/,
+    /youtube\.com.*[?&]v=([a-zA-Z0-9_-]+)/
   ];
   for (const p of patterns) {
     const m = url.match(p);
