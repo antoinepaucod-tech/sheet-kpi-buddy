@@ -311,46 +311,6 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                 />
               </div>
               <div className="space-y-2">
-                <Label>Papeterie</Label>
-                <Input 
-                  type="number" 
-                  value={formData.stationary}
-                  onChange={(e) => updateField('stationary', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Services Publics</Label>
-                <Input 
-                  type="number" 
-                  value={formData.utilities}
-                  onChange={(e) => updateField('utilities', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Publicité & Promotion</Label>
-                <Input 
-                  type="number" 
-                  value={formData.advertising_promotion}
-                  onChange={(e) => updateField('advertising_promotion', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Frais Juridiques</Label>
-                <Input 
-                  type="number" 
-                  value={formData.legal_professional}
-                  onChange={(e) => updateField('legal_professional', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Dons Caritatifs</Label>
-                <Input 
-                  type="number" 
-                  value={formData.charitable_donations}
-                  onChange={(e) => updateField('charitable_donations', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>Abonnements</Label>
                 <Input 
                   type="number" 

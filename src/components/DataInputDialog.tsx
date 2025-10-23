@@ -342,51 +342,6 @@ export const DataInputDialog = ({ monthData, monthName, onSave }: DataInputDialo
                   />
                 </div>
                 <div>
-                  <Label htmlFor="stationary">Stationary</Label>
-                  <Input
-                    id="stationary"
-                    type="number"
-                    value={formData.stationary}
-                    onChange={(e) => updateField('stationary', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="utilities">Utilities</Label>
-                  <Input
-                    id="utilities"
-                    type="number"
-                    value={formData.utilities}
-                    onChange={(e) => updateField('utilities', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="advertisingPromotion">Advertising</Label>
-                  <Input
-                    id="advertisingPromotion"
-                    type="number"
-                    value={formData.advertisingPromotion}
-                    onChange={(e) => updateField('advertisingPromotion', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="legalProfessionalFees">Legal & Professional</Label>
-                  <Input
-                    id="legalProfessionalFees"
-                    type="number"
-                    value={formData.legalProfessionalFees}
-                    onChange={(e) => updateField('legalProfessionalFees', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="charitableDonations">Charitable Donations</Label>
-                  <Input
-                    id="charitableDonations"
-                    type="number"
-                    value={formData.charitableDonations}
-                    onChange={(e) => updateField('charitableDonations', e.target.value)}
-                  />
-                </div>
-                <div>
                   <Label htmlFor="subscriptions">Subscriptions</Label>
                   <Input
                     id="subscriptions"

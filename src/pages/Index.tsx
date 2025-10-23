@@ -45,9 +45,8 @@ const Index = () => {
   const saveMonthData = async (data: any) => {
     const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue + data.cash_collected;
     const total_expenses = data.ad_spend + data.rent + data.repairs_maintenance +
-                          data.computer_software + data.internet_telephone + data.stationary +
-                          data.utilities + data.advertising_promotion + data.legal_professional +
-                          data.charitable_donations + data.subscriptions + data.bank_finance_charges +
+                          data.computer_software + data.internet_telephone + 
+                          data.subscriptions + data.bank_finance_charges +
                           data.insurance;
     const profit = total_revenue - total_expenses;
     const total_active_members = (data.pif_members || 0) + (data.recurring_general_members || 0) + (data.pt_members || 0);
@@ -251,11 +250,6 @@ const Index = () => {
               repairs: m.repairs_maintenance,
               software: m.computer_software,
               internet: m.internet_telephone,
-              stationary: m.stationary,
-              utilities: m.utilities,
-              advertising: m.advertising_promotion,
-              legal: m.legal_professional,
-              donations: m.charitable_donations,
               subscriptions: m.subscriptions,
               bankCharges: m.bank_finance_charges,
               insurance: m.insurance,
@@ -269,11 +263,6 @@ const Index = () => {
               { key: 'repairs', name: 'Réparations', color: 'hsl(var(--chart-3))' },
               { key: 'software', name: 'Logiciels', color: 'hsl(var(--chart-4))' },
               { key: 'internet', name: 'Internet/Téléphone', color: 'hsl(var(--chart-5))' },
-              { key: 'stationary', name: 'Papeterie', color: '#8b5cf6' },
-              { key: 'utilities', name: 'Services publics', color: '#ec4899' },
-              { key: 'advertising', name: 'Promotion', color: '#f97316' },
-              { key: 'legal', name: 'Juridique', color: '#84cc16' },
-              { key: 'donations', name: 'Dons', color: '#06b6d4' },
               { key: 'subscriptions', name: 'Abonnements', color: '#eab308' },
               { key: 'bankCharges', name: 'Frais bancaires', color: '#f43f5e' },
               { key: 'insurance', name: 'Assurance', color: '#10b981' },

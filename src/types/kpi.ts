@@ -54,11 +54,6 @@ export interface MonthlyKPI {
   repairsAndMaintenance: number;
   computerSoftware: number;
   internetTelephone: number;
-  stationary: number;
-  utilities: number;
-  advertisingPromotion: number;
-  legalProfessionalFees: number;
-  charitableDonations: number;
   subscriptions: number;
   bankFinanceCharges: number;
   insurance: number;
@@ -127,11 +122,6 @@ export const createEmptyKPI = (month: string): MonthlyKPI => ({
   repairsAndMaintenance: 0,
   computerSoftware: 0,
   internetTelephone: 0,
-  stationary: 0,
-  utilities: 0,
-  advertisingPromotion: 0,
-  legalProfessionalFees: 0,
-  charitableDonations: 0,
   subscriptions: 0,
   bankFinanceCharges: 0,
   insurance: 0,

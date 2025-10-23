@@ -60,9 +60,8 @@ export const useKPIData = () => {
       
       // Calculate total expenses
       data.totalExpenses = data.adSpend + data.rent + data.repairsAndMaintenance + 
-        data.computerSoftware + data.internetTelephone + data.stationary + 
-        data.utilities + data.advertisingPromotion + data.legalProfessionalFees + 
-        data.charitableDonations + data.subscriptions + data.bankFinanceCharges + 
+        data.computerSoftware + data.internetTelephone + 
+        data.subscriptions + data.bankFinanceCharges + 
         data.insurance;
       
       // Calculate profit
