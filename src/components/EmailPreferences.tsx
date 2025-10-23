@@ -3,7 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Plus, Trash2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Mail, Plus, Trash2, Clock, Share2, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,12 +14,33 @@ interface EmailPref {
   id: string;
   email: string;
   enabled: boolean;
+  send_hour?: number;
+  timezone?: string;
 }
+
+const TIMEZONES = [
+  { value: "America/New_York", label: "EST (New York)" },
+  { value: "America/Chicago", label: "CST (Chicago)" },
+  { value: "America/Denver", label: "MST (Denver)" },
+  { value: "America/Los_Angeles", label: "PST (Los Angeles)" },
+  { value: "America/Toronto", label: "Toronto" },
+  { value: "America/Montreal", label: "Montréal" },
+  { value: "America/Vancouver", label: "Vancouver" },
+  { value: "UTC", label: "UTC" },
+];
+
+const HOURS = Array.from({ length: 24 }, (_, i) => ({
+  value: i.toString(),
+  label: `${i.toString().padStart(2, '0')}:00`,
+}));
 
 export const EmailPreferences = () => {
   const [emails, setEmails] = useState<EmailPref[]>([]);
   const [newEmail, setNewEmail] = useState("");
+  const [newHour, setNewHour] = useState("9");
+  const [newTimezone, setNewTimezone] = useState("America/Montreal");
   const [loading, setLoading] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,7 +74,12 @@ export const EmailPreferences = () => {
     setLoading(true);
     const { error } = await supabase
       .from("email_preferences")
-      .insert({ email: newEmail, enabled: true });
+      .insert({ 
+        email: newEmail, 
+        enabled: true,
+        send_hour: parseInt(newHour),
+        timezone: newTimezone
+      });
 
     if (error) {
       toast({
@@ -67,6 +96,15 @@ export const EmailPreferences = () => {
       loadEmails();
     }
     setLoading(false);
+  };
+
+  const copyShareLink = () => {
+    const shareUrl = `${window.location.origin}/weekly?view=readonly`;
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: "Lien copié",
+      description: "Le lien de partage a été copié dans le presse-papiers",
+    });
   };
 
   const removeEmail = async (id: string) => {
@@ -102,18 +140,84 @@ export const EmailPreferences = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            type="email"
-            placeholder="votre@email.com"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && addEmail()}
-          />
-          <Button onClick={addEmail} disabled={loading} className="gradient-primary">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Button>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="votre@email.com"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addEmail()}
+              />
+            </div>
+            <div>
+              <Label htmlFor="hour">Heure d'envoi</Label>
+              <Select value={newHour} onValueChange={setNewHour}>
+                <SelectTrigger id="hour">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOURS.map((hour) => (
+                    <SelectItem key={hour.value} value={hour.value}>
+                      {hour.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="timezone">Fuseau horaire</Label>
+              <Select value={newTimezone} onValueChange={setNewTimezone}>
+                <SelectTrigger id="timezone">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEZONES.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={addEmail} disabled={loading} className="gradient-primary flex-1">
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter le rappel
+            </Button>
+            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Partager
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Partager le Dashboard</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Partagez ce lien pour permettre à quelqu'un de visualiser vos KPIs en lecture seule (sans pouvoir modifier les données).
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={`${window.location.origin}/weekly?view=readonly`}
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button onClick={copyShareLink} variant="outline">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -127,14 +231,25 @@ export const EmailPreferences = () => {
                 key={email.id}
                 className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 flex-1">
                   <Mail className="h-4 w-4 text-primary" />
-                  <span className="text-sm">{email.email}</span>
-                  {email.enabled && (
-                    <Badge variant="outline" className="text-xs">
-                      Actif
-                    </Badge>
-                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{email.email}</span>
+                      {email.enabled && (
+                        <Badge variant="outline" className="text-xs">
+                          Actif
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        {email.send_hour !== undefined ? `${email.send_hour.toString().padStart(2, '0')}:00` : '09:00'} 
+                        {' '}{email.timezone ? TIMEZONES.find(tz => tz.value === email.timezone)?.label : 'UTC'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
@@ -150,9 +265,10 @@ export const EmailPreferences = () => {
 
         <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
           <p className="font-semibold mb-1">📅 Rappel automatique :</p>
-          <p>• Envoyé chaque <strong>lundi à 9h00 UTC</strong></p>
+          <p>• Envoyé chaque <strong>lundi</strong> à l'heure configurée</p>
           <p>• Résumé des métriques à suivre</p>
           <p>• Lien direct vers votre dashboard</p>
+          <p>• Personnalisable par email (heure et fuseau horaire)</p>
         </div>
       </CardContent>
     </Card>

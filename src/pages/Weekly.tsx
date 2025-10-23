@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { WeeklyKPI, getWeekInfo, createEmptyWeeklyKPI } from "@/types/weekly-kpi";
 import { WeeklyDataInput } from "@/components/WeeklyDataInput";
@@ -8,8 +9,13 @@ import { EmailPreferences } from "@/components/EmailPreferences";
 import { MetricCard } from "@/components/MetricCard";
 import { DollarSign, Users, Target, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
 
 const Weekly = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isReadOnly = searchParams.get("view") === "readonly";
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [weekData, setWeekData] = useState<WeeklyKPI | null>(null);
   const { toast } = useToast();
@@ -70,13 +76,26 @@ const Weekly = () => {
       <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Suivi Hebdomadaire
-              </h1>
-              <p className="text-muted-foreground mt-1">Données semaine par semaine</p>
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    Suivi Hebdomadaire
+                  </h1>
+                  {isReadOnly && (
+                    <Badge variant="outline" className="text-xs">
+                      Lecture seule
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-muted-foreground mt-1">Données semaine par semaine</p>
+              </div>
             </div>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
                 <Button variant="ghost" size="icon" onClick={() => setCurrentWeekOffset(currentWeekOffset - 1)} className="h-8 w-8">
                   <ChevronLeft className="h-4 w-4" />
@@ -88,14 +107,16 @@ const Weekly = () => {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-              <WeeklyDataInput weekData={weekData} weekLabel={`Semaine ${weekInfo.weekNumber}`} onSave={saveWeekData} />
+              {!isReadOnly && (
+                <WeeklyDataInput weekData={weekData} weekLabel={`Semaine ${weekInfo.weekNumber}`} onSave={saveWeekData} />
+              )}
             </div>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <EmailPreferences />
+        {!isReadOnly && <EmailPreferences />}
         
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard title="Revenu Total" value={formatCurrency(weekData.total_revenue)} icon={DollarSign} variant="default" />

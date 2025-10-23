@@ -4,6 +4,7 @@ import { useKPIData } from "@/hooks/useKPIData";
 import { MetricCard } from "@/components/MetricCard";
 import { KPIChart } from "@/components/KPIChart";
 import { DataInputDialog } from "@/components/DataInputDialog";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import {
   DollarSign,
@@ -57,6 +58,7 @@ const Index = () => {
               </Button>
             </div>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
                 <Button
                   variant="ghost"
