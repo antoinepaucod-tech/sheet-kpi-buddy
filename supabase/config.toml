@@ -1,1 +1,4 @@
 project_id = "rujpspjvyndjtkvjbbhq"
+
+[functions.send-weekly-reminder]
+verify_jwt = false

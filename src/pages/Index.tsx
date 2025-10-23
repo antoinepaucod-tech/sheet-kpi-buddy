@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useKPIData } from "@/hooks/useKPIData";
 import { MetricCard } from "@/components/MetricCard";
 import { KPIChart } from "@/components/KPIChart";
@@ -18,6 +19,7 @@ import {
 import { MONTHS } from "@/types/kpi";
 
 const Index = () => {
+  const navigate = useNavigate();
   const { kpiData, currentMonthIndex, setCurrentMonthIndex, updateKPI, getCurrentMonthData } = useKPIData();
   const currentMonth = getCurrentMonthData();
 
@@ -43,11 +45,16 @@ const Index = () => {
       <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Tableau de Bord KPI
-              </h1>
-              <p className="text-muted-foreground mt-1">Suivi de performance mensuel</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Tableau de Bord KPI
+                </h1>
+                <p className="text-muted-foreground mt-1">Suivi de performance mensuel</p>
+              </div>
+              <Button variant="outline" onClick={() => navigate('/weekly')}>
+                📅 Vue Hebdomadaire
+              </Button>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
