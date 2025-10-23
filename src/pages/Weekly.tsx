@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { WeeklyKPI, getWeekInfo, createEmptyWeeklyKPI } from "@/types/weekly-kpi";
 import { WeeklyDataInput } from "@/components/WeeklyDataInput";
-import { EmailPreferences } from "@/components/EmailPreferences";
+import { EmailReminderButton } from "@/components/EmailReminderButton";
 import { MetricCard } from "@/components/MetricCard";
 import { DollarSign, Users, Target, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -115,11 +115,14 @@ const Weekly = () => {
               
               <div className="flex items-center gap-2">
                 {!isReadOnly && (
-                  <WeeklyDataInput 
-                    weekData={weekData} 
-                    weekLabel={`Semaine ${weekInfo.weekNumber}`} 
-                    onSave={saveWeekData} 
-                  />
+                  <>
+                    <WeeklyDataInput 
+                      weekData={weekData} 
+                      weekLabel={`Semaine ${weekInfo.weekNumber}`} 
+                      onSave={saveWeekData} 
+                    />
+                    <EmailReminderButton />
+                  </>
                 )}
                 <VideoSettings onConfigChange={setVideoConfig} />
                 <ThemeToggle />
@@ -154,8 +157,6 @@ const Weekly = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8 space-y-10">
-        {!isReadOnly && <EmailPreferences />}
-        
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard title="Revenu Total" value={formatCurrency(weekData.total_revenue)} icon={DollarSign} variant="default" />
           <MetricCard title="Membres Actifs" value={weekData.recurring_general_members + weekData.pif_members} icon={Users} variant="default" />

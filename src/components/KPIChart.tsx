@@ -1,20 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { MonthlyKPI } from "@/types/kpi";
 
 interface KPIChartProps {
-  data: MonthlyKPI[];
+  data: any[];
   title: string;
-  dataKeys: { key: keyof MonthlyKPI; name: string; color: string }[];
+  dataKeys: { key: string; name: string; color: string }[];
   type?: "line" | "bar";
 }
 
 export const KPIChart = ({ data, title, dataKeys, type = "line" }: KPIChartProps) => {
-  const chartData = data.map(month => ({
-    name: month.month.substring(0, 3),
+  const chartData = data.map(item => ({
+    name: item.month?.substring(0, 3) || item.month_name?.substring(0, 3) || '',
     ...dataKeys.reduce((acc, { key }) => ({
       ...acc,
-      [key]: month[key],
+      [key]: item[key],
     }), {}),
   }));
 

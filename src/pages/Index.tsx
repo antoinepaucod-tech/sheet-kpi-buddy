@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useKPIData } from "@/hooks/useKPIData";
+import { useMonthlyKPIData } from "@/hooks/useMonthlyKPIData";
 import { MetricCard } from "@/components/MetricCard";
 import { KPIChart } from "@/components/KPIChart";
-import { DataInputDialog } from "@/components/DataInputDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { VideoBackground } from "@/components/VideoBackground";
 import { VideoSettings } from "@/components/VideoSettings";
@@ -16,15 +15,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
-  Percent,
   Calendar,
 } from "lucide-react";
 import { MONTHS } from "@/types/kpi";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { kpiData, currentMonthIndex, setCurrentMonthIndex, updateKPI, getCurrentMonthData } = useKPIData();
-  const currentMonth = getCurrentMonthData();
+  const { 
+    monthlyData, 
+    currentMonthIndex, 
+    setCurrentMonthIndex, 
+    getCurrentMonthData,
+    isLoading 
+  } = useMonthlyKPIData();
+  
+  const currentMonth = getCurrentMonthData() || monthlyData[currentMonthIndex];
   
   const [videoConfig, setVideoConfig] = useState(() => {
     const saved = localStorage.getItem("video-config");
@@ -46,6 +51,14 @@ const Index = () => {
       minimumFractionDigits: 0,
     }).format(value);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Chargement des données...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,38 +126,39 @@ const Index = () => {
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Clés</h2>
-            <DataInputDialog
-              monthData={currentMonth}
-              monthName={MONTHS[currentMonthIndex]}
-              onSave={(data) => updateKPI(currentMonthIndex, data)}
-            />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               title="Revenu Total"
-              value={formatCurrency(currentMonth.totalRevenue)}
+              value={formatCurrency(currentMonth?.total_revenue || 0)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
               title="Profit"
-              value={formatCurrency(currentMonth.profit)}
+              value={formatCurrency(currentMonth?.profit || 0)}
               icon={TrendingUp}
-              variant={currentMonth.profit > 0 ? "success" : "destructive"}
-              suffix={` (${currentMonth.profitPercentage}%)`}
+              variant={(currentMonth?.profit || 0) > 0 ? "success" : "destructive"}
+              suffix={currentMonth?.total_revenue && currentMonth.total_revenue > 0 
+                ? ` (${Math.round((currentMonth.profit / currentMonth.total_revenue) * 100)}%)` 
+                : ''}
             />
             <MetricCard
               title="Membres Actifs"
-              value={currentMonth.recurringGeneralMembers + currentMonth.pifMembers}
+              value={(currentMonth?.recurring_general_members || 0) + (currentMonth?.pif_members || 0)}
               icon={Users}
               variant="default"
             />
             <MetricCard
               title="Taux de Conversion"
-              value={currentMonth.closePercentage}
+              value={currentMonth?.show && currentMonth.show > 0 
+                ? Math.round((currentMonth.close / currentMonth.show) * 100) 
+                : 0}
               icon={Target}
               suffix="%"
-              variant={currentMonth.closePercentage > 50 ? "success" : "warning"}
+              variant={(currentMonth?.show && currentMonth.show > 0 
+                ? Math.round((currentMonth.close / currentMonth.show) * 100) 
+                : 0) > 50 ? "success" : "warning"}
             />
           </div>
         </section>
@@ -152,7 +166,11 @@ const Index = () => {
         {/* Revenue & Expenses Chart */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <KPIChart
-            data={kpiData}
+            data={monthlyData.map(m => ({
+              month: m.month_name,
+              totalRevenue: m.total_revenue,
+              profit: m.profit,
+            }))}
             title="Évolution du Revenu"
             type="line"
             dataKeys={[
@@ -161,7 +179,11 @@ const Index = () => {
             ]}
           />
           <KPIChart
-            data={kpiData}
+            data={monthlyData.map(m => ({
+              month: m.month_name,
+              totalExpenses: m.total_expenses,
+              adSpend: m.ad_spend,
+            }))}
             title="Dépenses Mensuelles"
             type="bar"
             dataKeys={[
@@ -177,34 +199,44 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <MetricCard
               title="Leads"
-              value={currentMonth.leads}
+              value={currentMonth?.leads || 0}
               icon={Activity}
               variant="default"
             />
             <MetricCard
               title="Scheduled"
-              value={currentMonth.scheduled}
+              value={currentMonth?.scheduled || 0}
               icon={Calendar}
-              suffix={` (${currentMonth.schedPercentage}%)`}
+              suffix={currentMonth?.leads && currentMonth.leads > 0 
+                ? ` (${Math.round((currentMonth.scheduled / currentMonth.leads) * 100)}%)` 
+                : ''}
               variant="default"
             />
             <MetricCard
               title="Show"
-              value={currentMonth.show}
+              value={currentMonth?.show || 0}
               icon={Target}
-              suffix={` (${currentMonth.showPercentage}%)`}
+              suffix={currentMonth?.scheduled && currentMonth.scheduled > 0 
+                ? ` (${Math.round((currentMonth.show / currentMonth.scheduled) * 100)}%)` 
+                : ''}
               variant="default"
             />
             <MetricCard
               title="Close"
-              value={currentMonth.close}
+              value={currentMonth?.close || 0}
               icon={TrendingUp}
-              suffix={` (${currentMonth.closePercentage}%)`}
-              variant={currentMonth.closePercentage > 30 ? "success" : "warning"}
+              suffix={currentMonth?.show && currentMonth.show > 0 
+                ? ` (${Math.round((currentMonth.close / currentMonth.show) * 100)}%)` 
+                : ''}
+              variant={(currentMonth?.show && currentMonth.show > 0 
+                ? Math.round((currentMonth.close / currentMonth.show) * 100) 
+                : 0) > 30 ? "success" : "warning"}
             />
             <MetricCard
               title="Avg Par Vente"
-              value={formatCurrency(currentMonth.avgPerSale)}
+              value={formatCurrency(currentMonth?.close && currentMonth.close > 0 
+                ? currentMonth.cash_collected / currentMonth.close 
+                : 0)}
               icon={DollarSign}
               variant="success"
             />
@@ -214,7 +246,12 @@ const Index = () => {
         {/* Members Chart */}
         <section>
           <KPIChart
-            data={kpiData}
+            data={monthlyData.map(m => ({
+              month: m.month_name,
+              recurringGeneralMembers: m.recurring_general_members,
+              ptMembers: m.pt_members,
+              pifMembers: m.pif_members,
+            }))}
             title="Évolution des Membres"
             type="line"
             dataKeys={[
@@ -231,27 +268,36 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               title="Classes Totales"
-              value={currentMonth.totalClasses}
+              value={currentMonth?.total_classes || 0}
               icon={Activity}
               variant="default"
             />
             <MetricCard
               title="RoAds"
-              value={currentMonth.roAds.toFixed(2)}
+              value={(currentMonth?.total_revenue && currentMonth?.ad_spend && currentMonth.ad_spend > 0 
+                ? (currentMonth.total_revenue / currentMonth.ad_spend).toFixed(2) 
+                : '0.00')}
               icon={TrendingUp}
               suffix="x"
-              variant={currentMonth.roAds > 2 ? "success" : "warning"}
+              variant={(currentMonth?.total_revenue && currentMonth?.ad_spend && currentMonth.ad_spend > 0 
+                ? currentMonth.total_revenue / currentMonth.ad_spend 
+                : 0) > 2 ? "success" : "warning"}
             />
             <MetricCard
               title="CPL"
-              value={formatCurrency(currentMonth.cpl)}
+              value={formatCurrency(currentMonth?.leads && currentMonth.leads > 0 && currentMonth?.ad_spend
+                ? currentMonth.ad_spend / currentMonth.leads 
+                : 0)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
-              title="CAC"
-              value={formatCurrency(currentMonth.cac)}
+              title="Taux Conversion Trial"
+              value={currentMonth?.trial_ending && currentMonth.trial_ending > 0 
+                ? Math.round((currentMonth.converted / currentMonth.trial_ending) * 100) 
+                : 0}
               icon={Target}
+              suffix="%"
               variant="default"
             />
           </div>
@@ -260,7 +306,13 @@ const Index = () => {
         {/* Sales Performance Chart */}
         <section>
           <KPIChart
-            data={kpiData}
+            data={monthlyData.map(m => ({
+              month: m.month_name,
+              leads: m.leads,
+              scheduled: m.scheduled,
+              show: m.show,
+              close: m.close,
+            }))}
             title="Performance des Ventes"
             type="bar"
             dataKeys={[

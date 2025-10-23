@@ -44,6 +44,156 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_kpis: {
+        Row: {
+          ad_spend: number | null
+          advertising_promotion: number | null
+          bank_finance_charges: number | null
+          calls_made: number | null
+          cash_collected: number | null
+          charitable_donations: number | null
+          close: number | null
+          computer_software: number | null
+          converted: number | null
+          created_at: string
+          fast_cash_revenue: number | null
+          general_eft_revenue: number | null
+          general_exits: number | null
+          id: string
+          in_trial: number | null
+          insurance: number | null
+          internet_telephone: number | null
+          leads: number | null
+          legal_professional: number | null
+          month: number
+          month_name: string
+          organic_cash_collected: number | null
+          organic_close: number | null
+          organic_leads: number | null
+          pauses: number | null
+          pif_exits: number | null
+          pif_members: number | null
+          profit: number | null
+          pt_exits: number | null
+          pt_members: number | null
+          pt_revenue: number | null
+          recurring_general_members: number | null
+          rent: number | null
+          repairs_maintenance: number | null
+          retail_revenue: number | null
+          scheduled: number | null
+          show: number | null
+          stationary: number | null
+          subscriptions: number | null
+          total_active_members: number | null
+          total_classes: number | null
+          total_expenses: number | null
+          total_revenue: number | null
+          trial_ending: number | null
+          updated_at: string
+          utilities: number | null
+          year: number
+        }
+        Insert: {
+          ad_spend?: number | null
+          advertising_promotion?: number | null
+          bank_finance_charges?: number | null
+          calls_made?: number | null
+          cash_collected?: number | null
+          charitable_donations?: number | null
+          close?: number | null
+          computer_software?: number | null
+          converted?: number | null
+          created_at?: string
+          fast_cash_revenue?: number | null
+          general_eft_revenue?: number | null
+          general_exits?: number | null
+          id?: string
+          in_trial?: number | null
+          insurance?: number | null
+          internet_telephone?: number | null
+          leads?: number | null
+          legal_professional?: number | null
+          month: number
+          month_name: string
+          organic_cash_collected?: number | null
+          organic_close?: number | null
+          organic_leads?: number | null
+          pauses?: number | null
+          pif_exits?: number | null
+          pif_members?: number | null
+          profit?: number | null
+          pt_exits?: number | null
+          pt_members?: number | null
+          pt_revenue?: number | null
+          recurring_general_members?: number | null
+          rent?: number | null
+          repairs_maintenance?: number | null
+          retail_revenue?: number | null
+          scheduled?: number | null
+          show?: number | null
+          stationary?: number | null
+          subscriptions?: number | null
+          total_active_members?: number | null
+          total_classes?: number | null
+          total_expenses?: number | null
+          total_revenue?: number | null
+          trial_ending?: number | null
+          updated_at?: string
+          utilities?: number | null
+          year: number
+        }
+        Update: {
+          ad_spend?: number | null
+          advertising_promotion?: number | null
+          bank_finance_charges?: number | null
+          calls_made?: number | null
+          cash_collected?: number | null
+          charitable_donations?: number | null
+          close?: number | null
+          computer_software?: number | null
+          converted?: number | null
+          created_at?: string
+          fast_cash_revenue?: number | null
+          general_eft_revenue?: number | null
+          general_exits?: number | null
+          id?: string
+          in_trial?: number | null
+          insurance?: number | null
+          internet_telephone?: number | null
+          leads?: number | null
+          legal_professional?: number | null
+          month?: number
+          month_name?: string
+          organic_cash_collected?: number | null
+          organic_close?: number | null
+          organic_leads?: number | null
+          pauses?: number | null
+          pif_exits?: number | null
+          pif_members?: number | null
+          profit?: number | null
+          pt_exits?: number | null
+          pt_members?: number | null
+          pt_revenue?: number | null
+          recurring_general_members?: number | null
+          rent?: number | null
+          repairs_maintenance?: number | null
+          retail_revenue?: number | null
+          scheduled?: number | null
+          show?: number | null
+          stationary?: number | null
+          subscriptions?: number | null
+          total_active_members?: number | null
+          total_classes?: number | null
+          total_expenses?: number | null
+          total_revenue?: number | null
+          trial_ending?: number | null
+          updated_at?: string
+          utilities?: number | null
+          year?: number
+        }
+        Relationships: []
+      }
       weekly_kpis: {
         Row: {
           ad_spend: number | null
