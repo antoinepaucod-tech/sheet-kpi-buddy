@@ -24,7 +24,7 @@ const getYoutubeId = (url?: string): string | null => {
 };
 
 export const VideoBackground = ({ 
-  videoUrl = "https://assets.mixkit.co/videos/preview/mixkit-athlete-working-out-in-a-gym-44472-large.mp4",
+  videoUrl = "/videos/fitness-background.mp4",
   overlayOpacity = 0.7,
   children 
 }: VideoBackgroundProps) => {
