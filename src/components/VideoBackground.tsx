@@ -39,7 +39,7 @@ export const VideoBackground = ({
     : undefined;
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative overflow-hidden">
       {/* Background layer */}
       {videoUrl && (
         <>
@@ -89,6 +89,7 @@ export const VideoBackground = ({
                   loop
                   muted
                   playsInline
+                  preload="auto"
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   onError={() => setVideoError(true)}
                 >
