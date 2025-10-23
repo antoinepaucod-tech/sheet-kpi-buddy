@@ -79,6 +79,18 @@ export const VideoSettings = ({ onConfigChange }: VideoSettingsProps) => {
     {
       name: "Running Track",
       url: "https://assets.mixkit.co/videos/preview/mixkit-runner-on-a-running-track-40920-large.mp4"
+    },
+    {
+      name: "Boxing Training",
+      url: "https://assets.mixkit.co/videos/preview/mixkit-woman-doing-boxing-exercises-42836-large.mp4"
+    },
+    {
+      name: "Yoga Session",
+      url: "https://assets.mixkit.co/videos/preview/mixkit-woman-meditating-in-nature-39583-large.mp4"
+    },
+    {
+      name: "Weightlifting",
+      url: "https://assets.mixkit.co/videos/preview/mixkit-man-lifting-weights-in-a-gym-44466-large.mp4"
     }
   ];
 
@@ -102,16 +114,16 @@ export const VideoSettings = ({ onConfigChange }: VideoSettingsProps) => {
         
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="video-url">URL de la vidéo</Label>
+            <Label htmlFor="video-url">URL de la vidéo (MP4 ou WebM)</Label>
             <Input
               id="video-url"
               type="url"
-              placeholder="https://youtube.com/watch?v=... ou https://example.com/video.mp4"
+              placeholder="https://example.com/video.mp4"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Formats supportés: Vidéos YouTube ou liens directs (MP4, WebM). La vidéo sera en lecture automatique et en boucle.
+              Utilisez un lien direct vers une vidéo MP4 ou WebM. Les vidéos YouTube ne sont pas supportées pour les backgrounds. Essayez les exemples ci-dessous ou des sites comme Mixkit, Pexels, ou Pixabay.
             </p>
           </div>
 
