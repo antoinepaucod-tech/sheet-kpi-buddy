@@ -114,16 +114,16 @@ export const VideoSettings = ({ onConfigChange }: VideoSettingsProps) => {
         
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="video-url">URL de la vidéo (MP4 ou WebM)</Label>
+            <Label htmlFor="video-url">URL de la vidéo (YouTube, MP4 ou WebM)</Label>
             <Input
               id="video-url"
               type="url"
-              placeholder="https://example.com/video.mp4"
+              placeholder="https://youtu.be/UG3RghzKp_Y ou https://example.com/video.mp4"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Utilisez un lien direct vers une vidéo MP4 ou WebM. Les vidéos YouTube ne sont pas supportées pour les backgrounds. Essayez les exemples ci-dessous ou des sites comme Mixkit, Pexels, ou Pixabay.
+              YouTube est pris en charge (lecture après clic). Les liens MP4/WebM se lisent automatiquement en arrière-plan.
             </p>
           </div>
 
