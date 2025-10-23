@@ -57,6 +57,9 @@ export interface WeeklyKPI {
   bank_finance_charges: number;
   insurance: number;
   
+  // Additional metrics
+  gym_floor_sqft?: number;
+  
   created_at?: string;
   updated_at?: string;
 }
@@ -128,4 +131,5 @@ export const createEmptyWeeklyKPI = (year: number, weekNumber: number, startDate
   subscriptions: 0,
   bank_finance_charges: 0,
   insurance: 0,
+  gym_floor_sqft: 0,
 });

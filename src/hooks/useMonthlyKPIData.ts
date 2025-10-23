@@ -66,6 +66,22 @@ export interface MonthlyKPIData {
   
   // Calculated
   profit: number;
+  
+  // Churn rates
+  pif_churn?: number;
+  general_churn?: number;
+  pt_churn?: number;
+  
+  // Advanced metrics
+  general_acrm?: number;
+  general_ltv?: number;
+  pt_acrm?: number;
+  pt_ltv?: number;
+  cpl?: number;
+  cpr?: number;
+  cac?: number;
+  ro_ads?: number;
+  gym_floor_sqft?: number;
 }
 
 export const useMonthlyKPIData = () => {
@@ -138,6 +154,18 @@ export const useMonthlyKPIData = () => {
           insurance: 0,
           total_expenses: 0,
           profit: 0,
+          pif_churn: 0,
+          general_churn: 0,
+          pt_churn: 0,
+          general_acrm: 0,
+          general_ltv: 0,
+          pt_acrm: 0,
+          pt_ltv: 0,
+          cpl: 0,
+          cpr: 0,
+          cac: 0,
+          ro_ads: 0,
+          gym_floor_sqft: 0,
         };
       }
 
@@ -214,6 +242,17 @@ export const useMonthlyKPIData = () => {
                                 monthly.charitable_donations + monthly.subscriptions + monthly.bank_finance_charges +
                                 monthly.insurance;
         monthly.profit = monthly.total_revenue - monthly.total_expenses;
+
+        // Calculate churn rates
+        monthly.pif_churn = monthly.pif_members > 0 ? (monthly.pif_exits / monthly.pif_members) * 100 : 0;
+        monthly.general_churn = monthly.recurring_general_members > 0 ? (monthly.general_exits / monthly.recurring_general_members) * 100 : 0;
+        monthly.pt_churn = monthly.pt_members > 0 ? (monthly.pt_exits / monthly.pt_members) * 100 : 0;
+
+        // Calculate cost metrics
+        monthly.cpl = monthly.leads > 0 ? monthly.ad_spend / monthly.leads : 0;
+        monthly.cpr = monthly.scheduled > 0 ? monthly.ad_spend / monthly.scheduled : 0;
+        monthly.cac = monthly.close > 0 ? monthly.ad_spend / monthly.close : 0;
+        monthly.ro_ads = monthly.ad_spend > 0 ? (monthly.cash_collected / monthly.ad_spend) * 100 : 0;
 
         // Upsert to database
         const { error: upsertError } = await supabase

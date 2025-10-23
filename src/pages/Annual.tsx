@@ -326,11 +326,23 @@ const Annual = () => {
           {/* Additional Metrics */}
           <section className="space-y-6">
             <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Additionnelles</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 title="Classes Totales"
                 value={annualData.totalClasses}
                 icon={Activity}
+                variant="default"
+              />
+              <MetricCard
+                title="CPL"
+                value={formatCurrency(annualData.cpl)}
+                icon={DollarSign}
+                variant="default"
+              />
+              <MetricCard
+                title="CPR"
+                value={formatCurrency(annualData.cpr)}
+                icon={DollarSign}
                 variant="default"
               />
               <MetricCard
@@ -339,10 +351,66 @@ const Annual = () => {
                 icon={Users}
                 variant="default"
               />
+            </div>
+          </section>
+
+          {/* Churn Rates */}
+          <section className="space-y-6">
+            <h2 className="text-2xl font-medium text-heading tracking-tight">Taux de Désabonnement (Churn)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <MetricCard
-                title="Pauses"
-                value={annualData.pauses}
+                title="PIF Churn"
+                value={formatPercentage(annualData.pifChurn)}
                 icon={Users}
+                variant={annualData.pifChurn < 5 ? "success" : annualData.pifChurn < 10 ? "warning" : "destructive"}
+              />
+              <MetricCard
+                title="General Churn"
+                value={formatPercentage(annualData.generalChurn)}
+                icon={Users}
+                variant={annualData.generalChurn < 5 ? "success" : annualData.generalChurn < 10 ? "warning" : "destructive"}
+              />
+              <MetricCard
+                title="PT Churn"
+                value={formatPercentage(annualData.ptChurn)}
+                icon={Users}
+                variant={annualData.ptChurn < 5 ? "success" : annualData.ptChurn < 10 ? "warning" : "destructive"}
+              />
+            </div>
+          </section>
+
+          {/* Advanced Metrics */}
+          <section className="space-y-6">
+            <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Avancées (LTV & ACRM)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <MetricCard
+                title="General ACRM"
+                value={formatCurrency(annualData.generalACRM)}
+                icon={DollarSign}
+                variant="default"
+              />
+              <MetricCard
+                title="General LTV"
+                value={formatCurrency(annualData.generalLTV)}
+                icon={TrendingUp}
+                variant="success"
+              />
+              <MetricCard
+                title="PT ACRM"
+                value={formatCurrency(annualData.ptACRM)}
+                icon={DollarSign}
+                variant="default"
+              />
+              <MetricCard
+                title="PT LTV"
+                value={formatCurrency(annualData.ptLTV)}
+                icon={TrendingUp}
+                variant="success"
+              />
+              <MetricCard
+                title="Gym Floor SQFT"
+                value={annualData.gymFloorSQFT}
+                icon={Activity}
                 variant="default"
               />
             </div>

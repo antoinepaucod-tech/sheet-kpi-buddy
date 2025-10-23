@@ -52,6 +52,10 @@ const Index = () => {
     }).format(value);
   };
 
+  const formatPercentage = (value: number) => {
+    return `${value.toFixed(1)}%`;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -272,7 +276,7 @@ const Index = () => {
         {/* Additional Metrics */}
         <section className="space-y-6">
           <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Additionnelles</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <MetricCard
               title="Classes Totales"
               value={currentMonth?.total_classes || 0}
@@ -281,32 +285,27 @@ const Index = () => {
             />
             <MetricCard
               title="CAC"
-              value={formatCurrency(currentMonth?.close && currentMonth.close > 0 && currentMonth?.ad_spend
-                ? currentMonth.ad_spend / currentMonth.close
-                : 0)}
+              value={formatCurrency(currentMonth?.cac || 0)}
               icon={DollarSign}
-              variant={(currentMonth?.close && currentMonth.close > 0 && currentMonth?.ad_spend
-                ? currentMonth.ad_spend / currentMonth.close
-                : 0) < 100 ? "success" : "warning"}
-            />
-            <MetricCard
-              title="RoAds"
-              value={(currentMonth?.total_revenue && currentMonth?.ad_spend && currentMonth.ad_spend > 0 
-                ? (currentMonth.total_revenue / currentMonth.ad_spend).toFixed(2) 
-                : '0.00')}
-              icon={TrendingUp}
-              suffix="x"
-              variant={(currentMonth?.total_revenue && currentMonth?.ad_spend && currentMonth.ad_spend > 0 
-                ? currentMonth.total_revenue / currentMonth.ad_spend 
-                : 0) > 2 ? "success" : "warning"}
+              variant={(currentMonth?.cac || 0) < 100 ? "success" : "warning"}
             />
             <MetricCard
               title="CPL"
-              value={formatCurrency(currentMonth?.leads && currentMonth.leads > 0 && currentMonth?.ad_spend
-                ? currentMonth.ad_spend / currentMonth.leads 
-                : 0)}
+              value={formatCurrency(currentMonth?.cpl || 0)}
               icon={DollarSign}
               variant="default"
+            />
+            <MetricCard
+              title="CPR"
+              value={formatCurrency(currentMonth?.cpr || 0)}
+              icon={DollarSign}
+              variant="default"
+            />
+            <MetricCard
+              title="RoAds"
+              value={formatPercentage(currentMonth?.ro_ads || 0)}
+              icon={TrendingUp}
+              variant={(currentMonth?.ro_ads || 0) > 200 ? "success" : (currentMonth?.ro_ads || 0) > 100 ? "warning" : "destructive"}
             />
             <MetricCard
               title="Taux Conversion Trial"
@@ -315,6 +314,70 @@ const Index = () => {
                 : 0}
               icon={Target}
               suffix="%"
+              variant={(currentMonth?.trial_ending && currentMonth.trial_ending > 0 
+                ? Math.round((currentMonth.converted / currentMonth.trial_ending) * 100) 
+                : 0) > 50 ? "success" : "default"}
+            />
+          </div>
+        </section>
+
+        {/* Churn Rates */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-medium text-heading tracking-tight">Taux de Désabonnement (Churn)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard
+              title="PIF Churn"
+              value={formatPercentage(currentMonth?.pif_churn || 0)}
+              icon={Users}
+              variant={(currentMonth?.pif_churn || 0) < 5 ? "success" : (currentMonth?.pif_churn || 0) < 10 ? "warning" : "destructive"}
+            />
+            <MetricCard
+              title="General Churn"
+              value={formatPercentage(currentMonth?.general_churn || 0)}
+              icon={Users}
+              variant={(currentMonth?.general_churn || 0) < 5 ? "success" : (currentMonth?.general_churn || 0) < 10 ? "warning" : "destructive"}
+            />
+            <MetricCard
+              title="PT Churn"
+              value={formatPercentage(currentMonth?.pt_churn || 0)}
+              icon={Users}
+              variant={(currentMonth?.pt_churn || 0) < 5 ? "success" : (currentMonth?.pt_churn || 0) < 10 ? "warning" : "destructive"}
+            />
+          </div>
+        </section>
+
+        {/* Advanced Metrics */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Avancées (LTV & ACRM)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <MetricCard
+              title="General ACRM"
+              value={formatCurrency(currentMonth?.general_acrm || 0)}
+              icon={DollarSign}
+              variant="default"
+            />
+            <MetricCard
+              title="General LTV"
+              value={formatCurrency(currentMonth?.general_ltv || 0)}
+              icon={TrendingUp}
+              variant="success"
+            />
+            <MetricCard
+              title="PT ACRM"
+              value={formatCurrency(currentMonth?.pt_acrm || 0)}
+              icon={DollarSign}
+              variant="default"
+            />
+            <MetricCard
+              title="PT LTV"
+              value={formatCurrency(currentMonth?.pt_ltv || 0)}
+              icon={TrendingUp}
+              variant="success"
+            />
+            <MetricCard
+              title="Gym Floor SQFT"
+              value={currentMonth?.gym_floor_sqft || 0}
+              icon={Activity}
               variant="default"
             />
           </div>

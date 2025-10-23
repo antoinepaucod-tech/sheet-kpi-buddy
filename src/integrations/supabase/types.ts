@@ -49,16 +49,23 @@ export type Database = {
           ad_spend: number | null
           advertising_promotion: number | null
           bank_finance_charges: number | null
+          cac: number | null
           calls_made: number | null
           cash_collected: number | null
           charitable_donations: number | null
           close: number | null
           computer_software: number | null
           converted: number | null
+          cpl: number | null
+          cpr: number | null
           created_at: string
           fast_cash_revenue: number | null
+          general_acrm: number | null
+          general_churn: number | null
           general_eft_revenue: number | null
           general_exits: number | null
+          general_ltv: number | null
+          gym_floor_sqft: number | null
           id: string
           in_trial: number | null
           insurance: number | null
@@ -71,16 +78,21 @@ export type Database = {
           organic_close: number | null
           organic_leads: number | null
           pauses: number | null
+          pif_churn: number | null
           pif_exits: number | null
           pif_members: number | null
           profit: number | null
+          pt_acrm: number | null
+          pt_churn: number | null
           pt_exits: number | null
+          pt_ltv: number | null
           pt_members: number | null
           pt_revenue: number | null
           recurring_general_members: number | null
           rent: number | null
           repairs_maintenance: number | null
           retail_revenue: number | null
+          ro_ads: number | null
           scheduled: number | null
           show: number | null
           stationary: number | null
@@ -98,16 +110,23 @@ export type Database = {
           ad_spend?: number | null
           advertising_promotion?: number | null
           bank_finance_charges?: number | null
+          cac?: number | null
           calls_made?: number | null
           cash_collected?: number | null
           charitable_donations?: number | null
           close?: number | null
           computer_software?: number | null
           converted?: number | null
+          cpl?: number | null
+          cpr?: number | null
           created_at?: string
           fast_cash_revenue?: number | null
+          general_acrm?: number | null
+          general_churn?: number | null
           general_eft_revenue?: number | null
           general_exits?: number | null
+          general_ltv?: number | null
+          gym_floor_sqft?: number | null
           id?: string
           in_trial?: number | null
           insurance?: number | null
@@ -120,16 +139,21 @@ export type Database = {
           organic_close?: number | null
           organic_leads?: number | null
           pauses?: number | null
+          pif_churn?: number | null
           pif_exits?: number | null
           pif_members?: number | null
           profit?: number | null
+          pt_acrm?: number | null
+          pt_churn?: number | null
           pt_exits?: number | null
+          pt_ltv?: number | null
           pt_members?: number | null
           pt_revenue?: number | null
           recurring_general_members?: number | null
           rent?: number | null
           repairs_maintenance?: number | null
           retail_revenue?: number | null
+          ro_ads?: number | null
           scheduled?: number | null
           show?: number | null
           stationary?: number | null
@@ -147,16 +171,23 @@ export type Database = {
           ad_spend?: number | null
           advertising_promotion?: number | null
           bank_finance_charges?: number | null
+          cac?: number | null
           calls_made?: number | null
           cash_collected?: number | null
           charitable_donations?: number | null
           close?: number | null
           computer_software?: number | null
           converted?: number | null
+          cpl?: number | null
+          cpr?: number | null
           created_at?: string
           fast_cash_revenue?: number | null
+          general_acrm?: number | null
+          general_churn?: number | null
           general_eft_revenue?: number | null
           general_exits?: number | null
+          general_ltv?: number | null
+          gym_floor_sqft?: number | null
           id?: string
           in_trial?: number | null
           insurance?: number | null
@@ -169,16 +200,21 @@ export type Database = {
           organic_close?: number | null
           organic_leads?: number | null
           pauses?: number | null
+          pif_churn?: number | null
           pif_exits?: number | null
           pif_members?: number | null
           profit?: number | null
+          pt_acrm?: number | null
+          pt_churn?: number | null
           pt_exits?: number | null
+          pt_ltv?: number | null
           pt_members?: number | null
           pt_revenue?: number | null
           recurring_general_members?: number | null
           rent?: number | null
           repairs_maintenance?: number | null
           retail_revenue?: number | null
+          ro_ads?: number | null
           scheduled?: number | null
           show?: number | null
           stationary?: number | null
@@ -209,6 +245,7 @@ export type Database = {
           fast_cash_revenue: number | null
           general_eft_revenue: number | null
           general_exits: number | null
+          gym_floor_sqft: number | null
           id: string
           in_trial: number | null
           insurance: number | null
@@ -256,6 +293,7 @@ export type Database = {
           fast_cash_revenue?: number | null
           general_eft_revenue?: number | null
           general_exits?: number | null
+          gym_floor_sqft?: number | null
           id?: string
           in_trial?: number | null
           insurance?: number | null
@@ -303,6 +341,7 @@ export type Database = {
           fast_cash_revenue?: number | null
           general_eft_revenue?: number | null
           general_exits?: number | null
+          gym_floor_sqft?: number | null
           id?: string
           in_trial?: number | null
           insurance?: number | null

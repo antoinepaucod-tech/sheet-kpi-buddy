@@ -33,6 +33,22 @@ export interface AnnualKPIData {
   adSpend: number;
   totalExpenses: number;
   profit: number;
+  
+  // Churn rates
+  pifChurn: number;
+  generalChurn: number;
+  ptChurn: number;
+  
+  // Advanced metrics
+  generalACRM: number;
+  generalLTV: number;
+  ptACRM: number;
+  ptLTV: number;
+  cpl: number;
+  cpr: number;
+  cac: number;
+  roAds: number;
+  gymFloorSQFT: number;
 }
 
 export const useAnnualKPIData = () => {
@@ -89,6 +105,18 @@ export const useAnnualKPIData = () => {
         adSpend: 0,
         totalExpenses: 0,
         profit: 0,
+        pifChurn: 0,
+        generalChurn: 0,
+        ptChurn: 0,
+        generalACRM: 0,
+        generalLTV: 0,
+        ptACRM: 0,
+        ptLTV: 0,
+        cpl: 0,
+        cpr: 0,
+        cac: 0,
+        roAds: 0,
+        gymFloorSQFT: 0,
       };
 
       // Sum up all months
@@ -128,6 +156,24 @@ export const useAnnualKPIData = () => {
       annual.ptMembers = Number(latestMonth.pt_members || 0);
 
       annual.totalExits = annual.pifExits + annual.generalExits + annual.ptExits;
+
+      // Calculate annual churn rates
+      annual.pifChurn = annual.pifMembers > 0 ? (annual.pifExits / annual.pifMembers) * 100 : 0;
+      annual.generalChurn = annual.recurringGeneralMembers > 0 ? (annual.generalExits / annual.recurringGeneralMembers) * 100 : 0;
+      annual.ptChurn = annual.ptMembers > 0 ? (annual.ptExits / annual.ptMembers) * 100 : 0;
+
+      // Calculate annual cost metrics
+      annual.cpl = annual.leads > 0 ? annual.adSpend / annual.leads : 0;
+      annual.cpr = annual.scheduled > 0 ? annual.adSpend / annual.scheduled : 0;
+      annual.cac = annual.close > 0 ? annual.adSpend / annual.close : 0;
+      annual.roAds = annual.adSpend > 0 ? (annual.cashCollected / annual.adSpend) * 100 : 0;
+
+      // Use average of monthly LTV/ACRM values (from last month)
+      annual.generalACRM = Number(latestMonth.general_acrm || 0);
+      annual.generalLTV = Number(latestMonth.general_ltv || 0);
+      annual.ptACRM = Number(latestMonth.pt_acrm || 0);
+      annual.ptLTV = Number(latestMonth.pt_ltv || 0);
+      annual.gymFloorSQFT = Number(latestMonth.gym_floor_sqft || 0);
 
       setAnnualData(annual);
     } catch (error) {
