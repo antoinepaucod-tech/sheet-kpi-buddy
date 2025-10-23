@@ -228,20 +228,22 @@ const Index = () => {
         </section>
 
         {/* Revenue & Expenses Chart */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <KPIChart
-            data={monthlyData.map(m => ({
-              month: m.month_name,
-              totalRevenue: m.total_revenue,
-              profit: m.profit,
-            }))}
-            title="Évolution du Revenu"
-            type="line"
-            dataKeys={[
-              { key: 'totalRevenue', name: 'Revenu Total', color: 'hsl(var(--chart-1))' },
-              { key: 'profit', name: 'Profit', color: 'hsl(var(--success))' },
-            ]}
-          />
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <KPIChart
+              data={monthlyData.map(m => ({
+                month: m.month_name,
+                totalRevenue: m.total_revenue,
+                profit: m.profit,
+              }))}
+              title="Évolution du Revenu"
+              type="line"
+              dataKeys={[
+                { key: 'totalRevenue', name: 'Revenu Total', color: 'hsl(var(--chart-1))' },
+                { key: 'profit', name: 'Profit', color: 'hsl(var(--success))' },
+              ]}
+            />
+          </div>
           <KPIChart
             data={monthlyData.map(m => ({
               month: m.month_name,
@@ -260,8 +262,9 @@ const Index = () => {
               bankCharges: m.bank_finance_charges,
               insurance: m.insurance,
             }))}
-            title="Dépenses Mensuelles"
+            title="Dépenses Mensuelles Détaillées"
             type="bar"
+            height={500}
             dataKeys={[
               { key: 'totalExpenses', name: 'Dépenses Totales', color: 'hsl(var(--destructive))' },
               { key: 'adSpend', name: 'Publicité', color: 'hsl(var(--chart-1))' },
