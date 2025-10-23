@@ -151,7 +151,12 @@ export const useAnnualKPIData = () => {
 
       // For members, use the most recent month's values (not sum)
       const latestMonth = monthlyData[monthlyData.length - 1];
-      annual.totalActiveMembers = Number(latestMonth.total_active_members || 0);
+      const computedTotalActive =
+        Number(latestMonth.total_active_members ?? 0) ||
+        (Number(latestMonth.pif_members || 0) +
+         Number(latestMonth.recurring_general_members || 0) +
+         Number(latestMonth.pt_members || 0));
+      annual.totalActiveMembers = computedTotalActive;
       annual.pifMembers = Number(latestMonth.pif_members || 0);
       annual.recurringGeneralMembers = Number(latestMonth.recurring_general_members || 0);
       annual.ptMembers = Number(latestMonth.pt_members || 0);

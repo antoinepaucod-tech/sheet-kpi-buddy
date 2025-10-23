@@ -50,6 +50,7 @@ const Index = () => {
                           data.charitable_donations + data.subscriptions + data.bank_finance_charges +
                           data.insurance;
     const profit = total_revenue - total_expenses;
+    const total_active_members = (data.pif_members || 0) + (data.recurring_general_members || 0) + (data.pt_members || 0);
 
     // Calculate churn rates
     const pif_churn = data.pif_members > 0 ? (data.pif_exits / data.pif_members) * 100 : 0;
@@ -69,6 +70,7 @@ const Index = () => {
         total_revenue,
         total_expenses,
         profit,
+        total_active_members,
         pif_churn,
         general_churn,
         pt_churn,
