@@ -21,9 +21,9 @@ export const KPIChart = ({ data, title, dataKeys, type = "line" }: KPIChartProps
   const Chart = type === "line" ? LineChart : BarChart;
 
   return (
-    <Card className="animate-fade-in border-2 border-primary/20 bg-card/50">
+    <Card className="animate-fade-in border border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-xl">{title}</CardTitle>
+        <CardTitle className="text-xl font-medium text-heading tracking-tight">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

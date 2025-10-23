@@ -73,49 +73,74 @@ const Weekly = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-                <ArrowLeft className="h-4 w-4" />
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between gap-8">
+            <div className="flex items-center gap-6 flex-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate('/')}
+                className="hover:bg-foreground/5"
+              >
+                <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    Suivi Hebdomadaire
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-semibold tracking-tight text-display">
+                    SUIVI HEBDOMADAIRE
                   </h1>
                   {isReadOnly && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs uppercase tracking-wider">
                       Lecture seule
                     </Badge>
                   )}
                 </div>
-                <p className="text-muted-foreground mt-1">Données semaine par semaine</p>
+                <p className="text-muted-foreground text-sm tracking-wide">
+                  Données semaine par semaine
+                </p>
               </div>
             </div>
+            
             <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
-                <Button variant="ghost" size="icon" onClick={() => setCurrentWeekOffset(currentWeekOffset - 1)} className="h-8 w-8">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="font-semibold min-w-[200px] text-center">
-                  Semaine {weekInfo.weekNumber} - {weekInfo.year}
-                </span>
-                <Button variant="ghost" size="icon" onClick={() => setCurrentWeekOffset(currentWeekOffset + 1)} className="h-8 w-8">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
               {!isReadOnly && (
-                <WeeklyDataInput weekData={weekData} weekLabel={`Semaine ${weekInfo.weekNumber}`} onSave={saveWeekData} />
+                <WeeklyDataInput 
+                  weekData={weekData} 
+                  weekLabel={`Semaine ${weekInfo.weekNumber}`} 
+                  onSave={saveWeekData} 
+                />
               )}
+              <ThemeToggle />
             </div>
+          </div>
+          
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setCurrentWeekOffset(currentWeekOffset - 1)} 
+              className="h-10 w-10 hover:bg-foreground/5"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3 px-6 py-2 bg-muted/50 rounded-lg min-w-[240px] justify-center">
+              <span className="font-medium text-lg tracking-wide">
+                SEMAINE {weekInfo.weekNumber} · {weekInfo.year}
+              </span>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setCurrentWeekOffset(currentWeekOffset + 1)} 
+              className="h-10 w-10 hover:bg-foreground/5"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
+      <main className="container mx-auto px-6 py-8 space-y-10">
         {!isReadOnly && <EmailPreferences />}
         
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

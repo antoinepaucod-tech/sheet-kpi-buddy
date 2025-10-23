@@ -36,13 +36,13 @@ export const MetricCard = ({
   };
 
   return (
-    <Card className={cn("animate-fade-in border-2 transition-all hover:scale-105 hover:glow-effect", variantStyles[variant], className)}>
+    <Card className="animate-fade-in border border-border/50 transition-all hover:scale-[1.02] hover:shadow-lg bg-card/50 backdrop-blur-sm">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className="space-y-2 flex-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="space-y-3 flex-1">
+            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-bold">
+              <p className="text-3xl font-semibold tracking-tight">
                 {value}{suffix}
               </p>
               {trend !== undefined && (
@@ -55,7 +55,7 @@ export const MetricCard = ({
               )}
             </div>
           </div>
-          <div className={cn("rounded-lg p-3", iconStyles[variant], "bg-background/50")}>
+          <div className={cn("rounded-lg p-3", iconStyles[variant], "bg-muted/30")}>
             <Icon className="h-6 w-6" />
           </div>
         </div>

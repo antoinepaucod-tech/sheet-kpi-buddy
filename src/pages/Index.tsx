@@ -43,61 +43,69 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between gap-8">
+            <div className="flex-1">
+              <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
+                TABLEAU DE BORD KPI
+              </h1>
+              <p className="text-muted-foreground text-sm tracking-wide">
+                Suivi de performance mensuel
+              </p>
+            </div>
+            
             <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Tableau de Bord KPI
-                </h1>
-                <p className="text-muted-foreground mt-1">Suivi de performance mensuel</p>
-              </div>
-              <Button variant="outline" onClick={() => navigate('/weekly')}>
-                📅 Vue Hebdomadaire
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/weekly')}
+                className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
+              >
+                Vue Hebdomadaire
               </Button>
-            </div>
-            <div className="flex items-center gap-4">
               <ThemeToggle />
-              <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={goToPreviousMonth}
-                  className="h-8 w-8"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex items-center gap-2 px-4">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  <span className="font-semibold min-w-[100px] text-center">
-                    {MONTHS[currentMonthIndex]}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={goToNextMonth}
-                  className="h-8 w-8"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              <DataInputDialog
-                monthData={currentMonth}
-                monthName={MONTHS[currentMonthIndex]}
-                onSave={(data) => updateKPI(currentMonthIndex, data)}
-              />
             </div>
+          </div>
+          
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToPreviousMonth}
+              className="h-10 w-10 hover:bg-foreground/5"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3 px-6 py-2 bg-muted/50 rounded-lg min-w-[180px] justify-center">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium text-lg tracking-wide">
+                {MONTHS[currentMonthIndex].toUpperCase()}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToNextMonth}
+              className="h-10 w-10 hover:bg-foreground/5"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 space-y-8">
+      <main className="container mx-auto px-6 py-8 space-y-10">
         {/* Key Metrics */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-bold">Métriques Clés</h2>
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Clés</h2>
+            <DataInputDialog
+              monthData={currentMonth}
+              monthName={MONTHS[currentMonthIndex]}
+              onSave={(data) => updateKPI(currentMonthIndex, data)}
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               title="Revenu Total"
@@ -135,7 +143,7 @@ const Index = () => {
             title="Évolution du Revenu"
             type="line"
             dataKeys={[
-              { key: 'totalRevenue', name: 'Revenu Total', color: 'hsl(var(--primary))' },
+              { key: 'totalRevenue', name: 'Revenu Total', color: 'hsl(var(--chart-1))' },
               { key: 'profit', name: 'Profit', color: 'hsl(var(--success))' },
             ]}
           />
@@ -151,8 +159,8 @@ const Index = () => {
         </section>
 
         {/* Sales Funnel */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-bold">Entonnoir de Vente</h2>
+        <section className="space-y-6">
+          <h2 className="text-2xl font-medium text-heading tracking-tight">Entonnoir de Vente</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <MetricCard
               title="Leads"
@@ -205,8 +213,8 @@ const Index = () => {
         </section>
 
         {/* Additional Metrics */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-bold">Métriques Additionnelles</h2>
+        <section className="space-y-6">
+          <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Additionnelles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               title="Classes Totales"

@@ -129,9 +129,9 @@ export const EmailPreferences = () => {
   };
 
   return (
-    <Card className="border-2 border-primary/20 bg-card/50">
+    <Card className="border border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-heading">
           <Mail className="h-5 w-5" />
           Rappels Email Hebdomadaires
         </CardTitle>
