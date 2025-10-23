@@ -106,12 +106,12 @@ export const VideoSettings = ({ onConfigChange }: VideoSettingsProps) => {
             <Input
               id="video-url"
               type="url"
-              placeholder="https://example.com/video.mp4"
+              placeholder="https://youtube.com/watch?v=... ou https://example.com/video.mp4"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Formats supportés: MP4, WebM. La vidéo sera en lecture automatique et en boucle.
+              Formats supportés: Vidéos YouTube ou liens directs (MP4, WebM). La vidéo sera en lecture automatique et en boucle.
             </p>
           </div>
 
