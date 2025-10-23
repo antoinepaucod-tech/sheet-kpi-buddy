@@ -63,7 +63,8 @@ export const useAnnualKPIData = () => {
       const { data: monthlyData, error } = await supabase
         .from('monthly_kpis')
         .select('*')
-        .eq('year', currentYear);
+        .eq('year', currentYear)
+        .order('month', { ascending: true });
 
       if (error) throw error;
 
