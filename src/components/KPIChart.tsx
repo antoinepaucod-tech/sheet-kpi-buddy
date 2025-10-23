@@ -9,10 +9,9 @@ interface KPIChartProps {
   dataKeys: { key: string; name: string; color: string }[];
   type?: "line" | "bar";
   showFilter?: boolean;
-  height?: number;
 }
 
-export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = true, height = 300 }: KPIChartProps) => {
+export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = true }: KPIChartProps) => {
   const [selectedKeys, setSelectedKeys] = useState<string[]>(
     dataKeys.map(({ key }) => key)
   );
@@ -47,7 +46,7 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
             onToggle={handleToggleKey}
           />
         )}
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width="100%" height={300}>
           <Chart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 
