@@ -1,10 +1,7 @@
-import { useState } from 'react';
 import { useAnnualKPIData } from '@/hooks/useAnnualKPIData';
 import { MetricCard } from '@/components/MetricCard';
 import { KPIChart } from '@/components/KPIChart';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { VideoSettings } from '@/components/VideoSettings';
-import { VideoBackground } from '@/components/VideoBackground';
 import { 
   DollarSign, 
   Users, 
@@ -25,11 +22,6 @@ import { Link } from 'react-router-dom';
 
 const Annual = () => {
   const { annualData, isLoading } = useAnnualKPIData();
-  
-  const [videoConfig, setVideoConfig] = useState(() => {
-    const saved = localStorage.getItem("video-config");
-    return saved ? JSON.parse(saved) : { url: "", overlayOpacity: 0.7, enabled: false };
-  });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-CA', {
@@ -80,11 +72,7 @@ const Annual = () => {
   const roAds = annualData.adSpend > 0 ? (annualData.cashCollected / annualData.adSpend) * 100 : 0;
 
   return (
-    <VideoBackground
-      videoUrl={videoConfig.enabled ? videoConfig.url : undefined}
-      overlayOpacity={videoConfig.overlayOpacity}
-    >
-      <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 space-y-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -104,7 +92,6 @@ const Annual = () => {
               <Link to="/weekly">
                 <Button variant="outline">Hebdomadaire</Button>
               </Link>
-              <VideoSettings onConfigChange={setVideoConfig} />
               <ThemeToggle />
             </div>
           </div>
@@ -361,8 +348,7 @@ const Annual = () => {
             </div>
           </section>
         </div>
-      </div>
-    </VideoBackground>
+    </div>
   );
 };
 
