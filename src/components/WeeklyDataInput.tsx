@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,11 @@ interface WeeklyDataInputProps {
 export const WeeklyDataInput = ({ weekData, weekLabel, onSave }: WeeklyDataInputProps) => {
   const [formData, setFormData] = useState<WeeklyKPI>(weekData);
   const [open, setOpen] = useState(false);
+
+  // Reset form data when weekData changes (week selection changes)
+  useEffect(() => {
+    setFormData(weekData);
+  }, [weekData]);
 
   const handleSave = () => {
     onSave(formData);
