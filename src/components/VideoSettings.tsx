@@ -104,7 +104,7 @@ export const VideoSettings = ({ onConfigChange }: VideoSettingsProps) => {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -162,7 +162,7 @@ export const VideoSettings = ({ onConfigChange }: VideoSettingsProps) => {
           {videoUrl && (
             <div className="space-y-2">
               <Label>Aperçu</Label>
-              <div className="relative aspect-video rounded-lg overflow-hidden border border-border">
+              <div className="relative aspect-video rounded-lg overflow-hidden border border-border max-h-48">
                 <video
                   src={videoUrl}
                   autoPlay
@@ -175,7 +175,7 @@ export const VideoSettings = ({ onConfigChange }: VideoSettingsProps) => {
                   className="absolute inset-0 bg-background flex items-center justify-center"
                   style={{ opacity: overlayOpacity / 100 }}
                 >
-                  <p className="text-2xl font-semibold">Texte d'exemple</p>
+                  <p className="text-lg font-semibold">Texte d'exemple</p>
                 </div>
               </div>
             </div>
