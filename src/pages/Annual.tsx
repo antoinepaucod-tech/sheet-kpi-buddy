@@ -78,6 +78,7 @@ const Annual = () => {
     generalEFT: Number(month.general_eft_revenue || 0),
     pt: Number(month.pt_revenue || 0),
     retail: Number(month.retail_revenue || 0),
+    cashCollecte: Number(month.cash_collected || 0),
   }));
 
   const membersChartData = monthlyData.map((month) => ({
@@ -205,6 +206,7 @@ const Annual = () => {
                   { key: "generalEFT", name: "General EFT", color: "hsl(var(--chart-1))" },
                   { key: "pt", name: "PT", color: "hsl(var(--chart-2))" },
                   { key: "retail", name: "Retail", color: "hsl(var(--chart-3))" },
+                  { key: "cashCollecte", name: "Cash Collecté", color: "hsl(var(--chart-4))" },
                 ]}
               />
             )}
