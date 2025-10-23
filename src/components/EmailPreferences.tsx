@@ -26,6 +26,7 @@ const TIMEZONES = [
   { value: "America/Toronto", label: "Toronto" },
   { value: "America/Montreal", label: "Montréal" },
   { value: "America/Vancouver", label: "Vancouver" },
+  { value: "Europe/Zurich", label: "Zurich" },
   { value: "UTC", label: "UTC" },
 ];
 
