@@ -51,6 +51,7 @@ export const VideoBackground = ({
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   style={{ border: 'none' }}
                   allow="autoplay; encrypted-media; picture-in-picture"
+                  loading="lazy"
                   allowFullScreen
                   title="Background video"
                 />
@@ -66,13 +67,15 @@ export const VideoBackground = ({
                   src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
                   alt="Arrière-plan vidéo YouTube"
                   className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div 
                   className="absolute inset-0 bg-background"
                   style={{ opacity: overlayOpacity }}
                 />
-                <div className="absolute inset-0 z-20 flex items-center justify-center">
-                  <Button variant="secondary" size="lg" onClick={() => setIsPlaying(true)} className="shadow-md">
+                <div className="absolute inset-0 z-40 flex items-center justify-center">
+                  <Button variant="secondary" size="lg" onClick={() => setIsPlaying(true)} className="shadow-md" aria-label="Lire la vidéo d'arrière-plan">
                     <Play className="mr-2 h-4 w-4" /> Lire la vidéo
                   </Button>
                 </div>
