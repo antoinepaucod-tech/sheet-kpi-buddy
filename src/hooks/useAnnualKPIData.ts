@@ -150,7 +150,13 @@ export const useAnnualKPIData = () => {
       });
 
       // For members, use the most recent month's values (not sum)
-      const latestMonth = monthlyData[monthlyData.length - 1];
+      const latestMonth = [...monthlyData].reverse().find((m) =>
+        Number(m.total_active_members || 0) > 0 ||
+        Number(m.pif_members || 0) > 0 ||
+        Number(m.recurring_general_members || 0) > 0 ||
+        Number(m.pt_members || 0) > 0
+      ) || monthlyData[monthlyData.length - 1];
+
       const computedTotalActive =
         Number(latestMonth.total_active_members ?? 0) ||
         (Number(latestMonth.pif_members || 0) +
