@@ -88,6 +88,13 @@ const Index = () => {
                 >
                   Vue Hebdomadaire
                 </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/annual')}
+                  className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
+                >
+                  Vue Annuelle
+                </Button>
                 <ThemeToggle />
               </div>
             </div>

@@ -124,6 +124,13 @@ const Weekly = () => {
                     <EmailReminderButton />
                   </>
                 )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/annual')}
+                  className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
+                >
+                  Vue Annuelle
+                </Button>
                 <VideoSettings onConfigChange={setVideoConfig} />
                 <ThemeToggle />
               </div>
