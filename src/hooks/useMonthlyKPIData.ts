@@ -89,184 +89,94 @@ export const useMonthlyKPIData = () => {
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load and aggregate monthly data from weekly KPIs
+  // Load monthly data directly from monthly_kpis table
   const loadMonthlyData = async () => {
     setIsLoading(true);
     try {
       const currentYear = new Date().getFullYear();
       
-      // Fetch all weekly KPIs for the year
-      const { data: weeklyData, error } = await supabase
-        .from('weekly_kpis')
+      // Fetch all monthly KPIs for the year
+      const { data: existingData, error } = await supabase
+        .from('monthly_kpis')
         .select('*')
         .eq('year', currentYear)
-        .order('week_number', { ascending: true });
+        .order('month', { ascending: true });
 
       if (error) throw error;
 
-      // Aggregate weekly data by month
-      const monthlyAggregates: { [key: number]: MonthlyKPIData } = {};
-      
-      // Initialize all months
-      for (let m = 0; m < 12; m++) {
-        monthlyAggregates[m] = {
-          year: currentYear,
-          month: m,
-          month_name: MONTHS[m],
-          general_eft_revenue: 0,
-          pt_revenue: 0,
-          retail_revenue: 0,
-          fast_cash_revenue: 0,
-          total_revenue: 0,
-          pif_members: 0,
-          recurring_general_members: 0,
-          pt_members: 0,
-          total_active_members: 0,
-          pif_exits: 0,
-          general_exits: 0,
-          pt_exits: 0,
-          pauses: 0,
-          total_classes: 0,
-          leads: 0,
-          calls_made: 0,
-          scheduled: 0,
-          show: 0,
-          close: 0,
-          cash_collected: 0,
-          organic_leads: 0,
-          organic_close: 0,
-          organic_cash_collected: 0,
-          in_trial: 0,
-          trial_ending: 0,
-          converted: 0,
-          ad_spend: 0,
-          rent: 0,
-          repairs_maintenance: 0,
-          computer_software: 0,
-          internet_telephone: 0,
-          stationary: 0,
-          utilities: 0,
-          advertising_promotion: 0,
-          legal_professional: 0,
-          charitable_donations: 0,
-          subscriptions: 0,
-          bank_finance_charges: 0,
-          insurance: 0,
-          total_expenses: 0,
-          profit: 0,
-          pif_churn: 0,
-          general_churn: 0,
-          pt_churn: 0,
-          general_acrm: 0,
-          general_ltv: 0,
-          pt_acrm: 0,
-          pt_ltv: 0,
-          cpl: 0,
-          cpr: 0,
-          cac: 0,
-          ro_ads: 0,
-          gym_floor_sqft: 0,
-        };
-      }
-
-      // Aggregate weekly data
-      weeklyData?.forEach((week) => {
-        const weekDate = new Date(week.week_start_date);
-        const monthIndex = weekDate.getMonth();
-        const monthly = monthlyAggregates[monthIndex];
-
-        // Add revenues
-        monthly.general_eft_revenue += Number(week.general_eft_revenue) || 0;
-        monthly.pt_revenue += Number(week.pt_revenue) || 0;
-        monthly.retail_revenue += Number(week.retail_revenue) || 0;
-        monthly.fast_cash_revenue += Number(week.fast_cash_revenue) || 0;
-
-        // Add member changes (entries add, exits subtract)
-        monthly.pif_members += (Number(week.pif_members) || 0) - (Number(week.pif_exits) || 0);
-        monthly.recurring_general_members += (Number(week.recurring_general_members) || 0) - (Number(week.general_exits) || 0);
-        monthly.pt_members += (Number(week.pt_members) || 0) - (Number(week.pt_exits) || 0);
-        
-        // Track exits and pauses
-        monthly.pif_exits += Number(week.pif_exits) || 0;
-        monthly.general_exits += Number(week.general_exits) || 0;
-        monthly.pt_exits += Number(week.pt_exits) || 0;
-        monthly.pauses += Number(week.pauses) || 0;
-
-        // Add classes
-        monthly.total_classes += Number(week.total_classes) || 0;
-
-        // Add sales funnel
-        monthly.leads += Number(week.leads) || 0;
-        monthly.calls_made += Number(week.calls_made) || 0;
-        monthly.scheduled += Number(week.scheduled) || 0;
-        monthly.show += Number(week.show) || 0;
-        monthly.close += Number(week.close) || 0;
-        monthly.cash_collected += Number(week.cash_collected) || 0;
-
-        // Add organic
-        monthly.organic_leads += Number(week.organic_leads) || 0;
-        monthly.organic_close += Number(week.organic_close) || 0;
-        monthly.organic_cash_collected += Number(week.organic_cash_collected) || 0;
-
-        // Add trial
-        monthly.in_trial += Number(week.in_trial) || 0;
-        monthly.trial_ending += Number(week.trial_ending) || 0;
-        monthly.converted += Number(week.converted) || 0;
-
-        // Add expenses
-        monthly.ad_spend += Number(week.ad_spend) || 0;
-        monthly.rent += Number(week.rent) || 0;
-        monthly.repairs_maintenance += Number(week.repairs_maintenance) || 0;
-        monthly.computer_software += Number(week.computer_software) || 0;
-        monthly.internet_telephone += Number(week.internet_telephone) || 0;
-        monthly.stationary += Number(week.stationary) || 0;
-        monthly.utilities += Number(week.utilities) || 0;
-        monthly.advertising_promotion += Number(week.advertising_promotion) || 0;
-        monthly.legal_professional += Number(week.legal_professional) || 0;
-        monthly.charitable_donations += Number(week.charitable_donations) || 0;
-        monthly.subscriptions += Number(week.subscriptions) || 0;
-        monthly.bank_finance_charges += Number(week.bank_finance_charges) || 0;
-        monthly.insurance += Number(week.insurance) || 0;
+      // Create a map of existing data
+      const dataMap: { [key: number]: MonthlyKPIData } = {};
+      existingData?.forEach(item => {
+        dataMap[item.month] = item as MonthlyKPIData;
       });
 
-      // Calculate totals and save to database
-      const monthlyDataArray = Object.values(monthlyAggregates);
-      
-      for (const monthly of monthlyDataArray) {
-        monthly.total_revenue = monthly.general_eft_revenue + monthly.pt_revenue + 
-                                monthly.retail_revenue + monthly.fast_cash_revenue;
-        monthly.total_active_members = Math.max(0, monthly.pif_members + monthly.recurring_general_members + monthly.pt_members);
-        monthly.total_expenses = monthly.ad_spend + monthly.rent + monthly.repairs_maintenance +
-                                monthly.computer_software + monthly.internet_telephone + monthly.stationary +
-                                monthly.utilities + monthly.advertising_promotion + monthly.legal_professional +
-                                monthly.charitable_donations + monthly.subscriptions + monthly.bank_finance_charges +
-                                monthly.insurance;
-        monthly.profit = monthly.total_revenue - monthly.total_expenses;
-
-        // Calculate churn rates
-        monthly.pif_churn = monthly.pif_members > 0 ? (monthly.pif_exits / monthly.pif_members) * 100 : 0;
-        monthly.general_churn = monthly.recurring_general_members > 0 ? (monthly.general_exits / monthly.recurring_general_members) * 100 : 0;
-        monthly.pt_churn = monthly.pt_members > 0 ? (monthly.pt_exits / monthly.pt_members) * 100 : 0;
-
-        // Calculate cost metrics
-        monthly.cpl = monthly.leads > 0 ? monthly.ad_spend / monthly.leads : 0;
-        monthly.cpr = monthly.scheduled > 0 ? monthly.ad_spend / monthly.scheduled : 0;
-        monthly.cac = monthly.close > 0 ? monthly.ad_spend / monthly.close : 0;
-        monthly.ro_ads = monthly.ad_spend > 0 ? (monthly.cash_collected / monthly.ad_spend) * 100 : 0;
-
-        // Upsert to database
-        const { error: upsertError } = await supabase
-          .from('monthly_kpis')
-          .upsert({
-            year: monthly.year,
-            month: monthly.month,
-            month_name: monthly.month_name,
-            ...monthly
-          }, {
-            onConflict: 'year,month'
-          });
-
-        if (upsertError) console.error('Error upserting monthly data:', upsertError);
+      // Initialize all months with existing or empty data
+      const monthlyDataArray: MonthlyKPIData[] = [];
+      for (let m = 0; m < 12; m++) {
+        if (dataMap[m]) {
+          monthlyDataArray.push(dataMap[m]);
+        } else {
+          // Create empty entry for missing months
+          const emptyMonth: MonthlyKPIData = {
+            year: currentYear,
+            month: m,
+            month_name: MONTHS[m],
+            general_eft_revenue: 0,
+            pt_revenue: 0,
+            retail_revenue: 0,
+            fast_cash_revenue: 0,
+            total_revenue: 0,
+            pif_members: 0,
+            recurring_general_members: 0,
+            pt_members: 0,
+            total_active_members: 0,
+            pif_exits: 0,
+            general_exits: 0,
+            pt_exits: 0,
+            pauses: 0,
+            total_classes: 0,
+            leads: 0,
+            calls_made: 0,
+            scheduled: 0,
+            show: 0,
+            close: 0,
+            cash_collected: 0,
+            organic_leads: 0,
+            organic_close: 0,
+            organic_cash_collected: 0,
+            in_trial: 0,
+            trial_ending: 0,
+            converted: 0,
+            ad_spend: 0,
+            rent: 0,
+            repairs_maintenance: 0,
+            computer_software: 0,
+            internet_telephone: 0,
+            stationary: 0,
+            utilities: 0,
+            advertising_promotion: 0,
+            legal_professional: 0,
+            charitable_donations: 0,
+            subscriptions: 0,
+            bank_finance_charges: 0,
+            insurance: 0,
+            total_expenses: 0,
+            profit: 0,
+            pif_churn: 0,
+            general_churn: 0,
+            pt_churn: 0,
+            general_acrm: 0,
+            general_ltv: 0,
+            pt_acrm: 0,
+            pt_ltv: 0,
+            cpl: 0,
+            cpr: 0,
+            cac: 0,
+            ro_ads: 0,
+            gym_floor_sqft: 0,
+          };
+          monthlyDataArray.push(emptyMonth);
+        }
       }
 
       setMonthlyData(monthlyDataArray);
@@ -280,15 +190,15 @@ export const useMonthlyKPIData = () => {
   useEffect(() => {
     loadMonthlyData();
 
-    // Subscribe to weekly KPI changes
+    // Subscribe to monthly KPI changes
     const channel = supabase
-      .channel('weekly_kpis_changes')
+      .channel('monthly_kpis_changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'weekly_kpis'
+          table: 'monthly_kpis'
         },
         () => {
           loadMonthlyData();

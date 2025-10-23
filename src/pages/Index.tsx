@@ -6,7 +6,11 @@ import { KPIChart } from "@/components/KPIChart";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { VideoBackground } from "@/components/VideoBackground";
 import { VideoSettings } from "@/components/VideoSettings";
+import { MonthlyDataInput } from "@/components/MonthlyDataInput";
+import { EmailReminderButton } from "@/components/EmailReminderButton";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
   DollarSign,
   Users,
@@ -21,12 +25,14 @@ import { MONTHS } from "@/types/kpi";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { 
     monthlyData, 
     currentMonthIndex, 
     setCurrentMonthIndex, 
     getCurrentMonthData,
-    isLoading 
+    isLoading,
+    refreshData 
   } = useMonthlyKPIData();
   
   const currentMonth = getCurrentMonthData() || monthlyData[currentMonthIndex];
@@ -35,6 +41,52 @@ const Index = () => {
     const saved = localStorage.getItem("video-config");
     return saved ? JSON.parse(saved) : { url: "", overlayOpacity: 0.7, enabled: false };
   });
+
+  const saveMonthData = async (data: any) => {
+    const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue;
+    const total_expenses = data.ad_spend + data.rent + data.repairs_maintenance + 
+                          data.computer_software + data.internet_telephone + data.stationary +
+                          data.utilities + data.advertising_promotion + data.legal_professional +
+                          data.charitable_donations + data.subscriptions + data.bank_finance_charges +
+                          data.insurance;
+    const profit = total_revenue - total_expenses;
+
+    // Calculate churn rates
+    const pif_churn = data.pif_members > 0 ? (data.pif_exits / data.pif_members) * 100 : 0;
+    const general_churn = data.recurring_general_members > 0 ? (data.general_exits / data.recurring_general_members) * 100 : 0;
+    const pt_churn = data.pt_members > 0 ? (data.pt_exits / data.pt_members) * 100 : 0;
+
+    // Calculate cost metrics
+    const cpl = data.leads > 0 ? data.ad_spend / data.leads : 0;
+    const cpr = data.scheduled > 0 ? data.ad_spend / data.scheduled : 0;
+    const cac = data.close > 0 ? data.ad_spend / data.close : 0;
+    const ro_ads = data.ad_spend > 0 ? (data.cash_collected / data.ad_spend) * 100 : 0;
+
+    const { error } = await supabase
+      .from("monthly_kpis")
+      .upsert({
+        ...data,
+        total_revenue,
+        total_expenses,
+        profit,
+        pif_churn,
+        general_churn,
+        pt_churn,
+        cpl,
+        cpr,
+        cac,
+        ro_ads,
+      }, {
+        onConflict: 'year,month'
+      });
+
+    if (error) {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder", variant: "destructive" });
+    } else {
+      toast({ title: "Sauvegardé", description: "Données mises à jour avec succès" });
+      refreshData();
+    }
+  };
 
   const goToPreviousMonth = () => {
     setCurrentMonthIndex((prev) => (prev === 0 ? 11 : prev - 1));
@@ -84,14 +136,13 @@ const Index = () => {
               </div>
               
               <div className="flex items-center gap-2">
+                <MonthlyDataInput 
+                  monthData={currentMonth} 
+                  monthLabel={MONTHS[currentMonthIndex]} 
+                  onSave={saveMonthData}
+                />
+                <EmailReminderButton />
                 <VideoSettings onConfigChange={setVideoConfig} />
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/weekly')}
-                  className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
-                >
-                  Vue Hebdomadaire
-                </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/annual')}
