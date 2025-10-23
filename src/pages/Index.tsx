@@ -265,12 +265,22 @@ const Index = () => {
         {/* Additional Metrics */}
         <section className="space-y-6">
           <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Additionnelles</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <MetricCard
               title="Classes Totales"
               value={currentMonth?.total_classes || 0}
               icon={Activity}
               variant="default"
+            />
+            <MetricCard
+              title="CAC"
+              value={formatCurrency(currentMonth?.close && currentMonth.close > 0 && currentMonth?.ad_spend
+                ? currentMonth.ad_spend / currentMonth.close
+                : 0)}
+              icon={DollarSign}
+              variant={(currentMonth?.close && currentMonth.close > 0 && currentMonth?.ad_spend
+                ? currentMonth.ad_spend / currentMonth.close
+                : 0) < 100 ? "success" : "warning"}
             />
             <MetricCard
               title="RoAds"
