@@ -10,6 +10,8 @@ import { MetricCard } from "@/components/MetricCard";
 import { DollarSign, Users, Target, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VideoBackground } from "@/components/VideoBackground";
+import { VideoSettings } from "@/components/VideoSettings";
 import { Badge } from "@/components/ui/badge";
 
 const Weekly = () => {
@@ -19,6 +21,11 @@ const Weekly = () => {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [weekData, setWeekData] = useState<WeeklyKPI | null>(null);
   const { toast } = useToast();
+  
+  const [videoConfig, setVideoConfig] = useState(() => {
+    const saved = localStorage.getItem("video-config");
+    return saved ? JSON.parse(saved) : { url: "", overlayOpacity: 0.7, enabled: false };
+  });
 
   const getCurrentWeek = () => {
     const date = new Date();
@@ -73,71 +80,77 @@ const Weekly = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between gap-8">
-            <div className="flex items-center gap-6 flex-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate('/')}
-                className="hover:bg-foreground/5"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-4xl font-semibold tracking-tight text-display">
-                    SUIVI HEBDOMADAIRE
-                  </h1>
-                  {isReadOnly && (
-                    <Badge variant="outline" className="text-xs uppercase tracking-wider">
-                      Lecture seule
-                    </Badge>
-                  )}
+      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10">
+        <VideoBackground 
+          videoUrl={videoConfig.enabled ? videoConfig.url : undefined}
+          overlayOpacity={videoConfig.overlayOpacity}
+        >
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex items-center justify-between gap-8">
+              <div className="flex items-center gap-6 flex-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => navigate('/')}
+                  className="hover:bg-foreground/5"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-4xl font-semibold tracking-tight text-display">
+                      SUIVI HEBDOMADAIRE
+                    </h1>
+                    {isReadOnly && (
+                      <Badge variant="outline" className="text-xs uppercase tracking-wider">
+                        Lecture seule
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-sm tracking-wide">
+                    Données semaine par semaine
+                  </p>
                 </div>
-                <p className="text-muted-foreground text-sm tracking-wide">
-                  Données semaine par semaine
-                </p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {!isReadOnly && (
+                  <WeeklyDataInput 
+                    weekData={weekData} 
+                    weekLabel={`Semaine ${weekInfo.weekNumber}`} 
+                    onSave={saveWeekData} 
+                  />
+                )}
+                <VideoSettings onConfigChange={setVideoConfig} />
+                <ThemeToggle />
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              {!isReadOnly && (
-                <WeeklyDataInput 
-                  weekData={weekData} 
-                  weekLabel={`Semaine ${weekInfo.weekNumber}`} 
-                  onSave={saveWeekData} 
-                />
-              )}
-              <ThemeToggle />
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setCurrentWeekOffset(currentWeekOffset - 1)} 
+                className="h-10 w-10 hover:bg-foreground/5"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex items-center gap-3 px-6 py-2 bg-muted/50 rounded-lg min-w-[240px] justify-center">
+                <span className="font-medium text-lg tracking-wide">
+                  SEMAINE {weekInfo.weekNumber} · {weekInfo.year}
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setCurrentWeekOffset(currentWeekOffset + 1)} 
+                className="h-10 w-10 hover:bg-foreground/5"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
             </div>
           </div>
-          
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setCurrentWeekOffset(currentWeekOffset - 1)} 
-              className="h-10 w-10 hover:bg-foreground/5"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-3 px-6 py-2 bg-muted/50 rounded-lg min-w-[240px] justify-center">
-              <span className="font-medium text-lg tracking-wide">
-                SEMAINE {weekInfo.weekNumber} · {weekInfo.year}
-              </span>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setCurrentWeekOffset(currentWeekOffset + 1)} 
-              className="h-10 w-10 hover:bg-foreground/5"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        </VideoBackground>
       </header>
 
       <main className="container mx-auto px-6 py-8 space-y-10">

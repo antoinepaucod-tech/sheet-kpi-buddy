@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useKPIData } from "@/hooks/useKPIData";
 import { MetricCard } from "@/components/MetricCard";
 import { KPIChart } from "@/components/KPIChart";
 import { DataInputDialog } from "@/components/DataInputDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VideoBackground } from "@/components/VideoBackground";
+import { VideoSettings } from "@/components/VideoSettings";
 import { Button } from "@/components/ui/button";
 import {
   DollarSign,
@@ -23,6 +25,11 @@ const Index = () => {
   const navigate = useNavigate();
   const { kpiData, currentMonthIndex, setCurrentMonthIndex, updateKPI, getCurrentMonthData } = useKPIData();
   const currentMonth = getCurrentMonthData();
+  
+  const [videoConfig, setVideoConfig] = useState(() => {
+    const saved = localStorage.getItem("video-config");
+    return saved ? JSON.parse(saved) : { url: "", overlayOpacity: 0.7, enabled: false };
+  });
 
   const goToPreviousMonth = () => {
     setCurrentMonthIndex((prev) => (prev === 0 ? 11 : prev - 1));
@@ -43,55 +50,61 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between gap-8">
-            <div className="flex-1">
-              <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
-                TABLEAU DE BORD KPI
-              </h1>
-              <p className="text-muted-foreground text-sm tracking-wide">
-                Suivi de performance mensuel
-              </p>
+      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10">
+        <VideoBackground 
+          videoUrl={videoConfig.enabled ? videoConfig.url : undefined}
+          overlayOpacity={videoConfig.overlayOpacity}
+        >
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex items-center justify-between gap-8">
+              <div className="flex-1">
+                <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
+                  TABLEAU DE BORD KPI
+                </h1>
+                <p className="text-muted-foreground text-sm tracking-wide">
+                  Suivi de performance mensuel
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <VideoSettings onConfigChange={setVideoConfig} />
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/weekly')}
+                  className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
+                >
+                  Vue Hebdomadaire
+                </Button>
+                <ThemeToggle />
+              </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/weekly')}
-                className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToPreviousMonth}
+                className="h-10 w-10 hover:bg-foreground/5"
               >
-                Vue Hebdomadaire
+                <ChevronLeft className="h-5 w-5" />
               </Button>
-              <ThemeToggle />
+              <div className="flex items-center gap-3 px-6 py-2 bg-muted/50 rounded-lg min-w-[180px] justify-center">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-lg tracking-wide">
+                  {MONTHS[currentMonthIndex].toUpperCase()}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToNextMonth}
+                className="h-10 w-10 hover:bg-foreground/5"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
             </div>
           </div>
-          
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={goToPreviousMonth}
-              className="h-10 w-10 hover:bg-foreground/5"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-3 px-6 py-2 bg-muted/50 rounded-lg min-w-[180px] justify-center">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-lg tracking-wide">
-                {MONTHS[currentMonthIndex].toUpperCase()}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={goToNextMonth}
-              className="h-10 w-10 hover:bg-foreground/5"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        </VideoBackground>
       </header>
 
       {/* Main Content */}
