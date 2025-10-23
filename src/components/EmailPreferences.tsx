@@ -133,11 +133,8 @@ export const EmailPreferences = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-heading">
           <Mail className="h-5 w-5" />
-          Rappels Email Hebdomadaires
+          Rappels Hebdomadaires
         </CardTitle>
-        <CardDescription>
-          Recevez un email chaque lundi pour vous rappeler de mettre à jour vos KPIs
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-4">
@@ -261,14 +258,6 @@ export const EmailPreferences = () => {
               </div>
             ))
           )}
-        </div>
-
-        <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
-          <p className="font-semibold mb-1">📅 Rappel automatique :</p>
-          <p>• Envoyé chaque <strong>lundi</strong> à l'heure configurée</p>
-          <p>• Résumé des métriques à suivre</p>
-          <p>• Lien direct vers votre dashboard</p>
-          <p>• Personnalisable par email (heure et fuseau horaire)</p>
         </div>
       </CardContent>
     </Card>
