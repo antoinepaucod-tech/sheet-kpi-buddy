@@ -39,7 +39,7 @@ export const VideoBackground = ({
     : undefined;
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden">
       {/* Background layer */}
       {videoUrl && (
         <>
