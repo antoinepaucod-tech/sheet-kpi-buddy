@@ -89,23 +89,47 @@ const Annual = () => {
                   Mensuel
                 </Button>
               </Link>
-              <Link to="/weekly">
-                <Button variant="outline">Hebdomadaire</Button>
-              </Link>
               <ThemeToggle />
             </div>
           </div>
 
-          {/* Revenue Overview */}
+          {/* Key Metrics Overview */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Revenu Total</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Clés</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 title="Revenu Total"
                 value={formatCurrency(annualData.totalRevenue)}
                 icon={DollarSign}
                 variant="default"
               />
+              <MetricCard
+                title="Profit"
+                value={formatCurrency(annualData.profit)}
+                icon={PiggyBank}
+                trend={profitMargin}
+                suffix={` (${formatPercentage(profitMargin)})`}
+                variant={annualData.profit > 0 ? "success" : "destructive"}
+              />
+              <MetricCard
+                title="Membres Actifs"
+                value={annualData.totalActiveMembers}
+                icon={Users}
+                variant="default"
+              />
+              <MetricCard
+                title="Taux de Conversion"
+                value={formatPercentage(closeRate)}
+                icon={Target}
+                variant={closeRate > 50 ? "success" : "warning"}
+              />
+            </div>
+          </section>
+
+          {/* Revenue Breakdown */}
+          <section className="space-y-6">
+            <h2 className="text-2xl font-medium text-heading tracking-tight">Détail des Revenus</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
                 title="Revenu General EFT"
                 value={formatCurrency(annualData.generalEFTRevenue)}
@@ -125,9 +149,9 @@ const Annual = () => {
                 variant="default"
               />
               <MetricCard
-                title="Fast Cash"
-                value={formatCurrency(annualData.fastCashRevenue)}
-                icon={DollarSign}
+                title="Cash Collecté"
+                value={formatCurrency(annualData.cashCollected)}
+                icon={Wallet}
                 variant="default"
               />
             </div>
