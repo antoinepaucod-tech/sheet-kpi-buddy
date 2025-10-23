@@ -48,13 +48,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10">
-        <VideoBackground 
-          videoUrl={videoConfig.enabled ? videoConfig.url : undefined}
-          overlayOpacity={videoConfig.overlayOpacity}
-        >
+    <VideoBackground 
+      videoUrl={videoConfig.enabled ? videoConfig.url : undefined}
+      overlayOpacity={videoConfig.overlayOpacity}
+    >
+      <div className="min-h-screen">
+        {/* Header */}
+        <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10 bg-background/30">
           <div className="container mx-auto px-6 py-6">
             <div className="flex items-center justify-between gap-8">
               <div className="flex-1">
@@ -104,8 +104,7 @@ const Index = () => {
               </Button>
             </div>
           </div>
-        </VideoBackground>
-      </header>
+        </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 space-y-10">
@@ -272,7 +271,8 @@ const Index = () => {
           />
         </section>
       </main>
-    </div>
+      </div>
+    </VideoBackground>
   );
 };
 
