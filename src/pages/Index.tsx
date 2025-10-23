@@ -227,7 +227,7 @@ const Index = () => {
         </section>
 
         {/* Revenue & Expenses Chart */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="space-y-6">
           <KPIChart
             data={monthlyData.map(m => ({
               month: m.month_name,
@@ -236,15 +236,15 @@ const Index = () => {
             }))}
             title="Évolution du Revenu"
             type="line"
+            height={400}
             dataKeys={[
-              { key: 'totalRevenue', name: 'Revenu Total', color: 'hsl(var(--chart-1))' },
-              { key: 'profit', name: 'Profit', color: 'hsl(var(--success))' },
+              { key: 'totalRevenue', name: 'Revenu Total', color: 'hsl(220, 90%, 56%)' },
+              { key: 'profit', name: 'Profit', color: 'hsl(142, 76%, 36%)' },
             ]}
           />
           <KPIChart
             data={monthlyData.map(m => ({
               month: m.month_name,
-              totalExpenses: m.total_expenses,
               adSpend: m.ad_spend,
               rent: m.rent,
               repairs: m.repairs_maintenance,
@@ -254,18 +254,18 @@ const Index = () => {
               bankCharges: m.bank_finance_charges,
               insurance: m.insurance,
             }))}
-            title="Dépenses Mensuelles"
+            title="Dépenses Mensuelles Détaillées"
             type="bar"
+            height={450}
             dataKeys={[
-              { key: 'totalExpenses', name: 'Dépenses Totales', color: 'hsl(var(--destructive))' },
-              { key: 'adSpend', name: 'Publicité', color: 'hsl(var(--chart-1))' },
-              { key: 'rent', name: 'Loyer', color: 'hsl(var(--chart-2))' },
-              { key: 'repairs', name: 'Réparations', color: 'hsl(var(--chart-3))' },
-              { key: 'software', name: 'Logiciels', color: 'hsl(var(--chart-4))' },
-              { key: 'internet', name: 'Internet/Téléphone', color: 'hsl(var(--chart-5))' },
-              { key: 'subscriptions', name: 'Abonnements', color: '#eab308' },
-              { key: 'bankCharges', name: 'Frais bancaires', color: '#f43f5e' },
-              { key: 'insurance', name: 'Assurance', color: '#10b981' },
+              { key: 'adSpend', name: 'Publicité', color: 'hsl(0, 84%, 60%)' },
+              { key: 'rent', name: 'Loyer', color: 'hsl(221, 83%, 53%)' },
+              { key: 'software', name: 'Logiciels', color: 'hsl(262, 83%, 58%)' },
+              { key: 'internet', name: 'Internet/Téléphone', color: 'hsl(291, 64%, 42%)' },
+              { key: 'subscriptions', name: 'Abonnements', color: 'hsl(48, 96%, 53%)' },
+              { key: 'repairs', name: 'Réparations', color: 'hsl(173, 58%, 39%)' },
+              { key: 'insurance', name: 'Assurance', color: 'hsl(142, 71%, 45%)' },
+              { key: 'bankCharges', name: 'Frais bancaires', color: 'hsl(24, 95%, 53%)' },
             ]}
           />
         </section>

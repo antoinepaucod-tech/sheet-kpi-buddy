@@ -9,9 +9,10 @@ interface KPIChartProps {
   dataKeys: { key: string; name: string; color: string }[];
   type?: "line" | "bar";
   showFilter?: boolean;
+  height?: number;
 }
 
-export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = true }: KPIChartProps) => {
+export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = true, height = 350 }: KPIChartProps) => {
   const [selectedKeys, setSelectedKeys] = useState<string[]>(
     dataKeys.map(({ key }) => key)
   );
@@ -46,26 +47,31 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
             onToggle={handleToggleKey}
           />
         )}
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={height}>
           <Chart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
             <XAxis 
               dataKey="name" 
-              stroke="hsl(var(--muted-foreground))"
-              style={{ fontSize: '12px' }}
+              stroke="hsl(var(--foreground))"
+              style={{ fontSize: '13px', fontWeight: 500 }}
             />
             <YAxis 
-              stroke="hsl(var(--muted-foreground))"
-              style={{ fontSize: '12px' }}
+              stroke="hsl(var(--foreground))"
+              style={{ fontSize: '13px', fontWeight: 500 }}
             />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
+                padding: '12px',
               }}
+              labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
             />
-            <Legend />
+            <Legend 
+              wrapperStyle={{ paddingTop: '20px' }}
+              iconSize={14}
+            />
             {filteredDataKeys.map(({ key, name, color }) => (
               type === "line" ? (
                 <Line
@@ -74,8 +80,9 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
                   dataKey={key}
                   name={name}
                   stroke={color}
-                  strokeWidth={2}
-                  dot={{ fill: color, r: 4 }}
+                  strokeWidth={3}
+                  dot={{ fill: color, r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                  activeDot={{ r: 7 }}
                 />
               ) : (
                 <Bar
