@@ -46,11 +46,12 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
         </DialogHeader>
         
         <Tabs defaultValue="revenue" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="revenue">Revenu</TabsTrigger>
             <TabsTrigger value="members">Membres</TabsTrigger>
             <TabsTrigger value="sales">Ventes</TabsTrigger>
             <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+            <TabsTrigger value="advanced">Avancées</TabsTrigger>
           </TabsList>
 
           <TabsContent value="revenue" className="space-y-4 mt-4">
@@ -332,6 +333,47 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                   type="number" 
                   value={formData.insurance}
                   onChange={(e) => updateField('insurance', e.target.value)}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="advanced" className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>General ACRM ($)</Label>
+                <Input 
+                  type="number" 
+                  value={formData.general_acrm || 0}
+                  onChange={(e) => updateField('general_acrm', e.target.value)}
+                  placeholder="Revenu moyen mensuel par client général"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>General LTV ($)</Label>
+                <Input 
+                  type="number" 
+                  value={formData.general_ltv || 0}
+                  onChange={(e) => updateField('general_ltv', e.target.value)}
+                  placeholder="Valeur vie client général"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>PT ACRM ($)</Label>
+                <Input 
+                  type="number" 
+                  value={formData.pt_acrm || 0}
+                  onChange={(e) => updateField('pt_acrm', e.target.value)}
+                  placeholder="Revenu moyen mensuel par client PT"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>PT LTV ($)</Label>
+                <Input 
+                  type="number" 
+                  value={formData.pt_ltv || 0}
+                  onChange={(e) => updateField('pt_ltv', e.target.value)}
+                  placeholder="Valeur vie client PT"
                 />
               </div>
             </div>
