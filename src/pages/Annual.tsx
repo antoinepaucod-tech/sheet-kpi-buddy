@@ -1,7 +1,9 @@
 import { useAnnualKPIData } from '@/hooks/useAnnualKPIData';
+import { useTranslations } from '@/hooks/useTranslations';
 import { MetricCard } from '@/components/MetricCard';
 import { KPIChart } from '@/components/KPIChart';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { 
   DollarSign, 
   Users, 
@@ -22,6 +24,7 @@ import { Link } from 'react-router-dom';
 
 const Annual = () => {
   const { annualData, monthlyData, isLoading } = useAnnualKPIData();
+  const { t } = useTranslations();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-CA', {
@@ -39,7 +42,7 @@ const Annual = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-lg">Chargement des données annuelles...</div>
+        <div className="animate-pulse text-lg">{t('loading.annualData')}</div>
       </div>
     );
   }
@@ -48,11 +51,11 @@ const Annual = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-lg">Aucune donnée disponible pour l'année {new Date().getFullYear()}</p>
+          <p className="text-lg">{t('empty.noData')} {new Date().getFullYear()}</p>
           <Link to="/">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour au tableau de bord
+              {t('button.back')}
             </Button>
           </Link>
         </div>
@@ -119,33 +122,34 @@ const Annual = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-4xl font-bold text-heading tracking-tight">
-                Synthèse Annuelle {annualData.year}
+                {t('annual.title')} {annualData.year}
               </h1>
-              <p className="text-muted-foreground mt-2">Vue d'ensemble de l'année complète</p>
+              <p className="text-muted-foreground mt-2">{t('annual.subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
               <Link to="/">
                 <Button variant="outline">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Mensuel
+                  {t('header.monthlyView')}
                 </Button>
               </Link>
+              <LanguageToggle />
               <ThemeToggle />
             </div>
           </div>
 
           {/* Key Metrics Overview */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Clés</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.keyMetrics')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Revenu Total"
+                title={t('metric.totalRevenue')}
                 value={formatCurrency(annualData.totalRevenue)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="Profit"
+                title={t('metric.profit')}
                 value={formatCurrency(annualData.profit)}
                 icon={PiggyBank}
                 trend={profitMargin}
@@ -153,13 +157,13 @@ const Annual = () => {
                 variant={annualData.profit > 0 ? "success" : "destructive"}
               />
               <MetricCard
-                title="Membres Actifs"
+                title={t('metric.activeMembers')}
                 value={annualData.totalActiveMembers}
                 icon={Users}
                 variant="default"
               />
               <MetricCard
-                title="Taux de Conversion"
+                title={t('metric.conversionRate')}
                 value={formatPercentage(closeRate)}
                 icon={Target}
                 variant={closeRate > 50 ? "success" : "warning"}
@@ -169,28 +173,28 @@ const Annual = () => {
 
           {/* Revenue Breakdown */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Détail des Revenus</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.revenueBreakdown')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Revenu General EFT"
+                title={t('metric.generalEftRevenue')}
                 value={formatCurrency(annualData.generalEFTRevenue)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="Revenu PT"
+                title={t('metric.ptRevenue')}
                 value={formatCurrency(annualData.ptRevenue)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="Revenu Retail"
+                title={t('metric.retailRevenue')}
                 value={formatCurrency(annualData.retailRevenue)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="Cash Collecté"
+                title={t('metric.cashCollected')}
                 value={formatCurrency(annualData.cashCollected)}
                 icon={Wallet}
                 variant="default"
@@ -198,15 +202,15 @@ const Annual = () => {
             </div>
             {revenueChartData.length > 0 && (
               <KPIChart
-                title="Évolution Mensuelle des Revenus"
+                title={t('annual.monthlyEvolutionRevenue')}
                 data={revenueChartData}
                 type="bar"
                 dataKeys={[
-                  { key: "revenuTotal", name: "Revenu Total", color: "hsl(var(--primary))" },
-                  { key: "generalEFT", name: "General EFT", color: "hsl(var(--chart-1))" },
-                  { key: "pt", name: "PT", color: "hsl(var(--chart-2))" },
-                  { key: "retail", name: "Retail", color: "hsl(var(--chart-3))" },
-                  { key: "cashCollecte", name: "Cash Collecté", color: "hsl(var(--chart-4))" },
+                  { key: "revenuTotal", name: t('chart.totalRevenue'), color: "hsl(var(--primary))" },
+                  { key: "generalEFT", name: t('chart.generalEFT'), color: "hsl(var(--chart-1))" },
+                  { key: "pt", name: t('chart.pt'), color: "hsl(var(--chart-2))" },
+                  { key: "retail", name: t('chart.retail'), color: "hsl(var(--chart-3))" },
+                  { key: "cashCollecte", name: t('chart.cashCollected'), color: "hsl(var(--chart-4))" },
                 ]}
               />
             )}

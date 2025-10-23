@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMonthlyKPIData } from "@/hooks/useMonthlyKPIData";
+import { useTranslations } from "@/hooks/useTranslations";
 import { MetricCard } from "@/components/MetricCard";
 import { KPIChart } from "@/components/KPIChart";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { VideoBackground } from "@/components/VideoBackground";
 import { VideoSettings } from "@/components/VideoSettings";
 import { MonthlyDataInput } from "@/components/MonthlyDataInput";
@@ -26,6 +28,7 @@ import { MONTHS } from "@/types/kpi";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslations();
   const { 
     monthlyData, 
     currentMonthIndex, 
@@ -82,9 +85,9 @@ const Index = () => {
       });
 
     if (error) {
-      toast({ title: "Erreur", description: "Impossible de sauvegarder", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.cannotSave'), variant: "destructive" });
     } else {
-      toast({ title: "Sauvegardé", description: "Données mises à jour avec succès" });
+      toast({ title: t('toast.saved'), description: t('toast.dataUpdated') });
       refreshData();
     }
   };
@@ -112,7 +115,7 @@ const Index = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Chargement des données...</p>
+        <p className="text-muted-foreground">{t('loading.data')}</p>
       </div>
     );
   }
@@ -129,10 +132,10 @@ const Index = () => {
             <div className="flex items-center justify-between gap-8">
               <div className="flex-1">
                 <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
-                  TABLEAU DE BORD KPI
+                  {t('header.title')}
                 </h1>
                 <p className="text-muted-foreground text-sm tracking-wide">
-                  Suivi de performance mensuel
+                  {t('header.subtitle')}
                 </p>
               </div>
               
@@ -149,8 +152,9 @@ const Index = () => {
                   onClick={() => navigate('/annual')}
                   className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
                 >
-                  Vue Annuelle
+                  {t('header.annualView')}
                 </Button>
+                <LanguageToggle />
                 <ThemeToggle />
               </div>
             </div>
@@ -188,17 +192,17 @@ const Index = () => {
         {/* Key Metrics */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Clés</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.keyMetrics')}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
-              title="Revenu Total"
+              title={t('metric.totalRevenue')}
               value={formatCurrency(currentMonth?.total_revenue || 0)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
-              title="Profit"
+              title={t('metric.profit')}
               value={formatCurrency(currentMonth?.profit || 0)}
               icon={TrendingUp}
               variant={(currentMonth?.profit || 0) > 0 ? "success" : "destructive"}
@@ -207,13 +211,13 @@ const Index = () => {
                 : ''}
             />
             <MetricCard
-              title="Membres Actifs"
+              title={t('metric.activeMembers')}
               value={(currentMonth?.recurring_general_members || 0) + (currentMonth?.pif_members || 0)}
               icon={Users}
               variant="default"
             />
             <MetricCard
-              title="Taux de Conversion"
+              title={t('metric.conversionRate')}
               value={currentMonth?.show && currentMonth.show > 0 
                 ? Math.round((currentMonth.close / currentMonth.show) * 100) 
                 : 0}
@@ -234,12 +238,12 @@ const Index = () => {
               totalRevenue: m.total_revenue,
               profit: m.profit,
             }))}
-            title="Évolution du Revenu"
+            title={t('section.revenueEvolution')}
             type="line"
             height={400}
             dataKeys={[
-              { key: 'totalRevenue', name: 'Revenu Total', color: 'hsl(220, 90%, 56%)' },
-              { key: 'profit', name: 'Profit', color: 'hsl(142, 76%, 36%)' },
+              { key: 'totalRevenue', name: t('chart.totalRevenue'), color: 'hsl(220, 90%, 56%)' },
+              { key: 'profit', name: t('chart.profit'), color: 'hsl(142, 76%, 36%)' },
             ]}
           />
           <KPIChart
@@ -254,18 +258,18 @@ const Index = () => {
               bankCharges: m.bank_finance_charges,
               insurance: m.insurance,
             }))}
-            title="Dépenses Mensuelles Détaillées"
+            title={t('section.monthlyExpenses')}
             type="bar"
             height={450}
             dataKeys={[
-              { key: 'adSpend', name: 'Publicité', color: 'hsl(0, 84%, 60%)' },
-              { key: 'rent', name: 'Loyer', color: 'hsl(221, 83%, 53%)' },
-              { key: 'software', name: 'Logiciels', color: 'hsl(262, 83%, 58%)' },
-              { key: 'internet', name: 'Internet/Téléphone', color: 'hsl(291, 64%, 42%)' },
-              { key: 'subscriptions', name: 'Abonnements', color: 'hsl(48, 96%, 53%)' },
-              { key: 'repairs', name: 'Réparations', color: 'hsl(173, 58%, 39%)' },
-              { key: 'insurance', name: 'Assurance', color: 'hsl(142, 71%, 45%)' },
-              { key: 'bankCharges', name: 'Frais bancaires', color: 'hsl(24, 95%, 53%)' },
+              { key: 'adSpend', name: t('chart.advertising'), color: 'hsl(0, 84%, 60%)' },
+              { key: 'rent', name: t('chart.rent'), color: 'hsl(221, 83%, 53%)' },
+              { key: 'software', name: t('chart.software'), color: 'hsl(262, 83%, 58%)' },
+              { key: 'internet', name: t('chart.internet'), color: 'hsl(291, 64%, 42%)' },
+              { key: 'subscriptions', name: t('chart.subscriptions'), color: 'hsl(48, 96%, 53%)' },
+              { key: 'repairs', name: t('chart.repairs'), color: 'hsl(173, 58%, 39%)' },
+              { key: 'insurance', name: t('chart.insurance'), color: 'hsl(142, 71%, 45%)' },
+              { key: 'bankCharges', name: t('chart.bankCharges'), color: 'hsl(24, 95%, 53%)' },
             ]}
           />
         </section>

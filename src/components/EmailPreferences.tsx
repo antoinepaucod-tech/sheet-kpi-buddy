@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Mail, Plus, Trash2, Clock, Share2, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface EmailPref {
   id: string;
@@ -43,6 +44,7 @@ export const EmailPreferences = () => {
   const [loading, setLoading] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslations();
 
   useEffect(() => {
     loadEmails();
@@ -65,8 +67,8 @@ export const EmailPreferences = () => {
   const addEmail = async () => {
     if (!newEmail || !newEmail.includes("@")) {
       toast({
-        title: "Email invalide",
-        description: "Veuillez entrer une adresse email valide",
+        title: t('toast.invalidEmail'),
+        description: t('toast.validEmail'),
         variant: "destructive",
       });
       return;
@@ -84,14 +86,14 @@ export const EmailPreferences = () => {
 
     if (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter l'email. Il existe peut-être déjà.",
+        title: t('toast.error'),
+        description: t('toast.cannotAdd'),
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Email ajouté",
-        description: "Vous recevrez les rappels hebdomadaires",
+        title: t('toast.emailAdded'),
+        description: t('toast.weeklyReminders'),
       });
       setNewEmail("");
       loadEmails();
@@ -103,8 +105,8 @@ export const EmailPreferences = () => {
     const shareUrl = `${window.location.origin}/weekly?view=readonly`;
     navigator.clipboard.writeText(shareUrl);
     toast({
-      title: "Lien copié",
-      description: "Le lien de partage a été copié dans le presse-papiers",
+      title: t('toast.linkCopied'),
+      description: t('toast.linkCopiedDesc'),
     });
   };
 
@@ -134,7 +136,7 @@ export const EmailPreferences = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-heading">
           <Mail className="h-5 w-5" />
-          Rappels Hebdomadaires
+          {t('email.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -152,7 +154,7 @@ export const EmailPreferences = () => {
               />
             </div>
             <div>
-              <Label htmlFor="hour">Heure d'envoi</Label>
+              <Label htmlFor="hour">{t('email.hourLabel')}</Label>
               <Select value={newHour} onValueChange={setNewHour}>
                 <SelectTrigger id="hour">
                   <SelectValue />
@@ -167,7 +169,7 @@ export const EmailPreferences = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="timezone">Fuseau horaire</Label>
+              <Label htmlFor="timezone">{t('email.timezoneLabel')}</Label>
               <Select value={newTimezone} onValueChange={setNewTimezone}>
                 <SelectTrigger id="timezone">
                   <SelectValue />
@@ -185,22 +187,22 @@ export const EmailPreferences = () => {
           <div className="flex gap-2">
             <Button onClick={addEmail} disabled={loading} className="gradient-primary flex-1">
               <Plus className="h-4 w-4 mr-2" />
-              Ajouter le rappel
+              {t('button.addReminder')}
             </Button>
             <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Share2 className="h-4 w-4 mr-2" />
-                  Partager
+                  {t('button.share')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Partager le Dashboard</DialogTitle>
+                  <DialogTitle>{t('email.shareTitle')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Partagez ce lien pour permettre à quelqu'un de visualiser vos KPIs en lecture seule (sans pouvoir modifier les données).
+                    {t('email.shareDescription')}
                   </p>
                   <div className="flex gap-2">
                     <Input
@@ -221,7 +223,7 @@ export const EmailPreferences = () => {
         <div className="space-y-2">
           {emails.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Aucun email configuré. Ajoutez-en un pour recevoir des rappels !
+              {t('email.noEmails')}
             </p>
           ) : (
             emails.map((email) => (
@@ -236,7 +238,7 @@ export const EmailPreferences = () => {
                       <span className="text-sm font-medium">{email.email}</span>
                       {email.enabled && (
                         <Badge variant="outline" className="text-xs">
-                          Actif
+                          {t('email.active')}
                         </Badge>
                       )}
                     </div>
