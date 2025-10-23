@@ -169,12 +169,24 @@ export const useAnnualKPIData = () => {
 
       annual.totalExits = annual.pifExits + annual.generalExits + annual.ptExits;
 
-      // Calculate annual churn rates
-      annual.pifChurn = annual.pifMembers > 0 ? (annual.pifExits / annual.pifMembers) * 100 : 0;
-      annual.generalChurn = annual.recurringGeneralMembers > 0 ? (annual.generalExits / annual.recurringGeneralMembers) * 100 : 0;
-      annual.ptChurn = annual.ptMembers > 0 ? (annual.ptExits / annual.ptMembers) * 100 : 0;
+      // Calculate annual churn rates (prefer monthly averages when available)
+      const pifChurnValues = monthlyData.map((m) => Number(m.pif_churn ?? 0)).filter((v) => v > 0);
+      const generalChurnValues = monthlyData.map((m) => Number(m.general_churn ?? 0)).filter((v) => v > 0);
+      const ptChurnValues = monthlyData.map((m) => Number(m.pt_churn ?? 0)).filter((v) => v > 0);
 
-      // Calculate annual cost metrics
+      annual.pifChurn = pifChurnValues.length
+        ? pifChurnValues.reduce((a, b) => a + b, 0) / pifChurnValues.length
+        : (annual.pifMembers > 0 ? (annual.pifExits / annual.pifMembers) * 100 : 0);
+
+      annual.generalChurn = generalChurnValues.length
+        ? generalChurnValues.reduce((a, b) => a + b, 0) / generalChurnValues.length
+        : (annual.recurringGeneralMembers > 0 ? (annual.generalExits / annual.recurringGeneralMembers) * 100 : 0);
+
+      annual.ptChurn = ptChurnValues.length
+        ? ptChurnValues.reduce((a, b) => a + b, 0) / ptChurnValues.length
+        : (annual.ptMembers > 0 ? (annual.ptExits / annual.ptMembers) * 100 : 0);
+
+
       annual.cpl = annual.leads > 0 ? annual.adSpend / annual.leads : 0;
       annual.cpr = annual.scheduled > 0 ? annual.adSpend / annual.scheduled : 0;
       annual.cac = annual.close > 0 ? annual.adSpend / annual.close : 0;
