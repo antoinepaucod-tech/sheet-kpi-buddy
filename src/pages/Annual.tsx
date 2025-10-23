@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 const Annual = () => {
-  const { annualData, isLoading } = useAnnualKPIData();
+  const { annualData, monthlyData, isLoading } = useAnnualKPIData();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-CA', {
@@ -70,6 +70,46 @@ const Annual = () => {
   const profitMargin = annualData.totalRevenue > 0 ? (annualData.profit / annualData.totalRevenue) * 100 : 0;
   const cac = annualData.close > 0 ? annualData.adSpend / annualData.close : 0;
   const roAds = annualData.adSpend > 0 ? (annualData.cashCollected / annualData.adSpend) * 100 : 0;
+
+  // Prepare chart data
+  const revenueChartData = monthlyData.map((month) => ({
+    month: month.month_name,
+    revenuTotal: Number(month.total_revenue || 0),
+    generalEFT: Number(month.general_eft_revenue || 0),
+    pt: Number(month.pt_revenue || 0),
+    retail: Number(month.retail_revenue || 0),
+  }));
+
+  const membersChartData = monthlyData.map((month) => ({
+    month: month.month_name,
+    totalActifs: Number(month.total_active_members || 0),
+    pif: Number(month.pif_members || 0),
+    general: Number(month.recurring_general_members || 0),
+    pt: Number(month.pt_members || 0),
+  }));
+
+  const salesFunnelChartData = monthlyData.map((month) => ({
+    month: month.month_name,
+    leads: Number(month.leads || 0),
+    appels: Number(month.calls_made || 0),
+    rdv: Number(month.scheduled || 0),
+    presents: Number(month.show || 0),
+    ventes: Number(month.close || 0),
+  }));
+
+  const financialChartData = monthlyData.map((month) => ({
+    month: month.month_name,
+    revenu: Number(month.total_revenue || 0),
+    depenses: Number(month.total_expenses || 0),
+    profit: Number(month.profit || 0),
+  }));
+
+  const churnChartData = monthlyData.map((month) => ({
+    month: month.month_name,
+    pifChurn: Number(month.pif_churn || 0),
+    generalChurn: Number(month.general_churn || 0),
+    ptChurn: Number(month.pt_churn || 0),
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,6 +195,19 @@ const Annual = () => {
                 variant="default"
               />
             </div>
+            {revenueChartData.length > 0 && (
+              <KPIChart
+                title="Évolution Mensuelle des Revenus"
+                data={revenueChartData}
+                type="bar"
+                dataKeys={[
+                  { key: "revenuTotal", name: "Revenu Total", color: "hsl(var(--primary))" },
+                  { key: "generalEFT", name: "General EFT", color: "hsl(var(--chart-1))" },
+                  { key: "pt", name: "PT", color: "hsl(var(--chart-2))" },
+                  { key: "retail", name: "Retail", color: "hsl(var(--chart-3))" },
+                ]}
+              />
+            )}
           </section>
 
           {/* Members Overview */}
@@ -212,6 +265,19 @@ const Annual = () => {
                 variant="destructive"
               />
             </div>
+            {membersChartData.length > 0 && (
+              <KPIChart
+                title="Évolution Mensuelle des Membres"
+                data={membersChartData}
+                type="bar"
+                dataKeys={[
+                  { key: "totalActifs", name: "Total Actifs", color: "hsl(var(--primary))" },
+                  { key: "pif", name: "PIF", color: "hsl(var(--chart-1))" },
+                  { key: "general", name: "Général", color: "hsl(var(--chart-2))" },
+                  { key: "pt", name: "PT", color: "hsl(var(--chart-3))" },
+                ]}
+              />
+            )}
           </section>
 
           {/* Sales Funnel */}
@@ -271,6 +337,20 @@ const Annual = () => {
                 variant="default"
               />
             </div>
+            {salesFunnelChartData.length > 0 && (
+              <KPIChart
+                title="Évolution Mensuelle de l'Entonnoir de Ventes"
+                data={salesFunnelChartData}
+                type="bar"
+                dataKeys={[
+                  { key: "leads", name: "Leads", color: "hsl(var(--chart-1))" },
+                  { key: "appels", name: "Appels", color: "hsl(var(--chart-2))" },
+                  { key: "rdv", name: "RDV", color: "hsl(var(--chart-3))" },
+                  { key: "presents", name: "Présents", color: "hsl(var(--chart-4))" },
+                  { key: "ventes", name: "Ventes", color: "hsl(var(--primary))" },
+                ]}
+              />
+            )}
           </section>
 
           {/* Organic & Trials */}
@@ -345,6 +425,18 @@ const Annual = () => {
                 variant={roAds > 200 ? "success" : roAds > 100 ? "warning" : "destructive"}
               />
             </div>
+            {financialChartData.length > 0 && (
+              <KPIChart
+                title="Évolution Mensuelle Financière"
+                data={financialChartData}
+                type="bar"
+                dataKeys={[
+                  { key: "revenu", name: "Revenu", color: "hsl(var(--chart-1))" },
+                  { key: "depenses", name: "Dépenses", color: "hsl(var(--destructive))" },
+                  { key: "profit", name: "Profit", color: "hsl(var(--primary))" },
+                ]}
+              />
+            )}
           </section>
 
           {/* Additional Metrics */}
@@ -401,6 +493,18 @@ const Annual = () => {
                 variant={annualData.ptChurn < 5 ? "success" : annualData.ptChurn < 10 ? "warning" : "destructive"}
               />
             </div>
+            {churnChartData.length > 0 && (
+              <KPIChart
+                title="Évolution Mensuelle du Churn"
+                data={churnChartData}
+                type="line"
+                dataKeys={[
+                  { key: "pifChurn", name: "PIF Churn", color: "hsl(var(--chart-1))" },
+                  { key: "generalChurn", name: "General Churn", color: "hsl(var(--chart-2))" },
+                  { key: "ptChurn", name: "PT Churn", color: "hsl(var(--chart-3))" },
+                ]}
+              />
+            )}
           </section>
 
           {/* Advanced Metrics */}

@@ -53,6 +53,7 @@ export interface AnnualKPIData {
 
 export const useAnnualKPIData = () => {
   const [annualData, setAnnualData] = useState<AnnualKPIData | null>(null);
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadAnnualData = async () => {
@@ -70,8 +71,12 @@ export const useAnnualKPIData = () => {
 
       if (!monthlyData || monthlyData.length === 0) {
         setAnnualData(null);
+        setMonthlyData([]);
         return;
       }
+
+      // Store monthly data for charts
+      setMonthlyData(monthlyData);
 
       // Aggregate all monthly data into annual totals
       const annual: AnnualKPIData = {
@@ -232,6 +237,7 @@ export const useAnnualKPIData = () => {
 
   return {
     annualData,
+    monthlyData,
     isLoading,
     refreshData: loadAnnualData,
   };
