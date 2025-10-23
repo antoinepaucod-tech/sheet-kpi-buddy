@@ -43,8 +43,8 @@ const Index = () => {
   });
 
   const saveMonthData = async (data: any) => {
-    const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue;
-    const total_expenses = data.ad_spend + data.rent + data.repairs_maintenance + 
+    const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue + data.cash_collected;
+    const total_expenses = data.ad_spend + data.rent + data.repairs_maintenance +
                           data.computer_software + data.internet_telephone + data.stationary +
                           data.utilities + data.advertising_promotion + data.legal_professional +
                           data.charitable_donations + data.subscriptions + data.bank_finance_charges +
