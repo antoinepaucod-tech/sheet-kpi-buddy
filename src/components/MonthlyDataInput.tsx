@@ -335,6 +335,14 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                   onChange={(e) => updateField('insurance', e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Salaires</Label>
+                <Input 
+                  type="number" 
+                  value={formData.salaries || 0}
+                  onChange={(e) => updateField('salaries', e.target.value)}
+                />
+              </div>
             </div>
           </TabsContent>
 

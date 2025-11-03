@@ -93,6 +93,7 @@ export type Database = {
           repairs_maintenance: number | null
           retail_revenue: number | null
           ro_ads: number | null
+          salaries: number | null
           scheduled: number | null
           show: number | null
           stationary: number | null
@@ -154,6 +155,7 @@ export type Database = {
           repairs_maintenance?: number | null
           retail_revenue?: number | null
           ro_ads?: number | null
+          salaries?: number | null
           scheduled?: number | null
           show?: number | null
           stationary?: number | null
@@ -215,6 +217,7 @@ export type Database = {
           repairs_maintenance?: number | null
           retail_revenue?: number | null
           ro_ads?: number | null
+          salaries?: number | null
           scheduled?: number | null
           show?: number | null
           stationary?: number | null
