@@ -341,7 +341,7 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
           <TabsContent value="advanced" className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>General ACRM ($)</Label>
+                <Label>General ACRM (CHF)</Label>
                 <Input 
                   type="number" 
                   value={formData.general_acrm || 0}
@@ -350,7 +350,7 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                 />
               </div>
               <div className="space-y-2">
-                <Label>General LTV ($)</Label>
+                <Label>General LTV (CHF)</Label>
                 <Input 
                   type="number" 
                   value={formData.general_ltv || 0}
@@ -359,7 +359,7 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                 />
               </div>
               <div className="space-y-2">
-                <Label>PT ACRM ($)</Label>
+                <Label>PT ACRM (CHF)</Label>
                 <Input 
                   type="number" 
                   value={formData.pt_acrm || 0}
@@ -368,7 +368,7 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                 />
               </div>
               <div className="space-y-2">
-                <Label>PT LTV ($)</Label>
+                <Label>PT LTV (CHF)</Label>
                 <Input 
                   type="number" 
                   value={formData.pt_ltv || 0}

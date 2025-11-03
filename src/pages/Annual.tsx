@@ -27,12 +27,10 @@ const Annual = () => {
   const { t } = useTranslations();
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-CA', {
-      style: 'currency',
-      currency: 'CAD',
+    return `${t('currency')} ${new Intl.NumberFormat('fr-CH', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value);
+    }).format(value)}`;
   };
 
   const formatPercentage = (value: number) => {

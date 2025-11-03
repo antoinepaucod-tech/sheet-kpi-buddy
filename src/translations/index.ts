@@ -20,6 +20,9 @@ export const translations = {
     'months.november': 'Novembre',
     'months.december': 'Décembre',
     
+    // Currency
+    'currency': 'CHF',
+    
     // Sections
     'section.keyMetrics': 'Métriques Clés',
     'section.revenueEvolution': 'Évolution du Revenu',
@@ -201,6 +204,9 @@ export const translations = {
     'months.october': 'October',
     'months.november': 'November',
     'months.december': 'December',
+    
+    // Currency
+    'currency': 'CHF',
     
     // Sections
     'section.keyMetrics': 'Key Metrics',
