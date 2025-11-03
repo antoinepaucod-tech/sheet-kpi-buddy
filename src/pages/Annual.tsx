@@ -61,8 +61,7 @@ const Annual = () => {
     );
   }
 
-  const callRate = annualData.leads > 0 ? (annualData.callsMade / annualData.leads) * 100 : 0;
-  const schedRate = annualData.callsMade > 0 ? (annualData.scheduled / annualData.callsMade) * 100 : 0;
+  const schedRate = annualData.leads > 0 ? (annualData.scheduled / annualData.leads) * 100 : 0;
   const showRate = annualData.scheduled > 0 ? (annualData.show / annualData.scheduled) * 100 : 0;
   const closeRate = annualData.show > 0 ? (annualData.close / annualData.show) * 100 : 0;
   const avgPerSale = annualData.close > 0 ? annualData.cashCollected / annualData.close : 0;
@@ -298,8 +297,6 @@ const Annual = () => {
                 title={t('metric.calls')}
                 value={annualData.callsMade}
                 icon={Phone}
-                trend={callRate}
-                suffix={` (${formatPercentage(callRate)})`}
                 variant="default"
               />
               <MetricCard
