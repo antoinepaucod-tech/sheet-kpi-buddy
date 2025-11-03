@@ -216,28 +216,28 @@ const Annual = () => {
 
           {/* Members Overview */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Membres</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.members')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Membres Actifs"
+                title={t('metric.activeMembers')}
                 value={annualData.totalActiveMembers}
                 icon={Users}
                 variant="default"
               />
               <MetricCard
-                title="Membres PIF"
+                title={t('metric.pifMembers')}
                 value={annualData.pifMembers}
                 icon={Users}
                 variant="default"
               />
               <MetricCard
-                title="Membres Général"
+                title={t('metric.generalMembers')}
                 value={annualData.recurringGeneralMembers}
                 icon={Users}
                 variant="default"
               />
               <MetricCard
-                title="Membres PT"
+                title={t('metric.ptMembers')}
                 value={annualData.ptMembers}
                 icon={Users}
                 variant="default"
@@ -245,25 +245,25 @@ const Annual = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Total Sorties"
+                title={t('metric.totalExits')}
                 value={annualData.totalExits}
                 icon={UserMinus}
                 variant="destructive"
               />
               <MetricCard
-                title="Sorties PIF"
+                title={t('metric.pifExits')}
                 value={annualData.pifExits}
                 icon={UserMinus}
                 variant="destructive"
               />
               <MetricCard
-                title="Sorties Général"
+                title={t('metric.generalExits')}
                 value={annualData.generalExits}
                 icon={UserMinus}
                 variant="destructive"
               />
               <MetricCard
-                title="Sorties PT"
+                title={t('metric.ptExits')}
                 value={annualData.ptExits}
                 icon={UserMinus}
                 variant="destructive"
@@ -271,14 +271,14 @@ const Annual = () => {
             </div>
             {membersChartData.length > 0 && (
               <KPIChart
-                title="Évolution Mensuelle des Membres"
+                title={t('annual.monthlyEvolutionMembers')}
                 data={membersChartData}
                 type="bar"
                 dataKeys={[
-                  { key: "totalActifs", name: "Total Actifs", color: "hsl(var(--primary))" },
-                  { key: "pif", name: "PIF", color: "hsl(var(--chart-1))" },
-                  { key: "general", name: "Général", color: "hsl(var(--chart-2))" },
-                  { key: "pt", name: "PT", color: "hsl(var(--chart-3))" },
+                  { key: "totalActifs", name: t('chart.totalActive'), color: "hsl(var(--primary))" },
+                  { key: "pif", name: t('chart.pif'), color: "hsl(var(--chart-1))" },
+                  { key: "general", name: t('chart.general'), color: "hsl(var(--chart-2))" },
+                  { key: "pt", name: t('chart.pt'), color: "hsl(var(--chart-3))" },
                 ]}
               />
             )}
@@ -286,16 +286,16 @@ const Annual = () => {
 
           {/* Sales Funnel */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Entonnoir de Ventes</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.salesFunnel')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Leads"
+                title={t('metric.leads')}
                 value={annualData.leads}
                 icon={UserPlus}
                 variant="default"
               />
               <MetricCard
-                title="Appels"
+                title={t('metric.calls')}
                 value={annualData.callsMade}
                 icon={Phone}
                 trend={callRate}
@@ -303,7 +303,7 @@ const Annual = () => {
                 variant="default"
               />
               <MetricCard
-                title="Rendez-vous"
+                title={t('metric.appointments')}
                 value={annualData.scheduled}
                 icon={Calendar}
                 trend={schedRate}
@@ -311,7 +311,7 @@ const Annual = () => {
                 variant="default"
               />
               <MetricCard
-                title="Présents"
+                title={t('metric.present')}
                 value={annualData.show}
                 icon={Eye}
                 trend={showRate}
@@ -321,7 +321,7 @@ const Annual = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <MetricCard
-                title="Ventes Fermées"
+                title={t('metric.salesClosed')}
                 value={annualData.close}
                 icon={Target}
                 trend={closeRate}
@@ -329,13 +329,13 @@ const Annual = () => {
                 variant={closeRate > 50 ? "success" : "default"}
               />
               <MetricCard
-                title="Cash Collecté"
+                title={t('metric.cashCollected')}
                 value={formatCurrency(annualData.cashCollected)}
                 icon={Wallet}
                 variant="default"
               />
               <MetricCard
-                title="Avg Par Vente"
+                title={t('metric.avgPerSale')}
                 value={formatCurrency(avgPerSale)}
                 icon={DollarSign}
                 variant="default"
@@ -343,15 +343,15 @@ const Annual = () => {
             </div>
             {salesFunnelChartData.length > 0 && (
               <KPIChart
-                title="Évolution Mensuelle de l'Entonnoir de Ventes"
+                title={t('annual.monthlyEvolutionSales')}
                 data={salesFunnelChartData}
                 type="bar"
                 dataKeys={[
-                  { key: "leads", name: "Leads", color: "hsl(var(--chart-1))" },
-                  { key: "appels", name: "Appels", color: "hsl(var(--chart-2))" },
-                  { key: "rdv", name: "RDV", color: "hsl(var(--chart-3))" },
-                  { key: "presents", name: "Présents", color: "hsl(var(--chart-4))" },
-                  { key: "ventes", name: "Ventes", color: "hsl(var(--primary))" },
+                  { key: "leads", name: t('chart.leads'), color: "hsl(var(--chart-1))" },
+                  { key: "appels", name: t('chart.calls'), color: "hsl(var(--chart-2))" },
+                  { key: "rdv", name: t('chart.rdv'), color: "hsl(var(--chart-3))" },
+                  { key: "presents", name: t('chart.present'), color: "hsl(var(--chart-4))" },
+                  { key: "ventes", name: t('chart.sales'), color: "hsl(var(--primary))" },
                 ]}
               />
             )}
@@ -359,16 +359,16 @@ const Annual = () => {
 
           {/* Organic & Trials */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Organique & Essais</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.organicTrials')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Leads Organiques"
+                title={t('metric.organicLeads')}
                 value={annualData.organicLeads}
                 icon={UserPlus}
                 variant="default"
               />
               <MetricCard
-                title="Ventes Organiques"
+                title={t('metric.organicSales')}
                 value={annualData.organicClose}
                 icon={Target}
                 trend={organicCloseRate}
@@ -376,13 +376,13 @@ const Annual = () => {
                 variant="default"
               />
               <MetricCard
-                title="Cash Organique"
+                title={t('metric.organicCash')}
                 value={formatCurrency(annualData.organicCashCollected)}
                 icon={Wallet}
                 variant="default"
               />
               <MetricCard
-                title="Essais Convertis"
+                title={t('metric.trialsConverted')}
                 value={annualData.converted}
                 icon={TrendingUp}
                 trend={conversionRate}
@@ -394,22 +394,22 @@ const Annual = () => {
 
           {/* Financial Summary */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Résumé Financier</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.financialSummary')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <MetricCard
-                title="Dépenses Pub"
+                title={t('metric.adSpend')}
                 value={formatCurrency(annualData.adSpend)}
                 icon={DollarSign}
                 variant="destructive"
               />
               <MetricCard
-                title="Dépenses Totales"
+                title={t('metric.totalExpenses')}
                 value={formatCurrency(annualData.totalExpenses)}
                 icon={DollarSign}
                 variant="destructive"
               />
               <MetricCard
-                title="Profit"
+                title={t('metric.profit')}
                 value={formatCurrency(annualData.profit)}
                 icon={PiggyBank}
                 trend={profitMargin}
@@ -417,13 +417,13 @@ const Annual = () => {
                 variant={annualData.profit > 0 ? "success" : "destructive"}
               />
               <MetricCard
-                title="CAC"
+                title={t('metric.cac')}
                 value={formatCurrency(cac)}
                 icon={DollarSign}
                 variant={cac < 100 ? "success" : "warning"}
               />
               <MetricCard
-                title="RoAds"
+                title={t('metric.roAds')}
                 value={formatPercentage(roAds)}
                 icon={TrendingUp}
                 variant={roAds > 200 ? "success" : roAds > 100 ? "warning" : "destructive"}
@@ -431,13 +431,13 @@ const Annual = () => {
             </div>
             {financialChartData.length > 0 && (
               <KPIChart
-                title="Évolution Mensuelle Financière"
+                title={t('annual.monthlyFinancial')}
                 data={financialChartData}
                 type="bar"
                 dataKeys={[
-                  { key: "revenu", name: "Revenu", color: "hsl(var(--chart-1))" },
-                  { key: "depenses", name: "Dépenses", color: "hsl(var(--destructive))" },
-                  { key: "profit", name: "Profit", color: "hsl(var(--primary))" },
+                  { key: "revenu", name: t('chart.revenue'), color: "hsl(var(--chart-1))" },
+                  { key: "depenses", name: t('chart.expenses'), color: "hsl(var(--destructive))" },
+                  { key: "profit", name: t('chart.profit'), color: "hsl(var(--primary))" },
                 ]}
               />
             )}
@@ -445,28 +445,28 @@ const Annual = () => {
 
           {/* Additional Metrics */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Additionnelles</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.additionalMetrics')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Classes Totales"
+                title={t('metric.totalClasses')}
                 value={annualData.totalClasses}
                 icon={Activity}
                 variant="default"
               />
               <MetricCard
-                title="CPL"
+                title={t('metric.cpl')}
                 value={formatCurrency(annualData.cpl)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="CPR"
+                title={t('metric.cpr')}
                 value={formatCurrency(annualData.cpr)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="En Essai"
+                title={t('metric.inTrial')}
                 value={annualData.inTrial}
                 icon={Users}
                 variant="default"
@@ -476,22 +476,22 @@ const Annual = () => {
 
           {/* Churn Rates */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Taux de Désabonnement (Churn)</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.churnRates')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <MetricCard
-                title="PIF Churn"
+                title={t('metric.pifChurn')}
                 value={formatPercentage(annualData.pifChurn)}
                 icon={Users}
                 variant={annualData.pifChurn < 5 ? "success" : annualData.pifChurn < 10 ? "warning" : "destructive"}
               />
               <MetricCard
-                title="General Churn"
+                title={t('metric.generalChurn')}
                 value={formatPercentage(annualData.generalChurn)}
                 icon={Users}
                 variant={annualData.generalChurn < 5 ? "success" : annualData.generalChurn < 10 ? "warning" : "destructive"}
               />
               <MetricCard
-                title="PT Churn"
+                title={t('metric.ptChurn')}
                 value={formatPercentage(annualData.ptChurn)}
                 icon={Users}
                 variant={annualData.ptChurn < 5 ? "success" : annualData.ptChurn < 10 ? "warning" : "destructive"}
@@ -499,13 +499,13 @@ const Annual = () => {
             </div>
             {churnChartData.length > 0 && (
               <KPIChart
-                title="Évolution Mensuelle du Churn"
+                title={t('annual.monthlyChurn')}
                 data={churnChartData}
                 type="line"
                 dataKeys={[
-                  { key: "pifChurn", name: "PIF Churn", color: "hsl(var(--chart-1))" },
-                  { key: "generalChurn", name: "General Churn", color: "hsl(var(--chart-2))" },
-                  { key: "ptChurn", name: "PT Churn", color: "hsl(var(--chart-3))" },
+                  { key: "pifChurn", name: t('chart.pifChurn'), color: "hsl(var(--chart-1))" },
+                  { key: "generalChurn", name: t('chart.generalChurn'), color: "hsl(var(--chart-2))" },
+                  { key: "ptChurn", name: t('chart.ptChurn'), color: "hsl(var(--chart-3))" },
                 ]}
               />
             )}
@@ -513,34 +513,34 @@ const Annual = () => {
 
           {/* Advanced Metrics */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Avancées (LTV & ACRM)</h2>
+            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.advancedMetrics')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <MetricCard
-                title="General ACRM"
+                title={t('metric.generalAcrm')}
                 value={formatCurrency(annualData.generalACRM)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="General LTV"
+                title={t('metric.generalLtv')}
                 value={formatCurrency(annualData.generalLTV)}
                 icon={TrendingUp}
                 variant="success"
               />
               <MetricCard
-                title="PT ACRM"
+                title={t('metric.ptAcrm')}
                 value={formatCurrency(annualData.ptACRM)}
                 icon={DollarSign}
                 variant="default"
               />
               <MetricCard
-                title="PT LTV"
+                title={t('metric.ptLtv')}
                 value={formatCurrency(annualData.ptLTV)}
                 icon={TrendingUp}
                 variant="success"
               />
               <MetricCard
-                title="Gym Floor SQFT"
+                title={t('metric.gymFloorSqft')}
                 value={annualData.gymFloorSQFT}
                 icon={Activity}
                 variant="default"

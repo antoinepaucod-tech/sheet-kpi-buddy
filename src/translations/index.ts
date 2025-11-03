@@ -83,6 +83,7 @@ export const translations = {
     'metric.trialsConverted': 'Essais Convertis',
     'metric.adSpend': 'Dépenses Pub',
     'metric.totalExpenses': 'Dépenses Totales',
+    'metric.inTrial': 'En Essai',
     
     // Chart legends
     'chart.totalRevenue': 'Revenu Total',
@@ -268,6 +269,7 @@ export const translations = {
     'metric.trialsConverted': 'Trials Converted',
     'metric.adSpend': 'Ad Spend',
     'metric.totalExpenses': 'Total Expenses',
+    'metric.inTrial': 'In Trial',
     
     // Chart legends
     'chart.totalRevenue': 'Total Revenue',

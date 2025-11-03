@@ -275,16 +275,16 @@ const Index = () => {
 
         {/* Sales Funnel */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">Entonnoir de Vente</h2>
+          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.salesFunnel')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <MetricCard
-              title="Leads"
+              title={t('metric.leads')}
               value={currentMonth?.leads || 0}
               icon={Activity}
               variant="default"
             />
             <MetricCard
-              title="Scheduled"
+              title={t('metric.scheduled')}
               value={currentMonth?.scheduled || 0}
               icon={Calendar}
               suffix={currentMonth?.leads && currentMonth.leads > 0 
@@ -293,7 +293,7 @@ const Index = () => {
               variant="default"
             />
             <MetricCard
-              title="Show"
+              title={t('metric.show')}
               value={currentMonth?.show || 0}
               icon={Target}
               suffix={currentMonth?.scheduled && currentMonth.scheduled > 0 
@@ -302,7 +302,7 @@ const Index = () => {
               variant="default"
             />
             <MetricCard
-              title="Close"
+              title={t('metric.close')}
               value={currentMonth?.close || 0}
               icon={TrendingUp}
               suffix={currentMonth?.show && currentMonth.show > 0 
@@ -313,7 +313,7 @@ const Index = () => {
                 : 0) > 30 ? "success" : "warning"}
             />
             <MetricCard
-              title="Avg Par Vente"
+              title={t('metric.avgPerSale')}
               value={formatCurrency(currentMonth?.close && currentMonth.close > 0 
                 ? currentMonth.cash_collected / currentMonth.close 
                 : 0)}
@@ -332,52 +332,52 @@ const Index = () => {
               ptMembers: m.pt_members,
               pifMembers: m.pif_members,
             }))}
-            title="Évolution des Membres"
+            title={t('section.membersEvolution')}
             type="line"
             dataKeys={[
-              { key: 'recurringGeneralMembers', name: 'Membres Généraux', color: 'hsl(var(--chart-1))' },
-              { key: 'ptMembers', name: 'Membres PT', color: 'hsl(var(--chart-2))' },
-              { key: 'pifMembers', name: 'Membres PIF', color: 'hsl(var(--chart-3))' },
+              { key: 'recurringGeneralMembers', name: t('chart.generalMembers'), color: 'hsl(var(--chart-1))' },
+              { key: 'ptMembers', name: t('chart.ptMembers'), color: 'hsl(var(--chart-2))' },
+              { key: 'pifMembers', name: t('chart.pifMembers'), color: 'hsl(var(--chart-3))' },
             ]}
           />
         </section>
 
         {/* Additional Metrics */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Additionnelles</h2>
+          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.additionalMetrics')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <MetricCard
-              title="Classes Totales"
+              title={t('metric.totalClasses')}
               value={currentMonth?.total_classes || 0}
               icon={Activity}
               variant="default"
             />
             <MetricCard
-              title="CAC"
+              title={t('metric.cac')}
               value={formatCurrency(currentMonth?.cac || 0)}
               icon={DollarSign}
               variant={(currentMonth?.cac || 0) < 100 ? "success" : "warning"}
             />
             <MetricCard
-              title="CPL"
+              title={t('metric.cpl')}
               value={formatCurrency(currentMonth?.cpl || 0)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
-              title="CPR"
+              title={t('metric.cpr')}
               value={formatCurrency(currentMonth?.cpr || 0)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
-              title="RoAds"
+              title={t('metric.roAds')}
               value={formatPercentage(currentMonth?.ro_ads || 0)}
               icon={TrendingUp}
               variant={(currentMonth?.ro_ads || 0) > 200 ? "success" : (currentMonth?.ro_ads || 0) > 100 ? "warning" : "destructive"}
             />
             <MetricCard
-              title="Taux Conversion Trial"
+              title={t('metric.trialConversionRate')}
               value={currentMonth?.trial_ending && currentMonth.trial_ending > 0 
                 ? Math.round((currentMonth.converted / currentMonth.trial_ending) * 100) 
                 : 0}
@@ -392,22 +392,22 @@ const Index = () => {
 
         {/* Churn Rates */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">Taux de Désabonnement (Churn)</h2>
+          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.churnRates')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MetricCard
-              title="PIF Churn"
+              title={t('metric.pifChurn')}
               value={formatPercentage(currentMonth?.pif_churn || 0)}
               icon={Users}
               variant={(currentMonth?.pif_churn || 0) < 5 ? "success" : (currentMonth?.pif_churn || 0) < 10 ? "warning" : "destructive"}
             />
             <MetricCard
-              title="General Churn"
+              title={t('metric.generalChurn')}
               value={formatPercentage(currentMonth?.general_churn || 0)}
               icon={Users}
               variant={(currentMonth?.general_churn || 0) < 5 ? "success" : (currentMonth?.general_churn || 0) < 10 ? "warning" : "destructive"}
             />
             <MetricCard
-              title="PT Churn"
+              title={t('metric.ptChurn')}
               value={formatPercentage(currentMonth?.pt_churn || 0)}
               icon={Users}
               variant={(currentMonth?.pt_churn || 0) < 5 ? "success" : (currentMonth?.pt_churn || 0) < 10 ? "warning" : "destructive"}
@@ -417,34 +417,34 @@ const Index = () => {
 
         {/* Advanced Metrics */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">Métriques Avancées (LTV & ACRM)</h2>
+          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.advancedMetrics')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <MetricCard
-              title="General ACRM"
+              title={t('metric.generalAcrm')}
               value={formatCurrency(currentMonth?.general_acrm || 0)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
-              title="General LTV"
+              title={t('metric.generalLtv')}
               value={formatCurrency(currentMonth?.general_ltv || 0)}
               icon={TrendingUp}
               variant="success"
             />
             <MetricCard
-              title="PT ACRM"
+              title={t('metric.ptAcrm')}
               value={formatCurrency(currentMonth?.pt_acrm || 0)}
               icon={DollarSign}
               variant="default"
             />
             <MetricCard
-              title="PT LTV"
+              title={t('metric.ptLtv')}
               value={formatCurrency(currentMonth?.pt_ltv || 0)}
               icon={TrendingUp}
               variant="success"
             />
             <MetricCard
-              title="Gym Floor SQFT"
+              title={t('metric.gymFloorSqft')}
               value={currentMonth?.gym_floor_sqft || 0}
               icon={Activity}
               variant="default"
@@ -462,10 +462,10 @@ const Index = () => {
               show: m.show,
               close: m.close,
             }))}
-            title="Performance des Ventes"
+            title={t('section.salesPerformance')}
             type="bar"
             dataKeys={[
-              { key: 'leads', name: 'Leads', color: 'hsl(var(--chart-1))' },
+              { key: 'leads', name: t('chart.leads'), color: 'hsl(var(--chart-1))' },
               { key: 'scheduled', name: 'Scheduled', color: 'hsl(var(--chart-2))' },
               { key: 'show', name: 'Show', color: 'hsl(var(--chart-3))' },
               { key: 'close', name: 'Close', color: 'hsl(var(--success))' },
