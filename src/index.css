@@ -11,7 +11,7 @@ All colors MUST be HSL.
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
 
-    --card: 0 0% 98%;
+    --card: 0 0% 96%;
     --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
@@ -46,8 +46,8 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
     
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.12), 0 1px 3px 0 rgb(0 0 0 / 0.08);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.12);
 
     --chart-1: 0 0% 20%;
     --chart-2: 0 0% 35%;
