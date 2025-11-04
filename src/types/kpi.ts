@@ -58,6 +58,8 @@ export interface MonthlyKPI {
   bankFinanceCharges: number;
   insurance: number;
   salaries: number;
+  foodExpenses: number;
+  creditRepayment: number;
   totalExpenses: number;
   
   // Profit
@@ -127,6 +129,8 @@ export const createEmptyKPI = (month: string): MonthlyKPI => ({
   bankFinanceCharges: 0,
   insurance: 0,
   salaries: 0,
+  foodExpenses: 0,
+  creditRepayment: 0,
   totalExpenses: 0,
   profit: 0,
   profitPercentage: 0,

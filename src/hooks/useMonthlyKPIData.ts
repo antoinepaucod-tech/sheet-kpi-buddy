@@ -63,6 +63,8 @@ export interface MonthlyKPIData {
   bank_finance_charges: number;
   insurance: number;
   salaries?: number;
+  food_expenses?: number;
+  credit_repayment?: number;
   total_expenses: number;
   
   // Calculated

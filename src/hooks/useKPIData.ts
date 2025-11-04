@@ -62,7 +62,7 @@ export const useKPIData = () => {
       data.totalExpenses = data.adSpend + data.rent + data.repairsAndMaintenance + 
         data.computerSoftware + data.internetTelephone + 
         data.subscriptions + data.bankFinanceCharges + 
-        data.insurance + (data.salaries || 0);
+        data.insurance + (data.salaries || 0) + (data.foodExpenses || 0) + (data.creditRepayment || 0);
       
       // Calculate profit
       data.profit = data.totalRevenue - data.totalExpenses;

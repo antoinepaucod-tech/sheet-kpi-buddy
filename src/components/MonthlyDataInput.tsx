@@ -343,6 +343,22 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                   onChange={(e) => updateField('salaries', e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Dépenses alimentaires</Label>
+                <Input 
+                  type="number" 
+                  value={formData.food_expenses || 0}
+                  onChange={(e) => updateField('food_expenses', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Remboursement crédit</Label>
+                <Input 
+                  type="number" 
+                  value={formData.credit_repayment || 0}
+                  onChange={(e) => updateField('credit_repayment', e.target.value)}
+                />
+              </div>
             </div>
           </TabsContent>
 

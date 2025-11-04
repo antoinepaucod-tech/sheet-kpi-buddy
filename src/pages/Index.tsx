@@ -50,7 +50,7 @@ const Index = () => {
     const total_expenses = data.ad_spend + data.rent + data.repairs_maintenance +
                           data.computer_software + data.internet_telephone + 
                           data.subscriptions + data.bank_finance_charges +
-                          data.insurance + (data.salaries || 0);
+                          data.insurance + (data.salaries || 0) + (data.food_expenses || 0) + (data.credit_repayment || 0);
     const profit = total_revenue - total_expenses;
     const total_active_members = (data.pif_members || 0) + (data.recurring_general_members || 0) + (data.pt_members || 0);
 

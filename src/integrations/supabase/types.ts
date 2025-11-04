@@ -59,7 +59,9 @@ export type Database = {
           cpl: number | null
           cpr: number | null
           created_at: string
+          credit_repayment: number | null
           fast_cash_revenue: number | null
+          food_expenses: number | null
           general_acrm: number | null
           general_churn: number | null
           general_eft_revenue: number | null
@@ -121,7 +123,9 @@ export type Database = {
           cpl?: number | null
           cpr?: number | null
           created_at?: string
+          credit_repayment?: number | null
           fast_cash_revenue?: number | null
+          food_expenses?: number | null
           general_acrm?: number | null
           general_churn?: number | null
           general_eft_revenue?: number | null
@@ -183,7 +187,9 @@ export type Database = {
           cpl?: number | null
           cpr?: number | null
           created_at?: string
+          credit_repayment?: number | null
           fast_cash_revenue?: number | null
+          food_expenses?: number | null
           general_acrm?: number | null
           general_churn?: number | null
           general_eft_revenue?: number | null
