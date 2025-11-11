@@ -444,6 +444,7 @@ const CustomerJourney = () => {
               <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[60px] text-center">N°</TableHead>
                       <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
                       <TableHead className="min-w-[200px]">Type De Membership</TableHead>
                       <TableHead className="min-w-[180px]">Date Signature Contrat</TableHead>
@@ -459,7 +460,7 @@ const CustomerJourney = () => {
                   <TableBody>
                     {filteredMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                           {searchTerm 
                             ? `Aucun membre trouvé pour "${searchTerm}"`
                             : selectedYear === "all" && selectedMonth === "all"
@@ -471,8 +472,11 @@ const CustomerJourney = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredMembers.map((member) => (
+                      filteredMembers.map((member, index) => (
                         <TableRow key={member.id}>
+                          <TableCell className="text-center font-medium text-muted-foreground">
+                            {index + 1}
+                          </TableCell>
                           <TableCell>
                             <Input
                               value={member.name}
