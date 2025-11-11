@@ -1,84 +1,94 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 import type { Tutorial } from "@/hooks/useTutorials";
 
 interface VideoDialogProps {
   tutorial: Tutorial | null;
-  isViewed: boolean;
+  isCompleted: boolean;
   onClose: () => void;
-  onMarkAsViewed: () => void;
+  onMarkComplete: () => void;
 }
 
-export function VideoDialog({ tutorial, isViewed, onClose, onMarkAsViewed }: VideoDialogProps) {
+export function VideoDialog({ tutorial, isCompleted, onClose, onMarkComplete }: VideoDialogProps) {
   if (!tutorial) return null;
 
-  const getEmbedUrl = (videoType: string, videoUrl: string) => {
-    switch (videoType) {
+  const getEmbedUrl = (tutorial: Tutorial): string => {
+    const url = tutorial.video_url;
+    
+    switch (tutorial.video_type) {
       case 'youtube':
-        // Extract video ID from various YouTube URL formats
-        const youtubeMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-        return youtubeMatch ? `https://www.youtube.com/embed/${youtubeMatch[1]}` : videoUrl;
+        // Extract YouTube video ID and create embed URL
+        const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/);
+        if (youtubeMatch) {
+          return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+        }
+        return url;
       
       case 'vimeo':
-        // Extract video ID from Vimeo URL
-        const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
-        return vimeoMatch ? `https://player.vimeo.com/video/${vimeoMatch[1]}` : videoUrl;
+        // Extract Vimeo video ID and create embed URL
+        const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+        if (vimeoMatch) {
+          return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+        }
+        return url;
       
       case 'tella':
-        // Tella videos can be embedded directly
-        return videoUrl;
+        // Tella usually provides embed URLs directly
+        if (url.includes('tella.tv') && !url.includes('/embed/')) {
+          return url.replace('tella.tv/', 'tella.tv/embed/');
+        }
+        return url;
       
       case 'upload':
-        // For uploaded videos, use the URL directly
-        return videoUrl;
+        // Direct video file
+        return url;
       
       default:
-        return videoUrl;
+        return url;
     }
   };
 
-  const embedUrl = getEmbedUrl(tutorial.video_type, tutorial.video_url);
+  const embedUrl = getEmbedUrl(tutorial);
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{tutorial.title}</DialogTitle>
-          {tutorial.description && (
-            <p className="text-muted-foreground mt-2">{tutorial.description}</p>
-          )}
+          <DialogTitle className="text-xl">{tutorial.title}</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 mt-4">
-          <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+        <div className="space-y-4">
+          {tutorial.description && (
+            <p className="text-muted-foreground text-sm">{tutorial.description}</p>
+          )}
+          
+          <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
             {tutorial.video_type === 'upload' ? (
               <video
+                src={embedUrl}
                 controls
                 className="w-full h-full"
-                src={embedUrl}
-              >
-                Votre navigateur ne supporte pas la lecture de vidéos.
-              </video>
+                onEnded={onMarkComplete}
+              />
             ) : (
               <iframe
                 src={embedUrl}
                 className="w-full h-full"
-                allow="autoplay; fullscreen; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                title={tutorial.title}
               />
             )}
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-end">
             <Button
-              onClick={onMarkAsViewed}
-              className={isViewed ? "bg-green-500 hover:bg-green-600" : ""}
+              onClick={onMarkComplete}
+              className={isCompleted ? "bg-green-600 hover:bg-green-700" : ""}
               size="lg"
             >
-              <CheckCircle2 className="mr-2 h-5 w-5" />
-              {isViewed ? "Vidéo visionnée ✓" : "Marquer comme vue"}
+              <Check className="mr-2 h-5 w-5" />
+              {isCompleted ? "Visionnée" : "Marquer comme visionnée"}
             </Button>
           </div>
         </div>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 export interface Tutorial {
   id: string;
@@ -23,154 +22,142 @@ export interface TutorialView {
   completed: boolean;
 }
 
-export const useTutorials = () => {
+export function useTutorials() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [tutorialViews, setTutorialViews] = useState<TutorialView[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Load tutorials
-      const { data: tutorialsData, error: tutorialsError } = await supabase
-        .from("tutorials")
-        .select("*")
-        .order("order_index", { ascending: true });
-
-      if (tutorialsError) throw tutorialsError;
-
-      const typedTutorials = (tutorialsData || []) as Tutorial[];
-      
-      // Load tutorial views
-      const { data: viewsData, error: viewsError } = await supabase
-        .from("tutorial_views")
-        .select("*");
-
-      if (viewsError) throw viewsError;
-
-      setTutorials(typedTutorials);
-      setTutorialViews(viewsData || []);
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [userId] = useState(() => `user-${Date.now()}`); // Temporary user ID for demo
 
   useEffect(() => {
     loadData();
   }, []);
 
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Load tutorials
+      const { data: tutorialsData, error: tutorialsError } = await supabase
+        .from('tutorials')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+      if (tutorialsError) throw tutorialsError;
+      setTutorials((tutorialsData || []) as Tutorial[]);
+
+      // Load tutorial views
+      const { data: viewsData, error: viewsError } = await supabase
+        .from('tutorial_views')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (viewsError) throw viewsError;
+      setTutorialViews(viewsData || []);
+
+    } catch (error) {
+      console.error('Error loading tutorials:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const addTutorial = async (tutorial: Omit<Tutorial, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
-        .from("tutorials")
+        .from('tutorials')
         .insert([tutorial])
         .select()
         .single();
 
       if (error) throw error;
-
-      const typedData = data as Tutorial;
-      setTutorials([...tutorials, typedData]);
-      toast({
-        title: "Succès",
-        description: "Tutoriel ajouté avec succès",
-      });
+      
+      setTutorials(prev => [...prev, data as Tutorial].sort((a, b) => a.order_index - b.order_index));
       return data;
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
-      return null;
+    } catch (error) {
+      console.error('Error adding tutorial:', error);
+      throw error;
     }
   };
 
   const updateTutorial = async (id: string, updates: Partial<Tutorial>) => {
     try {
-      const { error } = await supabase
-        .from("tutorials")
+      const { data, error } = await supabase
+        .from('tutorials')
         .update(updates)
-        .eq("id", id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setTutorials(tutorials.map(t => t.id === id ? { ...t, ...updates } : t));
-      toast({
-        title: "Succès",
-        description: "Tutoriel mis à jour",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
+      setTutorials(prev =>
+        prev.map(t => t.id === id ? data as Tutorial : t).sort((a, b) => a.order_index - b.order_index)
+      );
+    } catch (error) {
+      console.error('Error updating tutorial:', error);
+      throw error;
     }
   };
 
   const deleteTutorial = async (id: string) => {
     try {
       const { error } = await supabase
-        .from("tutorials")
+        .from('tutorials')
         .delete()
-        .eq("id", id);
+        .eq('id', id);
 
       if (error) throw error;
 
-      setTutorials(tutorials.filter(t => t.id !== id));
-      toast({
-        title: "Succès",
-        description: "Tutoriel supprimé",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
+      setTutorials(prev => prev.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Error deleting tutorial:', error);
+      throw error;
     }
   };
 
-  const markAsViewed = async (tutorialId: string, userId: string, completed: boolean = true) => {
+  const markAsViewed = async (tutorialId: string, completed: boolean = true) => {
     try {
-      const { data, error } = await supabase
-        .from("tutorial_views")
-        .upsert({
-          tutorial_id: tutorialId,
-          user_id: userId,
-          completed,
-        })
-        .select()
-        .single();
+      const existing = tutorialViews.find(v => v.tutorial_id === tutorialId && v.user_id === userId);
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing view
+        const { data, error } = await supabase
+          .from('tutorial_views')
+          .update({ completed, viewed_at: new Date().toISOString() })
+          .eq('id', existing.id)
+          .select()
+          .single();
 
-      setTutorialViews([
-        ...tutorialViews.filter(v => !(v.tutorial_id === tutorialId && v.user_id === userId)),
-        data
-      ]);
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
+        if (error) throw error;
+
+        setTutorialViews(prev =>
+          prev.map(v => v.id === existing.id ? data : v)
+        );
+      } else {
+        // Create new view
+        const { data, error } = await supabase
+          .from('tutorial_views')
+          .insert([{
+            tutorial_id: tutorialId,
+            user_id: userId,
+            completed
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setTutorialViews(prev => [...prev, data]);
+      }
+    } catch (error) {
+      console.error('Error marking tutorial as viewed:', error);
+      throw error;
     }
   };
 
-  const isTutorialViewed = (tutorialId: string, userId: string): boolean => {
-    return tutorialViews.some(
-      v => v.tutorial_id === tutorialId && v.user_id === userId && v.completed
-    );
+  const isCompleted = (tutorialId: string): boolean => {
+    const view = tutorialViews.find(v => v.tutorial_id === tutorialId && v.user_id === userId);
+    return view?.completed || false;
   };
 
   return {
@@ -181,6 +168,6 @@ export const useTutorials = () => {
     updateTutorial,
     deleteTutorial,
     markAsViewed,
-    isTutorialViewed,
+    isCompleted,
   };
-};
+}
