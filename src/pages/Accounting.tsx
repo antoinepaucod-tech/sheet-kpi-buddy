@@ -560,29 +560,29 @@ const Accounting = () => {
                 const difference = totalAmount - totalReceived;
 
                 return (
-                  <Card key={category} className="overflow-hidden">
+                  <Card key={category} className="overflow-hidden border-0 shadow-none">
                     {/* Header Row - Red */}
-                    <div className="bg-[hsl(348,100%,50%)] text-white">
-                      <div className="grid grid-cols-7 border-b border-white/20">
-                        <div className="px-4 py-3 font-bold border-r border-white/20">NOM DU SERVICE</div>
-                        <div className="px-4 py-3 font-bold border-r border-white/20">NOM</div>
-                        <div className="px-4 py-3 font-bold border-r border-white/20">Prénom</div>
-                        <div className="px-4 py-3 font-bold border-r border-white/20">Prestation</div>
-                        <div className="px-4 py-3 font-bold border-r border-white/20 text-right">Montant</div>
-                        <div className="px-4 py-3 font-bold border-r border-white/20 text-center">État</div>
-                        <div className="px-4 py-3 font-bold text-left">Réglé le</div>
+                    <div className="bg-[hsl(348,100%,50%)] text-white border border-border">
+                      <div className="grid grid-cols-7">
+                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">NOM DU SERVICE</div>
+                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">NOM</div>
+                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">Prénom</div>
+                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">Prestation</div>
+                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm text-right">Montant</div>
+                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm text-center">État</div>
+                        <div className="px-3 py-2 font-bold text-sm text-left">Réglé le</div>
                       </div>
                     </div>
 
                     {/* Category Header - Cyan */}
-                    <div className="bg-[hsl(180,100%,70%)] text-black border-b-2 border-[hsl(180,100%,60%)]">
-                      <div className="px-4 py-2 font-bold uppercase">
+                    <div className="bg-[hsl(180,100%,70%)] text-black border-x border-b border-border">
+                      <div className="px-3 py-2 font-bold uppercase text-sm">
                         {category}
                       </div>
                     </div>
 
                     {/* Transaction Rows */}
-                    <div>
+                    <div className="border-x border-border">
                       {categoryTransactions.map((transaction, index) => {
                         const status = getPaymentStatus(transaction);
                         const [lastName = "", firstName = ""] = (transaction.client_name || "").split(" ");
@@ -590,234 +590,294 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className={`grid grid-cols-7 border-b border-border/50 ${
-                              index % 2 === 0 ? "bg-background" : "bg-muted/30"
-                            }`}
+                            className="grid grid-cols-7 border-b border-border hover:bg-muted/50 transition-colors group"
                           >
-                            <div className="px-4 py-3 border-r border-border/50 font-medium">
-                              #{String(index + 1).padStart(2, '0')}
+                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
+                              <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteTransaction.mutate(transaction.id)}
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="h-3 w-3 text-destructive" />
+                              </Button>
                             </div>
-                            <div className="px-4 py-3 border-r border-border/50 font-medium uppercase">
-                              {lastName}
-                            </div>
-                            <div className="px-4 py-3 border-r border-border/50 capitalize">
-                              {firstName}
-                            </div>
-                            <div className="px-4 py-3 border-r border-border/50 uppercase">
-                              {transaction.service_description || category}
-                            </div>
-                            <div className="px-4 py-3 border-r border-border/50 text-right font-medium">
-                              {transaction.amount.toFixed(1)}
-                            </div>
-                            <div className="px-4 py-3 border-r border-border/50 text-center">
-                              <span className={`inline-block px-3 py-1 rounded font-medium ${
+                            <Input
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none font-medium uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              value={lastName}
+                              onBlur={(e) => {
+                                const newName = `${e.target.value} ${firstName}`.trim();
+                                if (newName !== transaction.client_name) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    client_name: newName 
+                                  });
+                                }
+                              }}
+                              onChange={(e) => {
+                                // Update locale mais pas de save automatique
+                              }}
+                            />
+                            <Input
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none capitalize text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              value={firstName}
+                              onBlur={(e) => {
+                                const newName = `${lastName} ${e.target.value}`.trim();
+                                if (newName !== transaction.client_name) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    client_name: newName 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              value={transaction.service_description || category}
+                              onBlur={(e) => {
+                                if (e.target.value !== transaction.service_description) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    service_description: e.target.value 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
+                              type="number"
+                              step="0.1"
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-right font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              value={transaction.amount}
+                              onBlur={(e) => {
+                                const newAmount = parseFloat(e.target.value) || 0;
+                                if (newAmount !== transaction.amount) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    amount: newAmount 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
+                              type="number"
+                              step="0.1"
+                              className={`px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-center font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 ${
                                 status === "paid" 
                                   ? "bg-[hsl(120,60%,70%)] text-black" 
                                   : status === "pending"
                                   ? "bg-[hsl(45,100%,70%)] text-black"
                                   : "bg-[hsl(0,60%,70%)] text-black"
-                              }`}>
-                                {(transaction.amount_received || 0).toFixed(1)}
-                              </span>
-                            </div>
-                            <div className="px-4 py-3 text-sm">
-                              <div className="flex flex-col gap-1">
-                                <span className="uppercase text-xs text-muted-foreground">
-                                  {transaction.notes}
-                                </span>
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleEdit(transaction)}
-                                    className="h-7 px-2"
-                                  >
-                                    <Pencil className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => deleteTransaction.mutate(transaction.id)}
-                                    className="h-7 px-2 text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
+                              }`}
+                              value={transaction.amount_received || 0}
+                              onBlur={(e) => {
+                                const newReceived = parseFloat(e.target.value) || 0;
+                                if (newReceived !== transaction.amount_received) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    amount_received: newReceived 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
+                              className="px-3 py-2 border-r-0 border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
+                              value={transaction.notes || ""}
+                              placeholder="Notes..."
+                              onBlur={(e) => {
+                                if (e.target.value !== transaction.notes) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    notes: e.target.value 
+                                  });
+                                }
+                              }}
+                            />
                           </div>
                         );
                       })}
+                      
+                      {/* Add Row Button */}
+                      <div className="border-b border-border hover:bg-muted/30 transition-colors">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-muted-foreground hover:text-foreground py-3 h-auto rounded-none"
+                          onClick={() => {
+                            setFormData({
+                              transaction_date: format(new Date(), "yyyy-MM-dd"),
+                              transaction_type: "revenue",
+                              category: category,
+                              client_name: "",
+                              service_description: "",
+                              amount: 0,
+                              amount_received: 0,
+                              payment_method: "",
+                              notes: "",
+                            });
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Ajouter une ligne
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Total Row - Magenta */}
-                    <div className="bg-[hsl(328,100%,70%)] text-black border-y-2 border-[hsl(328,100%,60%)]">
+                    <div className="bg-[hsl(328,100%,70%)] text-black border-x border-b border-border">
                       <div className="grid grid-cols-7">
-                        <div className="px-4 py-3 col-span-4 font-bold uppercase">
+                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
                           TOTAL {category}
                         </div>
-                        <div className="px-4 py-3 text-right font-bold">
+                        <div className="px-3 py-2 text-right font-bold text-sm border-l border-black/20">
                           {totalAmount.toFixed(1)}
                         </div>
-                        <div className="px-4 py-3 text-center font-bold">
+                        <div className="px-3 py-2 text-center font-bold text-sm border-l border-black/20">
                           {totalReceived.toFixed(1)}
                         </div>
-                        <div className="px-4 py-3"></div>
+                        <div className="px-3 py-2 border-l border-black/20"></div>
                       </div>
                     </div>
 
                     {/* Difference Row - Gray */}
-                    <div className="bg-muted/60 border-b border-border">
+                    <div className="bg-muted/60 border-x border-b-2 border-border">
                       <div className="grid grid-cols-7">
-                        <div className="px-4 py-3 col-span-4 font-bold uppercase">
+                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
                           DIFFERENCE
                         </div>
-                        <div className={`px-4 py-3 text-right font-bold col-span-2 ${
+                        <div className={`px-3 py-2 text-right font-bold col-span-2 text-sm ${
                           difference > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
                         }`}>
                           {difference.toFixed(1)}
                         </div>
-                        <div className="px-4 py-3"></div>
+                        <div className="px-3 py-2"></div>
                       </div>
                     </div>
                   </Card>
                 );
               })}
 
-            {/* Add Transaction Button */}
-            <Card>
-              <CardContent className="pt-6">
-                <Dialog open={isDialogOpen && formData.transaction_type === "revenue"} 
-                  onOpenChange={(open) => {
-                    setIsDialogOpen(open);
-                    if (!open) resetForm();
-                  }}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => {
-                      resetForm();
-                      setFormData(prev => ({ ...prev, transaction_type: "revenue" }));
-                    }} className="w-full">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Ajouter un Revenu
+            {/* Hidden Dialog for Quick Add */}
+            <Dialog open={isDialogOpen && formData.transaction_type === "revenue"} 
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingTransaction ? "Modifier" : "Nouveau"} Revenu - {formData.category}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Date *</Label>
+                    <Input
+                      type="date"
+                      value={formData.transaction_date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, transaction_date: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Catégorie *</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, category: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REVENUE_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Nom du Client</Label>
+                    <Input
+                      value={formData.client_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, client_name: e.target.value })
+                      }
+                      placeholder="NOM Prénom"
+                    />
+                  </div>
+                  <div>
+                    <Label>Description du Service</Label>
+                    <Input
+                      value={formData.service_description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, service_description: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Montant *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Montant Reçu</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.amount_received}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount_received: parseFloat(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Moyen de Paiement</Label>
+                    <Select
+                      value={formData.payment_method}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, payment_method: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAYMENT_METHODS.map((method) => (
+                          <SelectItem key={method} value={method}>
+                            {method}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Notes</Label>
+                    <Input
+                      value={formData.notes}
+                      onChange={(e) =>
+                        setFormData({ ...formData, notes: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Button onClick={handleSubmit} className="w-full">
+                      {editingTransaction ? "Mettre à jour" : "Créer"}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {editingTransaction ? "Modifier" : "Nouveau"} Revenu
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>Date *</Label>
-                        <Input
-                          type="date"
-                          value={formData.transaction_date}
-                          onChange={(e) =>
-                            setFormData({ ...formData, transaction_date: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Catégorie *</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, category: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {REVENUE_CATEGORIES.map((cat) => (
-                              <SelectItem key={cat} value={cat}>
-                                {cat}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Nom du Client</Label>
-                        <Input
-                          value={formData.client_name}
-                          onChange={(e) =>
-                            setFormData({ ...formData, client_name: e.target.value })
-                          }
-                          placeholder="NOM Prénom"
-                        />
-                      </div>
-                      <div>
-                        <Label>Description du Service</Label>
-                        <Input
-                          value={formData.service_description}
-                          onChange={(e) =>
-                            setFormData({ ...formData, service_description: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Montant *</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={formData.amount}
-                          onChange={(e) =>
-                            setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Montant Reçu</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={formData.amount_received}
-                          onChange={(e) =>
-                            setFormData({ ...formData, amount_received: parseFloat(e.target.value) || 0 })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Moyen de Paiement</Label>
-                        <Select
-                          value={formData.payment_method}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, payment_method: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PAYMENT_METHODS.map((method) => (
-                              <SelectItem key={method} value={method}>
-                                {method}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="col-span-2">
-                        <Label>Notes</Label>
-                        <Input
-                          value={formData.notes}
-                          onChange={(e) =>
-                            setFormData({ ...formData, notes: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <Button onClick={handleSubmit} className="w-full">
-                          {editingTransaction ? "Mettre à jour" : "Créer"}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
-            </Card>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="expenses" className="space-y-4">
