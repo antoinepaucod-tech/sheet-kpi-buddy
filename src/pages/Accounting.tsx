@@ -263,21 +263,30 @@ const Accounting = () => {
   }, [transactions]);
 
   const revenuesByCategory = useMemo(() => {
-    const grouped: Record<string, number> = {};
+    const grouped: Record<string, { amount: number; received: number; count: number }> = {};
     transactions
       .filter((t) => t.transaction_type === "revenue")
       .forEach((t) => {
-        grouped[t.category] = (grouped[t.category] || 0) + t.amount;
+        if (!grouped[t.category]) {
+          grouped[t.category] = { amount: 0, received: 0, count: 0 };
+        }
+        grouped[t.category].amount += t.amount;
+        grouped[t.category].received += t.amount_received || 0;
+        grouped[t.category].count += 1;
       });
     return grouped;
   }, [transactions]);
 
   const expensesByCategory = useMemo(() => {
-    const grouped: Record<string, number> = {};
+    const grouped: Record<string, { amount: number; count: number }> = {};
     transactions
       .filter((t) => t.transaction_type === "expense")
       .forEach((t) => {
-        grouped[t.category] = (grouped[t.category] || 0) + t.amount;
+        if (!grouped[t.category]) {
+          grouped[t.category] = { amount: 0, count: 0 };
+        }
+        grouped[t.category].amount += t.amount;
+        grouped[t.category].count += 1;
       });
     return grouped;
   }, [transactions]);
@@ -349,112 +358,190 @@ const Accounting = () => {
             <TabsTrigger value="all">Toutes les Transactions</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-4">
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* KPIs Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Revenus Totaux</CardTitle>
+              <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-green-900 dark:text-green-100">
+                    Revenus Totaux
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">CHF {summary.totalRevenue.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+                    CHF {summary.totalRevenue.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                     {summary.revenueCount} transactions
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Revenus Reçus</CardTitle>
+              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    Revenus Encaissés
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">CHF {summary.totalRevenueReceived.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Encaissés
+                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                    CHF {summary.totalRevenueReceived.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    Différence: CHF {(summary.totalRevenue - summary.totalRevenueReceived).toFixed(2)}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Dépenses Totales</CardTitle>
+              <Card className="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                    Dépenses Totales
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">CHF {summary.totalExpenses.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">
+                    CHF {summary.totalExpenses.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                     {summary.expenseCount} transactions
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Profit</CardTitle>
+              <Card className={summary.profit >= 0 
+                ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
+                : "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+              }>
+                <CardHeader className="pb-3">
+                  <CardTitle className={`text-sm font-medium ${
+                    summary.profit >= 0 
+                      ? "text-emerald-900 dark:text-emerald-100"
+                      : "text-red-900 dark:text-red-100"
+                  }`}>
+                    Bénéfice / Perte
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className={`text-3xl font-bold ${summary.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-3xl font-bold ${
+                    summary.profit >= 0 
+                      ? "text-emerald-700 dark:text-emerald-300"
+                      : "text-red-700 dark:text-red-300"
+                  }`}>
                     CHF {summary.profit.toFixed(2)}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    Revenus - Dépenses
+                  <p className={`text-xs mt-1 ${
+                    summary.profit >= 0 
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}>
+                    {summary.profit >= 0 ? "Profit" : "Perte"}
                   </p>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenus par Catégorie</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Catégorie</TableHead>
-                        <TableHead className="text-right">Montant</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(revenuesByCategory).map(([category, amount]) => (
-                        <TableRow key={category}>
-                          <TableCell>{category}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            CHF {amount.toFixed(2)}
+            {/* Detailed Revenue Breakdown */}
+            <Card>
+              <CardHeader className="bg-green-50 dark:bg-green-950">
+                <CardTitle className="text-green-900 dark:text-green-100">
+                  📊 Revenus par Catégorie
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Catégorie</TableHead>
+                      <TableHead className="text-right font-bold">Nb</TableHead>
+                      <TableHead className="text-right font-bold">Montant Total</TableHead>
+                      <TableHead className="text-right font-bold">Montant Reçu</TableHead>
+                      <TableHead className="text-right font-bold">Différence</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(revenuesByCategory)
+                      .sort((a, b) => b[1].amount - a[1].amount)
+                      .map(([category, data]) => (
+                        <TableRow key={category} className="hover:bg-green-50 dark:hover:bg-green-950/30">
+                          <TableCell className="font-medium">{category}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {data.count}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            CHF {data.amount.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
+                            CHF {data.received.toFixed(2)}
+                          </TableCell>
+                          <TableCell className={`text-right font-medium ${
+                            data.amount - data.received > 0 
+                              ? "text-orange-600 dark:text-orange-400" 
+                              : "text-green-600 dark:text-green-400"
+                          }`}>
+                            CHF {(data.amount - data.received).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+                    <TableRow className="bg-green-100 dark:bg-green-900 font-bold border-t-2">
+                      <TableCell>TOTAL REVENUS</TableCell>
+                      <TableCell className="text-right">{summary.revenueCount}</TableCell>
+                      <TableCell className="text-right text-lg">
+                        CHF {summary.totalRevenue.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-lg text-green-700 dark:text-green-300">
+                        CHF {summary.totalRevenueReceived.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-lg text-orange-700 dark:text-orange-300">
+                        CHF {(summary.totalRevenue - summary.totalRevenueReceived).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Dépenses par Catégorie</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Catégorie</TableHead>
-                        <TableHead className="text-right">Montant</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(expensesByCategory).map(([category, amount]) => (
-                        <TableRow key={category}>
-                          <TableCell>{category}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            CHF {amount.toFixed(2)}
+            {/* Detailed Expense Breakdown */}
+            <Card>
+              <CardHeader className="bg-orange-50 dark:bg-orange-950">
+                <CardTitle className="text-orange-900 dark:text-orange-100">
+                  💸 Dépenses par Catégorie
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Catégorie</TableHead>
+                      <TableHead className="text-right font-bold">Nb</TableHead>
+                      <TableHead className="text-right font-bold">Montant Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(expensesByCategory)
+                      .sort((a, b) => b[1].amount - a[1].amount)
+                      .map(([category, data]) => (
+                        <TableRow key={category} className="hover:bg-orange-50 dark:hover:bg-orange-950/30">
+                          <TableCell className="font-medium">{category}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {data.count}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-orange-600 dark:text-orange-400">
+                            CHF {data.amount.toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
+                    <TableRow className="bg-orange-100 dark:bg-orange-900 font-bold border-t-2">
+                      <TableCell>TOTAL DÉPENSES</TableCell>
+                      <TableCell className="text-right">{summary.expenseCount}</TableCell>
+                      <TableCell className="text-right text-lg text-orange-700 dark:text-orange-300">
+                        CHF {summary.totalExpenses.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="revenues" className="space-y-4">
