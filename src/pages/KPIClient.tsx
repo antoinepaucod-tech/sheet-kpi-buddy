@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
-import { subMonths, differenceInWeeks, differenceInMonths, parseISO } from "date-fns";
+import { subMonths, differenceInWeeks, differenceInMonths, differenceInDays, parseISO } from "date-fns";
 
 // Memberships that require training tracking
 const trackingRequiredMemberships = [
@@ -57,9 +57,15 @@ export default function KPIClient() {
         const signatureDate = parseISO(member.contract_signed_date);
         const startDate = signatureDate > twelveMonthsAgo ? signatureDate : twelveMonthsAgo;
         
-        // Calculate time periods
-        const monthsSinceStart = differenceInMonths(now, startDate);
-        const weeksSinceStart = differenceInWeeks(now, startDate);
+        // Calculate time periods in days for more accurate averages
+        const daysSinceStart = differenceInDays(now, startDate);
+        // Use fractional months/weeks for accurate calculations, minimum 1 to avoid division issues
+        const monthsSinceStart = Math.max(1, daysSinceStart / 30.44); // Average days per month
+        const weeksSinceStart = Math.max(1, daysSinceStart / 7);
+        
+        // For display purposes (whole numbers)
+        const monthsSinceSignature = differenceInMonths(now, startDate);
+        const weeksSinceSignature = differenceInWeeks(now, startDate);
         
         // Get trainings for this member in the last 12 months
         const memberTrainings = weeklyTrainings.filter(wt => wt.member_id === member.id);
@@ -67,9 +73,9 @@ export default function KPIClient() {
         // Calculate total trainings in the last 12 months
         const totalTrainings = memberTrainings.reduce((sum, wt) => sum + wt.trainings_count, 0);
         
-        // Calculate averages
-        const averagePerMonth = monthsSinceStart > 0 ? totalTrainings / monthsSinceStart : 0;
-        const averagePerWeek = weeksSinceStart > 0 ? totalTrainings / weeksSinceStart : 0;
+        // Calculate averages using fractional periods
+        const averagePerMonth = totalTrainings / monthsSinceStart;
+        const averagePerWeek = totalTrainings / weeksSinceStart;
 
         return {
           id: member.id,
@@ -78,8 +84,8 @@ export default function KPIClient() {
           totalTrainings,
           averagePerMonth,
           averagePerWeek,
-          monthsSinceSignature: monthsSinceStart,
-          weeksSinceSignature: weeksSinceStart,
+          monthsSinceSignature,
+          weeksSinceSignature,
         };
       });
   }, [members, weeklyTrainings]);
