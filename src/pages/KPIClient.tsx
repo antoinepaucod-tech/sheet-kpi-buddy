@@ -4,6 +4,7 @@ import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { startOfMonth, subMonths, parseISO, differenceInWeeks, differenceInMonths, format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -13,6 +14,7 @@ export default function KPIClient() {
   const navigate = useNavigate();
   const { members, weeklyTrainings, isLoading } = useCustomerMembers();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   const memberStats = useMemo(() => {
     const now = new Date();
@@ -60,10 +62,11 @@ export default function KPIClient() {
     });
   }, [members, weeklyTrainings]);
 
-  // Sort by total trainings descending
+  // Sort by total trainings
   const sortedStats = useMemo(() => {
-    return [...memberStats].sort((a, b) => b.totalTrainings - a.totalTrainings);
-  }, [memberStats]);
+    const sorted = [...memberStats].sort((a, b) => b.totalTrainings - a.totalTrainings);
+    return sortOrder === "asc" ? sorted.reverse() : sorted;
+  }, [memberStats, sortOrder]);
 
   if (isLoading) {
     return (
@@ -83,6 +86,18 @@ export default function KPIClient() {
       </div>
 
       <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Liste des membres</h3>
+          <Select value={sortOrder} onValueChange={(value: "desc" | "asc") => setSortOrder(value)}>
+            <SelectTrigger className="w-[280px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">Plus actifs → Moins actifs</SelectItem>
+              <SelectItem value="asc">Moins actifs → Plus actifs</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
