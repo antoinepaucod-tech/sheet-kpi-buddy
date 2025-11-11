@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_members: {
+        Row: {
+          created_at: string
+          id: string
+          membership: string
+          name: string
+          onboarding_bsport: boolean
+          onboarding_hubfit: boolean
+          onboarding_nutrition: boolean
+          questionnaire_coaching: boolean
+          session_introduction: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          membership: string
+          name: string
+          onboarding_bsport?: boolean
+          onboarding_hubfit?: boolean
+          onboarding_nutrition?: boolean
+          questionnaire_coaching?: boolean
+          session_introduction?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          membership?: string
+          name?: string
+          onboarding_bsport?: boolean
+          onboarding_hubfit?: boolean
+          onboarding_nutrition?: boolean
+          questionnaire_coaching?: boolean
+          session_introduction?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_preferences: {
         Row: {
           created_at: string
@@ -238,6 +277,41 @@ export type Database = {
           year?: number
         }
         Relationships: []
+      }
+      weekly_trainings: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          trainings_count: number
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          trainings_count?: number
+          updated_at?: string
+          week_number: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          trainings_count?: number
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_trainings_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "customer_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

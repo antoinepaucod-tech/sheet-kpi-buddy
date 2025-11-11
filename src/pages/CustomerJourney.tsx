@@ -23,23 +23,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useTranslations } from "@/hooks/useTranslations";
 import { cn } from "@/lib/utils";
-
-interface Member {
-  id: string;
-  name: string;
-  membership: string;
-  onboardingBsport: boolean;
-  onboardingHubfit: boolean;
-  onboardingNutrition: boolean;
-  questionnaireCoaching: boolean;
-  sessionIntroduction: boolean;
-}
-
-interface WeeklyTraining {
-  memberId: string;
-  week: number;
-  trainings: number;
-}
+import { useCustomerMembers } from "@/hooks/useCustomerMembers";
+import type { Member } from "@/hooks/useCustomerMembers";
 
 const membershipTypes = [
   "49CHF/Sem Annuel 1x",
@@ -50,70 +35,46 @@ const membershipTypes = [
 
 const CustomerJourney = () => {
   const { t } = useTranslations();
-  const [members, setMembers] = useState<Member[]>([]);
   const [newMemberName, setNewMemberName] = useState("");
-  const [weeklyTrainings, setWeeklyTrainings] = useState<WeeklyTraining[]>([]);
   const [selectedView, setSelectedView] = useState("index");
+  
+  const {
+    members,
+    isLoading,
+    addMember: addMemberToDb,
+    updateMember: updateMemberInDb,
+    deleteMember: deleteMemberFromDb,
+    updateWeeklyTraining: updateWeeklyTrainingInDb,
+    getWeeklyTraining,
+  } = useCustomerMembers();
 
-  const addMember = () => {
+  const addMember = async () => {
     if (newMemberName.trim()) {
-      const newMember: Member = {
-        id: crypto.randomUUID(),
-        name: newMemberName,
-        membership: membershipTypes[0],
-        onboardingBsport: false,
-        onboardingHubfit: false,
-        onboardingNutrition: false,
-        questionnaireCoaching: false,
-        sessionIntroduction: false,
-      };
-      setMembers([...members, newMember]);
+      await addMemberToDb(newMemberName, membershipTypes[0]);
       setNewMemberName("");
     }
   };
 
-  const deleteMember = (id: string) => {
-    setMembers(members.filter((m) => m.id !== id));
+  const deleteMember = async (id: string) => {
+    await deleteMemberFromDb(id);
   };
 
-  const updateMember = (id: string, field: keyof Member, value: any) => {
-    setMembers(
-      members.map((m) => (m.id === id ? { ...m, [field]: value } : m))
-    );
+  const updateMember = async (id: string, field: string, value: any) => {
+    await updateMemberInDb(id, { [field]: value });
   };
 
   const isOnboardingComplete = (member: Member) => {
     return (
-      member.onboardingBsport &&
-      member.onboardingHubfit &&
-      member.onboardingNutrition &&
-      member.questionnaireCoaching &&
-      member.sessionIntroduction
+      member.onboarding_bsport &&
+      member.onboarding_hubfit &&
+      member.onboarding_nutrition &&
+      member.questionnaire_coaching &&
+      member.session_introduction
     );
   };
 
-  const getWeeklyTraining = (memberId: string, week: number): number => {
-    const training = weeklyTrainings.find(
-      (wt) => wt.memberId === memberId && wt.week === week
-    );
-    return training?.trainings ?? 0;
-  };
-
-  const updateWeeklyTraining = (memberId: string, week: number, trainings: number) => {
-    setWeeklyTrainings((prev) => {
-      const existing = prev.find(
-        (wt) => wt.memberId === memberId && wt.week === week
-      );
-      if (existing) {
-        return prev.map((wt) =>
-          wt.memberId === memberId && wt.week === week
-            ? { ...wt, trainings }
-            : wt
-        );
-      } else {
-        return [...prev, { memberId, week, trainings }];
-      }
-    });
+  const updateWeeklyTraining = async (memberId: string, weekNumber: number, trainingsCount: number) => {
+    await updateWeeklyTrainingInDb(memberId, weekNumber, trainingsCount);
   };
 
   const getTrainingColor = (trainings: number) => {
@@ -129,6 +90,14 @@ const CustomerJourney = () => {
         return "bg-red-500/20 text-red-700 dark:text-red-400";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
+        <p className="text-muted-foreground">Chargement des données...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
@@ -236,41 +205,41 @@ const CustomerJourney = () => {
                         </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
-                            checked={member.onboardingBsport}
+                            checked={member.onboarding_bsport}
                             onCheckedChange={(checked) =>
-                              updateMember(member.id, "onboardingBsport", checked)
+                              updateMember(member.id, "onboarding_bsport", checked)
                             }
                           />
                         </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
-                            checked={member.onboardingHubfit}
+                            checked={member.onboarding_hubfit}
                             onCheckedChange={(checked) =>
-                              updateMember(member.id, "onboardingHubfit", checked)
+                              updateMember(member.id, "onboarding_hubfit", checked)
                             }
                           />
                         </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
-                            checked={member.onboardingNutrition}
+                            checked={member.onboarding_nutrition}
                             onCheckedChange={(checked) =>
-                              updateMember(member.id, "onboardingNutrition", checked)
+                              updateMember(member.id, "onboarding_nutrition", checked)
                             }
                           />
                         </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
-                            checked={member.questionnaireCoaching}
+                            checked={member.questionnaire_coaching}
                             onCheckedChange={(checked) =>
-                              updateMember(member.id, "questionnaireCoaching", checked)
+                              updateMember(member.id, "questionnaire_coaching", checked)
                             }
                           />
                         </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
-                            checked={member.sessionIntroduction}
+                            checked={member.session_introduction}
                             onCheckedChange={(checked) =>
-                              updateMember(member.id, "sessionIntroduction", checked)
+                              updateMember(member.id, "session_introduction", checked)
                             }
                           />
                         </TableCell>
