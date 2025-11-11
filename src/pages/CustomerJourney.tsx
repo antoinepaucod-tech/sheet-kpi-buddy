@@ -48,6 +48,7 @@ const CustomerJourney = () => {
   const [selectedView, setSelectedView] = useState("index");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
+  const [searchTerm, setSearchTerm] = useState("");
   
   const {
     members,
@@ -98,11 +99,24 @@ const CustomerJourney = () => {
     { value: 11, label: "Décembre" },
   ], []);
 
-  // Filter members by selected year and month
+  // Filter members by selected year, month, search term, and exclude exited members
   const filteredMembers = useMemo(() => {
     if (selectedView !== "index") return members;
 
     return members.filter(member => {
+      // Filter by search term
+      if (searchTerm && !member.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+
+      // Filter out exited members (those with exit_date in the past)
+      if (member.exit_date) {
+        const exitDate = parseISO(member.exit_date);
+        if (exitDate < new Date()) {
+          return false;
+        }
+      }
+
       if (!member.contract_signed_date) return true; // Show members without date
       
       const contractDate = parseISO(member.contract_signed_date);
@@ -117,7 +131,7 @@ const CustomerJourney = () => {
 
       return true;
     });
-  }, [members, selectedView, selectedYear, selectedMonth]);
+  }, [members, selectedView, selectedYear, selectedMonth, searchTerm]);
 
   const addMember = async () => {
     if (newMemberName.trim()) {
@@ -198,6 +212,14 @@ const CustomerJourney = () => {
   const getFilteredMembersForWeek = (calendarWeekStart: Date) => {
     return members.filter(member => {
       if (!member.contract_signed_date) return false;
+
+      // Filter out exited members (those with exit_date in the past)
+      if (member.exit_date) {
+        const exitDate = parseISO(member.exit_date);
+        if (exitDate < calendarWeekStart) {
+          return false;
+        }
+      }
       
       const memberWeekForThisCalendarWeek = getAbsoluteWeekForMember(member.contract_signed_date, calendarWeekStart);
       return memberWeekForThisCalendarWeek !== null && memberWeekForThisCalendarWeek > 0;
@@ -246,21 +268,29 @@ const CustomerJourney = () => {
             </Select>
 
             {selectedView === "index" && (
-              <Select 
-                value={selectedMonth.toString()} 
-                onValueChange={(value) => setSelectedMonth(value === "all" ? "all" : parseInt(value))}
-              >
-                <SelectTrigger className="w-[160px] bg-background z-50">
-                  <SelectValue placeholder="Mois" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50">
-                  {months.map((month) => (
-                    <SelectItem key={month.value.toString()} value={month.value.toString()}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <>
+                <Select 
+                  value={selectedMonth.toString()} 
+                  onValueChange={(value) => setSelectedMonth(value === "all" ? "all" : parseInt(value))}
+                >
+                  <SelectTrigger className="w-[160px] bg-background z-50">
+                    <SelectValue placeholder="Mois" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {months.map((month) => (
+                      <SelectItem key={month.value.toString()} value={month.value.toString()}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Rechercher un membre..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-[200px]"
+                />
+              </>
             )}
 
             <Select value={selectedView} onValueChange={setSelectedView}>
@@ -302,6 +332,7 @@ const CustomerJourney = () => {
                       <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
                       <TableHead className="min-w-[200px]">Type De Membership</TableHead>
                       <TableHead className="min-w-[180px]">Date Signature Contrat</TableHead>
+                      <TableHead className="min-w-[180px]">Date de Sortie</TableHead>
                       <TableHead className="text-center">Onboarding Bsport</TableHead>
                       <TableHead className="text-center">Onboarding Hubfit</TableHead>
                       <TableHead className="text-center">Onboarding Nutrition</TableHead>
@@ -313,8 +344,10 @@ const CustomerJourney = () => {
                   <TableBody>
                     {filteredMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                          {selectedMonth !== "all" 
+                        <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                          {searchTerm 
+                            ? `Aucun membre trouvé pour "${searchTerm}"`
+                            : selectedMonth !== "all" 
                             ? `Aucun membre n'a signé en ${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
                             : `Aucun membre pour ${selectedYear}. Ajoutez-en un pour commencer.`
                           }
@@ -373,6 +406,35 @@ const CustomerJourney = () => {
                                   selected={member.contract_signed_date ? new Date(member.contract_signed_date) : undefined}
                                   onSelect={(date) =>
                                     updateMember(member.id, "contract_signed_date", date?.toISOString().split('T')[0] || null)
+                                  }
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </TableCell>
+                          <TableCell>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-[180px] justify-start text-left font-normal",
+                                    !member.exit_date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {member.exit_date
+                                    ? format(new Date(member.exit_date), "dd/MM/yyyy")
+                                    : "Actif"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={member.exit_date ? new Date(member.exit_date) : undefined}
+                                  onSelect={(date) =>
+                                    updateMember(member.id, "exit_date", date?.toISOString().split('T')[0] || null)
                                   }
                                   initialFocus
                                   className="pointer-events-auto"

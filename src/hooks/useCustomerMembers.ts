@@ -7,6 +7,7 @@ export interface Member {
   name: string;
   membership: string;
   contract_signed_date?: string | null;
+  exit_date?: string | null;
   onboarding_bsport: boolean;
   onboarding_hubfit: boolean;
   onboarding_nutrition: boolean;

@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           contract_signed_date: string | null
           created_at: string
+          exit_date: string | null
           id: string
           membership: string
           name: string
@@ -31,6 +32,7 @@ export type Database = {
         Insert: {
           contract_signed_date?: string | null
           created_at?: string
+          exit_date?: string | null
           id?: string
           membership: string
           name: string
@@ -44,6 +46,7 @@ export type Database = {
         Update: {
           contract_signed_date?: string | null
           created_at?: string
+          exit_date?: string | null
           id?: string
           membership?: string
           name?: string
