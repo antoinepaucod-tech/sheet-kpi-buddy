@@ -14,8 +14,8 @@ import {
 
 const menuItems = [
   { title: "KPI Club", url: "/", icon: BarChart3 },
-  { title: "Parcours Client", url: "/customer-journey", icon: Users },
   { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
+  { title: "Parcours Client", url: "/customer-journey", icon: Users },
 ];
 
 const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap };
