@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink, MessageSquare, CheckCircle2, XCircle } from "lucide-react";
+import { ExternalLink, MessageSquare, CheckCircle2, Trash2 } from "lucide-react";
 import { useMemberHistory } from "@/hooks/useMemberHistory";
 import { toast } from "sonner";
 import type { Member, WeeklyTraining } from "@/hooks/useCustomerMembers";
@@ -24,7 +24,7 @@ export function MemberActivityDialog({
   onNavigateToWeek 
 }: MemberActivityDialogProps) {
   const [newComment, setNewComment] = useState("");
-  const { comments, history, isLoading: historyLoading, addComment } = useMemberHistory(member?.id || null);
+  const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member?.id || null);
   
   if (!member) return null;
 
@@ -40,6 +40,15 @@ export function MemberActivityDialog({
       toast.success("Commentaire ajouté");
     } catch (error) {
       toast.error("Erreur lors de l'ajout du commentaire");
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await deleteComment(commentId);
+      toast.success("Commentaire supprimé");
+    } catch (error) {
+      toast.error("Erreur lors de la suppression");
     }
   };
 
@@ -296,8 +305,16 @@ export function MemberActivityDialog({
               {comments.length > 0 ? (
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
                   {comments.map((comment) => (
-                    <div key={comment.id} className="p-3 bg-background rounded-lg border">
-                      <p className="text-sm">{comment.comment}</p>
+                    <div key={comment.id} className="p-3 bg-background rounded-lg border group relative">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => handleDeleteComment(comment.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                      <p className="text-sm pr-8">{comment.comment}</p>
                       <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
                         <span>{comment.created_by}</span>
                         <span>{format(parseISO(comment.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span>

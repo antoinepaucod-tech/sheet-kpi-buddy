@@ -86,6 +86,23 @@ export function useMemberHistory(memberId: string | null) {
     }
   };
 
+  const deleteComment = async (commentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('member_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      setComments(prev => prev.filter(c => c.id !== commentId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw error;
+    }
+  };
+
   const logOnboardingAction = async (
     actionType: string,
     previousValue: boolean,
@@ -120,6 +137,7 @@ export function useMemberHistory(memberId: string | null) {
     history,
     isLoading,
     addComment,
+    deleteComment,
     logOnboardingAction,
     refreshData: loadData
   };

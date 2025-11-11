@@ -213,11 +213,18 @@ const CustomerJourney = () => {
     ];
 
     if (onboardingFields.includes(field) && value === true) {
+      // Delete any previous entry for this action_type and member
+      await supabase
+        .from('member_onboarding_history')
+        .delete()
+        .eq('member_id', id)
+        .eq('action_type', field);
+
+      // Log the new completion
       const member = members.find(m => m.id === id);
       if (member) {
         const previousValue = member[field as keyof Member] as boolean;
         
-        // Log the change to history only if it's a completion (checked)
         await supabase
           .from('member_onboarding_history')
           .insert([{
