@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -103,7 +104,6 @@ const Accounting = () => {
     amount: 0,
     amount_received: 0,
     payment_method: "",
-    invoice_number: "",
     notes: "",
   });
 
@@ -128,7 +128,6 @@ const Accounting = () => {
     amount: 0,
     amount_received: 0,
     payment_method: "",
-    invoice_number_prefix: "",
     notes: "",
     recurrence_day: 1,
     is_active: true,
@@ -144,7 +143,6 @@ const Accounting = () => {
       amount: 0,
       amount_received: 0,
       payment_method: "",
-      invoice_number: "",
       notes: "",
     });
     setEditingTransaction(null);
@@ -159,7 +157,6 @@ const Accounting = () => {
       amount: 0,
       amount_received: 0,
       payment_method: "",
-      invoice_number_prefix: "",
       notes: "",
       recurrence_day: 1,
       is_active: true,
@@ -192,7 +189,6 @@ const Accounting = () => {
       amount: recurring.amount,
       amount_received: recurring.amount_received || 0,
       payment_method: recurring.payment_method || "",
-      invoice_number_prefix: recurring.invoice_number_prefix || "",
       notes: recurring.notes || "",
       recurrence_day: recurring.recurrence_day,
       is_active: recurring.is_active,
@@ -237,7 +233,6 @@ const Accounting = () => {
       amount: transaction.amount,
       amount_received: transaction.amount_received || 0,
       payment_method: transaction.payment_method || "",
-      invoice_number: transaction.invoice_number || "",
       notes: transaction.notes || "",
     });
     setIsDialogOpen(true);
@@ -289,6 +284,18 @@ const Accounting = () => {
         grouped[t.category].count += 1;
       });
     return grouped;
+  }, [transactions]);
+
+  const getPaymentStatus = (transaction: AccountingTransaction): "paid" | "pending" | "unpaid" => {
+    if (transaction.transaction_type === "expense") return "paid";
+    const received = transaction.amount_received || 0;
+    if (received >= transaction.amount) return "paid";
+    if (received > 0) return "pending";
+    return "unpaid";
+  };
+
+  const unpaidTransactions = useMemo(() => {
+    return transactions.filter((t) => t.transaction_type === "revenue" && getPaymentStatus(t) !== "paid");
   }, [transactions]);
 
   if (isLoading) {
@@ -354,6 +361,7 @@ const Accounting = () => {
             <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="revenues">Revenus</TabsTrigger>
             <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+            <TabsTrigger value="unpaid">Impayés ({unpaidTransactions.length})</TabsTrigger>
             <TabsTrigger value="recurring">Récurrences</TabsTrigger>
             <TabsTrigger value="all">Toutes les Transactions</TabsTrigger>
           </TabsList>
@@ -596,16 +604,6 @@ const Accounting = () => {
                           </Select>
                         </div>
                         <div>
-                          <Label>N° Facture</Label>
-                          <Input
-                            value={formData.invoice_number}
-                            onChange={(e) =>
-                              setFormData({ ...formData, invoice_number: e.target.value })
-                            }
-                            placeholder="Ex: #01"
-                          />
-                        </div>
-                        <div>
                           <Label>Nom Client</Label>
                           <Input
                             value={formData.client_name}
@@ -693,51 +691,66 @@ const Accounting = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
-                      <TableHead>N° Facture</TableHead>
+                      <TableHead>Statut</TableHead>
                       <TableHead>Catégorie</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Service</TableHead>
                       <TableHead>Montant</TableHead>
                       <TableHead>Reçu</TableHead>
                       <TableHead>Paiement</TableHead>
+                      <TableHead>Notes</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {transactions
                       .filter((t) => t.transaction_type === "revenue")
-                      .map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>
-                            {format(new Date(transaction.transaction_date), "dd/MM/yyyy")}
-                          </TableCell>
-                          <TableCell>{transaction.invoice_number}</TableCell>
-                          <TableCell>{transaction.category}</TableCell>
-                          <TableCell>{transaction.client_name}</TableCell>
-                          <TableCell>{transaction.service_description}</TableCell>
-                          <TableCell>CHF {transaction.amount.toFixed(2)}</TableCell>
-                          <TableCell>CHF {(transaction.amount_received || 0).toFixed(2)}</TableCell>
-                          <TableCell>{transaction.payment_method}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleEdit(transaction)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => deleteTransaction.mutate(transaction.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      .map((transaction) => {
+                        const status = getPaymentStatus(transaction);
+                        return (
+                          <TableRow key={transaction.id}>
+                            <TableCell>
+                              {format(new Date(transaction.transaction_date), "dd/MM/yyyy")}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                status === "paid" ? "default" : 
+                                status === "pending" ? "secondary" : 
+                                "destructive"
+                              }>
+                                {status === "paid" ? "Payé" : 
+                                 status === "pending" ? "En attente" : 
+                                 "Impayé"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{transaction.category}</TableCell>
+                            <TableCell>{transaction.client_name}</TableCell>
+                            <TableCell>{transaction.service_description}</TableCell>
+                            <TableCell>CHF {transaction.amount.toFixed(2)}</TableCell>
+                            <TableCell>CHF {(transaction.amount_received || 0).toFixed(2)}</TableCell>
+                            <TableCell>{transaction.payment_method}</TableCell>
+                            <TableCell className="max-w-[200px] truncate">{transaction.notes}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleEdit(transaction)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteTransaction.mutate(transaction.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -910,6 +923,95 @@ const Accounting = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="unpaid" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-amber-500">⚠️</span>
+                  Transactions Impayées ou En Attente
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Catégorie</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Service</TableHead>
+                      <TableHead>Montant</TableHead>
+                      <TableHead>Reçu</TableHead>
+                      <TableHead>Reste à Encaisser</TableHead>
+                      <TableHead>Notes</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {unpaidTransactions.map((transaction) => {
+                      const status = getPaymentStatus(transaction);
+                      const remaining = transaction.amount - (transaction.amount_received || 0);
+                      return (
+                        <TableRow key={transaction.id} className={status === "unpaid" ? "bg-destructive/5" : "bg-secondary/5"}>
+                          <TableCell>
+                            {format(new Date(transaction.transaction_date), "dd/MM/yyyy")}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={status === "pending" ? "secondary" : "destructive"}>
+                              {status === "pending" ? "En attente" : "Impayé"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{transaction.category}</TableCell>
+                          <TableCell className="font-medium">{transaction.client_name}</TableCell>
+                          <TableCell>{transaction.service_description}</TableCell>
+                          <TableCell>CHF {transaction.amount.toFixed(2)}</TableCell>
+                          <TableCell className="text-emerald-600 dark:text-emerald-400">
+                            CHF {(transaction.amount_received || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="font-semibold text-amber-600 dark:text-amber-400">
+                            CHF {remaining.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="max-w-[200px]">
+                            {transaction.notes ? (
+                              <span className="text-sm">{transaction.notes}</span>
+                            ) : (
+                              <span className="text-muted-foreground italic text-sm">Aucune note</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEdit(transaction)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteTransaction.mutate(transaction.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {unpaidTransactions.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                          Aucune transaction impayée 🎉
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="recurring" className="space-y-4">
             <Card>
               <CardHeader>
@@ -1042,16 +1144,6 @@ const Accounting = () => {
                             onChange={(e) =>
                               setRecurringFormData({ ...recurringFormData, recurrence_day: parseInt(e.target.value) || 1 })
                             }
-                          />
-                        </div>
-                        <div>
-                          <Label>Préfixe N° Facture</Label>
-                          <Input
-                            value={recurringFormData.invoice_number_prefix}
-                            onChange={(e) =>
-                              setRecurringFormData({ ...recurringFormData, invoice_number_prefix: e.target.value })
-                            }
-                            placeholder="Ex: #"
                           />
                         </div>
                         <div className="flex items-center gap-2">

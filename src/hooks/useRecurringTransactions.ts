@@ -11,7 +11,6 @@ export interface RecurringTransaction {
   amount: number;
   amount_received?: number;
   payment_method?: string;
-  invoice_number_prefix?: string;
   notes?: string;
   recurrence_day: number;
   is_active: boolean;
@@ -130,7 +129,6 @@ export const useRecurringTransactions = () => {
           amount: rec.amount,
           amount_received: rec.amount_received || 0,
           payment_method: rec.payment_method,
-          invoice_number: rec.invoice_number_prefix,
           notes: rec.notes,
           year: year,
           month: month + 1,
