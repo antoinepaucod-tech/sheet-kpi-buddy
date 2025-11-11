@@ -1,12 +1,16 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { startOfMonth, subMonths, parseISO, differenceInWeeks, differenceInMonths, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ExternalLink } from "lucide-react";
 
 export default function KPIClient() {
+  const navigate = useNavigate();
   const { members, weeklyTrainings, isLoading } = useCustomerMembers();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
@@ -207,9 +211,9 @@ export default function KPIClient() {
                   {memberWeeklyData.length > 0 ? (
                     <div className="space-y-2">
                       {memberWeeklyData.map((wt) => (
-                        <div key={wt.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                        <div key={wt.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group">
                           <span className="text-sm font-medium">Semaine {wt.week_number}</span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <span className="text-lg font-bold">{wt.trainings_count}</span>
                             <div 
                               className={`w-3 h-3 rounded-full ${
@@ -219,6 +223,17 @@ export default function KPIClient() {
                                 "bg-red-500"
                               }`}
                             />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                navigate(`/customer-journey?week=${wt.week_number}&memberId=${selectedMemberId}`);
+                                setSelectedMemberId(null);
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}

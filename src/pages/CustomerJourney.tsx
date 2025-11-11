@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format, differenceInWeeks, startOfWeek, parseISO, addWeeks, startOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
@@ -44,6 +45,7 @@ const membershipTypes = [
 
 const CustomerJourney = () => {
   const { t } = useTranslations();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [newMemberName, setNewMemberName] = useState("");
   const [selectedView, setSelectedView] = useState("index");
   const [selectedYear, setSelectedYear] = useState<number | "all">(new Date().getFullYear());
@@ -60,6 +62,30 @@ const CustomerJourney = () => {
     updateWeeklyTraining: updateWeeklyTrainingInDb,
     getWeeklyTraining,
   } = useCustomerMembers();
+  
+  // Handle navigation from KPI Client
+  useEffect(() => {
+    const weekParam = searchParams.get('week');
+    const memberIdParam = searchParams.get('memberId');
+    
+    if (weekParam && memberIdParam) {
+      const member = members.find(m => m.id === memberIdParam);
+      if (member?.contract_signed_date) {
+        const signatureDate = parseISO(member.contract_signed_date);
+        const jan1 = new Date(signatureDate.getFullYear(), 0, 1);
+        const firstMonday = startOfWeek(jan1, { weekStartsOn: 1 });
+        const targetWeekStart = addWeeks(signatureDate, parseInt(weekParam) - 1);
+        const calendarWeek = differenceInWeeks(startOfWeek(targetWeekStart, { weekStartsOn: 1 }), firstMonday) + 1;
+        
+        setSelectedYear(signatureDate.getFullYear());
+        setSelectedView(`week-${calendarWeek}`);
+        setSearchTerm(member.name);
+        
+        // Clear params after navigation
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, members, setSearchParams]);
 
   // Generate week labels with dates for selected year
   const weekLabels = useMemo(() => {
