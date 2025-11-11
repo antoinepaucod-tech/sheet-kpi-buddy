@@ -31,6 +31,8 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useInstructors, type Instructor } from "@/hooks/useInstructors";
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -70,16 +72,23 @@ const CourseKPI = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseKPI | null>(null);
+  const [isInstructorDialogOpen, setIsInstructorDialogOpen] = useState(false);
+  const [editingInstructor, setEditingInstructor] = useState<Instructor | null>(null);
+  const [instructorFormData, setInstructorFormData] = useState({
+    name: "",
+    hourly_rate: 0,
+  });
   
   const [formData, setFormData] = useState({
     course_name: "",
     day_of_week: "Lundi",
     time_slot: "",
     instructor: "",
-    max_capacity: 10,
+    max_capacity: 15,
   });
 
   const queryClient = useQueryClient();
+  const { instructors, createInstructor, updateInstructor, deleteInstructor } = useInstructors();
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["course-kpis", selectedYear, selectedMonth],
@@ -141,9 +150,17 @@ const CourseKPI = () => {
       day_of_week: "Lundi",
       time_slot: "",
       instructor: "",
-      max_capacity: 10,
+      max_capacity: 15,
     });
     setEditingCourse(null);
+  };
+
+  const resetInstructorForm = () => {
+    setInstructorFormData({
+      name: "",
+      hourly_rate: 0,
+    });
+    setEditingInstructor(null);
   };
 
   const handleSubmit = () => {
@@ -213,6 +230,31 @@ const CourseKPI = () => {
   };
 
   const getDefaultSchedule = () => {
+    // Instructeurs par défaut du planning
+    const instructorMap: Record<string, string> = {
+      "Lundi-6h30": "Jennifer",
+      "Lundi-8h": "Jennifer",
+      "Lundi-12h15": "Jennifer",
+      "Lundi-18h30": "Antoine",
+      "Lundi-19h30": "Antoine",
+      "Mardi-6h30": "Jennifer",
+      "Mardi-12h15": "Jennifer",
+      "Mardi-18h30": "Antoine",
+      "Mardi-19h30": "Antoine",
+      "Mercredi-6h30": "Jennifer",
+      "Mercredi-8h": "Jennifer",
+      "Mercredi-12h15": "Jennifer",
+      "Mercredi-18h30": "Antoine",
+      "Jeudi-6h30": "Jennifer",
+      "Jeudi-12h15": "Jennifer",
+      "Jeudi-18h30": "Antoine",
+      "Jeudi-19h30": "Antoine",
+      "Vendredi-6h30": "Jennifer",
+      "Vendredi-8h": "Jennifer",
+      "Vendredi-12h15": "Jennifer",
+      "Samedi-9h": "Antoine",
+    };
+
     return [
       // Lundi
       { day: "Lundi", time: "6h30", course: "Hyrox Engine" },
@@ -241,7 +283,18 @@ const CourseKPI = () => {
       { day: "Vendredi", time: "12h15", course: "Hyrox Power" },
       // Samedi
       { day: "Samedi", time: "9h", course: "Hyrox Power" },
-    ];
+    ].map(item => {
+      const instructorName = instructorMap[`${item.day}-${item.time}`] || "";
+      const instructor = instructors.find(i => i.name === instructorName);
+      const courseDuration = 0.75; // 45 minutes par cours
+      const monthlyCost = instructor ? instructor.hourly_rate * courseDuration * 4 : 0; // 4 semaines par mois
+      
+      return {
+        ...item,
+        instructor: instructorName,
+        monthly_expenses: monthlyCost,
+      };
+    });
   };
 
   const initializeScheduleMutation = useMutation({
@@ -251,8 +304,8 @@ const CourseKPI = () => {
         course_name: item.course,
         day_of_week: item.day,
         time_slot: item.time,
-        instructor: "",
-        max_capacity: 10,
+        instructor: item.instructor,
+        max_capacity: 15,
         year: selectedYear,
         month: selectedMonth + 1,
         month_name: MONTHS[selectedMonth],
@@ -261,7 +314,7 @@ const CourseKPI = () => {
         week3_attendance: 0,
         week4_attendance: 0,
         week5_attendance: 0,
-        monthly_expenses: 0,
+        monthly_expenses: item.monthly_expenses,
         attendance_rate: 0,
       }));
 
@@ -307,6 +360,131 @@ const CourseKPI = () => {
             <ThemeToggle />
           </div>
         </div>
+
+        <Tabs defaultValue="courses" className="w-full">
+          <TabsList>
+            <TabsTrigger value="courses">Planning des Cours</TabsTrigger>
+            <TabsTrigger value="instructors">Gestion des Instructeurs</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="instructors" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Instructeurs</CardTitle>
+                  <Dialog open={isInstructorDialogOpen} onOpenChange={setIsInstructorDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={resetInstructorForm}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ajouter un instructeur
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingInstructor ? "Modifier l'instructeur" : "Nouvel instructeur"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Nom *</Label>
+                          <Input
+                            value={instructorFormData.name}
+                            onChange={(e) =>
+                              setInstructorFormData({ ...instructorFormData, name: e.target.value })
+                            }
+                            placeholder="Ex: Jennifer"
+                          />
+                        </div>
+                        <div>
+                          <Label>Salaire horaire (CHF) *</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={instructorFormData.hourly_rate}
+                            onChange={(e) =>
+                              setInstructorFormData({
+                                ...instructorFormData,
+                                hourly_rate: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            placeholder="Ex: 50"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => {
+                            if (!instructorFormData.name) {
+                              toast.error("Veuillez remplir tous les champs");
+                              return;
+                            }
+                            if (editingInstructor) {
+                              updateInstructor.mutate({ id: editingInstructor.id, ...instructorFormData });
+                            } else {
+                              createInstructor.mutate(instructorFormData);
+                            }
+                            setIsInstructorDialogOpen(false);
+                            resetInstructorForm();
+                          }}
+                          className="w-full"
+                        >
+                          {editingInstructor ? "Mettre à jour" : "Créer"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nom</TableHead>
+                      <TableHead>Salaire horaire</TableHead>
+                      <TableHead>Coût par cours (45min)</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {instructors.map((instructor) => (
+                      <TableRow key={instructor.id}>
+                        <TableCell className="font-medium">{instructor.name}</TableCell>
+                        <TableCell>CHF {instructor.hourly_rate.toFixed(2)}</TableCell>
+                        <TableCell>CHF {(instructor.hourly_rate * 0.75).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingInstructor(instructor);
+                                setInstructorFormData({
+                                  name: instructor.name,
+                                  hourly_rate: instructor.hourly_rate,
+                                });
+                                setIsInstructorDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteInstructor.mutate(instructor.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="courses" className="space-y-4">
 
         <Card>
           <CardHeader>
@@ -435,13 +613,23 @@ const CourseKPI = () => {
                       </div>
                       <div>
                         <Label>Instructeur</Label>
-                        <Input
+                        <Select
                           value={formData.instructor}
-                          onChange={(e) =>
-                            setFormData({ ...formData, instructor: e.target.value })
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, instructor: value })
                           }
-                          placeholder="Ex: Camille"
-                        />
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un instructeur" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {instructors.map((instructor) => (
+                              <SelectItem key={instructor.id} value={instructor.name}>
+                                {instructor.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label>Capacité max</Label>
@@ -620,6 +808,8 @@ const CourseKPI = () => {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

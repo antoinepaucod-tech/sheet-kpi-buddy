@@ -152,6 +152,30 @@ export type Database = {
         }
         Relationships: []
       }
+      instructors: {
+        Row: {
+          created_at: string
+          hourly_rate: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_comments: {
         Row: {
           comment: string
