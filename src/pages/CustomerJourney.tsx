@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { format, differenceInWeeks, startOfWeek, parseISO } from "date-fns";
+import { useState, useMemo } from "react";
+import { format, differenceInWeeks, startOfWeek, parseISO, addWeeks, startOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,22 @@ const CustomerJourney = () => {
     updateWeeklyTraining: updateWeeklyTrainingInDb,
     getWeeklyTraining,
   } = useCustomerMembers();
+
+  // Generate week labels with dates
+  const weekLabels = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const firstMonday = startOfWeek(startOfYear(new Date(currentYear, 0, 1)), { weekStartsOn: 1 });
+    
+    return Array.from({ length: 52 }, (_, i) => {
+      const weekNumber = i + 1;
+      const weekStart = addWeeks(firstMonday, i);
+      const formattedDate = format(weekStart, "EEEE dd/MM/yy", { locale: fr });
+      return {
+        value: `week-${weekNumber}`,
+        label: `S${weekNumber} : ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}`
+      };
+    });
+  }, []);
 
   const addMember = async () => {
     if (newMemberName.trim()) {
@@ -145,14 +161,14 @@ const CustomerJourney = () => {
         <Card className="p-6">
           <div className="flex gap-4 mb-6 items-center">
             <Select value={selectedView} onValueChange={setSelectedView}>
-              <SelectTrigger className="w-[200px] bg-background z-50">
+              <SelectTrigger className="w-[280px] bg-background z-50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg z-50 max-h-[300px]">
                 <SelectItem value="index">Index</SelectItem>
-                {Array.from({ length: 52 }, (_, i) => i + 1).map((week) => (
-                  <SelectItem key={week} value={`week-${week}`}>
-                    Semaine {week}
+                {weekLabels.map((week) => (
+                  <SelectItem key={week.value} value={week.value}>
+                    {week.label}
                   </SelectItem>
                 ))}
               </SelectContent>
