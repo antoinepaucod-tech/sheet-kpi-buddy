@@ -49,6 +49,7 @@ const CustomerJourney = () => {
   const [selectedYear, setSelectedYear] = useState<number | "all">(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [memberStatus, setMemberStatus] = useState<"active" | "exited" | "all">("active");
   
   const {
     members,
@@ -126,20 +127,18 @@ const CustomerJourney = () => {
     if (selectedView !== "index") return members;
 
     return members.filter(member => {
-      // Filter out exited members (those with exit_date in the past)
-      if (member.exit_date) {
-        const exitDate = parseISO(member.exit_date);
-        if (exitDate < new Date()) {
-          return false;
-        }
-      }
+      // Apply status filter first
+      const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
+      
+      if (memberStatus === "active" && isExited) return false;
+      if (memberStatus === "exited" && !isExited) return false;
 
       // If search term is present, only filter by search (ignore date filters)
       if (searchTerm) {
         return member.name.toLowerCase().includes(searchTerm.toLowerCase());
       }
 
-      // If "all years" is selected and "all months", show all active members
+      // If "all years" is selected and "all months", show all members matching status
       if (selectedYear === "all" && selectedMonth === "all") {
         return true;
       }
@@ -161,7 +160,7 @@ const CustomerJourney = () => {
 
       return true;
     });
-  }, [members, selectedView, selectedYear, selectedMonth, searchTerm]);
+  }, [members, selectedView, selectedYear, selectedMonth, searchTerm, memberStatus]);
 
   const addMember = async () => {
     if (newMemberName.trim()) {
@@ -323,6 +322,27 @@ const CustomerJourney = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="h-8 w-px bg-border" />
+
+              {selectedView === "index" && (
+                <div className="flex gap-2 items-center">
+                  <span className="text-sm text-muted-foreground font-medium">Statut:</span>
+                  <Select 
+                    value={memberStatus} 
+                    onValueChange={(value: "active" | "exited" | "all") => setMemberStatus(value)}
+                  >
+                    <SelectTrigger className="w-[140px] bg-background z-50 h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      <SelectItem value="active">✅ Actifs</SelectItem>
+                      <SelectItem value="exited">🚪 Sortis</SelectItem>
+                      <SelectItem value="all">📋 Tous</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="h-8 w-px bg-border" />
 
