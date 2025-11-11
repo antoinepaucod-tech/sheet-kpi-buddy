@@ -47,6 +47,7 @@ const CustomerJourney = () => {
   const [newMemberName, setNewMemberName] = useState("");
   const [selectedView, setSelectedView] = useState("index");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
   
   const {
     members,
@@ -79,6 +80,44 @@ const CustomerJourney = () => {
     const currentYear = new Date().getFullYear();
     return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
   }, []);
+
+  // Months list
+  const months = useMemo(() => [
+    { value: "all", label: "Tous les mois" },
+    { value: 0, label: "Janvier" },
+    { value: 1, label: "Février" },
+    { value: 2, label: "Mars" },
+    { value: 3, label: "Avril" },
+    { value: 4, label: "Mai" },
+    { value: 5, label: "Juin" },
+    { value: 6, label: "Juillet" },
+    { value: 7, label: "Août" },
+    { value: 8, label: "Septembre" },
+    { value: 9, label: "Octobre" },
+    { value: 10, label: "Novembre" },
+    { value: 11, label: "Décembre" },
+  ], []);
+
+  // Filter members by selected year and month
+  const filteredMembers = useMemo(() => {
+    if (selectedView !== "index") return members;
+
+    return members.filter(member => {
+      if (!member.contract_signed_date) return true; // Show members without date
+      
+      const contractDate = parseISO(member.contract_signed_date);
+      const contractYear = contractDate.getFullYear();
+      const contractMonth = contractDate.getMonth();
+
+      // Filter by year
+      if (contractYear !== selectedYear) return false;
+
+      // Filter by month if a specific month is selected
+      if (selectedMonth !== "all" && contractMonth !== selectedMonth) return false;
+
+      return true;
+    });
+  }, [members, selectedView, selectedYear, selectedMonth]);
 
   const addMember = async () => {
     if (newMemberName.trim()) {
@@ -192,10 +231,10 @@ const CustomerJourney = () => {
         </div>
 
         <Card className="p-6">
-          <div className="flex gap-4 mb-6 items-center">
+          <div className="flex gap-4 mb-6 items-center flex-wrap">
             <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
               <SelectTrigger className="w-[120px] bg-background z-50">
-                <SelectValue />
+                <SelectValue placeholder="Année" />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg z-50">
                 {availableYears.map((year) => (
@@ -205,6 +244,24 @@ const CustomerJourney = () => {
                 ))}
               </SelectContent>
             </Select>
+
+            {selectedView === "index" && (
+              <Select 
+                value={selectedMonth.toString()} 
+                onValueChange={(value) => setSelectedMonth(value === "all" ? "all" : parseInt(value))}
+              >
+                <SelectTrigger className="w-[160px] bg-background z-50">
+                  <SelectValue placeholder="Mois" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  {months.map((month) => (
+                    <SelectItem key={month.value.toString()} value={month.value.toString()}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Select value={selectedView} onValueChange={setSelectedView}>
               <SelectTrigger className="w-[280px] bg-background z-50">
@@ -254,14 +311,17 @@ const CustomerJourney = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {members.length === 0 ? (
+                    {filteredMembers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                          Aucun membre pour le moment. Ajoutez-en un pour commencer.
+                          {selectedMonth !== "all" 
+                            ? `Aucun membre n'a signé en ${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
+                            : `Aucun membre pour ${selectedYear}. Ajoutez-en un pour commencer.`
+                          }
                         </TableCell>
                       </TableRow>
                     ) : (
-                      members.map((member) => (
+                      filteredMembers.map((member) => (
                         <TableRow key={member.id}>
                           <TableCell>
                             <Input
