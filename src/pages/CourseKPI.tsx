@@ -32,7 +32,7 @@ import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 
-const DAYS_OF_WEEK = ["LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI", "SAMEDI", "DIMANCHE"];
+const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const COURSE_OPTIONS = [
   "Hyrox Engine",
@@ -72,7 +72,7 @@ const CourseKPI = () => {
   
   const [formData, setFormData] = useState({
     course_name: "",
-    day_of_week: "LUNDI",
+    day_of_week: "Lundi",
     time_slot: "",
     instructor: "",
     max_capacity: 10,
@@ -137,7 +137,7 @@ const CourseKPI = () => {
   const resetForm = () => {
     setFormData({
       course_name: "",
-      day_of_week: "LUNDI",
+      day_of_week: "Lundi",
       time_slot: "",
       instructor: "",
       max_capacity: 10,
