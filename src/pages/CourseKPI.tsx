@@ -34,6 +34,16 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 
 const DAYS_OF_WEEK = ["LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI", "SAMEDI", "DIMANCHE"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+const COURSE_OPTIONS = [
+  "Hyrox Engine",
+  "Hyrox Power",
+  "Hyrox Complete",
+  "Hyrox Foundationnal",
+  "Strengh",
+  "IFRC Mobility",
+  "Mobility",
+  "Yoga",
+];
 
 interface CourseKPI {
   id: string;
@@ -281,13 +291,23 @@ const CourseKPI = () => {
                     <div className="space-y-4">
                       <div>
                         <Label>Nom du cours *</Label>
-                        <Input
+                        <Select
                           value={formData.course_name}
-                          onChange={(e) =>
-                            setFormData({ ...formData, course_name: e.target.value })
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, course_name: value })
                           }
-                          placeholder="Ex: X Booty Camp"
-                        />
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un cours" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {COURSE_OPTIONS.map((course) => (
+                              <SelectItem key={course} value={course}>
+                                {course}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label>Jour de la semaine *</Label>
