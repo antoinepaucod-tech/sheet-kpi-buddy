@@ -65,16 +65,27 @@ const CustomerJourney = () => {
     const year = selectedYear === "all" ? new Date().getFullYear() : selectedYear;
     const firstMonday = startOfWeek(startOfYear(new Date(year, 0, 1)), { weekStartsOn: 1 });
     
-    return Array.from({ length: 52 }, (_, i) => {
-      const weekNumber = i + 1;
-      const weekStart = addWeeks(firstMonday, i);
-      const formattedDate = format(weekStart, "EEEE dd/MM", { locale: fr });
-      return {
+    // Generate weeks until we reach the next year
+    const weeks = [];
+    let weekNumber = 1;
+    let currentWeekStart = firstMonday;
+    
+    while (currentWeekStart.getFullYear() === year || (currentWeekStart.getFullYear() === year - 1 && weekNumber === 1)) {
+      const formattedDate = format(currentWeekStart, "EEEE dd/MM", { locale: fr });
+      weeks.push({
         value: `week-${weekNumber}`,
         label: `S${weekNumber} : ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}`,
-        weekStart: weekStart
-      };
-    });
+        weekStart: currentWeekStart
+      });
+      
+      weekNumber++;
+      currentWeekStart = addWeeks(firstMonday, weekNumber - 1);
+      
+      // Safety check to prevent infinite loops (max 53 weeks in a year)
+      if (weekNumber > 53) break;
+    }
+    
+    return weeks;
   }, [selectedYear]);
 
   // Generate available years (current year - 2 to current year + 2) plus "all" option
