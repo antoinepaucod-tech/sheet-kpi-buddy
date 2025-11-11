@@ -206,7 +206,7 @@ const Accounting = () => {
         return;
       }
 
-      // Copier les transactions vers le mois actuel
+      // Copier les transactions vers le mois actuel - SANS le montant reçu
       const newTransactions = sourceTransactions.map(t => ({
         transaction_date: t.transaction_date,
         transaction_type: t.transaction_type,
@@ -214,7 +214,7 @@ const Accounting = () => {
         client_name: t.client_name,
         service_description: t.service_description,
         amount: t.amount,
-        amount_received: t.amount_received,
+        amount_received: 0, // Réinitialiser à 0 lors de la copie
         payment_method: t.payment_method,
         notes: t.notes,
         year: selectedYear,
