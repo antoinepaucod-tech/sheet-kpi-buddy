@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_transactions: {
+        Row: {
+          amount: number
+          amount_received: number | null
+          category: string
+          client_name: string | null
+          created_at: string
+          id: string
+          invoice_number: string | null
+          month: number
+          month_name: string
+          notes: string | null
+          payment_method: string | null
+          service_description: string | null
+          transaction_date: string
+          transaction_type: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          amount_received?: number | null
+          category: string
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          month: number
+          month_name: string
+          notes?: string | null
+          payment_method?: string | null
+          service_description?: string | null
+          transaction_date: string
+          transaction_type: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          amount_received?: number | null
+          category?: string
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          invoice_number?: string | null
+          month?: number
+          month_name?: string
+          notes?: string | null
+          payment_method?: string | null
+          service_description?: string | null
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       course_kpis: {
         Row: {
           attendance_rate: number | null

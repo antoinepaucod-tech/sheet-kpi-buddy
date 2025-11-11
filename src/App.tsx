@@ -11,6 +11,7 @@ import Annual from "./pages/Annual";
 import CustomerJourney from "./pages/CustomerJourney";
 import KPIClient from "./pages/KPIClient";
 import CourseKPI from "./pages/CourseKPI";
+import Accounting from "./pages/Accounting";
 import Tutorial from "./pages/Tutorial";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/annual" element={<Annual />} />
                     <Route path="/course-kpi" element={<CourseKPI />} />
+                    <Route path="/accounting" element={<Accounting />} />
                     <Route path="/customer-journey" element={<CustomerJourney />} />
                     <Route path="/kpi-client" element={<KPIClient />} />
                     <Route path="/tutorial" element={<Tutorial />} />
