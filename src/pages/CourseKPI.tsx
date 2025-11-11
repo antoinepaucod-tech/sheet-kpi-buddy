@@ -279,8 +279,16 @@ const CourseKPI = () => {
 
   const groupedCourses = useMemo(() => {
     const grouped: Record<string, CourseKPI[]> = {};
+    const timeOrder = ["6h30", "8h", "9h", "12h15", "18h30", "19h30"];
+    
     DAYS_OF_WEEK.forEach(day => {
-      grouped[day] = courses.filter(c => c.day_of_week === day);
+      grouped[day] = courses
+        .filter(c => c.day_of_week === day)
+        .sort((a, b) => {
+          const indexA = timeOrder.indexOf(a.time_slot);
+          const indexB = timeOrder.indexOf(b.time_slot);
+          return indexA - indexB;
+        });
     });
     return grouped;
   }, [courses]);
