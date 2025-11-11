@@ -315,7 +315,7 @@ const CustomerJourney = () => {
             {selectedView === "index" && (
               <div className="flex gap-3">
                 <Input
-                  placeholder="🔍 Rechercher un membre par nom..."
+                  placeholder="Rechercher un membre par nom..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="flex-1 h-11 text-base"
@@ -341,7 +341,7 @@ const CustomerJourney = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-background border shadow-lg z-50 max-h-[300px]">
-                    <SelectItem value="index">📋 Index</SelectItem>
+                    <SelectItem value="index">Index</SelectItem>
                     {weekLabels.map((week) => (
                       <SelectItem key={week.value} value={week.value}>
                         {week.label}
@@ -364,9 +364,9 @@ const CustomerJourney = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-background border shadow-lg z-50">
-                      <SelectItem value="active">✅ Actifs</SelectItem>
-                      <SelectItem value="exited">🚪 Sortis</SelectItem>
-                      <SelectItem value="all">📋 Tous</SelectItem>
+                      <SelectItem value="active">Actifs</SelectItem>
+                      <SelectItem value="exited">Sortis</SelectItem>
+                      <SelectItem value="all">Tous</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -445,7 +445,7 @@ const CustomerJourney = () => {
                 )}
                 {!searchTerm && selectedYear === "all" && selectedMonth === "all" && (
                   <span className="px-2 py-1 bg-green-500/10 text-green-700 dark:text-green-400 rounded font-medium">
-                    📊 Vue globale - Tous les membres actifs
+                    Vue globale - Tous les membres actifs
                   </span>
                 )}
                 {!searchTerm && selectedYear !== "all" && selectedMonth !== "all" && (
