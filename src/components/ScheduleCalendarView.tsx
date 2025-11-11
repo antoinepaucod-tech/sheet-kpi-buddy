@@ -17,12 +17,14 @@ interface ScheduleCalendarViewProps {
   scheduleTemplates: ScheduleTemplate[];
   onDelete: (id: string) => void;
   onAdd: (day: string, time: string) => void;
+  onEdit: (template: ScheduleTemplate) => void;
 }
 
 export const ScheduleCalendarView = ({ 
   scheduleTemplates, 
   onDelete,
-  onAdd 
+  onAdd,
+  onEdit
 }: ScheduleCalendarViewProps) => {
   
   // Organiser les cours par jour et horaire
@@ -79,7 +81,8 @@ export const ScheduleCalendarView = ({
                       courses.map((course) => (
                         <div
                           key={course.id}
-                          className="relative group bg-black rounded-full px-4 py-3 flex items-center justify-center"
+                          className="relative group bg-black rounded-full px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-black/80 transition-colors"
+                          onClick={() => onEdit(course)}
                         >
                           <div className="text-center">
                             <div className="text-[#FFD700] font-bold text-xs uppercase">
@@ -95,7 +98,10 @@ export const ScheduleCalendarView = ({
                             variant="ghost"
                             size="icon"
                             className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => onDelete(course.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(course.id);
+                            }}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>

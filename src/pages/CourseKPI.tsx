@@ -495,7 +495,9 @@ const CourseKPI = () => {
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Nouveau créneau par défaut</DialogTitle>
+                        <DialogTitle>
+                          {editingScheduleTemplate ? "Modifier le créneau" : "Nouveau créneau par défaut"}
+                        </DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div>
@@ -584,8 +586,16 @@ const CourseKPI = () => {
                               toast.error("Veuillez remplir tous les champs obligatoires");
                               return;
                             }
-                            createScheduleTemplate.mutate(scheduleTemplateFormData);
+                            if (editingScheduleTemplate) {
+                              updateScheduleTemplate.mutate({
+                                id: editingScheduleTemplate.id,
+                                ...scheduleTemplateFormData,
+                              });
+                            } else {
+                              createScheduleTemplate.mutate(scheduleTemplateFormData);
+                            }
                             setIsScheduleTemplateDialogOpen(false);
+                            setEditingScheduleTemplate(null);
                             setScheduleTemplateFormData({
                               day_of_week: "Lundi",
                               time_slot: "",
@@ -595,7 +605,7 @@ const CourseKPI = () => {
                           }}
                           className="w-full"
                         >
-                          Créer
+                          {editingScheduleTemplate ? "Mettre à jour" : "Créer"}
                         </Button>
                       </div>
                     </DialogContent>
@@ -612,6 +622,17 @@ const CourseKPI = () => {
                       time_slot: time,
                       course_name: "",
                       instructor_name: "",
+                    });
+                    setEditingScheduleTemplate(null);
+                    setIsScheduleTemplateDialogOpen(true);
+                  }}
+                  onEdit={(template) => {
+                    setEditingScheduleTemplate(template);
+                    setScheduleTemplateFormData({
+                      day_of_week: template.day_of_week,
+                      time_slot: template.time_slot,
+                      course_name: template.course_name,
+                      instructor_name: template.instructor_name || "",
                     });
                     setIsScheduleTemplateDialogOpen(true);
                   }}
