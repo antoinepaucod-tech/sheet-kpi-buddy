@@ -658,7 +658,7 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className="grid grid-cols-7 border-b border-border hover:bg-muted/50 transition-colors group"
+                            className="grid grid-cols-7 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
                             <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
                               <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
@@ -771,10 +771,10 @@ const Accounting = () => {
                       })}
                       
                       {/* Add Row Button */}
-                      <div className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <div className="border-b border-border hover:bg-accent/30 transition-colors">
                         <Button
                           variant="ghost"
-                          className="w-full justify-start text-muted-foreground hover:text-foreground py-3 h-auto rounded-none"
+                          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/20 py-3 h-auto rounded-none"
                           onClick={() => {
                             setFormData({
                               transaction_date: format(new Date(), "yyyy-MM-dd"),
@@ -987,7 +987,7 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className="grid grid-cols-5 border-b border-border hover:bg-muted/50 transition-colors group"
+                            className="grid grid-cols-5 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
                             <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
                               <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
@@ -1061,10 +1061,10 @@ const Accounting = () => {
                       })}
                       
                       {/* Add Row Button */}
-                      <div className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <div className="border-b border-border hover:bg-accent/30 transition-colors">
                         <Button
                           variant="ghost"
-                          className="w-full justify-start text-muted-foreground hover:text-foreground py-3 h-auto rounded-none"
+                          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/20 py-3 h-auto rounded-none"
                           onClick={() => {
                             setFormData({
                               transaction_date: format(new Date(), "yyyy-MM-dd"),
