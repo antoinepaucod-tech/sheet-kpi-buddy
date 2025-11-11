@@ -99,16 +99,11 @@ const CustomerJourney = () => {
     { value: 11, label: "Décembre" },
   ], []);
 
-  // Filter members by selected year, month, search term, and exclude exited members
+  // Filter members - search is independent from date filters
   const filteredMembers = useMemo(() => {
     if (selectedView !== "index") return members;
 
     return members.filter(member => {
-      // Filter by search term
-      if (searchTerm && !member.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-
       // Filter out exited members (those with exit_date in the past)
       if (member.exit_date) {
         const exitDate = parseISO(member.exit_date);
@@ -117,16 +112,19 @@ const CustomerJourney = () => {
         }
       }
 
-      if (!member.contract_signed_date) return true; // Show members without date
+      // If search term is present, only filter by search (ignore date filters)
+      if (searchTerm) {
+        return member.name.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+
+      // If no search term, apply date filters
+      if (!member.contract_signed_date) return true;
       
       const contractDate = parseISO(member.contract_signed_date);
       const contractYear = contractDate.getFullYear();
       const contractMonth = contractDate.getMonth();
 
-      // Filter by year
       if (contractYear !== selectedYear) return false;
-
-      // Filter by month if a specific month is selected
       if (selectedMonth !== "all" && contractMonth !== selectedMonth) return false;
 
       return true;
@@ -253,74 +251,121 @@ const CustomerJourney = () => {
         </div>
 
         <Card className="p-6">
-          <div className="flex gap-4 mb-6 items-center flex-wrap">
-            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-              <SelectTrigger className="w-[120px] bg-background z-50">
-                <SelectValue placeholder="Année" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border shadow-lg z-50">
-                {availableYears.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
+          <div className="space-y-4 mb-6">
+            {/* Search Bar - Always visible in Index view */}
             {selectedView === "index" && (
-              <>
-                <Select 
-                  value={selectedMonth.toString()} 
-                  onValueChange={(value) => setSelectedMonth(value === "all" ? "all" : parseInt(value))}
-                >
-                  <SelectTrigger className="w-[160px] bg-background z-50">
-                    <SelectValue placeholder="Mois" />
+              <div className="flex gap-3">
+                <Input
+                  placeholder="🔍 Rechercher un membre par nom..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 h-11 text-base"
+                />
+                {searchTerm && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSearchTerm("")}
+                    className="h-11"
+                  >
+                    Effacer
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Filter Bar */}
+            <div className="flex gap-3 items-center flex-wrap">
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-muted-foreground font-medium">Vue:</span>
+                <Select value={selectedView} onValueChange={setSelectedView}>
+                  <SelectTrigger className="w-[200px] bg-background z-50 h-10">
+                    <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border shadow-lg z-50">
-                    {months.map((month) => (
-                      <SelectItem key={month.value.toString()} value={month.value.toString()}>
-                        {month.label}
+                  <SelectContent className="bg-background border shadow-lg z-50 max-h-[300px]">
+                    <SelectItem value="index">📋 Index</SelectItem>
+                    {weekLabels.map((week) => (
+                      <SelectItem key={week.value} value={week.value}>
+                        {week.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  placeholder="Rechercher un membre..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-[200px]"
-                />
-              </>
-            )}
+              </div>
 
-            <Select value={selectedView} onValueChange={setSelectedView}>
-              <SelectTrigger className="w-[280px] bg-background z-50">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background border shadow-lg z-50 max-h-[300px]">
-                <SelectItem value="index">Index</SelectItem>
-                {weekLabels.map((week) => (
-                  <SelectItem key={week.value} value={week.value}>
-                    {week.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <div className="h-8 w-px bg-border" />
 
-            {selectedView === "index" && (
-              <>
-                <Input
-                  placeholder="Nom du nouveau membre"
-                  value={newMemberName}
-                  onChange={(e) => setNewMemberName(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && addMember()}
-                  className="flex-1"
-                />
-                <Button onClick={addMember} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Ajouter
-                </Button>
-              </>
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-muted-foreground font-medium">Année:</span>
+                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                  <SelectTrigger className="w-[100px] bg-background z-50 h-10">
+                    <SelectValue placeholder="Année" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedView === "index" && !searchTerm && (
+                <>
+                  <div className="flex gap-2 items-center">
+                    <span className="text-sm text-muted-foreground font-medium">Mois:</span>
+                    <Select 
+                      value={selectedMonth.toString()} 
+                      onValueChange={(value) => setSelectedMonth(value === "all" ? "all" : parseInt(value))}
+                    >
+                      <SelectTrigger className="w-[140px] bg-background z-50 h-10">
+                        <SelectValue placeholder="Mois" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border shadow-lg z-50">
+                        {months.map((month) => (
+                          <SelectItem key={month.value.toString()} value={month.value.toString()}>
+                            {month.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {selectedView === "index" && (
+                <>
+                  <div className="flex-1" />
+                  <Input
+                    placeholder="Nom du nouveau membre"
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && addMember()}
+                    className="w-[250px] h-10"
+                  />
+                  <Button onClick={addMember} className="gap-2 h-10">
+                    <Plus className="h-4 w-4" />
+                    Ajouter
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {/* Active filters indicator */}
+            {selectedView === "index" && (searchTerm || selectedMonth !== "all") && (
+              <div className="flex gap-2 items-center text-sm text-muted-foreground">
+                <span className="font-medium">Filtres actifs:</span>
+                {searchTerm && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded">
+                    Recherche: "{searchTerm}"
+                  </span>
+                )}
+                {!searchTerm && selectedMonth !== "all" && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded">
+                    {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
