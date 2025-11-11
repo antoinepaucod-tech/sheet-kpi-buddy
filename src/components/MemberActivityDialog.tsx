@@ -102,23 +102,44 @@ export function MemberActivityDialog({
             </div>
           </Card>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              onClick={() => window.open("https://app.hubfit.io/clients", "_blank")}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Profil Hubfit
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              onClick={() => window.open("https://backoffice.bsport.io/member", "_blank")}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Profil Bsport
-            </Button>
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={() => window.open("https://app.hubfit.io/clients", "_blank")}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Profil Hubfit
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={() => window.open("https://backoffice.bsport.io/member", "_blank")}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Profil Bsport
+              </Button>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={() => window.open("https://link.localbestgyms.com/widget/bookings/antoine-paucod-personal-calendar-igmengorv", "_blank")}
+              >
+                <ExternalLink className="h-4 w-4" />
+                RDV Antoine
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={() => window.open("https://link.localbestgyms.com/widget/bookings/jennifer-porraz-personal-calendar-0y_0v3kue", "_blank")}
+              >
+                <ExternalLink className="h-4 w-4" />
+                RDV Jennifer
+              </Button>
+            </div>
           </div>
 
           <Card className="p-4 bg-primary/5">
