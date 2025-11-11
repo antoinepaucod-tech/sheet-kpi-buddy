@@ -46,7 +46,7 @@ const CustomerJourney = () => {
   const { t } = useTranslations();
   const [newMemberName, setNewMemberName] = useState("");
   const [selectedView, setSelectedView] = useState("index");
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number | "all">(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -62,7 +62,8 @@ const CustomerJourney = () => {
 
   // Generate week labels with dates for selected year
   const weekLabels = useMemo(() => {
-    const firstMonday = startOfWeek(startOfYear(new Date(selectedYear, 0, 1)), { weekStartsOn: 1 });
+    const year = selectedYear === "all" ? new Date().getFullYear() : selectedYear;
+    const firstMonday = startOfWeek(startOfYear(new Date(year, 0, 1)), { weekStartsOn: 1 });
     
     return Array.from({ length: 52 }, (_, i) => {
       const weekNumber = i + 1;
@@ -76,10 +77,16 @@ const CustomerJourney = () => {
     });
   }, [selectedYear]);
 
-  // Generate available years (current year - 2 to current year + 2)
+  // Generate available years (current year - 2 to current year + 2) plus "all" option
   const availableYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+    return [
+      { value: "all", label: "Toutes les années" },
+      ...Array.from({ length: 5 }, (_, i) => ({
+        value: currentYear - 2 + i,
+        label: (currentYear - 2 + i).toString()
+      }))
+    ];
   }, []);
 
   // Months list
@@ -117,14 +124,24 @@ const CustomerJourney = () => {
         return member.name.toLowerCase().includes(searchTerm.toLowerCase());
       }
 
-      // If no search term, apply date filters
-      if (!member.contract_signed_date) return true;
+      // If "all years" is selected and "all months", show all active members
+      if (selectedYear === "all" && selectedMonth === "all") {
+        return true;
+      }
+
+      // If no contract date, show member only if viewing all
+      if (!member.contract_signed_date) {
+        return selectedYear === "all";
+      }
       
       const contractDate = parseISO(member.contract_signed_date);
       const contractYear = contractDate.getFullYear();
       const contractMonth = contractDate.getMonth();
 
-      if (contractYear !== selectedYear) return false;
+      // Apply year filter if not "all"
+      if (selectedYear !== "all" && contractYear !== selectedYear) return false;
+      
+      // Apply month filter if not "all"
       if (selectedMonth !== "all" && contractMonth !== selectedMonth) return false;
 
       return true;
@@ -296,14 +313,17 @@ const CustomerJourney = () => {
 
               <div className="flex gap-2 items-center">
                 <span className="text-sm text-muted-foreground font-medium">Année:</span>
-                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                  <SelectTrigger className="w-[100px] bg-background z-50 h-10">
+                <Select 
+                  value={selectedYear.toString()} 
+                  onValueChange={(value) => setSelectedYear(value === "all" ? "all" : parseInt(value))}
+                >
+                  <SelectTrigger className="w-[160px] bg-background z-50 h-10">
                     <SelectValue placeholder="Année" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border shadow-lg z-50">
                     {availableYears.map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
+                      <SelectItem key={year.value.toString()} value={year.value.toString()}>
+                        {year.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -352,17 +372,32 @@ const CustomerJourney = () => {
             </div>
 
             {/* Active filters indicator */}
-            {selectedView === "index" && (searchTerm || selectedMonth !== "all") && (
-              <div className="flex gap-2 items-center text-sm text-muted-foreground">
+            {selectedView === "index" && (searchTerm || selectedMonth !== "all" || selectedYear !== "all") && (
+              <div className="flex gap-2 items-center text-sm text-muted-foreground flex-wrap">
                 <span className="font-medium">Filtres actifs:</span>
                 {searchTerm && (
                   <span className="px-2 py-1 bg-primary/10 text-primary rounded">
                     Recherche: "{searchTerm}"
                   </span>
                 )}
-                {!searchTerm && selectedMonth !== "all" && (
+                {!searchTerm && selectedYear === "all" && selectedMonth === "all" && (
+                  <span className="px-2 py-1 bg-green-500/10 text-green-700 dark:text-green-400 rounded font-medium">
+                    📊 Vue globale - Tous les membres actifs
+                  </span>
+                )}
+                {!searchTerm && selectedYear !== "all" && selectedMonth !== "all" && (
                   <span className="px-2 py-1 bg-primary/10 text-primary rounded">
                     {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+                  </span>
+                )}
+                {!searchTerm && selectedYear !== "all" && selectedMonth === "all" && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded">
+                    Année: {selectedYear}
+                  </span>
+                )}
+                {!searchTerm && selectedYear === "all" && selectedMonth !== "all" && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded">
+                    Mois: {months.find(m => m.value === selectedMonth)?.label}
                   </span>
                 )}
               </div>
@@ -392,8 +427,10 @@ const CustomerJourney = () => {
                         <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                           {searchTerm 
                             ? `Aucun membre trouvé pour "${searchTerm}"`
+                            : selectedYear === "all" && selectedMonth === "all"
+                            ? "Aucun membre actif. Ajoutez-en un pour commencer."
                             : selectedMonth !== "all" 
-                            ? `Aucun membre n'a signé en ${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
+                            ? `Aucun membre n'a signé en ${months.find(m => m.value === selectedMonth)?.label} ${selectedYear === "all" ? "" : selectedYear}`
                             : `Aucun membre pour ${selectedYear}. Ajoutez-en un pour commencer.`
                           }
                         </TableCell>
