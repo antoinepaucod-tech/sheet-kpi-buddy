@@ -360,7 +360,7 @@ const Accounting = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[2023, 2024, 2025, 2026].map((year) => (
+              {[2025, 2026, 2027].map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
                 </SelectItem>
@@ -409,7 +409,7 @@ const Accounting = () => {
                         <SelectValue placeholder="Sélectionner un mois" />
                       </SelectTrigger>
                       <SelectContent>
-                        {[2023, 2024, 2025, 2026].map((year) =>
+                        {[2025, 2026, 2027].map((year) =>
                           MONTHS.map((month, monthIndex) => (
                             <SelectItem 
                               key={`${year}-${monthIndex}`} 
