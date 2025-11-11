@@ -116,7 +116,7 @@ export const useRecurringTransactions = () => {
 
       // Generate transactions for the month
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const transactionsToCreate = recurring.map((rec) => {
+      const transactionsToCreate = recurring.map((rec: any) => {
         // Ensure recurrence_day doesn't exceed days in month
         const day = Math.min(rec.recurrence_day, daysInMonth);
         const transactionDate = new Date(year, month, day);

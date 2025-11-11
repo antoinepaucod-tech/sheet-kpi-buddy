@@ -531,6 +531,7 @@ export type Database = {
           is_active: boolean | null
           notes: string | null
           payment_method: string | null
+          product_description: string | null
           recurrence_day: number | null
           service_description: string | null
           transaction_type: string
@@ -547,6 +548,7 @@ export type Database = {
           is_active?: boolean | null
           notes?: string | null
           payment_method?: string | null
+          product_description?: string | null
           recurrence_day?: number | null
           service_description?: string | null
           transaction_type: string
@@ -563,6 +565,7 @@ export type Database = {
           is_active?: boolean | null
           notes?: string | null
           payment_method?: string | null
+          product_description?: string | null
           recurrence_day?: number | null
           service_description?: string | null
           transaction_type?: string
