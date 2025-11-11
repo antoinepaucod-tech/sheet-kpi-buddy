@@ -9,6 +9,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Annual from "./pages/Annual";
 import CustomerJourney from "./pages/CustomerJourney";
+import KPIClient from "./pages/KPIClient";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/annual" element={<Annual />} />
                     <Route path="/customer-journey" element={<CustomerJourney />} />
+                    <Route path="/kpi-client" element={<KPIClient />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

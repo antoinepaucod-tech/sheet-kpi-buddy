@@ -1,4 +1,4 @@
-import { BarChart3, Users, Calendar } from "lucide-react";
+import { BarChart3, Users, TrendingUp } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -15,6 +15,7 @@ import {
 const menuItems = [
   { title: "KPI Club", url: "/", icon: BarChart3 },
   { title: "Parcours Client", url: "/customer-journey", icon: Users },
+  { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
 ];
 
 export function AppSidebar() {
