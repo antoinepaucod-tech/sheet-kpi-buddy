@@ -516,6 +516,57 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_transactions: {
+        Row: {
+          amount: number
+          amount_received: number | null
+          category: string
+          client_name: string | null
+          created_at: string
+          id: string
+          invoice_number_prefix: string | null
+          is_active: boolean | null
+          notes: string | null
+          payment_method: string | null
+          recurrence_day: number | null
+          service_description: string | null
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          amount_received?: number | null
+          category: string
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          invoice_number_prefix?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          payment_method?: string | null
+          recurrence_day?: number | null
+          service_description?: string | null
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          amount_received?: number | null
+          category?: string
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          invoice_number_prefix?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          payment_method?: string | null
+          recurrence_day?: number | null
+          service_description?: string | null
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       schedule_templates: {
         Row: {
           course_name: string
