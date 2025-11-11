@@ -66,24 +66,23 @@ const CustomerJourney = () => {
   // Handle navigation from KPI Client
   useEffect(() => {
     const weekParam = searchParams.get('week');
+    const yearParam = searchParams.get('year');
     const memberIdParam = searchParams.get('memberId');
     
-    if (weekParam && memberIdParam) {
+    if (weekParam && yearParam && memberIdParam) {
+      const year = parseInt(yearParam);
+      const week = parseInt(weekParam);
+      
+      setSelectedYear(year);
+      setSelectedView(`week-${week}`);
+      
       const member = members.find(m => m.id === memberIdParam);
-      if (member?.contract_signed_date) {
-        const signatureDate = parseISO(member.contract_signed_date);
-        const jan1 = new Date(signatureDate.getFullYear(), 0, 1);
-        const firstMonday = startOfWeek(jan1, { weekStartsOn: 1 });
-        const targetWeekStart = addWeeks(signatureDate, parseInt(weekParam) - 1);
-        const calendarWeek = differenceInWeeks(startOfWeek(targetWeekStart, { weekStartsOn: 1 }), firstMonday) + 1;
-        
-        setSelectedYear(signatureDate.getFullYear());
-        setSelectedView(`week-${calendarWeek}`);
+      if (member) {
         setSearchTerm(member.name);
-        
-        // Clear params after navigation
-        setSearchParams({});
       }
+      
+      // Clear params after navigation
+      setSearchParams({});
     }
   }, [searchParams, members, setSearchParams]);
 

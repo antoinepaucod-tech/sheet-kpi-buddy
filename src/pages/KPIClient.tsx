@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { startOfMonth, subMonths, parseISO, differenceInWeeks, differenceInMonths, format } from "date-fns";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { startOfMonth, subMonths, parseISO, differenceInWeeks, differenceInMonths, format, startOfWeek, addWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ExternalLink } from "lucide-react";
 
@@ -78,11 +79,14 @@ export default function KPIClient() {
 
   return (
     <div className="container py-8 space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold mb-2">KPI Client</h1>
-        <p className="text-muted-foreground">
-          Statistiques d'entraînement par membre sur les 12 derniers mois
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">KPI Client</h1>
+          <p className="text-muted-foreground">
+            Statistiques d'entraînement par membre sur les 12 derniers mois
+          </p>
+        </div>
+        <ThemeToggle />
       </div>
 
       <Card className="p-6">
@@ -243,7 +247,21 @@ export default function KPIClient() {
                               size="sm"
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={() => {
-                                navigate(`/customer-journey?week=${wt.week_number}&memberId=${selectedMemberId}`);
+                                if (!member.contract_signed_date) return;
+                                
+                                // Calculate the actual date of this member's relative week
+                                const signatureDate = parseISO(member.contract_signed_date);
+                                const weekDate = addWeeks(signatureDate, wt.week_number - 1);
+                                
+                                // Find the calendar year and week for this date
+                                const year = weekDate.getFullYear();
+                                const jan1 = new Date(year, 0, 1);
+                                const firstMonday = startOfWeek(jan1, { weekStartsOn: 1 });
+                                const weekStart = startOfWeek(weekDate, { weekStartsOn: 1 });
+                                const calendarWeek = differenceInWeeks(weekStart, firstMonday) + 1;
+                                
+                                // Navigate with year and calendar week
+                                navigate(`/customer-journey?week=${calendarWeek}&year=${year}&memberId=${selectedMemberId}`);
                                 setSelectedMemberId(null);
                               }}
                             >
