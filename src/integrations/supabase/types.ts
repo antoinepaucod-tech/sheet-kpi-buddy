@@ -284,6 +284,77 @@ export type Database = {
         }
         Relationships: []
       }
+      tutorial_views: {
+        Row: {
+          completed: boolean | null
+          id: string
+          tutorial_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          tutorial_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          tutorial_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorial_views_tutorial_id_fkey"
+            columns: ["tutorial_id"]
+            isOneToOne: false
+            referencedRelation: "tutorials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutorials: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: number | null
+          id: string
+          order_index: number | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_type: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_type: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_type?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       weekly_trainings: {
         Row: {
           created_at: string

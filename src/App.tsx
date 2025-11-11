@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Annual from "./pages/Annual";
 import CustomerJourney from "./pages/CustomerJourney";
 import KPIClient from "./pages/KPIClient";
+import Tutorial from "./pages/Tutorial";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                     <Route path="/annual" element={<Annual />} />
                     <Route path="/customer-journey" element={<CustomerJourney />} />
                     <Route path="/kpi-client" element={<KPIClient />} />
+                    <Route path="/tutorial" element={<Tutorial />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
