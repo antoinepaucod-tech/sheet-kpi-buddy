@@ -500,11 +500,18 @@ const CustomerJourney = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredMembers.map((member, index) => (
-                        <TableRow key={member.id}>
-                          <TableCell className="text-center font-medium text-muted-foreground">
-                            {index + 1}
-                          </TableCell>
+                      filteredMembers.map((member, index) => {
+                        const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
+                        return (
+                          <TableRow 
+                            key={member.id}
+                            className={cn(
+                              isExited ? "bg-red-500/5" : "bg-green-500/5"
+                            )}
+                          >
+                            <TableCell className="text-center font-medium text-muted-foreground">
+                              {index + 1}
+                            </TableCell>
                           <TableCell>
                             <span 
                               className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
@@ -664,10 +671,11 @@ const CustomerJourney = () => {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
               </Table>
             </div>
           ) : (
@@ -706,9 +714,15 @@ const CustomerJourney = () => {
                       const trainingsWeekData = weekData;
                       const memberWeek = getAbsoluteWeekForMember(member.contract_signed_date, weekData.weekStart);
                       const trainings = memberWeek ? getWeeklyTraining(member.id, memberWeek) : 0;
+                      const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
                       
                       return (
-                        <TableRow key={member.id}>
+                        <TableRow 
+                          key={member.id}
+                          className={cn(
+                            isExited ? "bg-red-500/5" : "bg-green-500/5"
+                          )}
+                        >
                           <TableCell>
                             <span 
                               className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
