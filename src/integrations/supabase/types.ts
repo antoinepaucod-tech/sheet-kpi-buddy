@@ -89,6 +89,73 @@ export type Database = {
         }
         Relationships: []
       }
+      member_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          created_by: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          created_by: string
+          id?: string
+          member_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_comments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "customer_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_onboarding_history: {
+        Row: {
+          action_date: string
+          action_type: string
+          id: string
+          member_id: string
+          new_value: boolean
+          previous_value: boolean
+        }
+        Insert: {
+          action_date?: string
+          action_type: string
+          id?: string
+          member_id: string
+          new_value: boolean
+          previous_value: boolean
+        }
+        Update: {
+          action_date?: string
+          action_type?: string
+          id?: string
+          member_id?: string
+          new_value?: boolean
+          previous_value?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_onboarding_history_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "customer_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_kpis: {
         Row: {
           ad_spend: number | null

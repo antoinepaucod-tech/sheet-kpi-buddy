@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -202,6 +203,32 @@ const CustomerJourney = () => {
   };
 
   const updateMember = async (id: string, field: string, value: any) => {
+    // Log onboarding changes to history
+    const onboardingFields = [
+      'onboarding_bsport',
+      'onboarding_hubfit', 
+      'onboarding_nutrition',
+      'questionnaire_coaching',
+      'session_introduction'
+    ];
+
+    if (onboardingFields.includes(field)) {
+      const member = members.find(m => m.id === id);
+      if (member) {
+        const previousValue = member[field as keyof Member] as boolean;
+        
+        // Log the change to history
+        await supabase
+          .from('member_onboarding_history')
+          .insert([{
+            member_id: id,
+            action_type: field,
+            previous_value: previousValue,
+            new_value: value
+          }]);
+      }
+    }
+
     await updateMemberInDb(id, { [field]: value });
   };
 
