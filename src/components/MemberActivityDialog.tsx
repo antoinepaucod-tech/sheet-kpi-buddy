@@ -102,6 +102,25 @@ export function MemberActivityDialog({
             </div>
           </Card>
 
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 gap-2"
+              onClick={() => window.open("https://app.hubfit.io/clients", "_blank")}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Profil Hubfit
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 gap-2"
+              onClick={() => window.open("https://backoffice.bsport.io/member", "_blank")}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Profil Bsport
+            </Button>
+          </div>
+
           <Card className="p-4 bg-primary/5">
             <h3 className="font-semibold mb-3">Statistiques (12 derniers mois)</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
