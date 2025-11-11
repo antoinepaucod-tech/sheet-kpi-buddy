@@ -59,22 +59,16 @@ const REVENUE_CATEGORIES = [
 ];
 
 const EXPENSE_CATEGORIES = [
-  "Salaires",
-  "Loyer",
-  "Réparations & Maintenance",
-  "Informatique & Logiciels",
-  "Internet & Téléphone",
-  "Fournitures",
-  "Utilities (Electricité, Eau, etc.)",
-  "Publicité & Marketing",
-  "Services Professionnels",
-  "Donations",
-  "Abonnements",
-  "Frais Bancaires",
-  "Assurances",
-  "Remboursement Crédit",
-  "Nourriture",
-  "Autre",
+  "LOGICIELS",
+  "ABONNEMENTS",
+  "LOYERS",
+  "SALAIRES COACH",
+  "TELEPHONIE",
+  "REMBOURSEMENT PRÊT",
+  "RETRAIT BANCOMAT",
+  "ALIMENTAIRE",
+  "PUBLICITÉ",
+  "SALAIRES",
 ];
 
 const PAYMENT_METHODS = [
@@ -959,170 +953,266 @@ const Accounting = () => {
             </Dialog>
           </TabsContent>
 
-          <TabsContent value="expenses" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Dépenses</CardTitle>
-                  <Dialog open={isDialogOpen && formData.transaction_type === "expense"} 
-                    onOpenChange={(open) => {
-                      setIsDialogOpen(open);
-                      if (!open) resetForm();
-                    }}>
-                    <DialogTrigger asChild>
-                      <Button onClick={() => {
-                        resetForm();
-                        setFormData(prev => ({ ...prev, transaction_type: "expense" }));
-                      }}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Ajouter une Dépense
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingTransaction ? "Modifier" : "Nouvelle"} Dépense
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Date *</Label>
-                          <Input
-                            type="date"
-                            value={formData.transaction_date}
-                            onChange={(e) =>
-                              setFormData({ ...formData, transaction_date: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Catégorie *</Label>
-                          <Select
-                            value={formData.category}
-                            onValueChange={(value) =>
-                              setFormData({ ...formData, category: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {EXPENSE_CATEGORIES.map((cat) => (
-                                <SelectItem key={cat} value={cat}>
-                                  {cat}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-2">
-                          <Label>Description</Label>
-                          <Input
-                            value={formData.service_description}
-                            onChange={(e) =>
-                              setFormData({ ...formData, service_description: e.target.value })
-                            }
-                            placeholder="Description de la dépense"
-                          />
-                        </div>
-                        <div>
-                          <Label>Montant *</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={formData.amount}
-                            onChange={(e) =>
-                              setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Moyen de Paiement</Label>
-                          <Select
-                            value={formData.payment_method}
-                            onValueChange={(value) =>
-                              setFormData({ ...formData, payment_method: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PAYMENT_METHODS.map((method) => (
-                                <SelectItem key={method} value={method}>
-                                  {method}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-2">
-                          <Label>Notes</Label>
-                          <Input
-                            value={formData.notes}
-                            onChange={(e) =>
-                              setFormData({ ...formData, notes: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Button onClick={handleSubmit} className="w-full">
-                            {editingTransaction ? "Mettre à jour" : "Créer"}
-                          </Button>
-                        </div>
+          <TabsContent value="expenses" className="space-y-6">
+            {/* Expense Tables by Category - Same structure as Revenue */}
+            {EXPENSE_CATEGORIES.map((category) => {
+                const categoryTransactions = transactions
+                  .filter((t) => t.transaction_type === "expense" && t.category === category);
+                
+                const totalAmount = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+                return (
+                  <Card key={category} className="overflow-hidden border-0 shadow-none">
+                    {/* Header Row - Subtle Gray */}
+                    <div className="bg-muted/80 text-foreground border border-border">
+                      <div className="grid grid-cols-5">
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">DESCRIPTION</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">DÉTAILS</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">FOURNISSEUR</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">MONTANT</div>
+                        <div className="px-3 py-2 font-bold text-sm text-left">NOTES</div>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Catégorie</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Montant</TableHead>
-                      <TableHead>Paiement</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions
-                      .filter((t) => t.transaction_type === "expense")
-                      .map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>
-                            {format(new Date(transaction.transaction_date), "dd/MM/yyyy")}
-                          </TableCell>
-                          <TableCell>{transaction.category}</TableCell>
-                          <TableCell>{transaction.service_description}</TableCell>
-                          <TableCell>CHF {transaction.amount.toFixed(2)}</TableCell>
-                          <TableCell>{transaction.payment_method}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
+                    </div>
+
+                    {/* Category Header - Soft Orange */}
+                    <div className="bg-orange-100 dark:bg-orange-950/30 text-foreground border-x border-b border-border">
+                      <div className="px-3 py-2 font-bold uppercase text-sm">
+                        {category}
+                      </div>
+                    </div>
+
+                    {/* Transaction Rows */}
+                    <div className="border-x border-border">
+                      {categoryTransactions.map((transaction, index) => {
+                        return (
+                          <div 
+                            key={transaction.id}
+                            className="grid grid-cols-5 border-b border-border hover:bg-muted/50 transition-colors group"
+                          >
+                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
+                              <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleEdit(transaction)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
                                 onClick={() => deleteTransaction.mutate(transaction.id)}
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3 w-3 text-destructive" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                            <Input
+                              key={`service-${transaction.id}`}
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              defaultValue={transaction.service_description || category}
+                              onBlur={(e) => {
+                                if (e.target.value !== transaction.service_description) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    service_description: e.target.value 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
+                              key={`client-${transaction.id}`}
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              defaultValue={transaction.client_name || ""}
+                              onBlur={(e) => {
+                                if (e.target.value !== transaction.client_name) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    client_name: e.target.value 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
+                              key={`amount-${transaction.id}`}
+                              type="number"
+                              step="0.1"
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-right font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              defaultValue={transaction.amount}
+                              onBlur={(e) => {
+                                const newAmount = parseFloat(e.target.value) || 0;
+                                if (newAmount !== transaction.amount) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    amount: newAmount 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
+                              key={`notes-${transaction.id}`}
+                              className="px-3 py-2 border-r-0 border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
+                              defaultValue={transaction.notes || ""}
+                              placeholder="Notes..."
+                              onBlur={(e) => {
+                                if (e.target.value !== (transaction.notes || "")) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    notes: e.target.value 
+                                  });
+                                }
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Add Row Button */}
+                      <div className="border-b border-border hover:bg-muted/30 transition-colors">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-muted-foreground hover:text-foreground py-3 h-auto rounded-none"
+                          onClick={() => {
+                            setFormData({
+                              transaction_date: format(new Date(), "yyyy-MM-dd"),
+                              transaction_type: "expense",
+                              category: category,
+                              client_name: "",
+                              service_description: "",
+                              amount: 0,
+                              amount_received: 0,
+                              payment_method: "",
+                              notes: "",
+                            });
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Ajouter une ligne
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Total Row - Subtle Purple */}
+                    <div className="bg-purple-100 dark:bg-purple-950/30 text-foreground border-x border-b-2 border-border">
+                      <div className="grid grid-cols-5">
+                        <div className="px-3 py-2 col-span-3 font-bold uppercase text-sm">
+                          TOTAL {category}
+                        </div>
+                        <div className="px-3 py-2 text-right font-bold text-sm border-l border-border">
+                          {totalAmount.toFixed(1)}
+                        </div>
+                        <div className="px-3 py-2 border-l border-border"></div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+
+            {/* Hidden Dialog for Quick Add */}
+            <Dialog open={isDialogOpen && formData.transaction_type === "expense"} 
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingTransaction ? "Modifier" : "Nouvelle"} Dépense - {formData.category}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Date *</Label>
+                    <Input
+                      type="date"
+                      value={formData.transaction_date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, transaction_date: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Catégorie *</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, category: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EXPENSE_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Description</Label>
+                    <Input
+                      value={formData.service_description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, service_description: e.target.value })
+                      }
+                      placeholder="Description de la dépense"
+                    />
+                  </div>
+                  <div>
+                    <Label>Fournisseur</Label>
+                    <Input
+                      value={formData.client_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, client_name: e.target.value })
+                      }
+                      placeholder="Nom du fournisseur"
+                    />
+                  </div>
+                  <div>
+                    <Label>Montant *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Moyen de Paiement</Label>
+                    <Select
+                      value={formData.payment_method}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, payment_method: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAYMENT_METHODS.map((method) => (
+                          <SelectItem key={method} value={method}>
+                            {method}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Notes</Label>
+                    <Input
+                      value={formData.notes}
+                      onChange={(e) =>
+                        setFormData({ ...formData, notes: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Button onClick={handleSubmit} className="w-full">
+                      {editingTransaction ? "Mettre à jour" : "Créer"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="unpaid" className="space-y-4">
