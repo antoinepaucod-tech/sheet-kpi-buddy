@@ -63,26 +63,30 @@ const CustomerJourney = () => {
   // Generate week labels with dates for selected year
   const weekLabels = useMemo(() => {
     const year = selectedYear === "all" ? new Date().getFullYear() : selectedYear;
-    const firstMonday = startOfWeek(startOfYear(new Date(year, 0, 1)), { weekStartsOn: 1 });
     
-    // Generate weeks until we reach the next year
+    // Start from the first Monday of the year (or last Monday of previous year if Jan 1 is early in the week)
+    const jan1 = new Date(year, 0, 1);
+    const firstMonday = startOfWeek(jan1, { weekStartsOn: 1 });
+    
+    // End date is the last day that belongs to this year (accounting for weeks that span into next year)
+    const dec31 = new Date(year, 11, 31);
+    const lastMondayOfYear = startOfWeek(dec31, { weekStartsOn: 1 });
+    
     const weeks = [];
     let weekNumber = 1;
-    let currentWeekStart = firstMonday;
+    let currentWeekStart = new Date(firstMonday);
     
-    while (currentWeekStart.getFullYear() === year || (currentWeekStart.getFullYear() === year - 1 && weekNumber === 1)) {
+    // Generate weeks while the week start is before or on the last Monday that contains a day in our year
+    while (currentWeekStart <= lastMondayOfYear && weekNumber <= 53) {
       const formattedDate = format(currentWeekStart, "EEEE dd/MM", { locale: fr });
       weeks.push({
         value: `week-${weekNumber}`,
         label: `S${weekNumber} : ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}`,
-        weekStart: currentWeekStart
+        weekStart: new Date(currentWeekStart)
       });
       
       weekNumber++;
-      currentWeekStart = addWeeks(firstMonday, weekNumber - 1);
-      
-      // Safety check to prevent infinite loops (max 53 weeks in a year)
-      if (weekNumber > 53) break;
+      currentWeekStart = addWeeks(currentWeekStart, 1);
     }
     
     return weeks;
