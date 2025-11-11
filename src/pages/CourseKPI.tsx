@@ -212,6 +212,71 @@ const CourseKPI = () => {
     updateMutation.mutate({ id: courseId, monthly_expenses: value });
   };
 
+  const getDefaultSchedule = () => {
+    return [
+      // Lundi
+      { day: "Lundi", time: "6h30", course: "Hyrox Engine" },
+      { day: "Lundi", time: "8h", course: "Mobility" },
+      { day: "Lundi", time: "12h15", course: "Hyrox Power" },
+      { day: "Lundi", time: "18h30", course: "Hyrox Power" },
+      { day: "Lundi", time: "19h30", course: "Hyrox Foundationnal" },
+      // Mardi
+      { day: "Mardi", time: "6h30", course: "Hyrox Complete" },
+      { day: "Mardi", time: "12h15", course: "Hyrox Foundationnal" },
+      { day: "Mardi", time: "18h30", course: "Hyrox Foundationnal" },
+      { day: "Mardi", time: "19h30", course: "Hyrox Power" },
+      // Mercredi
+      { day: "Mercredi", time: "6h30", course: "Hyrox Power" },
+      { day: "Mercredi", time: "8h", course: "Mobility" },
+      { day: "Mercredi", time: "12h15", course: "Hyrox Engine" },
+      { day: "Mercredi", time: "18h30", course: "Hyrox Engine" },
+      // Jeudi
+      { day: "Jeudi", time: "6h30", course: "Hyrox Foundationnal" },
+      { day: "Jeudi", time: "12h15", course: "Hyrox Complete" },
+      { day: "Jeudi", time: "18h30", course: "Hyrox Power" },
+      { day: "Jeudi", time: "19h30", course: "Hyrox Complete" },
+      // Vendredi
+      { day: "Vendredi", time: "6h30", course: "Hyrox Complete" },
+      { day: "Vendredi", time: "8h", course: "Mobility" },
+      { day: "Vendredi", time: "12h15", course: "Hyrox Power" },
+      // Samedi
+      { day: "Samedi", time: "9h", course: "Hyrox Power" },
+    ];
+  };
+
+  const initializeScheduleMutation = useMutation({
+    mutationFn: async () => {
+      const defaultSchedule = getDefaultSchedule();
+      const coursesToCreate = defaultSchedule.map(item => ({
+        course_name: item.course,
+        day_of_week: item.day,
+        time_slot: item.time,
+        instructor: "",
+        max_capacity: 10,
+        year: selectedYear,
+        month: selectedMonth + 1,
+        month_name: MONTHS[selectedMonth],
+        week1_attendance: 0,
+        week2_attendance: 0,
+        week3_attendance: 0,
+        week4_attendance: 0,
+        week5_attendance: 0,
+        monthly_expenses: 0,
+        attendance_rate: 0,
+      }));
+
+      const { error } = await supabase.from("course_kpis").insert(coursesToCreate);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-kpis"] });
+      toast.success("Planning initialisé avec succès");
+    },
+    onError: () => {
+      toast.error("Erreur lors de l'initialisation du planning");
+    },
+  });
+
   const groupedCourses = useMemo(() => {
     const grouped: Record<string, CourseKPI[]> = {};
     DAYS_OF_WEEK.forEach(day => {
@@ -276,14 +341,24 @@ const CourseKPI = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={resetForm}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Ajouter un cours
+                <div className="flex gap-2">
+                  {courses.length === 0 && (
+                    <Button
+                      onClick={() => initializeScheduleMutation.mutate()}
+                      variant="secondary"
+                      disabled={initializeScheduleMutation.isPending}
+                    >
+                      Initialiser le planning du mois
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
+                  )}
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={resetForm}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ajouter un cours
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
                     <DialogHeader>
                       <DialogTitle>
                         {editingCourse ? "Modifier le cours" : "Nouveau cours"}
@@ -377,8 +452,9 @@ const CourseKPI = () => {
                         {editingCourse ? "Mettre à jour" : "Créer"}
                       </Button>
                     </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </div>
           </CardHeader>
