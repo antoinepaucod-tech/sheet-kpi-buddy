@@ -46,6 +46,7 @@ const CustomerJourney = () => {
   const { t } = useTranslations();
   const [newMemberName, setNewMemberName] = useState("");
   const [selectedView, setSelectedView] = useState("index");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
   const {
     members,
@@ -57,20 +58,26 @@ const CustomerJourney = () => {
     getWeeklyTraining,
   } = useCustomerMembers();
 
-  // Generate week labels with dates
+  // Generate week labels with dates for selected year
   const weekLabels = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const firstMonday = startOfWeek(startOfYear(new Date(currentYear, 0, 1)), { weekStartsOn: 1 });
+    const firstMonday = startOfWeek(startOfYear(new Date(selectedYear, 0, 1)), { weekStartsOn: 1 });
     
     return Array.from({ length: 52 }, (_, i) => {
       const weekNumber = i + 1;
       const weekStart = addWeeks(firstMonday, i);
-      const formattedDate = format(weekStart, "EEEE dd/MM/yy", { locale: fr });
+      const formattedDate = format(weekStart, "EEEE dd/MM", { locale: fr });
       return {
         value: `week-${weekNumber}`,
-        label: `S${weekNumber} : ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}`
+        label: `S${weekNumber} : ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}`,
+        weekStart: weekStart
       };
     });
+  }, [selectedYear]);
+
+  // Generate available years (current year - 2 to current year + 2)
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
   }, []);
 
   const addMember = async () => {
@@ -132,6 +139,32 @@ const CustomerJourney = () => {
     }
   };
 
+  // Get the absolute week number for a member based on their contract date and a given calendar week
+  const getAbsoluteWeekForMember = (contractDate: string | null | undefined, calendarWeekStart: Date): number | null => {
+    if (!contractDate) return null;
+    
+    try {
+      const signedDate = parseISO(contractDate);
+      const weeksSinceSignature = differenceInWeeks(
+        startOfWeek(calendarWeekStart, { weekStartsOn: 1 }),
+        startOfWeek(signedDate, { weekStartsOn: 1 })
+      );
+      return weeksSinceSignature + 1;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Filter members to show only those whose member week matches the selected calendar week
+  const getFilteredMembersForWeek = (calendarWeekStart: Date) => {
+    return members.filter(member => {
+      if (!member.contract_signed_date) return false;
+      
+      const memberWeekForThisCalendarWeek = getAbsoluteWeekForMember(member.contract_signed_date, calendarWeekStart);
+      return memberWeekForThisCalendarWeek !== null && memberWeekForThisCalendarWeek > 0;
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
@@ -160,6 +193,19 @@ const CustomerJourney = () => {
 
         <Card className="p-6">
           <div className="flex gap-4 mb-6 items-center">
+            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+              <SelectTrigger className="w-[120px] bg-background z-50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-lg z-50">
+                {availableYears.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={selectedView} onValueChange={setSelectedView}>
               <SelectTrigger className="w-[280px] bg-background z-50">
                 <SelectValue />
@@ -333,79 +379,89 @@ const CustomerJourney = () => {
           ) : (
             <div className="rounded-md border overflow-x-auto">
               <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[200px]">Nom / Prénom</TableHead>
-                      <TableHead className="min-w-[200px]">Type De Membership</TableHead>
-                      <TableHead className="text-center min-w-[120px]">Semaine Membre</TableHead>
-                      <TableHead className="text-center min-w-[150px]">Onboarding Complété</TableHead>
-                      <TableHead className="text-center min-w-[200px]">Entraînements cette semaine</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {members.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          Aucun membre dans l'Index. Ajoutez des membres dans l'Index.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      members.map((member) => {
-                        const week = parseInt(selectedView.replace("week-", ""));
-                        const trainings = getWeeklyTraining(member.id, week);
-                        const memberWeek = getMemberWeekNumber(member.contract_signed_date);
-                        
-                        return (
-                          <TableRow key={member.id}>
-                            <TableCell className="font-medium">{member.name}</TableCell>
-                            <TableCell>{member.membership}</TableCell>
-                            <TableCell className="text-center">
-                              {memberWeek !== null ? (
-                                <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">
-                                  S{memberWeek}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">Non défini</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex justify-center">
-                                <Checkbox
-                                  checked={isOnboardingComplete(member)}
-                                  disabled
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-2">
-                                <Select
-                                  value={trainings.toString()}
-                                  onValueChange={(value) =>
-                                    updateWeeklyTraining(member.id, week, parseInt(value))
-                                  }
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[200px]">Nom / Prénom</TableHead>
+                    <TableHead className="min-w-[200px]">Type De Membership</TableHead>
+                    <TableHead className="text-center min-w-[120px]">Semaine Membre</TableHead>
+                    <TableHead className="text-center min-w-[150px]">Onboarding Complété</TableHead>
+                    <TableHead className="text-center min-w-[200px]">Entraînements cette semaine</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(() => {
+                    const weekIndex = parseInt(selectedView.replace("week-", "")) - 1;
+                    const weekData = weekLabels[weekIndex];
+                    if (!weekData) return null;
+
+                    const filteredMembers = getFilteredMembersForWeek(weekData.weekStart);
+
+                    if (filteredMembers.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            Aucun membre actif pour cette semaine. Les membres ne sont affichés que pour les semaines qui correspondent à leur parcours depuis la signature du contrat.
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+
+                    return filteredMembers.map((member) => {
+                      const week = parseInt(selectedView.replace("week-", ""));
+                      const trainings = getWeeklyTraining(member.id, week);
+                      const memberWeek = getAbsoluteWeekForMember(member.contract_signed_date, weekData.weekStart);
+                      
+                      return (
+                        <TableRow key={member.id}>
+                          <TableCell className="font-medium">{member.name}</TableCell>
+                          <TableCell>{member.membership}</TableCell>
+                          <TableCell className="text-center">
+                            {memberWeek !== null && memberWeek > 0 ? (
+                              <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                                S{memberWeek}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">Non défini</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={isOnboardingComplete(member)}
+                                disabled
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              <Select
+                                value={trainings.toString()}
+                                onValueChange={(value) =>
+                                  updateWeeklyTraining(member.id, week, parseInt(value))
+                                }
+                              >
+                                <SelectTrigger
+                                  className={cn(
+                                    "w-[120px]",
+                                    getTrainingColor(trainings)
+                                  )}
                                 >
-                                  <SelectTrigger
-                                    className={cn(
-                                      "w-[120px]",
-                                      getTrainingColor(trainings)
-                                    )}
-                                  >
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border shadow-lg z-50">
-                                    <SelectItem value="0">0</SelectItem>
-                                    <SelectItem value="1">1</SelectItem>
-                                    <SelectItem value="2">2</SelectItem>
-                                    <SelectItem value="3">3</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border shadow-lg z-50">
+                                  <SelectItem value="0">0</SelectItem>
+                                  <SelectItem value="1">1</SelectItem>
+                                  <SelectItem value="2">2</SelectItem>
+                                  <SelectItem value="3">3</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    });
+                  })()}
+                </TableBody>
               </Table>
             </div>
           )}
