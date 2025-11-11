@@ -23,10 +23,11 @@ export function MemberActivityDialog({
   onClose,
   onNavigateToWeek 
 }: MemberActivityDialogProps) {
-  const [newComment, setNewComment] = useState("");
-  const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member?.id || null);
-  
+  // Check member first, before any hooks
   if (!member) return null;
+
+  const [newComment, setNewComment] = useState("");
+  const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member.id);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) {
