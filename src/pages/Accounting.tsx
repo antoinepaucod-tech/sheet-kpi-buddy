@@ -78,6 +78,26 @@ const EXPENSE_CATEGORIES = [
   "SALAIRES",
 ];
 
+const PRODUCT_DESCRIPTIONS_REVENUE = [
+  "Revenu EFT Général",
+  "Revenu PT",
+  "Revenu Retail",
+  "Revenu Fast Cash",
+];
+
+const PRODUCT_DESCRIPTIONS_EXPENSE = [
+  "Dépenses Publicitaires",
+  "Loyer",
+  "Réparations & Maintenance",
+  "Logiciels",
+  "Internet & Téléphone",
+  "Abonnements",
+  "Frais Bancaires",
+  "Assurance",
+  "Salaires",
+  "Remboursement crédit",
+];
+
 const PAYMENT_METHODS = [
   "Virement Bancaire",
   "Carte Bancaire",
@@ -97,6 +117,7 @@ const Accounting = () => {
     category: "",
     client_name: "",
     service_description: "",
+    product_description: "",
     amount: 0,
     amount_received: 0,
     payment_method: "",
@@ -136,6 +157,7 @@ const Accounting = () => {
       category: "",
       client_name: "",
       service_description: "",
+      product_description: "",
       amount: 0,
       amount_received: 0,
       payment_method: "",
@@ -269,6 +291,7 @@ const Accounting = () => {
       category: transaction.category,
       client_name: transaction.client_name || "",
       service_description: transaction.service_description || "",
+      product_description: (transaction as any).product_description || "",
       amount: transaction.amount,
       amount_received: transaction.amount_received || 0,
       payment_method: transaction.payment_method || "",
@@ -636,11 +659,12 @@ const Accounting = () => {
                   <Card key={category} className="overflow-hidden border-0 shadow-none">
                     {/* Header Row - Subtle Gray */}
                     <div className="bg-muted/80 text-foreground border border-border">
-                      <div className="grid grid-cols-7">
+                      <div className="grid grid-cols-8">
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM DU SERVICE</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Prénom</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Prestation</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Produit</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">Montant</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">État</div>
                         <div className="px-3 py-2 font-bold text-sm text-left">Réglé le</div>
@@ -665,7 +689,7 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className="grid grid-cols-7 border-b border-border hover:bg-accent/50 transition-colors group"
+                            className="grid grid-cols-8 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
                             <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
                               <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
@@ -721,6 +745,28 @@ const Accounting = () => {
                                 }
                               }}
                             />
+                            <div className="px-2 py-2 border-r border-border">
+                              <Select
+                                value={(transaction as any).product_description || ""}
+                                onValueChange={(value) => {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    product_description: value 
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 border-0 focus:ring-1 bg-transparent text-sm">
+                                  <SelectValue placeholder="Sélectionner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PRODUCT_DESCRIPTIONS_REVENUE.map((desc) => (
+                                    <SelectItem key={desc} value={desc}>
+                                      {desc}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             <Input
                               key={`amount-${transaction.id}`}
                               type="number"
@@ -789,6 +835,7 @@ const Accounting = () => {
                               category: category,
                               client_name: "",
                               service_description: "",
+                              product_description: "",
                               amount: 0,
                               amount_received: 0,
                               payment_method: "",
@@ -805,8 +852,8 @@ const Accounting = () => {
 
                     {/* Total Row - Subtle Purple */}
                     <div className="bg-purple-100 dark:bg-purple-950/30 text-foreground border-x border-b border-border">
-                      <div className="grid grid-cols-7">
-                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
+                      <div className="grid grid-cols-8">
+                        <div className="px-3 py-2 col-span-5 font-bold uppercase text-sm">
                           TOTAL {category}
                         </div>
                         <div className="px-3 py-2 text-right font-bold text-sm border-l border-border">
@@ -821,8 +868,8 @@ const Accounting = () => {
 
                     {/* Difference Row - Light Gray */}
                     <div className="bg-muted/40 border-x border-b-2 border-border">
-                      <div className="grid grid-cols-7">
-                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
+                      <div className="grid grid-cols-8">
+                        <div className="px-3 py-2 col-span-5 font-bold uppercase text-sm">
                           DIFFERENCE
                         </div>
                         <div className={`px-3 py-2 text-right font-bold col-span-2 text-sm ${
@@ -924,6 +971,26 @@ const Accounting = () => {
                     />
                   </div>
                   <div>
+                    <Label>Description du Produit</Label>
+                    <Select
+                      value={formData.product_description}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, product_description: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRODUCT_DESCRIPTIONS_REVENUE.map((desc) => (
+                          <SelectItem key={desc} value={desc}>
+                            {desc}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label>Montant *</Label>
                     <Input
                       type="number"
@@ -996,10 +1063,11 @@ const Accounting = () => {
                   <Card key={category} className="overflow-hidden border-0 shadow-none">
                     {/* Header Row - Subtle Gray */}
                     <div className="bg-muted/80 text-foreground border border-border">
-                      <div className="grid grid-cols-5">
+                      <div className="grid grid-cols-6">
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">DESCRIPTION</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">DÉTAILS</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">FOURNISSEUR</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Produit</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">MONTANT</div>
                         <div className="px-3 py-2 font-bold text-sm text-left">NOTES</div>
                       </div>
@@ -1018,7 +1086,7 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className="grid grid-cols-5 border-b border-border hover:bg-accent/50 transition-colors group"
+                            className="grid grid-cols-6 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
                             <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
                               <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
@@ -1057,6 +1125,28 @@ const Accounting = () => {
                                 }
                               }}
                             />
+                            <div className="px-2 py-2 border-r border-border">
+                              <Select
+                                value={(transaction as any).product_description || ""}
+                                onValueChange={(value) => {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    product_description: value 
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 border-0 focus:ring-1 bg-transparent text-sm">
+                                  <SelectValue placeholder="Sélectionner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PRODUCT_DESCRIPTIONS_EXPENSE.map((desc) => (
+                                    <SelectItem key={desc} value={desc}>
+                                      {desc}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             <Input
                               key={`amount-${transaction.id}`}
                               type="number"
@@ -1103,6 +1193,7 @@ const Accounting = () => {
                               category: category,
                               client_name: "",
                               service_description: "",
+                              product_description: "",
                               amount: 0,
                               amount_received: 0,
                               payment_method: "",
@@ -1119,8 +1210,8 @@ const Accounting = () => {
 
                     {/* Total Row - Subtle Purple */}
                     <div className="bg-purple-100 dark:bg-purple-950/30 text-foreground border-x border-b-2 border-border">
-                      <div className="grid grid-cols-5">
-                        <div className="px-3 py-2 col-span-3 font-bold uppercase text-sm">
+                      <div className="grid grid-cols-6">
+                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
                           TOTAL {category}
                         </div>
                         <div className="px-3 py-2 text-right font-bold text-sm border-l border-border">
@@ -1209,6 +1300,26 @@ const Accounting = () => {
                       }
                       placeholder="Description de la dépense"
                     />
+                  </div>
+                  <div>
+                    <Label>Description du Produit</Label>
+                    <Select
+                      value={formData.product_description}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, product_description: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRODUCT_DESCRIPTIONS_EXPENSE.map((desc) => (
+                          <SelectItem key={desc} value={desc}>
+                            {desc}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label>Fournisseur</Label>

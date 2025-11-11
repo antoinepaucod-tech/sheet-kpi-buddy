@@ -9,6 +9,7 @@ export interface AccountingTransaction {
   category: string;
   client_name?: string;
   service_description?: string;
+  product_description?: string;
   amount: number;
   amount_received?: number;
   payment_method?: string;

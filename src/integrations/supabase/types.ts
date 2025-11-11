@@ -27,6 +27,7 @@ export type Database = {
           month_name: string
           notes: string | null
           payment_method: string | null
+          product_description: string | null
           service_description: string | null
           transaction_date: string
           transaction_type: string
@@ -45,6 +46,7 @@ export type Database = {
           month_name: string
           notes?: string | null
           payment_method?: string | null
+          product_description?: string | null
           service_description?: string | null
           transaction_date: string
           transaction_type: string
@@ -63,6 +65,7 @@ export type Database = {
           month_name?: string
           notes?: string | null
           payment_method?: string | null
+          product_description?: string | null
           service_description?: string | null
           transaction_date?: string
           transaction_type?: string

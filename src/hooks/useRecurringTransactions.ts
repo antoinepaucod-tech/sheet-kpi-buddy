@@ -8,6 +8,7 @@ export interface RecurringTransaction {
   category: string;
   client_name?: string;
   service_description?: string;
+  product_description?: string;
   amount: number;
   amount_received?: number;
   payment_method?: string;
@@ -126,6 +127,7 @@ export const useRecurringTransactions = () => {
           category: rec.category,
           client_name: rec.client_name,
           service_description: rec.service_description,
+          product_description: rec.product_description,
           amount: rec.amount,
           amount_received: rec.amount_received || 0,
           payment_method: rec.payment_method,
