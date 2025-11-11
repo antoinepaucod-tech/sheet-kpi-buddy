@@ -14,7 +14,7 @@ import {
 
 const menuItems = [
   { title: "KPI Revenu", url: "/", icon: BarChart3 },
-  { title: "KPI Cours", url: "/kpi-courses", icon: Calendar },
+  { title: "KPI Cours", url: "/course-kpi", icon: Calendar },
   { title: "Parcours Client", url: "/customer-journey", icon: Users },
   { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
 ];
