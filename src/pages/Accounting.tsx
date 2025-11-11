@@ -361,80 +361,73 @@ const Accounting = () => {
           <TabsContent value="dashboard" className="space-y-6">
             {/* KPIs Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+              <Card className="border-l-4 border-l-emerald-400">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-green-900 dark:text-green-100">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
                     Revenus Totaux
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+                  <p className="text-3xl font-bold text-foreground">
                     CHF {summary.totalRevenue.toFixed(2)}
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {summary.revenueCount} transactions
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+              <Card className="border-l-4 border-l-blue-400">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
                     Revenus Encaissés
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                  <p className="text-3xl font-bold text-foreground">
                     CHF {summary.totalRevenueReceived.toFixed(2)}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Différence: CHF {(summary.totalRevenue - summary.totalRevenueReceived).toFixed(2)}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800">
+              <Card className="border-l-4 border-l-amber-400">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
                     Dépenses Totales
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">
+                  <p className="text-3xl font-bold text-foreground">
                     CHF {summary.totalExpenses.toFixed(2)}
                   </p>
-                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {summary.expenseCount} transactions
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className={summary.profit >= 0 
-                ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
-                : "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
-              }>
+              <Card className={`border-l-4 ${
+                summary.profit >= 0 
+                  ? "border-l-emerald-500"
+                  : "border-l-rose-500"
+              }`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className={`text-sm font-medium ${
-                    summary.profit >= 0 
-                      ? "text-emerald-900 dark:text-emerald-100"
-                      : "text-red-900 dark:text-red-100"
-                  }`}>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
                     Bénéfice / Perte
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className={`text-3xl font-bold ${
                     summary.profit >= 0 
-                      ? "text-emerald-700 dark:text-emerald-300"
-                      : "text-red-700 dark:text-red-300"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-rose-600 dark:text-rose-400"
                   }`}>
                     CHF {summary.profit.toFixed(2)}
                   </p>
-                  <p className={`text-xs mt-1 ${
-                    summary.profit >= 0 
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-red-600 dark:text-red-400"
-                  }`}>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {summary.profit >= 0 ? "Profit" : "Perte"}
                   </p>
                 </CardContent>
@@ -443,15 +436,16 @@ const Accounting = () => {
 
             {/* Detailed Revenue Breakdown */}
             <Card>
-              <CardHeader className="bg-green-50 dark:bg-green-950">
-                <CardTitle className="text-green-900 dark:text-green-100">
-                  📊 Revenus par Catégorie
+              <CardHeader className="border-b bg-muted/30">
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <span className="text-emerald-500">📊</span>
+                  Revenus par Catégorie
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="border-b-2">
                       <TableHead className="font-bold">Catégorie</TableHead>
                       <TableHead className="text-right font-bold">Nb</TableHead>
                       <TableHead className="text-right font-bold">Montant Total</TableHead>
@@ -462,8 +456,8 @@ const Accounting = () => {
                   <TableBody>
                     {Object.entries(revenuesByCategory)
                       .sort((a, b) => b[1].amount - a[1].amount)
-                      .map(([category, data]) => (
-                        <TableRow key={category} className="hover:bg-green-50 dark:hover:bg-green-950/30">
+                      .map(([category, data], index) => (
+                        <TableRow key={category} className={index % 2 === 0 ? "bg-muted/20" : ""}>
                           <TableCell className="font-medium">{category}</TableCell>
                           <TableCell className="text-right text-muted-foreground">
                             {data.count}
@@ -471,28 +465,28 @@ const Accounting = () => {
                           <TableCell className="text-right font-semibold">
                             CHF {data.amount.toFixed(2)}
                           </TableCell>
-                          <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
+                          <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
                             CHF {data.received.toFixed(2)}
                           </TableCell>
                           <TableCell className={`text-right font-medium ${
                             data.amount - data.received > 0 
-                              ? "text-orange-600 dark:text-orange-400" 
-                              : "text-green-600 dark:text-green-400"
+                              ? "text-amber-600 dark:text-amber-400" 
+                              : "text-emerald-600 dark:text-emerald-400"
                           }`}>
                             CHF {(data.amount - data.received).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
-                    <TableRow className="bg-green-100 dark:bg-green-900 font-bold border-t-2">
+                    <TableRow className="bg-muted/50 font-bold border-t-2">
                       <TableCell>TOTAL REVENUS</TableCell>
                       <TableCell className="text-right">{summary.revenueCount}</TableCell>
                       <TableCell className="text-right text-lg">
                         CHF {summary.totalRevenue.toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-right text-lg text-green-700 dark:text-green-300">
+                      <TableCell className="text-right text-lg text-emerald-600 dark:text-emerald-400">
                         CHF {summary.totalRevenueReceived.toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-right text-lg text-orange-700 dark:text-orange-300">
+                      <TableCell className="text-right text-lg text-amber-600 dark:text-amber-400">
                         CHF {(summary.totalRevenue - summary.totalRevenueReceived).toFixed(2)}
                       </TableCell>
                     </TableRow>
@@ -503,15 +497,16 @@ const Accounting = () => {
 
             {/* Detailed Expense Breakdown */}
             <Card>
-              <CardHeader className="bg-orange-50 dark:bg-orange-950">
-                <CardTitle className="text-orange-900 dark:text-orange-100">
-                  💸 Dépenses par Catégorie
+              <CardHeader className="border-b bg-muted/30">
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <span className="text-amber-500">💸</span>
+                  Dépenses par Catégorie
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="border-b-2">
                       <TableHead className="font-bold">Catégorie</TableHead>
                       <TableHead className="text-right font-bold">Nb</TableHead>
                       <TableHead className="text-right font-bold">Montant Total</TableHead>
@@ -520,21 +515,21 @@ const Accounting = () => {
                   <TableBody>
                     {Object.entries(expensesByCategory)
                       .sort((a, b) => b[1].amount - a[1].amount)
-                      .map(([category, data]) => (
-                        <TableRow key={category} className="hover:bg-orange-50 dark:hover:bg-orange-950/30">
+                      .map(([category, data], index) => (
+                        <TableRow key={category} className={index % 2 === 0 ? "bg-muted/20" : ""}>
                           <TableCell className="font-medium">{category}</TableCell>
                           <TableCell className="text-right text-muted-foreground">
                             {data.count}
                           </TableCell>
-                          <TableCell className="text-right font-semibold text-orange-600 dark:text-orange-400">
+                          <TableCell className="text-right font-semibold text-amber-600 dark:text-amber-400">
                             CHF {data.amount.toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
-                    <TableRow className="bg-orange-100 dark:bg-orange-900 font-bold border-t-2">
+                    <TableRow className="bg-muted/50 font-bold border-t-2">
                       <TableCell>TOTAL DÉPENSES</TableCell>
                       <TableCell className="text-right">{summary.expenseCount}</TableCell>
-                      <TableCell className="text-right text-lg text-orange-700 dark:text-orange-300">
+                      <TableCell className="text-right text-lg text-amber-600 dark:text-amber-400">
                         CHF {summary.totalExpenses.toFixed(2)}
                       </TableCell>
                     </TableRow>
