@@ -135,90 +135,6 @@ export function MemberActivityDialog({
             </div>
           </Card>
 
-          {/* Commentaires Section */}
-          <Card className="p-4 bg-accent/10">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Commentaires
-            </h3>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="Ajouter un commentaire..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={2}
-                  className="flex-1"
-                />
-                <Button onClick={handleAddComment} className="self-end">
-                  Ajouter
-                </Button>
-              </div>
-
-              {comments.length > 0 ? (
-                <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="p-3 bg-background rounded-lg border">
-                      <p className="text-sm">{comment.comment}</p>
-                      <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
-                        <span>{comment.created_by}</span>
-                        <span>{format(parseISO(comment.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">Aucun commentaire</p>
-              )}
-            </div>
-          </Card>
-
-          {/* Historique Onboarding Timeline */}
-          <Card className="p-4 bg-muted/20">
-            <h3 className="font-semibold mb-4">Historique Onboarding</h3>
-            {history.length > 0 ? (
-              <div className="relative pl-6">
-                {/* Timeline line */}
-                <div className="absolute left-[11px] top-0 bottom-0 w-0.5 bg-border" />
-                
-                {/* Timeline items - reversed to show oldest at bottom */}
-                <div className="space-y-4">
-                  {[...history].reverse().map((item, index) => (
-                    <div key={item.id} className="relative">
-                      {/* Timeline dot */}
-                      <div className={`absolute left-[-23px] top-1 w-5 h-5 rounded-full border-2 ${
-                        item.new_value ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'
-                      }`} />
-                      
-                      <div className="bg-background p-3 rounded-lg border">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            {item.new_value ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-red-600" />
-                            )}
-                            <span className="font-medium text-sm">
-                              {getActionLabel(item.action_type)}
-                            </span>
-                          </div>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {format(parseISO(item.action_date), "dd/MM/yyyy HH:mm", { locale: fr })}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          {item.new_value ? 'Complété' : 'Décomplété'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">Aucun historique</p>
-            )}
-          </Card>
-
           <div className="space-y-3">
             <div className="flex gap-3">
               <Button
@@ -316,6 +232,84 @@ export function MemberActivityDialog({
               <p className="text-center text-muted-foreground py-8">Aucune donnée d'entraînement disponible</p>
             )}
           </div>
+
+          {/* Historique Onboarding Timeline */}
+          <Card className="p-4 bg-muted/20">
+            <h3 className="font-semibold mb-4">Historique Onboarding</h3>
+            {history.length > 0 ? (
+              <div className="relative pl-6">
+                {/* Timeline line */}
+                <div className="absolute left-[11px] top-0 bottom-0 w-0.5 bg-border" />
+                
+                {/* Timeline items - reversed to show oldest at bottom */}
+                <div className="space-y-4">
+                  {[...history].reverse().map((item) => (
+                    <div key={item.id} className="relative">
+                      {/* Timeline dot */}
+                      <div className="absolute left-[-23px] top-1 w-5 h-5 rounded-full border-2 bg-green-500 border-green-600" />
+                      
+                      <div className="bg-background p-3 rounded-lg border">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <span className="font-medium text-sm">
+                              {getActionLabel(item.action_type)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {format(parseISO(item.action_date), "dd/MM/yyyy HH:mm", { locale: fr })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 ml-6">
+                          Complété
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucun historique</p>
+            )}
+          </Card>
+
+          {/* Commentaires Section */}
+          <Card className="p-4 bg-accent/10">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Commentaires
+            </h3>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Ajouter un commentaire..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddComment} className="self-end">
+                  Ajouter
+                </Button>
+              </div>
+
+              {comments.length > 0 ? (
+                <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="p-3 bg-background rounded-lg border">
+                      <p className="text-sm">{comment.comment}</p>
+                      <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
+                        <span>{comment.created_by}</span>
+                        <span>{format(parseISO(comment.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">Aucun commentaire</p>
+              )}
+            </div>
+          </Card>
         </div>
       </DialogContent>
     </Dialog>

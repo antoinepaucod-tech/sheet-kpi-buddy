@@ -203,7 +203,7 @@ const CustomerJourney = () => {
   };
 
   const updateMember = async (id: string, field: string, value: any) => {
-    // Log onboarding changes to history
+    // Log onboarding changes to history (only when completing, not when unchecking)
     const onboardingFields = [
       'onboarding_bsport',
       'onboarding_hubfit', 
@@ -212,12 +212,12 @@ const CustomerJourney = () => {
       'session_introduction'
     ];
 
-    if (onboardingFields.includes(field)) {
+    if (onboardingFields.includes(field) && value === true) {
       const member = members.find(m => m.id === id);
       if (member) {
         const previousValue = member[field as keyof Member] as boolean;
         
-        // Log the change to history
+        // Log the change to history only if it's a completion (checked)
         await supabase
           .from('member_onboarding_history')
           .insert([{
