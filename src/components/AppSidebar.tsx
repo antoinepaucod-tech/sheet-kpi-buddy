@@ -16,8 +16,9 @@ const menuItems = [
   { title: "KPI Club", url: "/", icon: BarChart3 },
   { title: "Parcours Client", url: "/customer-journey", icon: Users },
   { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
-  { title: "Tutoriel", url: "/tutorial", icon: GraduationCap },
 ];
+
+const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap };
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -46,6 +47,25 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={tutorialItem.title}>
+                  <NavLink 
+                    to={tutorialItem.url} 
+                    className="flex items-center gap-3 hover:bg-accent/50 transition-colors"
+                    activeClassName="bg-accent text-accent-foreground font-medium"
+                  >
+                    <tutorialItem.icon className="h-5 w-5" />
+                    <span className={collapsed ? "sr-only" : ""}>{tutorialItem.title}</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
