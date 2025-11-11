@@ -200,6 +200,40 @@ const CourseKPI = () => {
     };
   };
 
+  const calculateInstructorStats = () => {
+    const instructorStats: Record<string, {
+      name: string;
+      totalCost: number;
+      avgFillRate: number;
+      courseCount: number;
+    }> = {};
+
+    courses.forEach(course => {
+      const instructor = course.instructor || "Non assigné";
+      
+      if (!instructorStats[instructor]) {
+        instructorStats[instructor] = {
+          name: instructor,
+          totalCost: 0,
+          avgFillRate: 0,
+          courseCount: 0,
+        };
+      }
+
+      instructorStats[instructor].totalCost += course.monthly_expenses || 0;
+      instructorStats[instructor].avgFillRate += course.attendance_rate;
+      instructorStats[instructor].courseCount += 1;
+    });
+
+    // Calculate average fill rate
+    Object.keys(instructorStats).forEach(key => {
+      const stat = instructorStats[key];
+      stat.avgFillRate = stat.courseCount > 0 ? stat.avgFillRate / stat.courseCount : 0;
+    });
+
+    return Object.values(instructorStats).sort((a, b) => b.totalCost - a.totalCost);
+  };
+
   const handleSubmit = () => {
     if (!formData.course_name || !formData.time_slot) {
       toast.error("Veuillez remplir tous les champs obligatoires");
@@ -405,6 +439,42 @@ const CourseKPI = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistiques par Coach</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Coach</TableHead>
+                      <TableHead>Nombre de Cours</TableHead>
+                      <TableHead>Coût Total</TableHead>
+                      <TableHead>Taux de Remplissage Moyen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {calculateInstructorStats().map((stat) => (
+                      <TableRow key={stat.name}>
+                        <TableCell className="font-medium">{stat.name}</TableCell>
+                        <TableCell>{stat.courseCount}</TableCell>
+                        <TableCell>CHF {stat.totalCost.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <span className={
+                            stat.avgFillRate >= 80 ? "text-green-600 font-medium" :
+                            stat.avgFillRate >= 60 ? "text-yellow-600 font-medium" :
+                            "text-red-600 font-medium"
+                          }>
+                            {stat.avgFillRate.toFixed(1)}%
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="course-templates" className="space-y-4">
