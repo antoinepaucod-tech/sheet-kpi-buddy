@@ -700,8 +700,10 @@ const CustomerJourney = () => {
 
                     return filteredMembers.map((member) => {
                       const week = parseInt(selectedView.replace("week-", ""));
-                      const trainings = getWeeklyTraining(member.id, week);
+                      const trainingsCalendarWeek = week; // calendar week if needed later
+                      const trainingsWeekData = weekData;
                       const memberWeek = getAbsoluteWeekForMember(member.contract_signed_date, weekData.weekStart);
+                      const trainings = memberWeek ? getWeeklyTraining(member.id, memberWeek) : 0;
                       
                       return (
                         <TableRow key={member.id}>
@@ -729,7 +731,7 @@ const CustomerJourney = () => {
                               <Select
                                 value={trainings.toString()}
                                 onValueChange={(value) =>
-                                  updateWeeklyTraining(member.id, week, parseInt(value))
+                                  updateWeeklyTraining(member.id, memberWeek ?? 0, parseInt(value))
                                 }
                               >
                                 <SelectTrigger

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -182,6 +182,9 @@ export default function KPIClient() {
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-2xl">Synthèse d'activité - {member.name}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Détails d'activité hebdomadaire et statistiques du membre {member.name}
+                </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-6 mt-4">
