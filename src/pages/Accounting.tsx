@@ -42,25 +42,19 @@ const MONTHS = [
 ];
 
 const REVENUE_CATEGORIES = [
-  "Coach Pass Mensuel",
-  "Coach Pass One Shot",
-  "Open Gym Mensuel",
-  "Open Gym Annuel",
-  "Unlimited Access Mensuel",
-  "Unlimited Access Annuel",
-  "Unlimited Access Duo Mensuel",
-  "Unlimited Access Duo Annuel",
-  "Unlimited Access Sans Engagement",
-  "Hybrid FULL",
-  "Offre 6 Mois",
-  "Offre 3 Mois",
-  "Pack 20 Sessions",
-  "Pack 10 Sessions",
-  "6 Weeks Challenge",
-  "PT - Personal Training",
-  "Retail",
-  "Fast Cash",
-  "Autre",
+  "THE COACH PASS MENSUEL",
+  "HUBFIT",
+  "VIRTUAL COACH",
+  "PT ANTOINE",
+  "OPEN GYM - PAIEMENT MENSUEL",
+  "OPEN GYM - PAIEMENT ANNUEL X1",
+  "UNLIMITED ACCESS - PAIEMENT MENSUEL",
+  "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL",
+  "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL",
+  "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1",
+  "OFFRE 6 MOIS - 499 CHF",
+  "OFFRE 3 MOIS",
+  "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL",
 ];
 
 const EXPENSE_CATEGORIES = [
@@ -561,21 +555,21 @@ const Accounting = () => {
 
                 return (
                   <Card key={category} className="overflow-hidden border-0 shadow-none">
-                    {/* Header Row - Red */}
-                    <div className="bg-[hsl(348,100%,50%)] text-white border border-border">
+                    {/* Header Row - Subtle Gray */}
+                    <div className="bg-muted/80 text-foreground border border-border">
                       <div className="grid grid-cols-7">
-                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">NOM DU SERVICE</div>
-                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">NOM</div>
-                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">Prénom</div>
-                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm">Prestation</div>
-                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm text-right">Montant</div>
-                        <div className="px-3 py-2 font-bold border-r border-white/20 text-sm text-center">État</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM DU SERVICE</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Prénom</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Prestation</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">Montant</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">État</div>
                         <div className="px-3 py-2 font-bold text-sm text-left">Réglé le</div>
                       </div>
                     </div>
 
-                    {/* Category Header - Cyan */}
-                    <div className="bg-[hsl(180,100%,70%)] text-black border-x border-b border-border">
+                    {/* Category Header - Soft Blue */}
+                    <div className="bg-blue-100 dark:bg-blue-950/30 text-foreground border-x border-b border-border">
                       <div className="px-3 py-2 font-bold uppercase text-sm">
                         {category}
                       </div>
@@ -664,10 +658,10 @@ const Accounting = () => {
                               step="0.1"
                               className={`px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-center font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 ${
                                 status === "paid" 
-                                  ? "bg-[hsl(120,60%,70%)] text-black" 
+                                  ? "bg-emerald-100 dark:bg-emerald-950/30 text-foreground" 
                                   : status === "pending"
-                                  ? "bg-[hsl(45,100%,70%)] text-black"
-                                  : "bg-[hsl(0,60%,70%)] text-black"
+                                  ? "bg-amber-100 dark:bg-amber-950/30 text-foreground"
+                                  : "bg-rose-100 dark:bg-rose-950/30 text-foreground"
                               }`}
                               value={transaction.amount_received || 0}
                               onBlur={(e) => {
@@ -723,24 +717,24 @@ const Accounting = () => {
                       </div>
                     </div>
 
-                    {/* Total Row - Magenta */}
-                    <div className="bg-[hsl(328,100%,70%)] text-black border-x border-b border-border">
+                    {/* Total Row - Subtle Purple */}
+                    <div className="bg-purple-100 dark:bg-purple-950/30 text-foreground border-x border-b border-border">
                       <div className="grid grid-cols-7">
                         <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
                           TOTAL {category}
                         </div>
-                        <div className="px-3 py-2 text-right font-bold text-sm border-l border-black/20">
+                        <div className="px-3 py-2 text-right font-bold text-sm border-l border-border">
                           {totalAmount.toFixed(1)}
                         </div>
-                        <div className="px-3 py-2 text-center font-bold text-sm border-l border-black/20">
+                        <div className="px-3 py-2 text-center font-bold text-sm border-l border-border">
                           {totalReceived.toFixed(1)}
                         </div>
-                        <div className="px-3 py-2 border-l border-black/20"></div>
+                        <div className="px-3 py-2 border-l border-border"></div>
                       </div>
                     </div>
 
-                    {/* Difference Row - Gray */}
-                    <div className="bg-muted/60 border-x border-b-2 border-border">
+                    {/* Difference Row - Light Gray */}
+                    <div className="bg-muted/40 border-x border-b-2 border-border">
                       <div className="grid grid-cols-7">
                         <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
                           DIFFERENCE
