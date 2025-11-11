@@ -657,7 +657,9 @@ const Accounting = () => {
                     <div className="border-x border-border">
                       {categoryTransactions.map((transaction, index) => {
                         const status = getPaymentStatus(transaction);
-                        const [lastName = "", firstName = ""] = (transaction.client_name || "").split(" ");
+                        const nameParts = (transaction.client_name || "").split(" ");
+                        const lastName = nameParts[0] || "";
+                        const firstName = nameParts.slice(1).join(" ") || "";
                         
                         return (
                           <div 
@@ -676,37 +678,39 @@ const Accounting = () => {
                               </Button>
                             </div>
                             <Input
+                              key={`lastname-${transaction.id}`}
                               className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none font-medium uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              value={lastName}
+                              defaultValue={lastName}
                               onBlur={(e) => {
-                                const newName = `${e.target.value} ${firstName}`.trim();
-                                if (newName !== transaction.client_name) {
+                                const newLastName = e.target.value.trim();
+                                const newFullName = `${newLastName} ${firstName}`.trim();
+                                if (newFullName !== transaction.client_name) {
                                   updateTransaction.mutate({ 
                                     id: transaction.id, 
-                                    client_name: newName 
+                                    client_name: newFullName 
                                   });
                                 }
                               }}
-                              onChange={(e) => {
-                                // Update locale mais pas de save automatique
-                              }}
                             />
                             <Input
+                              key={`firstname-${transaction.id}`}
                               className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none capitalize text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              value={firstName}
+                              defaultValue={firstName}
                               onBlur={(e) => {
-                                const newName = `${lastName} ${e.target.value}`.trim();
-                                if (newName !== transaction.client_name) {
+                                const newFirstName = e.target.value.trim();
+                                const newFullName = `${lastName} ${newFirstName}`.trim();
+                                if (newFullName !== transaction.client_name) {
                                   updateTransaction.mutate({ 
                                     id: transaction.id, 
-                                    client_name: newName 
+                                    client_name: newFullName 
                                   });
                                 }
                               }}
                             />
                             <Input
+                              key={`service-${transaction.id}`}
                               className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              value={transaction.service_description || category}
+                              defaultValue={transaction.service_description || category}
                               onBlur={(e) => {
                                 if (e.target.value !== transaction.service_description) {
                                   updateTransaction.mutate({ 
@@ -717,10 +721,11 @@ const Accounting = () => {
                               }}
                             />
                             <Input
+                              key={`amount-${transaction.id}`}
                               type="number"
                               step="0.1"
                               className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-right font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              value={transaction.amount}
+                              defaultValue={transaction.amount}
                               onBlur={(e) => {
                                 const newAmount = parseFloat(e.target.value) || 0;
                                 if (newAmount !== transaction.amount) {
@@ -732,6 +737,7 @@ const Accounting = () => {
                               }}
                             />
                             <Input
+                              key={`received-${transaction.id}`}
                               type="number"
                               step="0.1"
                               className={`px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-center font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 ${
@@ -741,10 +747,10 @@ const Accounting = () => {
                                   ? "bg-amber-100 dark:bg-amber-950/30 text-foreground"
                                   : "bg-rose-100 dark:bg-rose-950/30 text-foreground"
                               }`}
-                              value={transaction.amount_received || 0}
+                              defaultValue={transaction.amount_received || 0}
                               onBlur={(e) => {
                                 const newReceived = parseFloat(e.target.value) || 0;
-                                if (newReceived !== transaction.amount_received) {
+                                if (newReceived !== (transaction.amount_received || 0)) {
                                   updateTransaction.mutate({ 
                                     id: transaction.id, 
                                     amount_received: newReceived 
@@ -753,11 +759,12 @@ const Accounting = () => {
                               }}
                             />
                             <Input
+                              key={`notes-${transaction.id}`}
                               className="px-3 py-2 border-r-0 border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
-                              value={transaction.notes || ""}
+                              defaultValue={transaction.notes || ""}
                               placeholder="Notes..."
                               onBlur={(e) => {
-                                if (e.target.value !== transaction.notes) {
+                                if (e.target.value !== (transaction.notes || "")) {
                                   updateTransaction.mutate({ 
                                     id: transaction.id, 
                                     notes: e.target.value 
