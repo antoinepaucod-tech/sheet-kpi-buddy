@@ -1,4 +1,4 @@
-import { BarChart3, Users, TrendingUp, GraduationCap } from "lucide-react";
+import { BarChart3, Users, TrendingUp, GraduationCap, Calendar } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -14,8 +14,9 @@ import {
 
 const menuItems = [
   { title: "KPI Revenu", url: "/", icon: BarChart3 },
-  { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
+  { title: "KPI Cours", url: "/kpi-courses", icon: Calendar },
   { title: "Parcours Client", url: "/customer-journey", icon: Users },
+  { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
 ];
 
 const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap };

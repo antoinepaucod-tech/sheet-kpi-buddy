@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_kpis: {
+        Row: {
+          attendance_rate: number | null
+          course_name: string
+          created_at: string
+          day_of_week: string
+          id: string
+          instructor: string | null
+          max_capacity: number | null
+          month: number
+          month_name: string
+          monthly_expenses: number | null
+          time_slot: string
+          updated_at: string
+          week1_attendance: number | null
+          week2_attendance: number | null
+          week3_attendance: number | null
+          week4_attendance: number | null
+          week5_attendance: number | null
+          year: number
+        }
+        Insert: {
+          attendance_rate?: number | null
+          course_name: string
+          created_at?: string
+          day_of_week: string
+          id?: string
+          instructor?: string | null
+          max_capacity?: number | null
+          month: number
+          month_name: string
+          monthly_expenses?: number | null
+          time_slot: string
+          updated_at?: string
+          week1_attendance?: number | null
+          week2_attendance?: number | null
+          week3_attendance?: number | null
+          week4_attendance?: number | null
+          week5_attendance?: number | null
+          year: number
+        }
+        Update: {
+          attendance_rate?: number | null
+          course_name?: string
+          created_at?: string
+          day_of_week?: string
+          id?: string
+          instructor?: string | null
+          max_capacity?: number | null
+          month?: number
+          month_name?: string
+          monthly_expenses?: number | null
+          time_slot?: string
+          updated_at?: string
+          week1_attendance?: number | null
+          week2_attendance?: number | null
+          week3_attendance?: number | null
+          week4_attendance?: number | null
+          week5_attendance?: number | null
+          year?: number
+        }
+        Relationships: []
+      }
       customer_members: {
         Row: {
           contract_signed_date: string | null
