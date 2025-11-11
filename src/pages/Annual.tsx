@@ -4,6 +4,8 @@ import { MetricCard } from '@/components/MetricCard';
 import { KPIChart } from '@/components/KPIChart';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { VideoBackground } from '@/components/VideoBackground';
+import { VideoSettings } from '@/components/VideoSettings';
 import { 
   DollarSign, 
   Users, 
@@ -21,10 +23,16 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 const Annual = () => {
   const { annualData, monthlyData, isLoading } = useAnnualKPIData();
   const { t } = useTranslations();
+  
+  const [videoConfig, setVideoConfig] = useState(() => {
+    const saved = localStorage.getItem("video-config");
+    return saved ? JSON.parse(saved) : { url: "", overlayOpacity: 0.7, enabled: false };
+  });
 
   const formatCurrency = (value: number) => {
     return `${t('currency')} ${new Intl.NumberFormat('fr-CH', {
@@ -114,26 +122,40 @@ const Annual = () => {
 
   return (
     <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 space-y-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-4xl font-bold text-heading tracking-tight">
-                {t('annual.title')} {annualData.year}
-              </h1>
-              <p className="text-muted-foreground mt-2">{t('annual.subtitle')}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link to="/">
-                <Button variant="outline">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  {t('header.monthlyView')}
-                </Button>
-              </Link>
-              <LanguageToggle />
-              <ThemeToggle />
+      {/* Header */}
+      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10">
+        <VideoBackground 
+          videoUrl="/videos/fitness-background.mp4"
+          overlayOpacity={0.4}
+        >
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex-1">
+                <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
+                  {t('annual.title')} {annualData.year}
+                </h1>
+                <p className="text-muted-foreground text-sm tracking-wide">
+                  {t('annual.subtitle')}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link to="/">
+                  <Button variant="outline" className="border-foreground/20 hover:bg-foreground/5">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t('header.monthlyView')}
+                  </Button>
+                </Link>
+                <VideoSettings onConfigChange={setVideoConfig} />
+                <LanguageToggle />
+                <ThemeToggle />
+              </div>
             </div>
           </div>
+        </VideoBackground>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-8 space-y-10">
 
           {/* Key Metrics Overview */}
           <section className="space-y-6">
@@ -544,7 +566,7 @@ const Annual = () => {
               />
             </div>
           </section>
-        </div>
+        </main>
     </div>
   );
 };
