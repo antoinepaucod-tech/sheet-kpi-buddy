@@ -575,9 +575,7 @@ const CustomerJourney = () => {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className={cn(
-                            isExited ? "bg-red-500/10" : "bg-green-500/10"
-                          )}>
+                          <TableCell>
                             <div className="flex items-center gap-1">
                               <Popover>
                                 <PopoverTrigger asChild>
@@ -585,7 +583,8 @@ const CustomerJourney = () => {
                                     variant="outline"
                                     className={cn(
                                       "w-[180px] justify-start text-left font-normal",
-                                      !member.exit_date && "text-muted-foreground"
+                                      !member.exit_date && "text-muted-foreground",
+                                      isExited ? "bg-red-500/10" : "bg-green-500/10"
                                     )}
                                   >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
