@@ -27,7 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, RefreshCw, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -36,6 +36,13 @@ import { useRecurringTransactions, type RecurringTransaction } from "@/hooks/use
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -845,13 +852,37 @@ const Accounting = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Date *</Label>
-                    <Input
-                      type="date"
-                      value={formData.transaction_date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, transaction_date: e.target.value })
-                      }
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !formData.transaction_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formData.transaction_date ? (
+                            format(new Date(formData.transaction_date), "dd/MM/yyyy")
+                          ) : (
+                            <span>Sélectionner une date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formData.transaction_date ? new Date(formData.transaction_date) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setFormData({ ...formData, transaction_date: format(date, "yyyy-MM-dd") });
+                            }
+                          }}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div>
                     <Label>Catégorie *</Label>
@@ -1117,13 +1148,37 @@ const Accounting = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Date *</Label>
-                    <Input
-                      type="date"
-                      value={formData.transaction_date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, transaction_date: e.target.value })
-                      }
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !formData.transaction_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formData.transaction_date ? (
+                            format(new Date(formData.transaction_date), "dd/MM/yyyy")
+                          ) : (
+                            <span>Sélectionner une date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formData.transaction_date ? new Date(formData.transaction_date) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setFormData({ ...formData, transaction_date: format(date, "yyyy-MM-dd") });
+                            }
+                          }}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div>
                     <Label>Catégorie *</Label>
