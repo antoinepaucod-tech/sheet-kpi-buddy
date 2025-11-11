@@ -3,13 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { startOfMonth, subMonths, parseISO, differenceInWeeks, differenceInMonths, format, startOfWeek, addWeeks } from "date-fns";
-import { fr } from "date-fns/locale";
-import { ExternalLink } from "lucide-react";
+import { MemberActivityDialog } from "@/components/MemberActivityDialog";
+import { subMonths, differenceInWeeks, differenceInMonths, parseISO } from "date-fns";
 
 export default function KPIClient() {
   const navigate = useNavigate();
@@ -167,137 +164,14 @@ export default function KPIClient() {
         </div>
       </Card>
 
-      {selectedMemberId && (() => {
-        const member = members.find(m => m.id === selectedMemberId);
-        const memberStat = memberStats.find(s => s.id === selectedMemberId);
-        const memberWeeklyData = weeklyTrainings
-          .filter(wt => wt.member_id === selectedMemberId)
-          .sort((a, b) => b.week_number - a.week_number)
-          .slice(0, 12);
-
-        if (!member || !memberStat) return null;
-
-        return (
-          <Dialog open={true} onOpenChange={() => setSelectedMemberId(null)}>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-2xl">Synthèse d'activité - {member.name}</DialogTitle>
-                <DialogDescription className="sr-only">
-                  Détails d'activité hebdomadaire et statistiques du membre {member.name}
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-6 mt-4">
-                <Card className="p-4 bg-muted/30">
-                  <h3 className="font-semibold mb-3">Informations Générales</h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Abonnement</p>
-                      <p className="font-medium">{member.membership}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Date de signature</p>
-                      <p className="font-medium">
-                        {member.contract_signed_date 
-                          ? format(parseISO(member.contract_signed_date), "dd MMMM yyyy", { locale: fr })
-                          : "Non définie"}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-4 bg-primary/5">
-                  <h3 className="font-semibold mb-3">Statistiques (12 derniers mois)</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Total</p>
-                      <p className="text-2xl font-bold text-primary">{memberStat.totalTrainings}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Moy. / Mois</p>
-                      <p className="text-2xl font-bold">{memberStat.averagePerMonth.toFixed(1)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Moy. / Semaine</p>
-                      <p className="text-2xl font-bold">{memberStat.averagePerWeek.toFixed(1)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Semaines</p>
-                      <p className="text-2xl font-bold">{memberStat.weeksSinceSignature}</p>
-                    </div>
-                  </div>
-                </Card>
-
-                <div>
-                  <h3 className="font-semibold mb-3">Activité Hebdomadaire (12 dernières semaines)</h3>
-                  {memberWeeklyData.length > 0 ? (
-                    <div className="space-y-2">
-                      {memberWeeklyData.map((wt) => (
-                        <div key={wt.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group">
-                          <span className="text-sm font-medium">Semaine {wt.week_number}</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-lg font-bold">{wt.trainings_count}</span>
-                            <div 
-                              className={`w-3 h-3 rounded-full ${
-                                wt.trainings_count >= 3 ? "bg-green-500" :
-                                wt.trainings_count === 2 ? "bg-yellow-500" :
-                                wt.trainings_count === 1 ? "bg-orange-500" :
-                                "bg-red-500"
-                              }`}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => {
-                                if (!member.contract_signed_date) return;
-                                
-                                // Calculate the actual date of this member's relative week
-                                const signatureDate = parseISO(member.contract_signed_date);
-                                const memberWeekStartDate = addWeeks(signatureDate, wt.week_number - 1);
-                                
-                                // Find which calendar year this week belongs to
-                                const targetYear = memberWeekStartDate.getFullYear();
-                                
-                                // Get the first Monday of that year
-                                const jan1 = new Date(targetYear, 0, 1);
-                                const firstMonday = startOfWeek(jan1, { weekStartsOn: 1 });
-                                
-                                // Calculate which calendar week number this is
-                                const memberWeekMonday = startOfWeek(memberWeekStartDate, { weekStartsOn: 1 });
-                                const calendarWeek = Math.floor(differenceInWeeks(memberWeekMonday, firstMonday)) + 1;
-                                
-                                console.log('Navigation Debug:', {
-                                  memberName: member.name,
-                                  relativeWeek: wt.week_number,
-                                  signatureDate: signatureDate.toISOString(),
-                                  memberWeekStartDate: memberWeekStartDate.toISOString(),
-                                  targetYear,
-                                  firstMonday: firstMonday.toISOString(),
-                                  memberWeekMonday: memberWeekMonday.toISOString(),
-                                  calendarWeek
-                                });
-                                
-                                // Navigate with year and calendar week
-                                navigate(`/customer-journey?week=${calendarWeek}&year=${targetYear}&memberId=${selectedMemberId}`);
-                                setSelectedMemberId(null);
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-muted-foreground py-8">Aucune donnée d'entraînement disponible</p>
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        );
-      })()}
+      <MemberActivityDialog
+        member={members.find(m => m.id === selectedMemberId) || null}
+        weeklyTrainings={weeklyTrainings}
+        onClose={() => setSelectedMemberId(null)}
+        onNavigateToWeek={(week, year, memberId) => {
+          navigate(`/customer-journey?week=${week}&year=${year}&memberId=${memberId}`);
+        }}
+      />
     </div>
   );
 }

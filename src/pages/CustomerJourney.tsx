@@ -6,6 +6,7 @@ import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 import {
   Table,
   TableBody,
@@ -52,9 +53,11 @@ const CustomerJourney = () => {
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [memberStatus, setMemberStatus] = useState<"active" | "exited" | "all">("active");
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   
   const {
     members,
+    weeklyTrainings,
     isLoading,
     addMember: addMemberToDb,
     updateMember: updateMemberInDb,
@@ -503,13 +506,12 @@ const CustomerJourney = () => {
                             {index + 1}
                           </TableCell>
                           <TableCell>
-                            <Input
-                              value={member.name}
-                              onChange={(e) =>
-                                updateMember(member.id, "name", e.target.value)
-                              }
-                              className="min-w-[150px]"
-                            />
+                            <span 
+                              className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
+                              onClick={() => setSelectedMemberId(member.id)}
+                            >
+                              {member.name}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <Select
@@ -707,7 +709,14 @@ const CustomerJourney = () => {
                       
                       return (
                         <TableRow key={member.id}>
-                          <TableCell className="font-medium">{member.name}</TableCell>
+                          <TableCell>
+                            <span 
+                              className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
+                              onClick={() => setSelectedMemberId(member.id)}
+                            >
+                              {member.name}
+                            </span>
+                          </TableCell>
                           <TableCell>{member.membership}</TableCell>
                           <TableCell className="text-center">
                             {memberWeek !== null && memberWeek > 0 ? (
@@ -760,6 +769,16 @@ const CustomerJourney = () => {
             </div>
           )}
         </Card>
+
+        <MemberActivityDialog
+          member={members.find(m => m.id === selectedMemberId) || null}
+          weeklyTrainings={weeklyTrainings}
+          onClose={() => setSelectedMemberId(null)}
+          onNavigateToWeek={(week, year) => {
+            setSelectedYear(year);
+            setSelectedView(`week-${week}`);
+          }}
+        />
       </div>
     </div>
   );
