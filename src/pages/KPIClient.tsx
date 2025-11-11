@@ -1,11 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { startOfMonth, subMonths, parseISO, differenceInWeeks, differenceInMonths } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { startOfMonth, subMonths, parseISO, differenceInWeeks, differenceInMonths, format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export default function KPIClient() {
   const { members, weeklyTrainings, isLoading } = useCustomerMembers();
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   const memberStats = useMemo(() => {
     const now = new Date();
@@ -97,7 +100,12 @@ export default function KPIClient() {
             ) : (
               sortedStats.map((stat) => (
                 <TableRow key={stat.id}>
-                  <TableCell className="font-medium">{stat.name}</TableCell>
+                  <TableCell 
+                    className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
+                    onClick={() => setSelectedMemberId(stat.id)}
+                  >
+                    {stat.name}
+                  </TableCell>
                   <TableCell className="text-right">{stat.totalTrainings}</TableCell>
                   <TableCell className="text-right">{stat.averagePerMonth.toFixed(1)}</TableCell>
                   <TableCell className="text-right">{stat.averagePerWeek.toFixed(1)}</TableCell>
@@ -135,6 +143,95 @@ export default function KPIClient() {
           </div>
         </div>
       </Card>
+
+      {selectedMemberId && (() => {
+        const member = members.find(m => m.id === selectedMemberId);
+        const memberStat = memberStats.find(s => s.id === selectedMemberId);
+        const memberWeeklyData = weeklyTrainings
+          .filter(wt => wt.member_id === selectedMemberId)
+          .sort((a, b) => b.week_number - a.week_number)
+          .slice(0, 12);
+
+        if (!member || !memberStat) return null;
+
+        return (
+          <Dialog open={true} onOpenChange={() => setSelectedMemberId(null)}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl">Synthèse d'activité - {member.name}</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-6 mt-4">
+                <Card className="p-4 bg-muted/30">
+                  <h3 className="font-semibold mb-3">Informations Générales</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Abonnement</p>
+                      <p className="font-medium">{member.membership}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Date de signature</p>
+                      <p className="font-medium">
+                        {member.contract_signed_date 
+                          ? format(parseISO(member.contract_signed_date), "dd MMMM yyyy", { locale: fr })
+                          : "Non définie"}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-4 bg-primary/5">
+                  <h3 className="font-semibold mb-3">Statistiques (12 derniers mois)</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-2xl font-bold text-primary">{memberStat.totalTrainings}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Moy. / Mois</p>
+                      <p className="text-2xl font-bold">{memberStat.averagePerMonth.toFixed(1)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Moy. / Semaine</p>
+                      <p className="text-2xl font-bold">{memberStat.averagePerWeek.toFixed(1)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Semaines</p>
+                      <p className="text-2xl font-bold">{memberStat.weeksSinceSignature}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                <div>
+                  <h3 className="font-semibold mb-3">Activité Hebdomadaire (12 dernières semaines)</h3>
+                  {memberWeeklyData.length > 0 ? (
+                    <div className="space-y-2">
+                      {memberWeeklyData.map((wt) => (
+                        <div key={wt.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                          <span className="text-sm font-medium">Semaine {wt.week_number}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold">{wt.trainings_count}</span>
+                            <div 
+                              className={`w-3 h-3 rounded-full ${
+                                wt.trainings_count >= 3 ? "bg-green-500" :
+                                wt.trainings_count === 2 ? "bg-yellow-500" :
+                                wt.trainings_count === 1 ? "bg-orange-500" :
+                                "bg-red-500"
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-8">Aucune donnée d'entraînement disponible</p>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
     </div>
   );
 }
