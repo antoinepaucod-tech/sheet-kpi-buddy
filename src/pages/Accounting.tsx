@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAccountingTransactions, type AccountingTransaction } from "@/hooks/useAccountingTransactions";
@@ -190,8 +191,51 @@ const Accounting = () => {
     setIsRecurringDialogOpen(true);
   };
 
-  const handleGenerateMonth = () => {
-    generateMonthlyTransactions.mutate({ year: selectedYear, month: selectedMonth });
+  const handleCopyMonth = async (sourceYear: number, sourceMonth: number) => {
+    try {
+      const { data: sourceTransactions, error } = await supabase
+        .from("accounting_transactions")
+        .select("*")
+        .eq("year", sourceYear)
+        .eq("month", sourceMonth + 1);
+
+      if (error) throw error;
+
+      if (!sourceTransactions || sourceTransactions.length === 0) {
+        toast.error("Aucune transaction à copier");
+        return;
+      }
+
+      // Copier les transactions vers le mois actuel
+      const newTransactions = sourceTransactions.map(t => ({
+        transaction_date: t.transaction_date,
+        transaction_type: t.transaction_type,
+        category: t.category,
+        client_name: t.client_name,
+        service_description: t.service_description,
+        amount: t.amount,
+        amount_received: t.amount_received,
+        payment_method: t.payment_method,
+        notes: t.notes,
+        year: selectedYear,
+        month: selectedMonth + 1,
+        month_name: MONTHS[selectedMonth],
+      }));
+
+      const { error: insertError } = await supabase
+        .from("accounting_transactions")
+        .insert(newTransactions);
+
+      if (insertError) throw insertError;
+
+      toast.success(`${sourceTransactions.length} transactions copiées`);
+      
+      // Rafraîchir les données
+      window.location.reload();
+    } catch (error) {
+      toast.error("Erreur lors de la copie");
+      console.error(error);
+    }
   };
 
   const handleSubmit = () => {
@@ -340,24 +384,60 @@ const Accounting = () => {
             </SelectContent>
           </Select>
 
-          <Button 
-            onClick={handleGenerateMonth}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Générer le Mois
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Copier depuis un autre mois
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Copier les transactions d'un autre mois</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Mois source</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      onValueChange={(value) => {
+                        const [sourceYear, sourceMonth] = value.split('-');
+                        handleCopyMonth(parseInt(sourceYear), parseInt(sourceMonth));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un mois" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[2023, 2024, 2025, 2026].map((year) =>
+                          MONTHS.map((month, monthIndex) => (
+                            <SelectItem 
+                              key={`${year}-${monthIndex}`} 
+                              value={`${year}-${monthIndex}`}
+                              disabled={year === selectedYear && monthIndex === selectedMonth}
+                            >
+                              {month} {year}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Les transactions du mois source seront copiées vers {MONTHS[selectedMonth]} {selectedYear}
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <Tabs defaultValue="dashboard" className="w-full">
+        <Tabs defaultValue="revenues" className="w-full">
           <TabsList>
-            <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="revenues">Revenus</TabsTrigger>
             <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+            <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="unpaid">Impayés ({unpaidTransactions.length})</TabsTrigger>
-            <TabsTrigger value="recurring">Récurrences</TabsTrigger>
-            <TabsTrigger value="all">Toutes les Transactions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -542,10 +622,8 @@ const Accounting = () => {
           </TabsContent>
 
           <TabsContent value="revenues" className="space-y-6">
-            {/* Revenue Tables by Category */}
-            {Object.entries(revenuesByCategory)
-              .sort((a, b) => b[1].amount - a[1].amount)
-              .map(([category]) => {
+            {/* Revenue Tables by Category - Show ALL categories */}
+            {REVENUE_CATEGORIES.map((category) => {
                 const categoryTransactions = transactions
                   .filter((t) => t.transaction_type === "revenue" && t.category === category);
                 
