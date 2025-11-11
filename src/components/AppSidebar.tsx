@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "KPI Club", url: "/", icon: BarChart3 },
+  { title: "KPI Revenu", url: "/", icon: BarChart3 },
   { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
   { title: "Parcours Client", url: "/customer-journey", icon: Users },
 ];
