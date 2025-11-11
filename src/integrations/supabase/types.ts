@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       customer_members: {
         Row: {
+          contract_signed_date: string | null
           created_at: string
           id: string
           membership: string
@@ -28,6 +29,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contract_signed_date?: string | null
           created_at?: string
           id?: string
           membership: string
@@ -40,6 +42,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contract_signed_date?: string | null
           created_at?: string
           id?: string
           membership?: string

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -17,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -153,56 +161,86 @@ const CustomerJourney = () => {
           {selectedView === "index" ? (
             <div className="rounded-md border overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
-                    <TableHead className="min-w-[200px]">Type De Membership</TableHead>
-                    <TableHead className="text-center">Onboarding Bsport</TableHead>
-                    <TableHead className="text-center">Onboarding Hubfit</TableHead>
-                    <TableHead className="text-center">Onboarding Nutrition</TableHead>
-                    <TableHead className="text-center">Questionnaire Coaching</TableHead>
-                    <TableHead className="text-center">Session Introduction Club</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.length === 0 ? (
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        Aucun membre pour le moment. Ajoutez-en un pour commencer.
-                      </TableCell>
+                      <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
+                      <TableHead className="min-w-[200px]">Type De Membership</TableHead>
+                      <TableHead className="min-w-[180px]">Date Signature Contrat</TableHead>
+                      <TableHead className="text-center">Onboarding Bsport</TableHead>
+                      <TableHead className="text-center">Onboarding Hubfit</TableHead>
+                      <TableHead className="text-center">Onboarding Nutrition</TableHead>
+                      <TableHead className="text-center">Questionnaire Coaching</TableHead>
+                      <TableHead className="text-center">Session Introduction Club</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    members.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          <Input
-                            value={member.name}
-                            onChange={(e) =>
-                              updateMember(member.id, "name", e.target.value)
-                            }
-                            className="min-w-[150px]"
-                          />
+                  </TableHeader>
+                  <TableBody>
+                    {members.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                          Aucun membre pour le moment. Ajoutez-en un pour commencer.
                         </TableCell>
-                        <TableCell>
-                          <Select
-                            value={member.membership}
-                            onValueChange={(value) =>
-                              updateMember(member.id, "membership", value)
-                            }
-                          >
-                            <SelectTrigger className="min-w-[180px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-background border shadow-lg z-50">
-                              {membershipTypes.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      members.map((member) => (
+                        <TableRow key={member.id}>
+                          <TableCell>
+                            <Input
+                              value={member.name}
+                              onChange={(e) =>
+                                updateMember(member.id, "name", e.target.value)
+                              }
+                              className="min-w-[150px]"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={member.membership}
+                              onValueChange={(value) =>
+                                updateMember(member.id, "membership", value)
+                              }
+                            >
+                              <SelectTrigger className="min-w-[180px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border shadow-lg z-50">
+                                {membershipTypes.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-[180px] justify-start text-left font-normal",
+                                    !member.contract_signed_date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {member.contract_signed_date
+                                    ? format(new Date(member.contract_signed_date), "dd/MM/yyyy")
+                                    : "Sélectionner"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={member.contract_signed_date ? new Date(member.contract_signed_date) : undefined}
+                                  onSelect={(date) =>
+                                    updateMember(member.id, "contract_signed_date", date?.toISOString().split('T')[0] || null)
+                                  }
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
                             checked={member.onboarding_bsport}
