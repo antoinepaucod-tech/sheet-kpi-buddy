@@ -33,6 +33,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInstructors, type Instructor } from "@/hooks/useInstructors";
+import { useCourseTemplates } from "@/hooks/useCourseTemplates";
+import { useScheduleTemplates } from "@/hooks/useScheduleTemplates";
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -78,17 +80,33 @@ const CourseKPI = () => {
     name: "",
     hourly_rate: 0,
   });
+  const [isCourseTemplateDialogOpen, setIsCourseTemplateDialogOpen] = useState(false);
+  const [courseTemplateFormData, setCourseTemplateFormData] = useState({ name: "" });
+  const [isScheduleTemplateDialogOpen, setIsScheduleTemplateDialogOpen] = useState(false);
+  const [scheduleTemplateFormData, setScheduleTemplateFormData] = useState({
+    day_of_week: "Lundi",
+    time_slot: "",
+    course_name: "",
+    instructor_name: "",
+  });
   
   const [formData, setFormData] = useState({
     course_name: "",
     day_of_week: "Lundi",
     time_slot: "",
     instructor: "",
-    max_capacity: 15,
+    max_capacity: 13,
   });
 
   const queryClient = useQueryClient();
   const { instructors, createInstructor, updateInstructor, deleteInstructor } = useInstructors();
+  const { courseTemplates, createTemplate, updateTemplate, deleteTemplate } = useCourseTemplates();
+  const { 
+    scheduleTemplates, 
+    createTemplate: createScheduleTemplate, 
+    updateTemplate: updateScheduleTemplate, 
+    deleteTemplate: deleteScheduleTemplate 
+  } = useScheduleTemplates();
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["course-kpis", selectedYear, selectedMonth],
@@ -150,7 +168,7 @@ const CourseKPI = () => {
       day_of_week: "Lundi",
       time_slot: "",
       instructor: "",
-      max_capacity: 15,
+      max_capacity: 13,
     });
     setEditingCourse(null);
   };
@@ -161,6 +179,22 @@ const CourseKPI = () => {
       hourly_rate: 0,
     });
     setEditingInstructor(null);
+  };
+
+  const calculateKPIs = () => {
+    const totalCourses = courses.length;
+    const totalExpenses = courses.reduce((sum, c) => sum + (c.monthly_expenses || 0), 0);
+    const avgAttendance = courses.length > 0 
+      ? courses.reduce((sum, c) => sum + c.attendance_rate, 0) / courses.length 
+      : 0;
+    const totalCapacity = courses.reduce((sum, c) => sum + c.max_capacity, 0);
+    
+    return {
+      totalCourses,
+      totalExpenses,
+      avgAttendance,
+      totalCapacity,
+    };
   };
 
   const handleSubmit = () => {
@@ -297,15 +331,23 @@ const CourseKPI = () => {
     });
   };
 
-  const initializeScheduleMutation = useMutation({
-    mutationFn: async () => {
-      const defaultSchedule = getDefaultSchedule();
-      const coursesToCreate = defaultSchedule.map(item => ({
-        course_name: item.course,
-        day_of_week: item.day,
-        time_slot: item.time,
-        instructor: item.instructor,
-        max_capacity: 15,
+  const initializeFromTemplates = async () => {
+    if (scheduleTemplates.length === 0) {
+      toast.error("Veuillez d'abord configurer le planning de base");
+      return;
+    }
+
+    const coursesToCreate = scheduleTemplates.map(template => {
+      const instructor = instructors.find(i => i.name === template.instructor_name);
+      const courseDuration = 0.75;
+      const monthlyCost = instructor ? instructor.hourly_rate * courseDuration * 4 : 0;
+
+      return {
+        course_name: template.course_name,
+        day_of_week: template.day_of_week,
+        time_slot: template.time_slot,
+        instructor: template.instructor_name || "",
+        max_capacity: 13,
         year: selectedYear,
         month: selectedMonth + 1,
         month_name: MONTHS[selectedMonth],
@@ -314,19 +356,25 @@ const CourseKPI = () => {
         week3_attendance: 0,
         week4_attendance: 0,
         week5_attendance: 0,
-        monthly_expenses: item.monthly_expenses,
+        monthly_expenses: monthlyCost,
         attendance_rate: 0,
-      }));
+      };
+    });
 
-      const { error } = await supabase.from("course_kpis").insert(coursesToCreate);
-      if (error) throw error;
-    },
+    const { error } = await supabase.from("course_kpis").insert(coursesToCreate);
+    if (error) {
+      toast.error("Erreur lors de l'initialisation");
+      throw error;
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ["course-kpis"] });
+    toast.success("Planning initialisé depuis le modèle");
+  };
+
+  const initializeScheduleMutation = useMutation({
+    mutationFn: initializeFromTemplates,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-kpis"] });
-      toast.success("Planning initialisé avec succès");
-    },
-    onError: () => {
-      toast.error("Erreur lors de l'initialisation du planning");
     },
   });
 
@@ -361,11 +409,274 @@ const CourseKPI = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="courses" className="w-full">
+        <Tabs defaultValue="dashboard" className="w-full">
           <TabsList>
+            <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="courses">Planning des Cours</TabsTrigger>
             <TabsTrigger value="instructors">Gestion des Instructeurs</TabsTrigger>
+            <TabsTrigger value="course-templates">Gestion des Cours</TabsTrigger>
+            <TabsTrigger value="schedule-templates">Planning de Base</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Total Cours</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{calculateKPIs().totalCourses}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Dépenses Totales</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">CHF {calculateKPIs().totalExpenses.toFixed(2)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Fréquentation Moyenne</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{calculateKPIs().avgAttendance.toFixed(1)}%</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Capacité Totale</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{calculateKPIs().totalCapacity}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="course-templates" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Cours Prédéfinis</CardTitle>
+                  <Dialog open={isCourseTemplateDialogOpen} onOpenChange={setIsCourseTemplateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ajouter un cours
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Nouveau type de cours</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Nom du cours *</Label>
+                          <Input
+                            value={courseTemplateFormData.name}
+                            onChange={(e) =>
+                              setCourseTemplateFormData({ name: e.target.value })
+                            }
+                            placeholder="Ex: Pilates"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => {
+                            if (!courseTemplateFormData.name) {
+                              toast.error("Veuillez remplir le nom");
+                              return;
+                            }
+                            createTemplate.mutate(courseTemplateFormData);
+                            setIsCourseTemplateDialogOpen(false);
+                            setCourseTemplateFormData({ name: "" });
+                          }}
+                          className="w-full"
+                        >
+                          Créer
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {courseTemplates.map((template) => (
+                    <Card key={template.id}>
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <span className="font-medium">{template.name}</span>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => deleteTemplate.mutate(template.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="schedule-templates" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Planning de Base</CardTitle>
+                  <Dialog open={isScheduleTemplateDialogOpen} onOpenChange={setIsScheduleTemplateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ajouter un créneau
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Nouveau créneau par défaut</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Jour *</Label>
+                          <Select
+                            value={scheduleTemplateFormData.day_of_week}
+                            onValueChange={(value) =>
+                              setScheduleTemplateFormData({ ...scheduleTemplateFormData, day_of_week: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {DAYS_OF_WEEK.map((day) => (
+                                <SelectItem key={day} value={day}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Horaire *</Label>
+                          <Select
+                            value={scheduleTemplateFormData.time_slot}
+                            onValueChange={(value) =>
+                              setScheduleTemplateFormData({ ...scheduleTemplateFormData, time_slot: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TIME_SLOTS.map((time) => (
+                                <SelectItem key={time} value={time}>
+                                  {time}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Cours *</Label>
+                          <Select
+                            value={scheduleTemplateFormData.course_name}
+                            onValueChange={(value) =>
+                              setScheduleTemplateFormData({ ...scheduleTemplateFormData, course_name: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {courseTemplates.map((template) => (
+                                <SelectItem key={template.id} value={template.name}>
+                                  {template.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Instructeur</Label>
+                          <Select
+                            value={scheduleTemplateFormData.instructor_name}
+                            onValueChange={(value) =>
+                              setScheduleTemplateFormData({ ...scheduleTemplateFormData, instructor_name: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {instructors.map((instructor) => (
+                                <SelectItem key={instructor.id} value={instructor.name}>
+                                  {instructor.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          onClick={() => {
+                            if (!scheduleTemplateFormData.time_slot || !scheduleTemplateFormData.course_name) {
+                              toast.error("Veuillez remplir tous les champs obligatoires");
+                              return;
+                            }
+                            createScheduleTemplate.mutate(scheduleTemplateFormData);
+                            setIsScheduleTemplateDialogOpen(false);
+                            setScheduleTemplateFormData({
+                              day_of_week: "Lundi",
+                              time_slot: "",
+                              course_name: "",
+                              instructor_name: "",
+                            });
+                          }}
+                          className="w-full"
+                        >
+                          Créer
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Jour</TableHead>
+                      <TableHead>Horaire</TableHead>
+                      <TableHead>Cours</TableHead>
+                      <TableHead>Instructeur</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {scheduleTemplates.map((template) => (
+                      <TableRow key={template.id}>
+                        <TableCell>{template.day_of_week}</TableCell>
+                        <TableCell>{template.time_slot}</TableCell>
+                        <TableCell>{template.course_name}</TableCell>
+                        <TableCell>{template.instructor_name || "-"}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteScheduleTemplate.mutate(template.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="instructors" className="space-y-4">
             <Card>
@@ -563,9 +874,9 @@ const CourseKPI = () => {
                             <SelectValue placeholder="Sélectionnez un cours" />
                           </SelectTrigger>
                           <SelectContent>
-                            {COURSE_OPTIONS.map((course) => (
-                              <SelectItem key={course} value={course}>
-                                {course}
+                            {courseTemplates.map((template) => (
+                              <SelectItem key={template.id} value={template.name}>
+                                {template.name}
                               </SelectItem>
                             ))}
                           </SelectContent>

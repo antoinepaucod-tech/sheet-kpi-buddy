@@ -77,6 +77,27 @@ export type Database = {
         }
         Relationships: []
       }
+      course_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_members: {
         Row: {
           contract_signed_date: string | null
@@ -435,6 +456,36 @@ export type Database = {
           updated_at?: string
           utilities?: number | null
           year?: number
+        }
+        Relationships: []
+      }
+      schedule_templates: {
+        Row: {
+          course_name: string
+          created_at: string
+          day_of_week: string
+          id: string
+          instructor_name: string | null
+          time_slot: string
+          updated_at: string
+        }
+        Insert: {
+          course_name: string
+          created_at?: string
+          day_of_week: string
+          id?: string
+          instructor_name?: string | null
+          time_slot: string
+          updated_at?: string
+        }
+        Update: {
+          course_name?: string
+          created_at?: string
+          day_of_week?: string
+          id?: string
+          instructor_name?: string | null
+          time_slot?: string
+          updated_at?: string
         }
         Relationships: []
       }
