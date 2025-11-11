@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, differenceInWeeks, startOfWeek, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +97,22 @@ const CustomerJourney = () => {
       case 0:
       default:
         return "bg-red-500/20 text-red-700 dark:text-red-400";
+    }
+  };
+
+  const getMemberWeekNumber = (contractDate: string | null | undefined): number | null => {
+    if (!contractDate) return null;
+    
+    try {
+      const signedDate = parseISO(contractDate);
+      const today = new Date();
+      const weeksSinceSignature = differenceInWeeks(
+        startOfWeek(today, { weekStartsOn: 1 }),
+        startOfWeek(signedDate, { weekStartsOn: 1 })
+      );
+      return weeksSinceSignature + 1; // +1 car la première semaine est la semaine 1, pas 0
+    } catch (error) {
+      return null;
     }
   };
 
@@ -300,67 +317,79 @@ const CustomerJourney = () => {
           ) : (
             <div className="rounded-md border overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[200px]">Nom / Prénom</TableHead>
-                    <TableHead className="min-w-[200px]">Type De Membership</TableHead>
-                    <TableHead className="text-center min-w-[150px]">Onboarding Complété</TableHead>
-                    <TableHead className="text-center min-w-[200px]">Entraînements cette semaine</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.length === 0 ? (
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        Aucun membre dans l'Index. Ajoutez des membres dans l'Index.
-                      </TableCell>
+                      <TableHead className="min-w-[200px]">Nom / Prénom</TableHead>
+                      <TableHead className="min-w-[200px]">Type De Membership</TableHead>
+                      <TableHead className="text-center min-w-[120px]">Semaine Membre</TableHead>
+                      <TableHead className="text-center min-w-[150px]">Onboarding Complété</TableHead>
+                      <TableHead className="text-center min-w-[200px]">Entraînements cette semaine</TableHead>
                     </TableRow>
-                  ) : (
-                    members.map((member) => {
-                      const week = parseInt(selectedView.replace("week-", ""));
-                      const trainings = getWeeklyTraining(member.id, week);
-                      return (
-                        <TableRow key={member.id}>
-                          <TableCell className="font-medium">{member.name}</TableCell>
-                          <TableCell>{member.membership}</TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={isOnboardingComplete(member)}
-                                disabled
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-2">
-                              <Select
-                                value={trainings.toString()}
-                                onValueChange={(value) =>
-                                  updateWeeklyTraining(member.id, week, parseInt(value))
-                                }
-                              >
-                                <SelectTrigger
-                                  className={cn(
-                                    "w-[120px]",
-                                    getTrainingColor(trainings)
-                                  )}
+                  </TableHeader>
+                  <TableBody>
+                    {members.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          Aucun membre dans l'Index. Ajoutez des membres dans l'Index.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      members.map((member) => {
+                        const week = parseInt(selectedView.replace("week-", ""));
+                        const trainings = getWeeklyTraining(member.id, week);
+                        const memberWeek = getMemberWeekNumber(member.contract_signed_date);
+                        
+                        return (
+                          <TableRow key={member.id}>
+                            <TableCell className="font-medium">{member.name}</TableCell>
+                            <TableCell>{member.membership}</TableCell>
+                            <TableCell className="text-center">
+                              {memberWeek !== null ? (
+                                <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                                  S{memberWeek}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">Non défini</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex justify-center">
+                                <Checkbox
+                                  checked={isOnboardingComplete(member)}
+                                  disabled
+                                />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-2">
+                                <Select
+                                  value={trainings.toString()}
+                                  onValueChange={(value) =>
+                                    updateWeeklyTraining(member.id, week, parseInt(value))
+                                  }
                                 >
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-background border shadow-lg z-50">
-                                  <SelectItem value="0">0</SelectItem>
-                                  <SelectItem value="1">1</SelectItem>
-                                  <SelectItem value="2">2</SelectItem>
-                                  <SelectItem value="3">3</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
+                                  <SelectTrigger
+                                    className={cn(
+                                      "w-[120px]",
+                                      getTrainingColor(trainings)
+                                    )}
+                                  >
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border shadow-lg z-50">
+                                    <SelectItem value="0">0</SelectItem>
+                                    <SelectItem value="1">1</SelectItem>
+                                    <SelectItem value="2">2</SelectItem>
+                                    <SelectItem value="3">3</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
               </Table>
             </div>
           )}
