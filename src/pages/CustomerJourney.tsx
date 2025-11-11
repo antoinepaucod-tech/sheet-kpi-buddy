@@ -18,11 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ScrollArea,
-  ScrollBar,
-} from "@/components/ui/scroll-area";
 import { Plus, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -58,7 +53,7 @@ const CustomerJourney = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [newMemberName, setNewMemberName] = useState("");
   const [weeklyTrainings, setWeeklyTrainings] = useState<WeeklyTraining[]>([]);
-  const [activeTab, setActiveTab] = useState("index");
+  const [selectedView, setSelectedView] = useState("index");
 
   const addMember = () => {
     if (newMemberName.trim()) {
@@ -154,21 +149,23 @@ const CustomerJourney = () => {
         </div>
 
         <Card className="p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground mb-6">
-                <TabsTrigger value="index">Index</TabsTrigger>
+          <div className="flex gap-4 mb-6 items-center">
+            <Select value={selectedView} onValueChange={setSelectedView}>
+              <SelectTrigger className="w-[200px] bg-background z-50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-lg z-50 max-h-[300px]">
+                <SelectItem value="index">Index</SelectItem>
                 {Array.from({ length: 52 }, (_, i) => i + 1).map((week) => (
-                  <TabsTrigger key={week} value={`week-${week}`}>
+                  <SelectItem key={week} value={`week-${week}`}>
                     Semaine {week}
-                  </TabsTrigger>
+                  </SelectItem>
                 ))}
-              </TabsList>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+              </SelectContent>
+            </Select>
 
-            <TabsContent value="index" className="mt-0">
-              <div className="flex gap-4 mb-6">
+            {selectedView === "index" && (
+              <>
                 <Input
                   placeholder="Nom du nouveau membre"
                   value={newMemberName}
@@ -180,187 +177,186 @@ const CustomerJourney = () => {
                   <Plus className="h-4 w-4" />
                   Ajouter
                 </Button>
-              </div>
+              </>
+            )}
+          </div>
 
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
+          {selectedView === "index" ? (
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
+                    <TableHead className="min-w-[200px]">Type De Membership</TableHead>
+                    <TableHead className="text-center">Onboarding Bsport</TableHead>
+                    <TableHead className="text-center">Onboarding Hubfit</TableHead>
+                    <TableHead className="text-center">Onboarding Nutrition</TableHead>
+                    <TableHead className="text-center">Questionnaire Coaching</TableHead>
+                    <TableHead className="text-center">Session Introduction Club</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {members.length === 0 ? (
                     <TableRow>
-                      <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
-                      <TableHead className="min-w-[200px]">Type De Membership</TableHead>
-                      <TableHead className="text-center">Onboarding Bsport</TableHead>
-                      <TableHead className="text-center">Onboarding Hubfit</TableHead>
-                      <TableHead className="text-center">Onboarding Nutrition</TableHead>
-                      <TableHead className="text-center">Questionnaire Coaching</TableHead>
-                      <TableHead className="text-center">Session Introduction Club</TableHead>
-                      <TableHead className="text-center">Actions</TableHead>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        Aucun membre pour le moment. Ajoutez-en un pour commencer.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {members.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                          Aucun membre pour le moment. Ajoutez-en un pour commencer.
+                  ) : (
+                    members.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          <Input
+                            value={member.name}
+                            onChange={(e) =>
+                              updateMember(member.id, "name", e.target.value)
+                            }
+                            className="min-w-[150px]"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={member.membership}
+                            onValueChange={(value) =>
+                              updateMember(member.id, "membership", value)
+                            }
+                          >
+                            <SelectTrigger className="min-w-[180px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border shadow-lg z-50">
+                              {membershipTypes.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={member.onboardingBsport}
+                            onCheckedChange={(checked) =>
+                              updateMember(member.id, "onboardingBsport", checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={member.onboardingHubfit}
+                            onCheckedChange={(checked) =>
+                              updateMember(member.id, "onboardingHubfit", checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={member.onboardingNutrition}
+                            onCheckedChange={(checked) =>
+                              updateMember(member.id, "onboardingNutrition", checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={member.questionnaireCoaching}
+                            onCheckedChange={(checked) =>
+                              updateMember(member.id, "questionnaireCoaching", checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={member.sessionIntroduction}
+                            onCheckedChange={(checked) =>
+                              updateMember(member.id, "sessionIntroduction", checked)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteMember(member.id)}
+                            className="hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      members.map((member) => (
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[200px]">Nom / Prénom</TableHead>
+                    <TableHead className="min-w-[200px]">Type De Membership</TableHead>
+                    <TableHead className="text-center min-w-[150px]">Onboarding Complété</TableHead>
+                    <TableHead className="text-center min-w-[200px]">Entraînements cette semaine</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {members.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        Aucun membre dans l'Index. Ajoutez des membres dans l'Index.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    members.map((member) => {
+                      const week = parseInt(selectedView.replace("week-", ""));
+                      const trainings = getWeeklyTraining(member.id, week);
+                      return (
                         <TableRow key={member.id}>
+                          <TableCell className="font-medium">{member.name}</TableCell>
+                          <TableCell>{member.membership}</TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={isOnboardingComplete(member)}
+                                disabled
+                              />
+                            </div>
+                          </TableCell>
                           <TableCell>
-                            <Input
-                              value={member.name}
-                              onChange={(e) =>
-                                updateMember(member.id, "name", e.target.value)
-                              }
-                              className="min-w-[150px]"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={member.membership}
-                              onValueChange={(value) =>
-                                updateMember(member.id, "membership", value)
-                              }
-                            >
-                              <SelectTrigger className="min-w-[180px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {membershipTypes.map((type) => (
-                                  <SelectItem key={type} value={type}>
-                                    {type}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={member.onboardingBsport}
-                              onCheckedChange={(checked) =>
-                                updateMember(member.id, "onboardingBsport", checked)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={member.onboardingHubfit}
-                              onCheckedChange={(checked) =>
-                                updateMember(member.id, "onboardingHubfit", checked)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={member.onboardingNutrition}
-                              onCheckedChange={(checked) =>
-                                updateMember(member.id, "onboardingNutrition", checked)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={member.questionnaireCoaching}
-                              onCheckedChange={(checked) =>
-                                updateMember(member.id, "questionnaireCoaching", checked)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={member.sessionIntroduction}
-                              onCheckedChange={(checked) =>
-                                updateMember(member.id, "sessionIntroduction", checked)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteMember(member.id)}
-                              className="hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center justify-center gap-2">
+                              <Select
+                                value={trainings.toString()}
+                                onValueChange={(value) =>
+                                  updateWeeklyTraining(member.id, week, parseInt(value))
+                                }
+                              >
+                                <SelectTrigger
+                                  className={cn(
+                                    "w-[120px]",
+                                    getTrainingColor(trainings)
+                                  )}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border shadow-lg z-50">
+                                  <SelectItem value="0">0</SelectItem>
+                                  <SelectItem value="1">1</SelectItem>
+                                  <SelectItem value="2">2</SelectItem>
+                                  <SelectItem value="3">3</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-
-            {Array.from({ length: 52 }, (_, i) => i + 1).map((week) => (
-              <TabsContent key={week} value={`week-${week}`} className="mt-0">
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[200px]">Nom / Prénom</TableHead>
-                        <TableHead className="min-w-[200px]">Type De Membership</TableHead>
-                        <TableHead className="text-center min-w-[150px]">Onboarding Complété</TableHead>
-                        <TableHead className="text-center min-w-[200px]">Entraînements cette semaine</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {members.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                            Aucun membre dans l'Index. Ajoutez des membres dans l'onglet Index.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        members.map((member) => {
-                          const trainings = getWeeklyTraining(member.id, week);
-                          return (
-                            <TableRow key={member.id}>
-                              <TableCell className="font-medium">{member.name}</TableCell>
-                              <TableCell>{member.membership}</TableCell>
-                              <TableCell className="text-center">
-                                <div className="flex justify-center">
-                                  <Checkbox
-                                    checked={isOnboardingComplete(member)}
-                                    disabled
-                                  />
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center justify-center gap-2">
-                                  <Select
-                                    value={trainings.toString()}
-                                    onValueChange={(value) =>
-                                      updateWeeklyTraining(member.id, week, parseInt(value))
-                                    }
-                                  >
-                                    <SelectTrigger
-                                      className={cn(
-                                        "w-[120px]",
-                                        getTrainingColor(trainings)
-                                      )}
-                                    >
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="0">0</SelectItem>
-                                      <SelectItem value="1">1</SelectItem>
-                                      <SelectItem value="2">2</SelectItem>
-                                      <SelectItem value="3">3</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </Card>
       </div>
     </div>
