@@ -251,17 +251,32 @@ export default function KPIClient() {
                                 
                                 // Calculate the actual date of this member's relative week
                                 const signatureDate = parseISO(member.contract_signed_date);
-                                const weekDate = addWeeks(signatureDate, wt.week_number - 1);
+                                const memberWeekStartDate = addWeeks(signatureDate, wt.week_number - 1);
                                 
-                                // Find the calendar year and week for this date
-                                const year = weekDate.getFullYear();
-                                const jan1 = new Date(year, 0, 1);
+                                // Find which calendar year this week belongs to
+                                const targetYear = memberWeekStartDate.getFullYear();
+                                
+                                // Get the first Monday of that year
+                                const jan1 = new Date(targetYear, 0, 1);
                                 const firstMonday = startOfWeek(jan1, { weekStartsOn: 1 });
-                                const weekStart = startOfWeek(weekDate, { weekStartsOn: 1 });
-                                const calendarWeek = differenceInWeeks(weekStart, firstMonday) + 1;
+                                
+                                // Calculate which calendar week number this is
+                                const memberWeekMonday = startOfWeek(memberWeekStartDate, { weekStartsOn: 1 });
+                                const calendarWeek = Math.floor(differenceInWeeks(memberWeekMonday, firstMonday)) + 1;
+                                
+                                console.log('Navigation Debug:', {
+                                  memberName: member.name,
+                                  relativeWeek: wt.week_number,
+                                  signatureDate: signatureDate.toISOString(),
+                                  memberWeekStartDate: memberWeekStartDate.toISOString(),
+                                  targetYear,
+                                  firstMonday: firstMonday.toISOString(),
+                                  memberWeekMonday: memberWeekMonday.toISOString(),
+                                  calendarWeek
+                                });
                                 
                                 // Navigate with year and calendar week
-                                navigate(`/customer-journey?week=${calendarWeek}&year=${year}&memberId=${selectedMemberId}`);
+                                navigate(`/customer-journey?week=${calendarWeek}&year=${targetYear}&memberId=${selectedMemberId}`);
                                 setSelectedMemberId(null);
                               }}
                             >
