@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { parseISO, format, addWeeks, startOfWeek, differenceInWeeks, differenceInMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -63,6 +63,18 @@ export function MemberActivityDialog({
     return labels[actionType] || actionType;
   };
 
+  const latestHistory = useMemo(() => {
+    const byType = new Map<string, typeof history[number]>();
+    // history is loaded desc, so first occurrence is latest
+    for (const item of history) {
+      if (!byType.has(item.action_type)) {
+        byType.set(item.action_type, item);
+      }
+    }
+    return Array.from(byType.values()).sort(
+      (a, b) => new Date(a.action_date).getTime() - new Date(b.action_date).getTime()
+    );
+  }, [history]);
   const now = new Date();
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 12, now.getDate());
 
@@ -245,14 +257,14 @@ export function MemberActivityDialog({
           {/* Historique Onboarding Timeline */}
           <Card className="p-4 bg-muted/20">
             <h3 className="font-semibold mb-4">Historique Onboarding</h3>
-            {history.length > 0 ? (
+            {latestHistory.length > 0 ? (
               <div className="relative pl-6">
                 {/* Timeline line */}
                 <div className="absolute left-[11px] top-0 bottom-0 w-0.5 bg-border" />
                 
-                {/* Timeline items - reversed to show oldest at bottom */}
+                {/* Timeline items - show oldest to newest */}
                 <div className="space-y-4">
-                  {[...history].reverse().map((item) => (
+                  {latestHistory.map((item) => (
                     <div key={item.id} className="relative">
                       {/* Timeline dot */}
                       <div className="absolute left-[-23px] top-1 w-5 h-5 rounded-full border-2 bg-green-500 border-green-600" />
