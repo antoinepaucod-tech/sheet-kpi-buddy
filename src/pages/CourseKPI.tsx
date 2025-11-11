@@ -34,7 +34,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInstructors, type Instructor } from "@/hooks/useInstructors";
 import { useCourseTemplates } from "@/hooks/useCourseTemplates";
-import { useScheduleTemplates } from "@/hooks/useScheduleTemplates";
+import { useScheduleTemplates, type ScheduleTemplate } from "@/hooks/useScheduleTemplates";
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -81,8 +81,10 @@ const CourseKPI = () => {
     hourly_rate: 0,
   });
   const [isCourseTemplateDialogOpen, setIsCourseTemplateDialogOpen] = useState(false);
-  const [courseTemplateFormData, setCourseTemplateFormData] = useState({ name: "" });
+  const [editingCourseTemplate, setEditingCourseTemplate] = useState<string | null>(null);
+  const [courseTemplateName, setCourseTemplateName] = useState("");
   const [isScheduleTemplateDialogOpen, setIsScheduleTemplateDialogOpen] = useState(false);
+  const [editingScheduleTemplate, setEditingScheduleTemplate] = useState<ScheduleTemplate | null>(null);
   const [scheduleTemplateFormData, setScheduleTemplateFormData] = useState({
     day_of_week: "Lundi",
     time_slot: "",
@@ -264,68 +266,17 @@ const CourseKPI = () => {
   };
 
   const getDefaultSchedule = () => {
-    // Instructeurs par défaut du planning
-    const instructorMap: Record<string, string> = {
-      "Lundi-6h30": "Jennifer",
-      "Lundi-8h": "Jennifer",
-      "Lundi-12h15": "Jennifer",
-      "Lundi-18h30": "Antoine",
-      "Lundi-19h30": "Antoine",
-      "Mardi-6h30": "Jennifer",
-      "Mardi-12h15": "Jennifer",
-      "Mardi-18h30": "Antoine",
-      "Mardi-19h30": "Antoine",
-      "Mercredi-6h30": "Jennifer",
-      "Mercredi-8h": "Jennifer",
-      "Mercredi-12h15": "Jennifer",
-      "Mercredi-18h30": "Antoine",
-      "Jeudi-6h30": "Jennifer",
-      "Jeudi-12h15": "Jennifer",
-      "Jeudi-18h30": "Antoine",
-      "Jeudi-19h30": "Antoine",
-      "Vendredi-6h30": "Jennifer",
-      "Vendredi-8h": "Jennifer",
-      "Vendredi-12h15": "Jennifer",
-      "Samedi-9h": "Antoine",
-    };
-
-    return [
-      // Lundi
-      { day: "Lundi", time: "6h30", course: "Hyrox Engine" },
-      { day: "Lundi", time: "8h", course: "Mobility" },
-      { day: "Lundi", time: "12h15", course: "Hyrox Power" },
-      { day: "Lundi", time: "18h30", course: "Hyrox Power" },
-      { day: "Lundi", time: "19h30", course: "Hyrox Foundationnal" },
-      // Mardi
-      { day: "Mardi", time: "6h30", course: "Hyrox Complete" },
-      { day: "Mardi", time: "12h15", course: "Hyrox Foundationnal" },
-      { day: "Mardi", time: "18h30", course: "Hyrox Foundationnal" },
-      { day: "Mardi", time: "19h30", course: "Hyrox Power" },
-      // Mercredi
-      { day: "Mercredi", time: "6h30", course: "Hyrox Power" },
-      { day: "Mercredi", time: "8h", course: "Mobility" },
-      { day: "Mercredi", time: "12h15", course: "Hyrox Engine" },
-      { day: "Mercredi", time: "18h30", course: "Hyrox Engine" },
-      // Jeudi
-      { day: "Jeudi", time: "6h30", course: "Hyrox Foundationnal" },
-      { day: "Jeudi", time: "12h15", course: "Hyrox Complete" },
-      { day: "Jeudi", time: "18h30", course: "Hyrox Power" },
-      { day: "Jeudi", time: "19h30", course: "Hyrox Complete" },
-      // Vendredi
-      { day: "Vendredi", time: "6h30", course: "Hyrox Complete" },
-      { day: "Vendredi", time: "8h", course: "Mobility" },
-      { day: "Vendredi", time: "12h15", course: "Hyrox Power" },
-      // Samedi
-      { day: "Samedi", time: "9h", course: "Hyrox Power" },
-    ].map(item => {
-      const instructorName = instructorMap[`${item.day}-${item.time}`] || "";
-      const instructor = instructors.find(i => i.name === instructorName);
+    // Utiliser le planning template de la base de données
+    return scheduleTemplates.map(template => {
+      const instructor = instructors.find(i => i.name === template.instructor_name);
       const courseDuration = 0.75; // 45 minutes par cours
-      const monthlyCost = instructor ? instructor.hourly_rate * courseDuration * 4 : 0; // 4 semaines par mois
+      const monthlyCost = instructor ? instructor.hourly_rate * courseDuration * 4 : 0;
       
       return {
-        ...item,
-        instructor: instructorName,
+        day: template.day_of_week,
+        time: template.time_slot,
+        course: template.course_name,
+        instructor: template.instructor_name || "",
         monthly_expenses: monthlyCost,
       };
     });
@@ -475,26 +426,33 @@ const CourseKPI = () => {
                         <div>
                           <Label>Nom du cours *</Label>
                           <Input
-                            value={courseTemplateFormData.name}
+                            value={courseTemplateName}
                             onChange={(e) =>
-                              setCourseTemplateFormData({ name: e.target.value })
+                              setCourseTemplateName(e.target.value)
                             }
                             placeholder="Ex: Pilates"
                           />
                         </div>
                         <Button
                           onClick={() => {
-                            if (!courseTemplateFormData.name) {
+                            if (!courseTemplateName) {
                               toast.error("Veuillez remplir le nom");
                               return;
                             }
-                            createTemplate.mutate(courseTemplateFormData);
+                            if (editingCourseTemplate) {
+                              updateTemplate.mutate({
+                                id: editingCourseTemplate,
+                                name: courseTemplateName,
+                              });
+                            } else {
+                              createTemplate.mutate(courseTemplateName);
+                            }
                             setIsCourseTemplateDialogOpen(false);
-                            setCourseTemplateFormData({ name: "" });
+                            setCourseTemplateName("");
                           }}
                           className="w-full"
                         >
-                          Créer
+                          {editingCourseTemplate ? "Mettre à jour" : "Créer"}
                         </Button>
                       </div>
                     </DialogContent>

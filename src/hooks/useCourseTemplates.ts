@@ -26,8 +26,8 @@ export const useCourseTemplates = () => {
   });
 
   const createTemplate = useMutation({
-    mutationFn: async (template: Partial<CourseTemplate>) => {
-      const { error } = await supabase.from("course_templates").insert([template as any]);
+    mutationFn: async (name: string) => {
+      const { error } = await supabase.from("course_templates").insert([{ name }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -40,10 +40,10 @@ export const useCourseTemplates = () => {
   });
 
   const updateTemplate = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<CourseTemplate> & { id: string }) => {
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
       const { error } = await supabase
         .from("course_templates")
-        .update(updates)
+        .update({ name })
         .eq("id", id);
       if (error) throw error;
     },

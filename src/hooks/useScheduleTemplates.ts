@@ -36,7 +36,7 @@ export const useScheduleTemplates = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule-templates"] });
-      toast.success("Planning ajouté");
+      toast.success("Créneau ajouté au planning de base");
     },
     onError: () => {
       toast.error("Erreur lors de l'ajout");
@@ -53,7 +53,7 @@ export const useScheduleTemplates = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule-templates"] });
-      toast.success("Planning mis à jour");
+      toast.success("Créneau mis à jour");
     },
     onError: () => {
       toast.error("Erreur lors de la mise à jour");
@@ -67,7 +67,7 @@ export const useScheduleTemplates = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule-templates"] });
-      toast.success("Planning supprimé");
+      toast.success("Créneau supprimé");
     },
     onError: () => {
       toast.error("Erreur lors de la suppression");
