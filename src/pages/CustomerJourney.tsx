@@ -39,11 +39,41 @@ import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import type { Member } from "@/hooks/useCustomerMembers";
 
 const membershipTypes = [
-  "49CHF/Sem Annuel 1x",
-  "29CHF/Sem Mensuel Basic",
-  "59CHF/Sem Annuel 2x",
-  "39CHF/Sem Mensuel Elite",
+  "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT",
+  "Hybrid FULL - paiement tous les 28 jours avec engagement",
+  "Hybrid FULL - Paiement x1 Annuel",
+  "Hybrid FULL DUO . Paiement x1 Annuel",
+  "Unlimited Access (ancien membership)",
+  "Unlimited Access 6 mois (ancien membership)",
+  "Abonnement offert",
+  "Hybrid OPEN GYM tous les 28 jours - avec engagement",
+  "hybrid OPEN GYM - Paiement x1 - Annuel",
+  "Open Gym (ancien membership)",
+  "Hybrid FULL tous les 28 jours - sans engagement",
+  "Pack 20 sessions",
+  "Pack 10",
+  "6 Weeks Challenge",
+  "IFRC Paiement Mensuel",
 ];
+
+// Memberships that require training tracking
+const trackingRequiredMemberships = [
+  "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT",
+  "Hybrid FULL - paiement tous les 28 jours avec engagement",
+  "Hybrid FULL - Paiement x1 Annuel",
+  "Hybrid FULL DUO . Paiement x1 Annuel",
+  "Unlimited Access (ancien membership)",
+  "Unlimited Access 6 mois (ancien membership)",
+  "Abonnement offert",
+  "Hybrid FULL tous les 28 jours - sans engagement",
+  "Pack 20 sessions",
+  "Pack 10",
+  "6 Weeks Challenge",
+];
+
+const requiresTrainingTracking = (membership: string): boolean => {
+  return trackingRequiredMemberships.includes(membership);
+};
 
 const CustomerJourney = () => {
   const { t } = useTranslations();
@@ -774,29 +804,35 @@ const CustomerJourney = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center justify-center gap-2">
-                              <Select
-                                value={trainings.toString()}
-                                onValueChange={(value) =>
-                                  updateWeeklyTraining(member.id, memberWeek ?? 0, parseInt(value))
-                                }
-                              >
-                                <SelectTrigger
-                                  className={cn(
-                                    "w-[120px]",
-                                    getTrainingColor(trainings)
-                                  )}
+                            {requiresTrainingTracking(member.membership) ? (
+                              <div className="flex items-center justify-center gap-2">
+                                <Select
+                                  value={trainings.toString()}
+                                  onValueChange={(value) =>
+                                    updateWeeklyTraining(member.id, memberWeek ?? 0, parseInt(value))
+                                  }
                                 >
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-background border shadow-lg z-50">
-                                  <SelectItem value="0">0</SelectItem>
-                                  <SelectItem value="1">1</SelectItem>
-                                  <SelectItem value="2">2</SelectItem>
-                                  <SelectItem value="3">3</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                                  <SelectTrigger
+                                    className={cn(
+                                      "w-[120px]",
+                                      getTrainingColor(trainings)
+                                    )}
+                                  >
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border shadow-lg z-50">
+                                    <SelectItem value="0">0</SelectItem>
+                                    <SelectItem value="1">1</SelectItem>
+                                    <SelectItem value="2">2</SelectItem>
+                                    <SelectItem value="3">3</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center">
+                                <span className="text-muted-foreground text-sm font-medium">N/A</span>
+                              </div>
+                            )}
                           </TableCell>
                         </TableRow>
                       );

@@ -8,6 +8,25 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 import { subMonths, differenceInWeeks, differenceInMonths, parseISO } from "date-fns";
 
+// Memberships that require training tracking
+const trackingRequiredMemberships = [
+  "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT",
+  "Hybrid FULL - paiement tous les 28 jours avec engagement",
+  "Hybrid FULL - Paiement x1 Annuel",
+  "Hybrid FULL DUO . Paiement x1 Annuel",
+  "Unlimited Access (ancien membership)",
+  "Unlimited Access 6 mois (ancien membership)",
+  "Abonnement offert",
+  "Hybrid FULL tous les 28 jours - sans engagement",
+  "Pack 20 sessions",
+  "Pack 10",
+  "6 Weeks Challenge",
+];
+
+const requiresTrainingTracking = (membership: string): boolean => {
+  return trackingRequiredMemberships.includes(membership);
+};
+
 export default function KPIClient() {
   const navigate = useNavigate();
   const { members, weeklyTrainings, isLoading } = useCustomerMembers();
@@ -18,46 +37,51 @@ export default function KPIClient() {
     const now = new Date();
     const twelveMonthsAgo = subMonths(now, 12);
 
-    return members.map(member => {
-      if (!member.contract_signed_date) {
+    // Only calculate stats for members with tracking-required memberships
+    return members
+      .filter(member => requiresTrainingTracking(member.membership))
+      .map(member => {
+        if (!member.contract_signed_date) {
+          return {
+            id: member.id,
+            name: member.name,
+            membership: member.membership,
+            totalTrainings: 0,
+            averagePerMonth: 0,
+            averagePerWeek: 0,
+            monthsSinceSignature: 0,
+            weeksSinceSignature: 0,
+          };
+        }
+
+        const signatureDate = parseISO(member.contract_signed_date);
+        const startDate = signatureDate > twelveMonthsAgo ? signatureDate : twelveMonthsAgo;
+        
+        // Calculate time periods
+        const monthsSinceStart = differenceInMonths(now, startDate);
+        const weeksSinceStart = differenceInWeeks(now, startDate);
+        
+        // Get trainings for this member in the last 12 months
+        const memberTrainings = weeklyTrainings.filter(wt => wt.member_id === member.id);
+        
+        // Calculate total trainings in the last 12 months
+        const totalTrainings = memberTrainings.reduce((sum, wt) => sum + wt.trainings_count, 0);
+        
+        // Calculate averages
+        const averagePerMonth = monthsSinceStart > 0 ? totalTrainings / monthsSinceStart : 0;
+        const averagePerWeek = weeksSinceStart > 0 ? totalTrainings / weeksSinceStart : 0;
+
         return {
           id: member.id,
           name: member.name,
-          totalTrainings: 0,
-          averagePerMonth: 0,
-          averagePerWeek: 0,
-          monthsSinceSignature: 0,
-          weeksSinceSignature: 0,
+          membership: member.membership,
+          totalTrainings,
+          averagePerMonth,
+          averagePerWeek,
+          monthsSinceSignature: monthsSinceStart,
+          weeksSinceSignature: weeksSinceStart,
         };
-      }
-
-      const signatureDate = parseISO(member.contract_signed_date);
-      const startDate = signatureDate > twelveMonthsAgo ? signatureDate : twelveMonthsAgo;
-      
-      // Calculate time periods
-      const monthsSinceStart = differenceInMonths(now, startDate);
-      const weeksSinceStart = differenceInWeeks(now, startDate);
-      
-      // Get trainings for this member in the last 12 months
-      const memberTrainings = weeklyTrainings.filter(wt => wt.member_id === member.id);
-      
-      // Calculate total trainings in the last 12 months
-      const totalTrainings = memberTrainings.reduce((sum, wt) => sum + wt.trainings_count, 0);
-      
-      // Calculate averages
-      const averagePerMonth = monthsSinceStart > 0 ? totalTrainings / monthsSinceStart : 0;
-      const averagePerWeek = weeksSinceStart > 0 ? totalTrainings / weeksSinceStart : 0;
-
-      return {
-        id: member.id,
-        name: member.name,
-        totalTrainings,
-        averagePerMonth,
-        averagePerWeek,
-        monthsSinceSignature: monthsSinceStart,
-        weeksSinceSignature: weeksSinceStart,
-      };
-    });
+      });
   }, [members, weeklyTrainings]);
 
   // Sort by total trainings
