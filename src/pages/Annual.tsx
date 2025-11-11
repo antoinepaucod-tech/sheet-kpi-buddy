@@ -129,7 +129,7 @@ const Annual = () => {
           overlayOpacity={0.4}
         >
           <div className="container mx-auto px-6 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center justify-between gap-8">
               <div className="flex-1">
                 <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
                   {t('annual.title')} {annualData.year}
@@ -138,9 +138,10 @@ const Annual = () => {
                   {t('annual.subtitle')}
                 </p>
               </div>
+              
               <div className="flex items-center gap-2">
                 <Link to="/">
-                  <Button variant="outline" className="border-foreground/20 hover:bg-foreground/5">
+                  <Button variant="outline" className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {t('header.monthlyView')}
                   </Button>
@@ -150,6 +151,9 @@ const Annual = () => {
                 <ThemeToggle />
               </div>
             </div>
+            
+            {/* Spacer to match monthly view height */}
+            <div className="h-[52px]"></div>
           </div>
         </VideoBackground>
       </header>
