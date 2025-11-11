@@ -35,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInstructors, type Instructor } from "@/hooks/useInstructors";
 import { useCourseTemplates } from "@/hooks/useCourseTemplates";
 import { useScheduleTemplates, type ScheduleTemplate } from "@/hooks/useScheduleTemplates";
+import { ScheduleCalendarView } from "@/components/ScheduleCalendarView";
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -602,36 +603,19 @@ const CourseKPI = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Jour</TableHead>
-                      <TableHead>Horaire</TableHead>
-                      <TableHead>Cours</TableHead>
-                      <TableHead>Instructeur</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {scheduleTemplates.map((template) => (
-                      <TableRow key={template.id}>
-                        <TableCell>{template.day_of_week}</TableCell>
-                        <TableCell>{template.time_slot}</TableCell>
-                        <TableCell>{template.course_name}</TableCell>
-                        <TableCell>{template.instructor_name || "-"}</TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => deleteScheduleTemplate.mutate(template.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <ScheduleCalendarView
+                  scheduleTemplates={scheduleTemplates}
+                  onDelete={(id) => deleteScheduleTemplate.mutate(id)}
+                  onAdd={(day, time) => {
+                    setScheduleTemplateFormData({
+                      day_of_week: day,
+                      time_slot: time,
+                      course_name: "",
+                      instructor_name: "",
+                    });
+                    setIsScheduleTemplateDialogOpen(true);
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
