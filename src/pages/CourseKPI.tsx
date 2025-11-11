@@ -34,6 +34,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+const TIME_SLOTS = ["6h30", "8h", "9h", "12h15", "18h30", "19h30"];
 const COURSE_OPTIONS = [
   "Hyrox Engine",
   "Hyrox Power",
@@ -331,13 +332,23 @@ const CourseKPI = () => {
                       </div>
                       <div>
                         <Label>Horaire *</Label>
-                        <Input
+                        <Select
                           value={formData.time_slot}
-                          onChange={(e) =>
-                            setFormData({ ...formData, time_slot: e.target.value })
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, time_slot: value })
                           }
-                          placeholder="Ex: 12h30"
-                        />
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un horaire" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TIME_SLOTS.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label>Instructeur</Label>
