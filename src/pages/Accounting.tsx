@@ -49,7 +49,7 @@ const MONTHS = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
 ];
 
-const REVENUE_CATEGORIES = [
+const DEFAULT_REVENUE_CATEGORIES = [
   "THE COACH PASS MENSUEL",
   "HUBFIT",
   "VIRTUAL COACH",
@@ -65,7 +65,7 @@ const REVENUE_CATEGORIES = [
   "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL",
 ];
 
-const EXPENSE_CATEGORIES = [
+const DEFAULT_EXPENSE_CATEGORIES = [
   "LOGICIELS",
   "ABONNEMENTS",
   "LOYERS",
@@ -111,6 +111,14 @@ const Accounting = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<AccountingTransaction | null>(null);
+  
+  // Manage custom categories
+  const [revenueCategories, setRevenueCategories] = useState<string[]>(DEFAULT_REVENUE_CATEGORIES);
+  const [expenseCategories, setExpenseCategories] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [categoryDialogType, setCategoryDialogType] = useState<"revenue" | "expense">("revenue");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  
   const [formData, setFormData] = useState({
     transaction_date: format(new Date(), "yyyy-MM-dd"),
     transaction_type: "revenue" as "revenue" | "expense",
@@ -301,6 +309,42 @@ const Accounting = () => {
       notes: transaction.notes || "",
     });
     setIsDialogOpen(true);
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Le nom de la catégorie ne peut pas être vide");
+      return;
+    }
+    
+    if (categoryDialogType === "revenue") {
+      if (revenueCategories.includes(newCategoryName.trim())) {
+        toast.error("Cette catégorie existe déjà");
+        return;
+      }
+      setRevenueCategories([...revenueCategories, newCategoryName.trim()]);
+      toast.success("Catégorie de revenu ajoutée");
+    } else {
+      if (expenseCategories.includes(newCategoryName.trim())) {
+        toast.error("Cette catégorie existe déjà");
+        return;
+      }
+      setExpenseCategories([...expenseCategories, newCategoryName.trim()]);
+      toast.success("Catégorie de dépense ajoutée");
+    }
+    
+    setNewCategoryName("");
+    setIsCategoryDialogOpen(false);
+  };
+
+  const handleDeleteCategory = (category: string, type: "revenue" | "expense") => {
+    if (type === "revenue") {
+      setRevenueCategories(revenueCategories.filter(c => c !== category));
+      toast.success("Catégorie de revenu supprimée");
+    } else {
+      setExpenseCategories(expenseCategories.filter(c => c !== category));
+      toast.success("Catégorie de dépense supprimée");
+    }
   };
 
   const summary = useMemo(() => {
@@ -649,8 +693,23 @@ const Accounting = () => {
           </TabsContent>
 
           <TabsContent value="revenues" className="space-y-6">
+            {/* Manage Categories Button */}
+            <div className="flex justify-end mb-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCategoryDialogType("revenue");
+                  setIsCategoryDialogOpen(true);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Gérer les types de revenus
+              </Button>
+            </div>
+
             {/* Revenue Tables by Category - Show ALL categories */}
-            {REVENUE_CATEGORIES.map((category) => {
+            {revenueCategories.map((category) => {
                 const categoryTransactions = transactions
                   .filter((t) => t.transaction_type === "revenue" && t.category === category);
                 
@@ -945,13 +1004,13 @@ const Accounting = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {REVENUE_CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                       <SelectContent>
+                         {revenueCategories.map((cat) => (
+                           <SelectItem key={cat} value={cat}>
+                             {cat}
+                           </SelectItem>
+                         ))}
+                       </SelectContent>
                     </Select>
                   </div>
                   <div>
@@ -1046,8 +1105,23 @@ const Accounting = () => {
           </TabsContent>
 
           <TabsContent value="expenses" className="space-y-6">
+            {/* Manage Categories Button */}
+            <div className="flex justify-end mb-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCategoryDialogType("expense");
+                  setIsCategoryDialogOpen(true);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Gérer les types de dépenses
+              </Button>
+            </div>
+
             {/* Expense Tables by Category - Same structure as Revenue */}
-            {EXPENSE_CATEGORIES.map((category) => {
+            {expenseCategories.map((category) => {
                 const categoryTransactions = transactions
                   .filter((t) => t.transaction_type === "expense" && t.category === category);
                 
@@ -1276,13 +1350,13 @@ const Accounting = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {EXPENSE_CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                       <SelectContent>
+                         {expenseCategories.map((cat) => (
+                           <SelectItem key={cat} value={cat}>
+                             {cat}
+                           </SelectItem>
+                         ))}
+                       </SelectContent>
                     </Select>
                   </div>
                   <div className="col-span-2">
@@ -1516,8 +1590,8 @@ const Accounting = () => {
                             </SelectTrigger>
                             <SelectContent>
                               {(recurringFormData.transaction_type === "revenue" 
-                                ? REVENUE_CATEGORIES 
-                                : EXPENSE_CATEGORIES
+                                ? revenueCategories 
+                                : expenseCategories
                               ).map((cat) => (
                                 <SelectItem key={cat} value={cat}>
                                   {cat}
@@ -1759,6 +1833,54 @@ const Accounting = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Category Management Dialog */}
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                Gérer les types de {categoryDialogType === "revenue" ? "revenus" : "dépenses"}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Add new category */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder={`Nouveau type de ${categoryDialogType === "revenue" ? "revenu" : "dépense"}`}
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleAddCategory();
+                    }
+                  }}
+                />
+                <Button onClick={handleAddCategory}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter
+                </Button>
+              </div>
+
+              {/* List existing categories */}
+              <div className="border rounded-md divide-y max-h-[400px] overflow-y-auto">
+                {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category) => (
+                  <div key={category} className="flex items-center justify-between p-3 hover:bg-accent/50">
+                    <span className="font-medium">{category}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteCategory(category, categoryDialogType)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
