@@ -139,6 +139,7 @@ const SortableCategoryItem = ({
   editingRecurring,
   editingRecurrenceDay,
   editingDefaultAmount,
+  editingIndefinite,
   onStartEdit, 
   onSaveEdit, 
   onCancelEdit, 
@@ -146,7 +147,8 @@ const SortableCategoryItem = ({
   onEditNameChange,
   onEditRecurringChange,
   onEditRecurrenceDayChange,
-  onEditDefaultAmountChange
+  onEditDefaultAmountChange,
+  onEditIndefiniteChange
 }: {
   category: string;
   index: number;
@@ -155,6 +157,7 @@ const SortableCategoryItem = ({
   editingRecurring: boolean;
   editingRecurrenceDay: number;
   editingDefaultAmount: number;
+  editingIndefinite: boolean;
   onStartEdit: () => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
@@ -163,6 +166,7 @@ const SortableCategoryItem = ({
   onEditRecurringChange: (value: boolean) => void;
   onEditRecurrenceDayChange: (value: number) => void;
   onEditDefaultAmountChange: (value: number) => void;
+  onEditIndefiniteChange: (value: boolean) => void;
 }) => {
   const {
     attributes,
@@ -231,9 +235,14 @@ const SortableCategoryItem = ({
             >
               {category}
             </span>
-            {editingRecurring && (
+            {editingRecurring && !editingIndefinite && (
               <Badge variant="secondary" className="text-xs">
-                Récurrent
+                Récurrent (J{editingRecurrenceDay})
+              </Badge>
+            )}
+            {editingRecurring && editingIndefinite && (
+              <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                Récurrent <span className="text-base">∞</span>
               </Badge>
             )}
             <div className="flex gap-1">
@@ -270,16 +279,27 @@ const SortableCategoryItem = ({
           {editingRecurring && (
             <>
               <div className="flex items-center gap-2">
-                <Label className="text-sm">Jour du mois:</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={editingRecurrenceDay}
-                  onChange={(e) => onEditRecurrenceDayChange(parseInt(e.target.value) || 1)}
-                  className="w-20"
+                <Switch
+                  checked={editingIndefinite}
+                  onCheckedChange={onEditIndefiniteChange}
                 />
+                <Label className="text-sm flex items-center gap-1">
+                  Indéterminée <span className="text-lg">∞</span>
+                </Label>
               </div>
+              {!editingIndefinite && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Jour du mois:</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={editingRecurrenceDay}
+                    onChange={(e) => onEditRecurrenceDayChange(parseInt(e.target.value) || 1)}
+                    className="w-20"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Label className="text-sm">Montant:</Label>
                 <Input
@@ -315,6 +335,7 @@ const Accounting = () => {
   const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
   const [editingCategoryRecurrenceDay, setEditingCategoryRecurrenceDay] = useState(1);
   const [editingCategoryDefaultAmount, setEditingCategoryDefaultAmount] = useState(0);
+  const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(false);
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -694,7 +715,7 @@ const Accounting = () => {
     // Load recurrence data from database
     const { data } = await (supabase as any)
       .from('accounting_categories')
-      .select('is_recurring, recurrence_day, default_amount')
+      .select('is_recurring, recurrence_day, default_amount, is_indefinite_recurrence')
       .eq('name', currentName)
       .eq('type', categoryDialogType)
       .single();
@@ -703,6 +724,7 @@ const Accounting = () => {
       setEditingCategoryRecurring(data.is_recurring || false);
       setEditingCategoryRecurrenceDay(data.recurrence_day || 1);
       setEditingCategoryDefaultAmount(data.default_amount || 0);
+      setEditingCategoryIndefinite(data.is_indefinite_recurrence || false);
     }
   };
 
@@ -712,6 +734,7 @@ const Accounting = () => {
     setEditingCategoryRecurring(false);
     setEditingCategoryRecurrenceDay(1);
     setEditingCategoryDefaultAmount(0);
+    setEditingCategoryIndefinite(false);
   };
 
   const handleSaveEditCategory = async (oldName: string, type: "revenue" | "expense") => {
@@ -741,7 +764,8 @@ const Accounting = () => {
           name: newName,
           is_recurring: editingCategoryRecurring,
           recurrence_day: editingCategoryRecurrenceDay,
-          default_amount: editingCategoryDefaultAmount
+          default_amount: editingCategoryDefaultAmount,
+          is_indefinite_recurrence: editingCategoryIndefinite
         })
         .eq('type', type)
         .eq('name', oldName);
@@ -965,7 +989,6 @@ const Accounting = () => {
           <TabsList>
             <TabsTrigger value="revenues">Revenus</TabsTrigger>
             <TabsTrigger value="expenses">Dépenses</TabsTrigger>
-            <TabsTrigger value="recurring">Récurrences</TabsTrigger>
             <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="unpaid">Impayés ({unpaidTransactions.length})</TabsTrigger>
           </TabsList>
@@ -2042,235 +2065,6 @@ const Accounting = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="recurring" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Transactions Récurrentes</CardTitle>
-                  <Dialog open={isRecurringDialogOpen} onOpenChange={(open) => {
-                    setIsRecurringDialogOpen(open);
-                    if (!open) resetRecurringForm();
-                  }}>
-                    <DialogTrigger asChild>
-                      <Button onClick={resetRecurringForm}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Ajouter une Récurrence
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingRecurring ? "Modifier" : "Nouvelle"} Transaction Récurrente
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Type *</Label>
-                          <Select
-                            value={recurringFormData.transaction_type}
-                            onValueChange={(value: "revenue" | "expense") =>
-                              setRecurringFormData({ ...recurringFormData, transaction_type: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="revenue">Revenu</SelectItem>
-                              <SelectItem value="expense">Dépense</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Catégorie *</Label>
-                          <Select
-                            value={recurringFormData.category}
-                            onValueChange={(value) =>
-                              setRecurringFormData({ ...recurringFormData, category: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {(recurringFormData.transaction_type === "revenue" 
-                                ? revenueCategories 
-                                : expenseCategories
-                              ).map((cat) => (
-                                <SelectItem key={cat} value={cat}>
-                                  {cat}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Nom Client</Label>
-                          <Input
-                            value={recurringFormData.client_name}
-                            onChange={(e) =>
-                              setRecurringFormData({ ...recurringFormData, client_name: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Description du Service</Label>
-                          <Input
-                            value={recurringFormData.service_description}
-                            onChange={(e) =>
-                              setRecurringFormData({ ...recurringFormData, service_description: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Montant *</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={recurringFormData.amount}
-                            onChange={(e) =>
-                              setRecurringFormData({ ...recurringFormData, amount: parseFloat(e.target.value) || 0 })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Montant Reçu (par défaut)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={recurringFormData.amount_received}
-                            onChange={(e) =>
-                              setRecurringFormData({ ...recurringFormData, amount_received: parseFloat(e.target.value) || 0 })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Moyen de Paiement</Label>
-                          <Select
-                            value={recurringFormData.payment_method}
-                            onValueChange={(value) =>
-                              setRecurringFormData({ ...recurringFormData, payment_method: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PAYMENT_METHODS.map((method) => (
-                                <SelectItem key={method} value={method}>
-                                  {method}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Jour du Mois (1-31)</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="31"
-                            value={recurringFormData.recurrence_day}
-                            onChange={(e) =>
-                              setRecurringFormData({ ...recurringFormData, recurrence_day: parseInt(e.target.value) || 1 })
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={recurringFormData.is_active}
-                            onCheckedChange={(checked) =>
-                              setRecurringFormData({ ...recurringFormData, is_active: checked })
-                            }
-                          />
-                          <Label>Active</Label>
-                        </div>
-                        <div className="col-span-2">
-                          <Label>Notes</Label>
-                          <Input
-                            value={recurringFormData.notes}
-                            onChange={(e) =>
-                              setRecurringFormData({ ...recurringFormData, notes: e.target.value })
-                            }
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Button onClick={handleRecurringSubmit} className="w-full">
-                            {editingRecurring ? "Mettre à jour" : "Créer"}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Active</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Catégorie</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Montant</TableHead>
-                      <TableHead>Jour</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recurringTransactions.map((recurring) => (
-                      <TableRow key={recurring.id}>
-                        <TableCell>
-                          <Switch
-                            checked={recurring.is_active}
-                            onCheckedChange={(checked) =>
-                              updateRecurring.mutate({ id: recurring.id, is_active: checked })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={
-                              recurring.transaction_type === "revenue"
-                                ? "text-green-600 font-medium"
-                                : "text-red-600 font-medium"
-                            }
-                          >
-                            {recurring.transaction_type === "revenue" ? "Revenu" : "Dépense"}
-                          </span>
-                        </TableCell>
-                        <TableCell>{recurring.category}</TableCell>
-                        <TableCell>{recurring.client_name}</TableCell>
-                        <TableCell>{recurring.service_description}</TableCell>
-                        <TableCell>CHF {recurring.amount.toFixed(2)}</TableCell>
-                        <TableCell>{recurring.recurrence_day}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditRecurring(recurring)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteRecurring.mutate(recurring.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="all" className="space-y-4">
             <Card>
               <CardHeader>
@@ -2387,6 +2181,7 @@ const Accounting = () => {
                         editingRecurring={editingCategoryRecurring}
                         editingRecurrenceDay={editingCategoryRecurrenceDay}
                         editingDefaultAmount={editingCategoryDefaultAmount}
+                        editingIndefinite={editingCategoryIndefinite}
                         onStartEdit={() => handleStartEditCategory(index, category)}
                         onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
                         onCancelEdit={handleCancelEditCategory}
@@ -2395,6 +2190,7 @@ const Accounting = () => {
                         onEditRecurringChange={setEditingCategoryRecurring}
                         onEditRecurrenceDayChange={setEditingCategoryRecurrenceDay}
                         onEditDefaultAmountChange={setEditingCategoryDefaultAmount}
+                        onEditIndefiniteChange={setEditingCategoryIndefinite}
                       />
                     ))}
                   </SortableContext>
