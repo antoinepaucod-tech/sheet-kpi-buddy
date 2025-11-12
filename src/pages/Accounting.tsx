@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,6 +137,8 @@ const Accounting = () => {
 
   const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction } =
     useAccountingTransactions(selectedYear, selectedMonth);
+
+  const queryClient = useQueryClient();
 
   const { 
     recurringTransactions, 
@@ -409,8 +412,8 @@ const Accounting = () => {
 
       handleCancelEditCategory();
       
-      // Refresh transactions to show updated data
-      window.location.reload();
+      // Refresh transactions using React Query instead of page reload
+      queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
     } catch (error) {
       console.error("Error updating category:", error);
       toast.error("Erreur lors de la modification de la catégorie");
