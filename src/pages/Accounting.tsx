@@ -348,6 +348,7 @@ const Accounting = () => {
 
   const [isRecurringDialogOpen, setIsRecurringDialogOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<RecurringTransaction | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [recurringFormData, setRecurringFormData] = useState({
     transaction_type: "revenue" as "revenue" | "expense",
     category: "",
@@ -426,6 +427,30 @@ const Accounting = () => {
       is_active: recurring.is_active,
     });
     setIsRecurringDialogOpen(true);
+  };
+
+  const handleGenerateRecurringTransactions = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-recurring-transactions');
+      
+      if (error) throw error;
+      
+      const result = data as { success: boolean; count: number; message: string };
+      
+      if (result.success) {
+        toast.success(result.message);
+        // Refresh transactions
+        queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
+      } else {
+        toast.info(result.message);
+      }
+    } catch (error) {
+      console.error('Error generating recurring transactions:', error);
+      toast.error("Erreur lors de la génération des transactions récurrentes");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCopyMonth = async (sourceYear: number, sourceMonth: number) => {
@@ -760,6 +785,14 @@ const Accounting = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold">Comptabilité</h1>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleGenerateRecurringTransactions}
+              disabled={isGenerating}
+            >
+              <RefreshCw className={cn("h-4 w-4 mr-2", isGenerating && "animate-spin")} />
+              {isGenerating ? "Génération..." : "Générer Paiements Récurrents"}
+            </Button>
             <LanguageToggle />
             <ThemeToggle />
           </div>
