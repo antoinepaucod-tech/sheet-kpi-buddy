@@ -52,6 +52,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAccountingTransactions, type AccountingTransaction } from "@/hooks/useAccountingTransactions";
 import { useRecurringTransactions, type RecurringTransaction } from "@/hooks/useRecurringTransactions";
+import { useAccountingCategoriesWithRecurrence } from "@/hooks/useAccountingCategoriesWithRecurrence";
 import { useCashCollectedValidation } from "@/hooks/useCashCollectedValidation";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -134,22 +135,34 @@ const SortableCategoryItem = ({
   category, 
   index, 
   isEditing, 
-  editingName, 
+  editingName,
+  editingRecurring,
+  editingRecurrenceDay,
+  editingDefaultAmount,
   onStartEdit, 
   onSaveEdit, 
   onCancelEdit, 
   onDelete, 
-  onEditNameChange 
+  onEditNameChange,
+  onEditRecurringChange,
+  onEditRecurrenceDayChange,
+  onEditDefaultAmountChange
 }: {
   category: string;
   index: number;
   isEditing: boolean;
   editingName: string;
+  editingRecurring: boolean;
+  editingRecurrenceDay: number;
+  editingDefaultAmount: number;
   onStartEdit: () => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
   onDelete: () => void;
   onEditNameChange: (value: string) => void;
+  onEditRecurringChange: (value: boolean) => void;
+  onEditRecurrenceDayChange: (value: number) => void;
+  onEditDefaultAmountChange: (value: number) => void;
 }) => {
   const {
     attributes,
@@ -170,9 +183,9 @@ const SortableCategoryItem = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between p-3 hover:bg-accent/50 gap-2 border-b last:border-b-0"
+      className="flex flex-col gap-2 p-3 hover:bg-accent/50 border-b last:border-b-0"
     >
-      <div className="flex items-center gap-2 flex-1">
+      <div className="flex items-center gap-2">
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -218,6 +231,11 @@ const SortableCategoryItem = ({
             >
               {category}
             </span>
+            {editingRecurring && (
+              <Badge variant="secondary" className="text-xs">
+                Récurrent
+              </Badge>
+            )}
             <div className="flex gap-1">
               <Button
                 size="sm"
@@ -239,6 +257,43 @@ const SortableCategoryItem = ({
           </>
         )}
       </div>
+      
+      {isEditing && (
+        <div className="ml-8 flex items-center gap-4 pt-2 border-t">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={editingRecurring}
+              onCheckedChange={onEditRecurringChange}
+            />
+            <Label className="text-sm">Récurrente</Label>
+          </div>
+          {editingRecurring && (
+            <>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm">Jour du mois:</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={editingRecurrenceDay}
+                  onChange={(e) => onEditRecurrenceDayChange(parseInt(e.target.value) || 1)}
+                  className="w-20"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm">Montant:</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editingDefaultAmount}
+                  onChange={(e) => onEditDefaultAmountChange(parseFloat(e.target.value) || 0)}
+                  className="w-28"
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -257,6 +312,9 @@ const Accounting = () => {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
+  const [editingCategoryRecurrenceDay, setEditingCategoryRecurrenceDay] = useState(1);
+  const [editingCategoryDefaultAmount, setEditingCategoryDefaultAmount] = useState(0);
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -430,25 +488,15 @@ const Accounting = () => {
     setIsRecurringDialogOpen(true);
   };
 
+  const { generateRecurringTransactions } = useAccountingCategoriesWithRecurrence();
+  
   const handleGenerateRecurringTransactions = async () => {
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-recurring-transactions');
-      
-      if (error) throw error;
-      
-      const result = data as { success: boolean; count: number; message: string };
-      
-      if (result.success) {
-        toast.success(result.message);
-        // Refresh transactions
-        queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
-      } else {
-        toast.info(result.message);
-      }
-    } catch (error) {
-      console.error('Error generating recurring transactions:', error);
-      toast.error("Erreur lors de la génération des transactions récurrentes");
+      await generateRecurringTransactions.mutateAsync({ year: selectedYear, month: selectedMonth });
+      queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la génération");
     } finally {
       setIsGenerating(false);
     }
@@ -639,14 +687,31 @@ const Accounting = () => {
     }
   };
 
-  const handleStartEditCategory = (index: number, currentName: string) => {
+  const handleStartEditCategory = async (index: number, currentName: string) => {
     setEditingCategoryIndex(index);
     setEditingCategoryName(currentName);
+    
+    // Load recurrence data from database
+    const { data } = await (supabase as any)
+      .from('accounting_categories')
+      .select('is_recurring, recurrence_day, default_amount')
+      .eq('name', currentName)
+      .eq('type', categoryDialogType)
+      .single();
+    
+    if (data) {
+      setEditingCategoryRecurring(data.is_recurring || false);
+      setEditingCategoryRecurrenceDay(data.recurrence_day || 1);
+      setEditingCategoryDefaultAmount(data.default_amount || 0);
+    }
   };
 
   const handleCancelEditCategory = () => {
     setEditingCategoryIndex(null);
     setEditingCategoryName("");
+    setEditingCategoryRecurring(false);
+    setEditingCategoryRecurrenceDay(1);
+    setEditingCategoryDefaultAmount(0);
   };
 
   const handleSaveEditCategory = async (oldName: string, type: "revenue" | "expense") => {
@@ -669,10 +734,15 @@ const Accounting = () => {
     }
 
     try {
-      // Update category name in database
+      // Update category name and recurrence data in database
       const { error: categoryError } = await (supabase as any)
         .from('accounting_categories')
-        .update({ name: newName })
+        .update({ 
+          name: newName,
+          is_recurring: editingCategoryRecurring,
+          recurrence_day: editingCategoryRecurrenceDay,
+          default_amount: editingCategoryDefaultAmount
+        })
         .eq('type', type)
         .eq('name', oldName);
 
@@ -2314,11 +2384,17 @@ const Accounting = () => {
                         index={index}
                         isEditing={editingCategoryIndex === index}
                         editingName={editingCategoryName}
+                        editingRecurring={editingCategoryRecurring}
+                        editingRecurrenceDay={editingCategoryRecurrenceDay}
+                        editingDefaultAmount={editingCategoryDefaultAmount}
                         onStartEdit={() => handleStartEditCategory(index, category)}
                         onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
                         onCancelEdit={handleCancelEditCategory}
                         onDelete={() => handleDeleteCategory(category, categoryDialogType)}
                         onEditNameChange={setEditingCategoryName}
+                        onEditRecurringChange={setEditingCategoryRecurring}
+                        onEditRecurrenceDayChange={setEditingCategoryRecurrenceDay}
+                        onEditDefaultAmountChange={setEditingCategoryDefaultAmount}
                       />
                     ))}
                   </SortableContext>
