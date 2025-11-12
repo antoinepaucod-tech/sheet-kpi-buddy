@@ -714,17 +714,31 @@ const Accounting = () => {
     setEditingCategoryName(currentName);
     
     // Load recurrence data from database
-    const { data } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from('accounting_categories')
       .select('is_recurring, is_indefinite_recurrence, recurrence_end_date')
       .eq('name', currentName)
       .eq('type', categoryDialogType)
-      .single();
+      .maybeSingle();
+
+    if (error) {
+      console.error('Erreur lors du chargement de la catégorie:', error);
+      // Set default values if error
+      setEditingCategoryRecurring(false);
+      setEditingCategoryIndefinite(true);
+      setEditingCategoryEndDate(null);
+      return;
+    }
 
     if (data) {
-      setEditingCategoryRecurring(data.is_recurring || false);
-      setEditingCategoryIndefinite(data.is_indefinite_recurrence !== false);
+      setEditingCategoryRecurring(data.is_recurring === true);
+      setEditingCategoryIndefinite(data.is_indefinite_recurrence === true);
       setEditingCategoryEndDate(data.recurrence_end_date || null);
+    } else {
+      // No data found, use defaults
+      setEditingCategoryRecurring(false);
+      setEditingCategoryIndefinite(true);
+      setEditingCategoryEndDate(null);
     }
   };
 
