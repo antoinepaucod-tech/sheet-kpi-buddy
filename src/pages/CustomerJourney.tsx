@@ -231,15 +231,68 @@ const CustomerJourney = () => {
         member_type: newMemberType || null,
         cash_collected: newCashCollected ? parseFloat(newCashCollected) : 0,
       };
+      
+      // Add member to database
       await addMemberToDb(newMember.name, newMember.membership);
-      // Update the member with additional fields after creation
-      const createdMember = members.find(m => m.name === newMember.name);
-      if (createdMember && (newMember.member_type || newMember.cash_collected)) {
-        await updateMemberInDb(createdMember.id, {
-          member_type: newMember.member_type,
-          cash_collected: newMember.cash_collected,
-        });
+      
+      // Wait a bit for the member to be created
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Get the created member
+      const { data: createdMemberData } = await supabase
+        .from('customer_members')
+        .select('*')
+        .eq('name', newMember.name)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (createdMemberData) {
+        // Update with additional fields
+        if (newMember.member_type || newMember.cash_collected) {
+          await updateMemberInDb(createdMemberData.id, {
+            member_type: newMember.member_type,
+            cash_collected: newMember.cash_collected,
+          });
+        }
+        
+        // Create accounting transaction if cash collected
+        if (newMember.cash_collected > 0) {
+          const today = format(new Date(), "yyyy-MM-dd");
+          const currentMonth = new Date().getMonth() + 1;
+          const currentYear = new Date().getFullYear();
+          
+          // Map member type to revenue category
+          let revenueCategory = "THE COACH PASS MENSUEL";
+          let productDescription = "Revenu EFT Général";
+          
+          if (newMember.member_type === "Membres PT") {
+            productDescription = "Revenu PT";
+          } else if (newMember.member_type === "Membres PIF") {
+            revenueCategory = "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL";
+          }
+          
+          // Create accounting transaction
+          await supabase
+            .from('accounting_transactions')
+            .insert({
+              transaction_date: today,
+              transaction_type: "revenue",
+              category: revenueCategory,
+              client_name: newMember.name,
+              service_description: newMember.membership,
+              product_description: productDescription,
+              amount: newMember.cash_collected,
+              amount_received: newMember.cash_collected,
+              payment_method: "Prélèvement Automatique",
+              notes: "Ajouté depuis Parcours Client",
+              year: currentYear,
+              month: currentMonth,
+              month_name: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date()),
+            });
+        }
       }
+      
       setNewMemberName("");
       setNewMemberType("");
       setNewCashCollected("");
@@ -281,6 +334,50 @@ const CustomerJourney = () => {
             previous_value: previousValue,
             new_value: value
           }]);
+      }
+    }
+    
+    // If updating cash_collected, sync with accounting
+    if (field === "cash_collected") {
+      const member = members.find(m => m.id === id);
+      if (member) {
+        const newAmount = parseFloat(value) || 0;
+        const oldAmount = member.cash_collected || 0;
+        
+        if (newAmount > 0 && newAmount !== oldAmount) {
+          const today = format(new Date(), "yyyy-MM-dd");
+          const currentMonth = new Date().getMonth() + 1;
+          const currentYear = new Date().getFullYear();
+          
+          // Map member type to revenue category
+          let revenueCategory = "THE COACH PASS MENSUEL";
+          let productDescription = "Revenu EFT Général";
+          
+          if (member.member_type === "Membres PT") {
+            productDescription = "Revenu PT";
+          } else if (member.member_type === "Membres PIF") {
+            revenueCategory = "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL";
+          }
+          
+          // Create accounting transaction
+          await supabase
+            .from('accounting_transactions')
+            .insert({
+              transaction_date: today,
+              transaction_type: "revenue",
+              category: revenueCategory,
+              client_name: member.name,
+              service_description: member.membership,
+              product_description: productDescription,
+              amount: newAmount,
+              amount_received: newAmount,
+              payment_method: "Prélèvement Automatique",
+              notes: "Synchronisé depuis Parcours Client",
+              year: currentYear,
+              month: currentMonth,
+              month_name: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date()),
+            });
+        }
       }
     }
 
