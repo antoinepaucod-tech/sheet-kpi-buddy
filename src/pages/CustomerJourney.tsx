@@ -322,7 +322,7 @@ const CustomerJourney = () => {
       if (value === "Membres PT") {
         productDescription = "Revenu PT";
       } else if (value === "Membres PIF") {
-        productDescription = "Revenu Fast Cash";
+        productDescription = "Membre PIF";
       }
       
       // Update all accounting transactions for this member
@@ -384,7 +384,7 @@ const CustomerJourney = () => {
           if (member.member_type === "Membres PT") {
             productDescription = "Revenu PT";
           } else if (member.member_type === "Membres PIF") {
-            productDescription = "Revenu Fast Cash";
+            productDescription = "Membre PIF";
           }
           
           // Create accounting transaction
