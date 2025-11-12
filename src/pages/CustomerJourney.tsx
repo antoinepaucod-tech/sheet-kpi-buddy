@@ -256,7 +256,7 @@ const CustomerJourney = () => {
           if (newMember.member_type === "Membres PT") {
             productDescription = "Revenu PT";
           } else if (newMember.member_type === "Membres PIF") {
-            productDescription = "Revenu Fast Cash";
+            productDescription = "Membre PIF";
           }
           
           // Create accounting transaction with complete information
