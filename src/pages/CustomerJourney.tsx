@@ -35,51 +35,14 @@ import { Plus, Trash2, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useTranslations } from "@/hooks/useTranslations";
+import { useAccountingCategories } from "@/hooks/useAccountingCategories";
 import { cn } from "@/lib/utils";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import type { Member } from "@/hooks/useCustomerMembers";
 
-const membershipTypes = [
-  "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT",
-  "Hybrid FULL - paiement tous les 28 jours avec engagement",
-  "Hybrid FULL - Paiement x1 Annuel",
-  "Hybrid FULL DUO . Paiement x1 Annuel",
-  "Unlimited Access (ancien membership)",
-  "Unlimited Access 6 mois (ancien membership)",
-  "Abonnement offert",
-  "Hybrid OPEN GYM tous les 28 jours - avec engagement",
-  "hybrid OPEN GYM - Paiement x1 - Annuel",
-  "Open Gym (ancien membership)",
-  "Hybrid FULL tous les 28 jours - sans engagement",
-  "Pack 20 sessions",
-  "Pack 10",
-  "6 Weeks Challenge",
-  "IFRC Paiement Mensuel",
-];
-
-// Memberships that require training tracking
-const trackingRequiredMemberships = [
-  "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT",
-  "Hybrid FULL - paiement tous les 28 jours avec engagement",
-  "Hybrid FULL - Paiement x1 Annuel",
-  "Hybrid FULL DUO . Paiement x1 Annuel",
-  "Unlimited Access (ancien membership)",
-  "Unlimited Access 6 mois (ancien membership)",
-  "Abonnement offert",
-  "Hybrid FULL tous les 28 jours - sans engagement",
-  "Pack 20 sessions",
-  "Pack 10",
-  "6 Weeks Challenge",
-];
-
-const requiresTrainingTracking = (membership: string): boolean => {
-  return trackingRequiredMemberships.includes(membership);
-};
-
-// Note: membership is now directly used as revenue category (1:1 mapping)
-
 const CustomerJourney = () => {
   const { t } = useTranslations();
+  const { revenueCategories, isLoading: categoriesLoading } = useAccountingCategories();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedView, setSelectedView] = useState("index");
   const [selectedYear, setSelectedYear] = useState<number | "all">(new Date().getFullYear());
@@ -87,7 +50,7 @@ const CustomerJourney = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [memberStatus, setMemberStatus] = useState<"active" | "exited" | "all">("active");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  
+
   const {
     members,
     weeklyTrainings,
@@ -98,6 +61,29 @@ const CustomerJourney = () => {
     updateWeeklyTraining: updateWeeklyTrainingInDb,
     getWeeklyTraining,
   } = useCustomerMembers();
+
+  // Dynamic membership types from accounting categories
+  const membershipTypes = revenueCategories.map(cat => cat.name);
+
+  // Memberships that require training tracking (updated names)
+  const trackingRequiredMemberships = [
+    "THE COACH PASS MENSUEL",
+    "HUBFIT",
+    "UNLIMITED ACCESS - PAIEMENT MENSUEL",
+    "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL",
+    "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL",
+    "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1",
+    "OFFRE 6 MOIS - 499 CHF",
+    "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL",
+    "PT ANTOINE",
+    "OFFRE 3 MOIS",
+  ];
+
+  const requiresTrainingTracking = (membership: string): boolean => {
+    return trackingRequiredMemberships.includes(membership);
+  };
+
+  // Note: membership is now directly used as revenue category (1:1 mapping)
   
   // Handle navigation from KPI Client
   useEffect(() => {
@@ -294,6 +280,9 @@ const CustomerJourney = () => {
             });
         }
       }
+      
+      // Force page refresh to show new member immediately
+      window.location.reload();
     }
   };
 
