@@ -76,28 +76,7 @@ const requiresTrainingTracking = (membership: string): boolean => {
   return trackingRequiredMemberships.includes(membership);
 };
 
-// Map membership types to accounting revenue categories
-const mapMembershipToRevenueCategory = (membership: string): string => {
-  const mapping: Record<string, string> = {
-    "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT": "THE COACH PASS MENSUEL",
-    "Hybrid FULL - paiement tous les 28 jours avec engagement": "THE COACH PASS MENSUEL",
-    "Hybrid FULL - Paiement x1 Annuel": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL",
-    "Hybrid FULL DUO . Paiement x1 Annuel": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1",
-    "Unlimited Access (ancien membership)": "UNLIMITED ACCESS - PAIEMENT MENSUEL",
-    "Unlimited Access 6 mois (ancien membership)": "OFFRE 6 MOIS - 499 CHF",
-    "Abonnement offert": "THE COACH PASS MENSUEL",
-    "Hybrid OPEN GYM tous les 28 jours - avec engagement": "OPEN GYM - PAIEMENT MENSUEL",
-    "hybrid OPEN GYM - Paiement x1 - Annuel": "OPEN GYM - PAIEMENT ANNUEL X1",
-    "Open Gym (ancien membership)": "OPEN GYM - PAIEMENT MENSUEL",
-    "Hybrid FULL tous les 28 jours - sans engagement": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL",
-    "Pack 20 sessions": "PT ANTOINE",
-    "Pack 10": "PT ANTOINE",
-    "6 Weeks Challenge": "OFFRE 3 MOIS",
-    "IFRC Paiement Mensuel": "THE COACH PASS MENSUEL",
-  };
-  
-  return mapping[membership] || "THE COACH PASS MENSUEL";
-};
+// Note: membership is now directly used as revenue category (1:1 mapping)
 
 const CustomerJourney = () => {
   const { t } = useTranslations();
@@ -283,8 +262,8 @@ const CustomerJourney = () => {
           const currentMonth = transactionDate.getMonth() + 1;
           const currentYear = transactionDate.getFullYear();
           
-          // Map membership to revenue category
-          const revenueCategory = mapMembershipToRevenueCategory(newMember.membership);
+          // Use membership directly as category (1:1 synchronization)
+          const category = newMember.membership;
           
           // Map member type to product description
           let productDescription = "Revenu EFT Général";
@@ -300,7 +279,7 @@ const CustomerJourney = () => {
             .insert({
               transaction_date: format(transactionDate, "yyyy-MM-dd"),
               transaction_type: "revenue",
-              category: revenueCategory,
+              category: category,
               client_name: newMember.name,
               service_description: memberData.serviceDescription || newMember.membership,
               product_description: productDescription,
@@ -368,8 +347,8 @@ const CustomerJourney = () => {
           const currentMonth = new Date().getMonth() + 1;
           const currentYear = new Date().getFullYear();
           
-          // Map membership to revenue category
-          const revenueCategory = mapMembershipToRevenueCategory(member.membership);
+          // Use membership directly as category (1:1 synchronization)
+          const category = member.membership;
           
           // Map member type to product description
           let productDescription = "Revenu EFT Général";
@@ -385,7 +364,7 @@ const CustomerJourney = () => {
             .insert({
               transaction_date: today,
               transaction_type: "revenue",
-              category: revenueCategory,
+              category: category,
               client_name: member.name,
               service_description: member.membership,
               product_description: productDescription,
