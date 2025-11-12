@@ -278,7 +278,7 @@ const Accounting = () => {
           ...DEFAULT_REVENUE_CATEGORIES.map((name, idx) => ({ type: 'revenue', name, position: idx })),
           ...DEFAULT_EXPENSE_CATEGORIES.map((name, idx) => ({ type: 'expense', name, position: idx })),
         ];
-        const { error: insertError } = await supabase.from('accounting_categories').insert(seed);
+        const { error: insertError } = await (supabase as any).from('accounting_categories').insert(seed);
         if (insertError) console.error('Erreur lors du seed des catégories', insertError);
         setRevenueCategories(DEFAULT_REVENUE_CATEGORIES);
         setExpenseCategories(DEFAULT_EXPENSE_CATEGORIES);
@@ -296,7 +296,7 @@ const Accounting = () => {
   const persistCategoryOrder = async (type: 'revenue' | 'expense', names: string[]) => {
     await Promise.all(
       names.map((name, idx) =>
-        supabase.from('accounting_categories').update({ position: idx }).eq('type', type).eq('name', name)
+        (supabase as any).from('accounting_categories').update({ position: idx }).eq('type', type).eq('name', name)
       )
     );
   };
@@ -495,7 +495,7 @@ const Accounting = () => {
     setIsDialogOpen(true);
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       toast.error("Le nom de la catégorie ne peut pas être vide");
       return;
@@ -506,14 +506,42 @@ const Accounting = () => {
         toast.error("Cette catégorie existe déjà");
         return;
       }
-      setRevenueCategories([...revenueCategories, newCategoryName.trim()]);
+      const newCategories = [...revenueCategories, newCategoryName.trim()];
+      setRevenueCategories(newCategories);
+      
+      // Persist to database
+      const { error } = await (supabase as any).from('accounting_categories').insert({
+        type: 'revenue',
+        name: newCategoryName.trim(),
+        position: revenueCategories.length
+      });
+      if (error) {
+        console.error('Erreur lors de l\'ajout de la catégorie', error);
+        toast.error("Erreur lors de la sauvegarde");
+        return;
+      }
+      
       toast.success("Catégorie de revenu ajoutée");
     } else {
       if (expenseCategories.includes(newCategoryName.trim())) {
         toast.error("Cette catégorie existe déjà");
         return;
       }
-      setExpenseCategories([...expenseCategories, newCategoryName.trim()]);
+      const newCategories = [...expenseCategories, newCategoryName.trim()];
+      setExpenseCategories(newCategories);
+      
+      // Persist to database
+      const { error } = await (supabase as any).from('accounting_categories').insert({
+        type: 'expense',
+        name: newCategoryName.trim(),
+        position: expenseCategories.length
+      });
+      if (error) {
+        console.error('Erreur lors de l\'ajout de la catégorie', error);
+        toast.error("Erreur lors de la sauvegarde");
+        return;
+      }
+      
       toast.success("Catégorie de dépense ajoutée");
     }
     
@@ -521,7 +549,20 @@ const Accounting = () => {
     setIsCategoryDialogOpen(false);
   };
 
-  const handleDeleteCategory = (category: string, type: "revenue" | "expense") => {
+  const handleDeleteCategory = async (category: string, type: "revenue" | "expense") => {
+    // Delete from database
+    const { error } = await (supabase as any)
+      .from('accounting_categories')
+      .delete()
+      .eq('type', type)
+      .eq('name', category);
+    
+    if (error) {
+      console.error('Erreur lors de la suppression de la catégorie', error);
+      toast.error("Erreur lors de la suppression");
+      return;
+    }
+    
     if (type === "revenue") {
       setRevenueCategories(revenueCategories.filter(c => c !== category));
       toast.success("Catégorie de revenu supprimée");
@@ -531,7 +572,7 @@ const Accounting = () => {
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -546,8 +587,10 @@ const Accounting = () => {
 
     if (categoryDialogType === "revenue") {
       setRevenueCategories(newCategories);
+      await persistCategoryOrder('revenue', newCategories);
     } else {
       setExpenseCategories(newCategories);
+      await persistCategoryOrder('expense', newCategories);
     }
   };
 
@@ -581,14 +624,23 @@ const Accounting = () => {
     }
 
     try {
+      // Update category name in database
+      const { error: categoryError } = await (supabase as any)
+        .from('accounting_categories')
+        .update({ name: newName })
+        .eq('type', type)
+        .eq('name', oldName);
+
+      if (categoryError) throw categoryError;
+
       // Update all transactions with the old category name to the new one
-      const { error } = await supabase
+      const { error: transError } = await supabase
         .from("accounting_transactions")
         .update({ category: newName })
         .eq("category", oldName)
         .eq("transaction_type", type);
 
-      if (error) throw error;
+      if (transError) throw transError;
 
       // Update local state
       if (type === "revenue") {
