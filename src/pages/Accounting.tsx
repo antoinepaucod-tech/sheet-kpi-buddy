@@ -118,6 +118,8 @@ const Accounting = () => {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [categoryDialogType, setCategoryDialogType] = useState<"revenue" | "expense">("revenue");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
   
   const [formData, setFormData] = useState({
     transaction_date: format(new Date(), "yyyy-MM-dd"),
@@ -344,6 +346,74 @@ const Accounting = () => {
     } else {
       setExpenseCategories(expenseCategories.filter(c => c !== category));
       toast.success("Catégorie de dépense supprimée");
+    }
+  };
+
+  const handleStartEditCategory = (index: number, currentName: string) => {
+    setEditingCategoryIndex(index);
+    setEditingCategoryName(currentName);
+  };
+
+  const handleCancelEditCategory = () => {
+    setEditingCategoryIndex(null);
+    setEditingCategoryName("");
+  };
+
+  const handleSaveEditCategory = async (oldName: string, type: "revenue" | "expense") => {
+    const newName = editingCategoryName.trim();
+    
+    if (!newName) {
+      toast.error("Le nom de la catégorie ne peut pas être vide");
+      return;
+    }
+
+    if (newName === oldName) {
+      handleCancelEditCategory();
+      return;
+    }
+
+    const categories = type === "revenue" ? revenueCategories : expenseCategories;
+    if (categories.includes(newName)) {
+      toast.error("Cette catégorie existe déjà");
+      return;
+    }
+
+    try {
+      // Update all transactions with the old category name to the new one
+      const { error } = await supabase
+        .from("accounting_transactions")
+        .update({ category: newName })
+        .eq("category", oldName)
+        .eq("transaction_type", type);
+
+      if (error) throw error;
+
+      // Update local state
+      if (type === "revenue") {
+        const updatedCategories = [...revenueCategories];
+        const index = updatedCategories.indexOf(oldName);
+        if (index !== -1) {
+          updatedCategories[index] = newName;
+          setRevenueCategories(updatedCategories);
+        }
+        toast.success("Catégorie de revenu modifiée et transactions mises à jour");
+      } else {
+        const updatedCategories = [...expenseCategories];
+        const index = updatedCategories.indexOf(oldName);
+        if (index !== -1) {
+          updatedCategories[index] = newName;
+          setExpenseCategories(updatedCategories);
+        }
+        toast.success("Catégorie de dépense modifiée et transactions mises à jour");
+      }
+
+      handleCancelEditCategory();
+      
+      // Refresh transactions to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating category:", error);
+      toast.error("Erreur lors de la modification de la catégorie");
     }
   };
 
@@ -1864,17 +1934,70 @@ const Accounting = () => {
 
               {/* List existing categories */}
               <div className="border rounded-md divide-y max-h-[400px] overflow-y-auto">
-                {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category) => (
-                  <div key={category} className="flex items-center justify-between p-3 hover:bg-accent/50">
-                    <span className="font-medium">{category}</span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteCategory(category, categoryDialogType)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category, index) => (
+                  <div key={category} className="flex items-center justify-between p-3 hover:bg-accent/50 gap-2">
+                    {editingCategoryIndex === index ? (
+                      <>
+                        <Input
+                          value={editingCategoryName}
+                          onChange={(e) => setEditingCategoryName(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              handleSaveEditCategory(category, categoryDialogType);
+                            } else if (e.key === "Escape") {
+                              handleCancelEditCategory();
+                            }
+                          }}
+                          autoFocus
+                          className="flex-1"
+                        />
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleSaveEditCategory(category, categoryDialogType)}
+                            className="h-8 w-8 p-0"
+                          >
+                            ✓
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCancelEditCategory}
+                            className="h-8 w-8 p-0"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <span 
+                          className="font-medium flex-1 cursor-pointer hover:text-primary"
+                          onClick={() => handleStartEditCategory(index, category)}
+                        >
+                          {category}
+                        </span>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleStartEditCategory(index, category)}
+                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteCategory(category, categoryDialogType)}
+                            className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
