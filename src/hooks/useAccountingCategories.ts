@@ -6,6 +6,9 @@ export interface AccountingCategory {
   name: string;
   type: "revenue" | "expense";
   position: number;
+  is_recurring?: boolean;
+  recurrence_day?: number;
+  default_amount?: number;
 }
 
 export const useAccountingCategories = () => {
