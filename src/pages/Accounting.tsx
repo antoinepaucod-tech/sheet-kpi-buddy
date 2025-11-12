@@ -798,6 +798,17 @@ const Accounting = () => {
             </SelectContent>
           </Select>
 
+          <Button 
+            variant="default"
+            onClick={() => {
+              generateMonthlyTransactions.mutate({ year: selectedYear, month: selectedMonth });
+            }}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Générer Transactions Récurrentes
+          </Button>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" className="gap-2">
@@ -850,6 +861,7 @@ const Accounting = () => {
           <TabsList>
             <TabsTrigger value="revenues">Revenus</TabsTrigger>
             <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+            <TabsTrigger value="recurring">Récurrences</TabsTrigger>
             <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="unpaid">Impayés ({unpaidTransactions.length})</TabsTrigger>
           </TabsList>
@@ -1107,6 +1119,11 @@ const Accounting = () => {
                                   Terminé
                                 </Badge>
                               )}
+                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
+                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                                  À valider
+                                </Badge>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1115,6 +1132,19 @@ const Accounting = () => {
                               >
                                 <Trash2 className="h-3 w-3 text-destructive" />
                               </Button>
+                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    is_validated: true 
+                                  })}
+                                  className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                  ✓ Valider
+                                </Button>
+                              )}
                             </div>
                             <Input
                               key={`lastname-${transaction.id}`}
@@ -1508,8 +1538,13 @@ const Accounting = () => {
                             key={transaction.id}
                             className="grid grid-cols-6 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
-                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
+                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center gap-2">
                               <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
+                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
+                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                                  À valider
+                                </Badge>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1518,6 +1553,19 @@ const Accounting = () => {
                               >
                                 <Trash2 className="h-3 w-3 text-destructive" />
                               </Button>
+                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    is_validated: true 
+                                  })}
+                                  className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                  ✓ Valider
+                                </Button>
+                              )}
                             </div>
                             <Input
                               key={`service-${transaction.id}`}

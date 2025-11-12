@@ -135,6 +135,8 @@ export const useRecurringTransactions = () => {
           year: year,
           month: month + 1,
           month_name: MONTHS[month],
+          is_auto_generated: true,
+          is_validated: false,
         };
       });
 

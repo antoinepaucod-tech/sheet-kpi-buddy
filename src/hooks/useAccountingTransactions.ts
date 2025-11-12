@@ -20,6 +20,8 @@ export interface AccountingTransaction {
   month_name: string;
   created_at: string;
   updated_at: string;
+  is_validated?: boolean;
+  is_auto_generated?: boolean;
 }
 
 export const useAccountingTransactions = (year: number, month: number) => {

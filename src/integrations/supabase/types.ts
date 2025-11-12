@@ -50,6 +50,8 @@ export type Database = {
           created_at: string
           id: string
           invoice_number: string | null
+          is_auto_generated: boolean | null
+          is_validated: boolean | null
           month: number
           month_name: string
           notes: string | null
@@ -69,6 +71,8 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_number?: string | null
+          is_auto_generated?: boolean | null
+          is_validated?: boolean | null
           month: number
           month_name: string
           notes?: string | null
@@ -88,6 +92,8 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_number?: string | null
+          is_auto_generated?: boolean | null
+          is_validated?: boolean | null
           month?: number
           month_name?: string
           notes?: string | null
