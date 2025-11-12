@@ -103,6 +103,7 @@ const PRODUCT_DESCRIPTIONS_REVENUE = [
   "Revenu PT",
   "Revenu Retail",
   "Revenu Fast Cash",
+  "Membre PIF",
 ];
 
 const PRODUCT_DESCRIPTIONS_EXPENSE = [
