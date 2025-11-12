@@ -26,6 +26,7 @@ import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useAccountingCategories } from "@/hooks/useAccountingCategories";
 
 const PAYMENT_METHODS = [
   "Prélèvement Automatique",
@@ -33,24 +34,6 @@ const PAYMENT_METHODS = [
   "Carte Bancaire",
   "Espèces",
   "Autre",
-];
-
-const MEMBERSHIP_TYPES = [
-  "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT",
-  "Hybrid FULL - paiement tous les 28 jours avec engagement",
-  "Hybrid FULL - Paiement x1 Annuel",
-  "Hybrid FULL DUO . Paiement x1 Annuel",
-  "Unlimited Access (ancien membership)",
-  "Unlimited Access 6 mois (ancien membership)",
-  "Abonnement offert",
-  "Hybrid OPEN GYM tous les 28 jours - avec engagement",
-  "hybrid OPEN GYM - Paiement x1 - Annuel",
-  "Open Gym (ancien membership)",
-  "Hybrid FULL tous les 28 jours - sans engagement",
-  "Pack 20 sessions",
-  "Pack 10",
-  "6 Weeks Challenge",
-  "IFRC Paiement Mensuel",
 ];
 
 interface AddMemberDialogProps {
@@ -69,10 +52,11 @@ export interface MemberFormData {
 }
 
 export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
+  const { revenueCategories, isLoading } = useAccountingCategories();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<MemberFormData>({
     name: "",
-    membership: MEMBERSHIP_TYPES[0],
+    membership: "",
     memberType: "",
     cashCollected: 0,
     contractDate: new Date(),
@@ -82,12 +66,12 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
   });
 
   const handleSubmit = () => {
-    if (formData.name.trim() && formData.memberType && formData.cashCollected >= 0) {
+    if (formData.name.trim() && formData.membership && formData.memberType && formData.cashCollected >= 0) {
       onAdd(formData);
       // Reset form
       setFormData({
         name: "",
-        membership: MEMBERSHIP_TYPES[0],
+        membership: "",
         memberType: "",
         cashCollected: 0,
         contractDate: new Date(),
@@ -131,14 +115,15 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
               <Select
                 value={formData.membership}
                 onValueChange={(value) => setFormData({ ...formData, membership: value })}
+                disabled={isLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {MEMBERSHIP_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  {revenueCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.name}>
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -267,7 +252,7 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!formData.name.trim() || !formData.memberType || !formData.contractDate}
+            disabled={!formData.name.trim() || !formData.membership || !formData.memberType || !formData.contractDate}
           >
             Ajouter
           </Button>
