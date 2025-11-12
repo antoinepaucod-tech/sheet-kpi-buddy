@@ -6,6 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from "lucide-react";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -107,6 +125,120 @@ const PAYMENT_METHODS = [
   "Autre",
 ];
 
+// Sortable category item component
+const SortableCategoryItem = ({ 
+  category, 
+  index, 
+  isEditing, 
+  editingName, 
+  onStartEdit, 
+  onSaveEdit, 
+  onCancelEdit, 
+  onDelete, 
+  onEditNameChange 
+}: {
+  category: string;
+  index: number;
+  isEditing: boolean;
+  editingName: string;
+  onStartEdit: () => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onDelete: () => void;
+  onEditNameChange: (value: string) => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3 hover:bg-accent/50 gap-2 border-b last:border-b-0"
+    >
+      <div className="flex items-center gap-2 flex-1">
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        {isEditing ? (
+          <>
+            <Input
+              value={editingName}
+              onChange={(e) => onEditNameChange(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  onSaveEdit();
+                } else if (e.key === "Escape") {
+                  onCancelEdit();
+                }
+              }}
+              autoFocus
+              className="flex-1"
+            />
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onSaveEdit}
+                className="h-8 w-8 p-0"
+              >
+                ✓
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onCancelEdit}
+                className="h-8 w-8 p-0"
+              >
+                ✕
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <span 
+              className="font-medium flex-1 cursor-pointer hover:text-primary"
+              onClick={onStartEdit}
+            >
+              {category}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onStartEdit}
+                className="h-8 w-8 p-0"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onDelete}
+                className="text-destructive hover:text-destructive h-8 w-8 p-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Accounting = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -121,6 +253,14 @@ const Accounting = () => {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
+  
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   const [formData, setFormData] = useState({
     transaction_date: format(new Date(), "yyyy-MM-dd"),
@@ -349,6 +489,26 @@ const Accounting = () => {
     } else {
       setExpenseCategories(expenseCategories.filter(c => c !== category));
       toast.success("Catégorie de dépense supprimée");
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const categories = categoryDialogType === "revenue" ? revenueCategories : expenseCategories;
+    const oldIndex = categories.indexOf(active.id as string);
+    const newIndex = categories.indexOf(over.id as string);
+
+    const newCategories = arrayMove(categories, oldIndex, newIndex);
+
+    if (categoryDialogType === "revenue") {
+      setRevenueCategories(newCategories);
+    } else {
+      setExpenseCategories(newCategories);
     }
   };
 
@@ -1935,75 +2095,34 @@ const Accounting = () => {
                 </Button>
               </div>
 
-              {/* List existing categories */}
-              <div className="border rounded-md divide-y max-h-[400px] overflow-y-auto">
-                {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category, index) => (
-                  <div key={category} className="flex items-center justify-between p-3 hover:bg-accent/50 gap-2">
-                    {editingCategoryIndex === index ? (
-                      <>
-                        <Input
-                          value={editingCategoryName}
-                          onChange={(e) => setEditingCategoryName(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              handleSaveEditCategory(category, categoryDialogType);
-                            } else if (e.key === "Escape") {
-                              handleCancelEditCategory();
-                            }
-                          }}
-                          autoFocus
-                          className="flex-1"
-                        />
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleSaveEditCategory(category, categoryDialogType)}
-                            className="h-8 w-8 p-0"
-                          >
-                            ✓
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleCancelEditCategory}
-                            className="h-8 w-8 p-0"
-                          >
-                            ✕
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <span 
-                          className="font-medium flex-1 cursor-pointer hover:text-primary"
-                          onClick={() => handleStartEditCategory(index, category)}
-                        >
-                          {category}
-                        </span>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleStartEditCategory(index, category)}
-                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteCategory(category, categoryDialogType)}
-                            className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
+              {/* List existing categories with drag and drop */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="border rounded-md max-h-[400px] overflow-y-auto">
+                  <SortableContext
+                    items={categoryDialogType === "revenue" ? revenueCategories : expenseCategories}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category, index) => (
+                      <SortableCategoryItem
+                        key={category}
+                        category={category}
+                        index={index}
+                        isEditing={editingCategoryIndex === index}
+                        editingName={editingCategoryName}
+                        onStartEdit={() => handleStartEditCategory(index, category)}
+                        onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
+                        onCancelEdit={handleCancelEditCategory}
+                        onDelete={() => handleDeleteCategory(category, categoryDialogType)}
+                        onEditNameChange={setEditingCategoryName}
+                      />
+                    ))}
+                  </SortableContext>
+                </div>
+              </DndContext>
             </div>
           </DialogContent>
         </Dialog>
