@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -261,6 +261,45 @@ const Accounting = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  
+  // Load categories from database and seed defaults if empty
+  useEffect(() => {
+    const load = async () => {
+      const { data, error } = await (supabase as any)
+        .from('accounting_categories')
+        .select('*')
+        .order('position', { ascending: true });
+      if (error) {
+        console.error('Erreur lors du chargement des catégories', error);
+        return;
+      }
+      if (!data || data.length === 0) {
+        const seed = [
+          ...DEFAULT_REVENUE_CATEGORIES.map((name, idx) => ({ type: 'revenue', name, position: idx })),
+          ...DEFAULT_EXPENSE_CATEGORIES.map((name, idx) => ({ type: 'expense', name, position: idx })),
+        ];
+        const { error: insertError } = await supabase.from('accounting_categories').insert(seed);
+        if (insertError) console.error('Erreur lors du seed des catégories', insertError);
+        setRevenueCategories(DEFAULT_REVENUE_CATEGORIES);
+        setExpenseCategories(DEFAULT_EXPENSE_CATEGORIES);
+        return;
+      }
+      const revenues = data.filter((d: any) => d.type === 'revenue').sort((a: any,b: any)=>a.position-b.position).map((d: any) => d.name);
+      const expenses = data.filter((d: any) => d.type === 'expense').sort((a: any,b: any)=>a.position-b.position).map((d: any) => d.name);
+      setRevenueCategories(revenues);
+      setExpenseCategories(expenses);
+    };
+    load();
+  }, []);
+  
+  // Persist category order helper
+  const persistCategoryOrder = async (type: 'revenue' | 'expense', names: string[]) => {
+    await Promise.all(
+      names.map((name, idx) =>
+        supabase.from('accounting_categories').update({ position: idx }).eq('type', type).eq('name', name)
+      )
+    );
+  };
   
   const [formData, setFormData] = useState({
     transaction_date: format(new Date(), "yyyy-MM-dd"),
