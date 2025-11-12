@@ -10,6 +10,7 @@ export interface AccountingCategoryWithRecurrence {
   is_recurring: boolean;
   recurrence_day: number;
   default_amount: number;
+  is_indefinite_recurrence: boolean;
 }
 
 export const useAccountingCategoriesWithRecurrence = () => {
@@ -38,6 +39,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
           recurrence_day: updates.recurrence_day,
           default_amount: updates.default_amount,
           position: updates.position,
+          is_indefinite_recurrence: updates.is_indefinite_recurrence,
         })
         .eq("id", updates.id);
       if (error) throw error;
@@ -70,25 +72,27 @@ export const useAccountingCategoriesWithRecurrence = () => {
         throw new Error("Aucune catégorie récurrente configurée");
       }
 
-      // Generate transactions
+      // Generate transactions - skip indefinite recurrences
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const transactionsToCreate = recurringCategories.map((cat: any) => {
-        const day = Math.min(cat.recurrence_day, daysInMonth);
-        const transactionDate = new Date(year, month, day);
+      const transactionsToCreate = recurringCategories
+        .filter((cat: any) => !cat.is_indefinite_recurrence) // Skip indefinite
+        .map((cat: any) => {
+          const day = Math.min(cat.recurrence_day, daysInMonth);
+          const transactionDate = new Date(year, month, day);
 
-        return {
-          transaction_date: transactionDate.toISOString().split('T')[0],
-          transaction_type: cat.type,
-          category: cat.name,
-          amount: cat.default_amount || 0,
-          amount_received: 0,
-          year: year,
-          month: month + 1,
-          month_name: MONTHS[month],
-          is_auto_generated: true,
-          is_validated: false,
-        };
-      });
+          return {
+            transaction_date: transactionDate.toISOString().split('T')[0],
+            transaction_type: cat.type,
+            category: cat.name,
+            amount: cat.default_amount || 0,
+            amount_received: 0,
+            year: year,
+            month: month + 1,
+            month_name: MONTHS[month],
+            is_auto_generated: true,
+            is_validated: false,
+          };
+        });
 
       const { error: insertError } = await (supabase as any)
         .from("accounting_transactions")
