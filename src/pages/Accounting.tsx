@@ -138,7 +138,6 @@ const SortableCategoryItem = ({
   editingName,
   editingRecurring,
   editingRecurrenceDay,
-  editingDefaultAmount,
   editingIndefinite,
   onStartEdit, 
   onSaveEdit, 
@@ -147,7 +146,6 @@ const SortableCategoryItem = ({
   onEditNameChange,
   onEditRecurringChange,
   onEditRecurrenceDayChange,
-  onEditDefaultAmountChange,
   onEditIndefiniteChange
 }: {
   category: string;
@@ -156,7 +154,6 @@ const SortableCategoryItem = ({
   editingName: string;
   editingRecurring: boolean;
   editingRecurrenceDay: number;
-  editingDefaultAmount: number;
   editingIndefinite: boolean;
   onStartEdit: () => void;
   onSaveEdit: () => void;
@@ -165,7 +162,6 @@ const SortableCategoryItem = ({
   onEditNameChange: (value: string) => void;
   onEditRecurringChange: (value: boolean) => void;
   onEditRecurrenceDayChange: (value: number) => void;
-  onEditDefaultAmountChange: (value: number) => void;
   onEditIndefiniteChange: (value: boolean) => void;
 }) => {
   const {
@@ -300,16 +296,6 @@ const SortableCategoryItem = ({
                   />
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Montant:</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editingDefaultAmount}
-                  onChange={(e) => onEditDefaultAmountChange(parseFloat(e.target.value) || 0)}
-                  className="w-28"
-                />
-              </div>
             </>
           )}
         </div>
@@ -334,7 +320,6 @@ const Accounting = () => {
   const [editingCategoryName, setEditingCategoryName] = useState("");
   const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
   const [editingCategoryRecurrenceDay, setEditingCategoryRecurrenceDay] = useState(1);
-  const [editingCategoryDefaultAmount, setEditingCategoryDefaultAmount] = useState(0);
   const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(false);
   
   // Drag and drop sensors
@@ -715,7 +700,7 @@ const Accounting = () => {
     // Load recurrence data from database
     const { data } = await (supabase as any)
       .from('accounting_categories')
-      .select('is_recurring, recurrence_day, default_amount, is_indefinite_recurrence')
+      .select('is_recurring, recurrence_day, is_indefinite_recurrence')
       .eq('name', currentName)
       .eq('type', categoryDialogType)
       .single();
@@ -723,7 +708,6 @@ const Accounting = () => {
     if (data) {
       setEditingCategoryRecurring(data.is_recurring || false);
       setEditingCategoryRecurrenceDay(data.recurrence_day || 1);
-      setEditingCategoryDefaultAmount(data.default_amount || 0);
       setEditingCategoryIndefinite(data.is_indefinite_recurrence || false);
     }
   };
@@ -733,7 +717,6 @@ const Accounting = () => {
     setEditingCategoryName("");
     setEditingCategoryRecurring(false);
     setEditingCategoryRecurrenceDay(1);
-    setEditingCategoryDefaultAmount(0);
     setEditingCategoryIndefinite(false);
   };
 
@@ -764,7 +747,6 @@ const Accounting = () => {
           name: newName,
           is_recurring: editingCategoryRecurring,
           recurrence_day: editingCategoryRecurrenceDay,
-          default_amount: editingCategoryDefaultAmount,
           is_indefinite_recurrence: editingCategoryIndefinite
         })
         .eq('type', type)
@@ -2180,7 +2162,6 @@ const Accounting = () => {
                         editingName={editingCategoryName}
                         editingRecurring={editingCategoryRecurring}
                         editingRecurrenceDay={editingCategoryRecurrenceDay}
-                        editingDefaultAmount={editingCategoryDefaultAmount}
                         editingIndefinite={editingCategoryIndefinite}
                         onStartEdit={() => handleStartEditCategory(index, category)}
                         onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
@@ -2189,7 +2170,6 @@ const Accounting = () => {
                         onEditNameChange={setEditingCategoryName}
                         onEditRecurringChange={setEditingCategoryRecurring}
                         onEditRecurrenceDayChange={setEditingCategoryRecurrenceDay}
-                        onEditDefaultAmountChange={setEditingCategoryDefaultAmount}
                         onEditIndefiniteChange={setEditingCategoryIndefinite}
                       />
                     ))}
