@@ -107,7 +107,7 @@ export const useMonthlyKPIData = () => {
 
       if (error) throw error;
 
-      // Create a map of existing data
+      // Create a map of existing data (DB months are 1-12, not 0-11)
       const dataMap: { [key: number]: MonthlyKPIData } = {};
       existingData?.forEach(item => {
         dataMap[item.month] = item as MonthlyKPIData;
@@ -116,8 +116,9 @@ export const useMonthlyKPIData = () => {
       // Initialize all months with existing or empty data
       const monthlyDataArray: MonthlyKPIData[] = [];
       for (let m = 0; m < 12; m++) {
-        if (dataMap[m]) {
-          monthlyDataArray.push(dataMap[m]);
+        // DB stores months as 1-12, so check m+1
+        if (dataMap[m + 1]) {
+          monthlyDataArray.push(dataMap[m + 1]);
         } else {
           // Create empty entry for missing months
           const emptyMonth: MonthlyKPIData = {

@@ -287,10 +287,33 @@ const CustomerJourney = () => {
   };
 
   const deleteMember = async (id: string) => {
+    // Get member name before deleting
+    const member = members.find(m => m.id === id);
+    if (member) {
+      // Delete associated accounting transactions
+      await supabase
+        .from('accounting_transactions')
+        .delete()
+        .eq('client_name', member.name);
+    }
+    
+    // Delete member from database
     await deleteMemberFromDb(id);
   };
 
   const updateMember = async (id: string, field: string, value: any) => {
+    // If updating exit_date and it's being set, delete accounting transactions
+    if (field === "exit_date" && value) {
+      const member = members.find(m => m.id === id);
+      if (member) {
+        // Delete all associated accounting transactions when member exits
+        await supabase
+          .from('accounting_transactions')
+          .delete()
+          .eq('client_name', member.name);
+      }
+    }
+    
     // Log onboarding changes to history (only when completing, not when unchecking)
     const onboardingFields = [
       'onboarding_bsport',
