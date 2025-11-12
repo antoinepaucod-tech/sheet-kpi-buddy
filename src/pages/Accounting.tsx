@@ -52,6 +52,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAccountingTransactions, type AccountingTransaction } from "@/hooks/useAccountingTransactions";
 import { useRecurringTransactions, type RecurringTransaction } from "@/hooks/useRecurringTransactions";
+import { useCashCollectedValidation } from "@/hooks/useCashCollectedValidation";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -320,6 +321,22 @@ const Accounting = () => {
     useAccountingTransactions(selectedYear, selectedMonth);
 
   const queryClient = useQueryClient();
+  
+  // Load customer members to check for exit dates
+  const [customerMembers, setCustomerMembers] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const loadMembers = async () => {
+      const { data } = await supabase
+        .from('customer_members')
+        .select('name, exit_date');
+      if (data) setCustomerMembers(data);
+    };
+    loadMembers();
+  }, []);
+  
+  // Validate cash collected across pages
+  const { validation } = useCashCollectedValidation(selectedYear, selectedMonth);
 
   const { 
     recurringTransactions, 
@@ -1074,13 +1091,22 @@ const Accounting = () => {
                         const lastName = nameParts[0] || "";
                         const firstName = nameParts.slice(1).join(" ") || "";
                         
+                        // Check if member has exit date
+                        const member = customerMembers.find(m => m.name === transaction.client_name);
+                        const hasExitDate = member && member.exit_date && new Date(member.exit_date) <= new Date();
+                        
                         return (
                           <div 
                             key={transaction.id}
                             className="grid grid-cols-8 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
-                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center">
+                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center gap-2">
                               <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
+                              {hasExitDate && (
+                                <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
+                                  Terminé
+                                </Badge>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"

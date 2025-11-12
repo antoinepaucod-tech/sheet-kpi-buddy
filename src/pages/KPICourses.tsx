@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -64,6 +65,62 @@ export default function KPICourses() {
 
   const { courses, isLoading, createCourse, updateCourse, deleteCourse } =
     useCourseKPIData(selectedYear, selectedMonth);
+
+  // Synchronize instructor costs to accounting table
+  useEffect(() => {
+    const syncInstructorCosts = async () => {
+      if (!courses || courses.length === 0) return;
+      
+      const totalExpenses = courses.reduce((sum, course) => sum + (Number(course.monthly_expenses) || 0), 0);
+      
+      if (totalExpenses === 0) return;
+      
+      // Check if there's already an entry for this month
+      const { data: existing } = await supabase
+        .from('accounting_transactions')
+        .select('*')
+        .eq('year', selectedYear)
+        .eq('month', selectedMonth)
+        .eq('category', 'Salaires')
+        .eq('notes', 'Synchronisé depuis KPI Cours')
+        .single();
+      
+      const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
+                          "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+      
+      if (existing) {
+        // Update existing entry
+        await supabase
+          .from('accounting_transactions')
+          .update({
+            amount: totalExpenses,
+            transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
+          })
+          .eq('id', existing.id);
+      } else {
+        // Create new entry
+        await supabase
+          .from('accounting_transactions')
+          .insert({
+            transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
+            transaction_type: 'expense',
+            category: 'Salaires',
+            client_name: 'Instructeurs',
+            service_description: 'Salaires instructeurs cours',
+            product_description: 'Salaires',
+            amount: totalExpenses,
+            amount_received: 0,
+            payment_method: 'Virement Bancaire',
+            notes: 'Synchronisé depuis KPI Cours',
+            year: selectedYear,
+            month: selectedMonth,
+            month_name: monthNames[selectedMonth - 1],
+          });
+      }
+    };
+    
+    syncInstructorCosts();
+  }, [courses, selectedYear, selectedMonth]);
 
   const handleEdit = (course: CourseKPI) => {
     setEditingId(course.id);
