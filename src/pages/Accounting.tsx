@@ -133,6 +133,7 @@ const PAYMENT_METHODS = [
 // Sortable category item component
 const SortableCategoryItem = ({ 
   category, 
+  categoryData,
   index, 
   isEditing, 
   editingName,
@@ -150,6 +151,7 @@ const SortableCategoryItem = ({
   onToggleEndDate
 }: {
   category: string;
+  categoryData?: { is_recurring: boolean; is_indefinite_recurrence: boolean; recurrence_end_date: string | null };
   index: number;
   isEditing: boolean;
   editingName: string;
@@ -233,14 +235,14 @@ const SortableCategoryItem = ({
             >
               {category}
             </span>
-            {editingRecurring && editingIndefinite && (
+            {categoryData?.is_recurring && categoryData?.is_indefinite_recurrence && (
               <Badge variant="secondary" className="text-xs flex items-center gap-1">
                 Récurrent <span className="text-base">∞</span>
               </Badge>
             )}
-            {editingRecurring && !editingIndefinite && editingEndDate && (
+            {categoryData?.is_recurring && !categoryData?.is_indefinite_recurrence && categoryData?.recurrence_end_date && (
               <Badge variant="secondary" className="text-xs">
-                Récurrent (fin: {new Date(editingEndDate).toLocaleDateString('fr-FR')})
+                Récurrent (fin: {new Date(categoryData.recurrence_end_date).toLocaleDateString('fr-FR')})
               </Badge>
             )}
             <div className="flex gap-1">
@@ -332,6 +334,9 @@ const Accounting = () => {
   const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
   const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(true);
   const [editingCategoryEndDate, setEditingCategoryEndDate] = useState<string | null>(null);
+  
+  // Load all category data with recurrence info
+  const { categories: allCategories } = useAccountingCategoriesWithRecurrence();
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -2163,41 +2168,49 @@ const Accounting = () => {
                     items={categoryDialogType === "revenue" ? revenueCategories : expenseCategories}
                     strategy={verticalListSortingStrategy}
                   >
-                    {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category, index) => (
-                      <SortableCategoryItem
-                        key={category}
-                        category={category}
-                        index={index}
-                        isEditing={editingCategoryIndex === index}
-                        editingName={editingCategoryName}
-                        editingRecurring={editingCategoryRecurring}
-                        editingIndefinite={editingCategoryIndefinite}
-                        editingEndDate={editingCategoryEndDate}
-                        onStartEdit={() => handleStartEditCategory(index, category)}
-                        onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
-                        onCancelEdit={handleCancelEditCategory}
-                        onDelete={() => handleDeleteCategory(category, categoryDialogType)}
-                        onEditNameChange={setEditingCategoryName}
-                        onEditRecurringChange={(checked) => {
-                          setEditingCategoryRecurring(checked);
-                          if (checked) {
-                            setEditingCategoryIndefinite(true);
-                            setEditingCategoryEndDate(null);
-                          }
-                        }}
-                        onEditIndefiniteChange={setEditingCategoryIndefinite}
-                        onEditEndDateChange={setEditingCategoryEndDate}
-                        onToggleEndDate={() => {
-                          if (editingCategoryEndDate) {
-                            setEditingCategoryEndDate(null);
-                            setEditingCategoryIndefinite(true);
-                          } else {
-                            setEditingCategoryIndefinite(false);
-                            setEditingCategoryEndDate(new Date().toISOString().split('T')[0]);
-                          }
-                        }}
-                      />
-                    ))}
+                     {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category, index) => {
+                       const categoryData = allCategories.find(c => c.name === category && c.type === categoryDialogType);
+                       return (
+                         <SortableCategoryItem
+                           key={category}
+                           category={category}
+                           categoryData={categoryData ? {
+                             is_recurring: categoryData.is_recurring,
+                             is_indefinite_recurrence: categoryData.is_indefinite_recurrence,
+                             recurrence_end_date: categoryData.recurrence_end_date
+                           } : undefined}
+                           index={index}
+                           isEditing={editingCategoryIndex === index}
+                           editingName={editingCategoryName}
+                           editingRecurring={editingCategoryRecurring}
+                           editingIndefinite={editingCategoryIndefinite}
+                           editingEndDate={editingCategoryEndDate}
+                           onStartEdit={() => handleStartEditCategory(index, category)}
+                           onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
+                           onCancelEdit={handleCancelEditCategory}
+                           onDelete={() => handleDeleteCategory(category, categoryDialogType)}
+                           onEditNameChange={setEditingCategoryName}
+                           onEditRecurringChange={(checked) => {
+                             setEditingCategoryRecurring(checked);
+                             if (checked) {
+                               setEditingCategoryIndefinite(true);
+                               setEditingCategoryEndDate(null);
+                             }
+                           }}
+                           onEditIndefiniteChange={setEditingCategoryIndefinite}
+                           onEditEndDateChange={setEditingCategoryEndDate}
+                           onToggleEndDate={() => {
+                             if (editingCategoryEndDate) {
+                               setEditingCategoryEndDate(null);
+                               setEditingCategoryIndefinite(true);
+                             } else {
+                               setEditingCategoryIndefinite(false);
+                               setEditingCategoryEndDate(new Date().toISOString().split('T')[0]);
+                             }
+                           }}
+                         />
+                       );
+                     })}
                   </SortableContext>
                 </div>
               </DndContext>
