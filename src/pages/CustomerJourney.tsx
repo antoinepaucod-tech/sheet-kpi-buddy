@@ -79,6 +79,8 @@ const CustomerJourney = () => {
   const { t } = useTranslations();
   const [searchParams, setSearchParams] = useSearchParams();
   const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberType, setNewMemberType] = useState("");
+  const [newCashCollected, setNewCashCollected] = useState("");
   const [selectedView, setSelectedView] = useState("index");
   const [selectedYear, setSelectedYear] = useState<number | "all">(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
@@ -223,8 +225,24 @@ const CustomerJourney = () => {
 
   const addMember = async () => {
     if (newMemberName.trim()) {
-      await addMemberToDb(newMemberName, membershipTypes[0]);
+      const newMember = {
+        name: newMemberName,
+        membership: membershipTypes[0],
+        member_type: newMemberType || null,
+        cash_collected: newCashCollected ? parseFloat(newCashCollected) : 0,
+      };
+      await addMemberToDb(newMember.name, newMember.membership);
+      // Update the member with additional fields after creation
+      const createdMember = members.find(m => m.name === newMember.name);
+      if (createdMember && (newMember.member_type || newMember.cash_collected)) {
+        await updateMemberInDb(createdMember.id, {
+          member_type: newMember.member_type,
+          cash_collected: newMember.cash_collected,
+        });
+      }
       setNewMemberName("");
+      setNewMemberType("");
+      setNewCashCollected("");
     }
   };
 
@@ -488,7 +506,29 @@ const CustomerJourney = () => {
                     value={newMemberName}
                     onChange={(e) => setNewMemberName(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && addMember()}
-                    className="w-[250px] h-10"
+                    className="w-[200px] h-10"
+                  />
+                  <Select
+                    value={newMemberType}
+                    onValueChange={setNewMemberType}
+                  >
+                    <SelectTrigger className="w-[200px] h-10">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      <SelectItem value="Membres Généraux Récurrents">Membres Généraux Récurrents</SelectItem>
+                      <SelectItem value="Membres PIF">Membres PIF</SelectItem>
+                      <SelectItem value="Membres PT">Membres PT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Cash Collectée"
+                    value={newCashCollected}
+                    onChange={(e) => setNewCashCollected(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && addMember()}
+                    className="w-[150px] h-10"
                   />
                   <Button onClick={addMember} className="gap-2 h-10">
                     <Plus className="h-4 w-4" />
@@ -538,7 +578,9 @@ const CustomerJourney = () => {
                     <TableRow>
                       <TableHead className="w-[60px] text-center">N°</TableHead>
                       <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
-                      <TableHead className="min-w-[200px]">Type De Membership</TableHead>
+                      <TableHead className="min-w-[200px]">Membership</TableHead>
+                      <TableHead className="min-w-[150px]">Type</TableHead>
+                      <TableHead className="min-w-[150px]">Cash Collectée</TableHead>
                       <TableHead className="min-w-[180px]">Date Signature Contrat</TableHead>
                       <TableHead className="min-w-[180px]">Date de Sortie</TableHead>
                       <TableHead className="text-center">Onboarding Bsport</TableHead>
@@ -552,7 +594,7 @@ const CustomerJourney = () => {
                   <TableBody>
                     {filteredMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
                           {searchTerm 
                             ? `Aucun membre trouvé pour "${searchTerm}"`
                             : selectedYear === "all" && selectedMonth === "all"
@@ -597,6 +639,34 @@ const CustomerJourney = () => {
                                 ))}
                               </SelectContent>
                             </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={member.member_type || ""}
+                              onValueChange={(value) =>
+                                updateMember(member.id, "member_type", value)
+                              }
+                            >
+                              <SelectTrigger className="min-w-[150px]">
+                                <SelectValue placeholder="Sélectionner" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border shadow-lg z-50">
+                                <SelectItem value="Membres Généraux Récurrents">Membres Généraux Récurrents</SelectItem>
+                                <SelectItem value="Membres PIF">Membres PIF</SelectItem>
+                                <SelectItem value="Membres PT">Membres PT</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={member.cash_collected || 0}
+                              onChange={(e) =>
+                                updateMember(member.id, "cash_collected", parseFloat(e.target.value) || 0)
+                              }
+                              className="w-[120px]"
+                            />
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
@@ -744,7 +814,7 @@ const CustomerJourney = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-[200px]">Nom / Prénom</TableHead>
-                    <TableHead className="min-w-[200px]">Type De Membership</TableHead>
+                    <TableHead className="min-w-[200px]">Membership</TableHead>
                     <TableHead className="text-center min-w-[120px]">Semaine Membre</TableHead>
                     <TableHead className="text-center min-w-[150px]">Onboarding Complété</TableHead>
                     <TableHead className="text-center min-w-[200px]">Entraînements cette semaine</TableHead>

@@ -6,6 +6,8 @@ export interface Member {
   id: string;
   name: string;
   membership: string;
+  member_type?: string | null;
+  cash_collected?: number | null;
   contract_signed_date?: string | null;
   exit_date?: string | null;
   onboarding_bsport: boolean;

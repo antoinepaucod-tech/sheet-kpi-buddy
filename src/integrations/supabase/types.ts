@@ -160,10 +160,12 @@ export type Database = {
       }
       customer_members: {
         Row: {
+          cash_collected: number | null
           contract_signed_date: string | null
           created_at: string
           exit_date: string | null
           id: string
+          member_type: string | null
           membership: string
           name: string
           onboarding_bsport: boolean
@@ -174,10 +176,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cash_collected?: number | null
           contract_signed_date?: string | null
           created_at?: string
           exit_date?: string | null
           id?: string
+          member_type?: string | null
           membership: string
           name: string
           onboarding_bsport?: boolean
@@ -188,10 +192,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cash_collected?: number | null
           contract_signed_date?: string | null
           created_at?: string
           exit_date?: string | null
           id?: string
+          member_type?: string | null
           membership?: string
           name?: string
           onboarding_bsport?: boolean
