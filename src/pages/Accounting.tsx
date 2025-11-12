@@ -115,6 +115,8 @@ const PRODUCT_DESCRIPTIONS_EXPENSE = [
   "Assurance",
   "Salaires",
   "Remboursement crédit",
+  "Retrait bancomat",
+  "Alimentaire",
 ];
 
 const PAYMENT_METHODS = [
