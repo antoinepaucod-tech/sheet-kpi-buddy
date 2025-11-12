@@ -127,18 +127,18 @@ const Index = () => {
           videoUrl="/videos/fitness-background.mp4"
           overlayOpacity={0.4}
         >
-          <div className="container mx-auto px-6 py-6">
-            <div className="flex items-center justify-between gap-8">
+          <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex-1">
-                <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-display mb-1 sm:mb-2">
                   {t('header.title')}
                 </h1>
-                <p className="text-muted-foreground text-sm tracking-wide">
+                <p className="text-muted-foreground text-xs sm:text-sm tracking-wide">
                   {t('header.subtitle')}
                 </p>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                 <MonthlyDataInput 
                   monthData={currentMonth} 
                   monthLabel={MONTHS[currentMonthIndex]} 
@@ -149,27 +149,29 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/annual')}
-                  className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5"
+                  className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5 text-xs sm:text-sm"
+                  size="sm"
                 >
-                  {t('header.annualView')}
+                  <span className="hidden sm:inline">{t('header.annualView')}</span>
+                  <span className="sm:hidden">Annuel</span>
                 </Button>
                 <LanguageToggle />
                 <ThemeToggle />
               </div>
             </div>
             
-            <div className="flex items-center justify-center gap-3 mt-6">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={goToPreviousMonth}
-                className="h-10 w-10 hover:bg-foreground/5"
+                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              <div className="flex items-center gap-3 px-6 py-2 bg-muted/50 rounded-lg min-w-[180px] justify-center">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-lg tracking-wide">
+              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-1.5 sm:py-2 bg-muted/50 rounded-lg min-w-[140px] sm:min-w-[180px] justify-center">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span className="font-medium text-sm sm:text-lg tracking-wide">
                   {MONTHS[currentMonthIndex].toUpperCase()}
                 </span>
               </div>
@@ -177,9 +179,9 @@ const Index = () => {
                 variant="ghost"
                 size="icon"
                 onClick={goToNextMonth}
-                className="h-10 w-10 hover:bg-foreground/5"
+                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
           </div>
@@ -187,13 +189,13 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 space-y-10">
+      <main className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-10">
         {/* Key Metrics */}
-        <section className="space-y-6">
+        <section className="space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.keyMetrics')}</h2>
+            <h2 className="text-lg sm:text-2xl font-medium text-heading tracking-tight">{t('section.keyMetrics')}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <MetricCard
               title={t('metric.totalRevenue')}
               value={formatCurrency(currentMonth?.total_revenue || 0)}
@@ -274,9 +276,9 @@ const Index = () => {
         </section>
 
         {/* Sales Funnel */}
-        <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.salesFunnel')}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <section className="space-y-4 sm:space-y-6">
+          <h2 className="text-lg sm:text-2xl font-medium text-heading tracking-tight">{t('section.salesFunnel')}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <MetricCard
               title={t('metric.leads')}
               value={currentMonth?.leads || 0}
@@ -343,9 +345,9 @@ const Index = () => {
         </section>
 
         {/* Additional Metrics */}
-        <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.additionalMetrics')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <section className="space-y-4 sm:space-y-6">
+          <h2 className="text-lg sm:text-2xl font-medium text-heading tracking-tight">{t('section.additionalMetrics')}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             <MetricCard
               title={t('metric.totalClasses')}
               value={currentMonth?.total_classes || 0}
@@ -391,9 +393,9 @@ const Index = () => {
         </section>
 
         {/* Churn Rates */}
-        <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.churnRates')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="space-y-4 sm:space-y-6">
+          <h2 className="text-lg sm:text-2xl font-medium text-heading tracking-tight">{t('section.churnRates')}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <MetricCard
               title={t('metric.pifChurn')}
               value={formatPercentage(currentMonth?.pif_churn || 0)}
@@ -416,9 +418,9 @@ const Index = () => {
         </section>
 
         {/* Advanced Metrics */}
-        <section className="space-y-6">
-          <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.advancedMetrics')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <section className="space-y-4 sm:space-y-6">
+          <h2 className="text-lg sm:text-2xl font-medium text-heading tracking-tight">{t('section.advancedMetrics')}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <MetricCard
               title={t('metric.generalAcrm')}
               value={formatCurrency(currentMonth?.general_acrm || 0)}

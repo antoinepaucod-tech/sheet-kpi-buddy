@@ -105,22 +105,22 @@ export default function KPIClient() {
   }
 
   return (
-    <div className="container py-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container py-4 sm:py-8 px-3 sm:px-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-4xl font-bold mb-2">KPI Client</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">KPI Client</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Statistiques d'entraînement par membre sur les 12 derniers mois
           </p>
         </div>
         <ThemeToggle />
       </div>
 
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Liste des membres</h3>
+      <Card className="p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h3 className="text-base sm:text-lg font-semibold">Liste des membres</h3>
           <Select value={sortOrder} onValueChange={(value: "desc" | "asc") => setSortOrder(value)}>
-            <SelectTrigger className="w-[280px]">
+            <SelectTrigger className="w-full sm:w-[280px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -129,7 +129,8 @@ export default function KPIClient() {
             </SelectContent>
           </Select>
         </div>
-        <Table>
+        <div className="overflow-x-auto -mx-3 sm:mx-0">
+          <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nom</TableHead>
@@ -166,30 +167,31 @@ export default function KPIClient() {
             )}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
-      <Card className="p-6 bg-muted/50">
-        <h3 className="font-semibold mb-2">Statistiques Globales</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card className="p-3 sm:p-6 bg-muted/50">
+        <h3 className="text-sm sm:text-base font-semibold mb-2">Statistiques Globales</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Moyenne globale / Mois</p>
-            <p className="text-2xl font-bold">
+            <p className="text-xs sm:text-sm text-muted-foreground">Moyenne globale / Mois</p>
+            <p className="text-xl sm:text-2xl font-bold">
               {memberStats.length > 0
                 ? (memberStats.reduce((sum, s) => sum + s.averagePerMonth, 0) / memberStats.length).toFixed(1)
                 : "0.0"}
             </p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Moyenne globale / Semaine</p>
-            <p className="text-2xl font-bold">
+            <p className="text-xs sm:text-sm text-muted-foreground">Moyenne globale / Semaine</p>
+            <p className="text-xl sm:text-2xl font-bold">
               {memberStats.length > 0
                 ? (memberStats.reduce((sum, s) => sum + s.averagePerWeek, 0) / memberStats.length).toFixed(1)
                 : "0.0"}
             </p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Total membres actifs</p>
-            <p className="text-2xl font-bold">{memberStats.length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Total membres actifs</p>
+            <p className="text-xl sm:text-2xl font-bold">{memberStats.length}</p>
           </div>
         </div>
       </Card>

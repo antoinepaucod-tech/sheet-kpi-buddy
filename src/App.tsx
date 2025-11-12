@@ -27,11 +27,11 @@ const App = () => (
           <SidebarProvider>
             <div className="flex min-h-screen w-full">
               <AppSidebar />
-              <div className="flex-1 flex flex-col">
-                <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+              <div className="flex-1 flex flex-col min-w-0">
+                <header className="sticky top-0 z-10 flex h-12 sm:h-14 items-center gap-2 sm:gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-2 sm:px-4">
                   <SidebarTrigger />
                 </header>
-                <main className="flex-1">
+                <main className="flex-1 overflow-x-hidden">
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/annual" element={<Annual />} />
