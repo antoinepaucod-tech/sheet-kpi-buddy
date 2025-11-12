@@ -667,7 +667,7 @@ const Accounting = () => {
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Prénom</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Prestation</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Produit</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Service</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">Montant</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">État</div>
                         <div className="px-3 py-2 font-bold text-sm text-left">Réglé le</div>
@@ -1070,7 +1070,7 @@ const Accounting = () => {
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">DESCRIPTION</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">DÉTAILS</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">FOURNISSEUR</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Produit</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Service</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">MONTANT</div>
                         <div className="px-3 py-2 font-bold text-sm text-left">NOTES</div>
                       </div>
