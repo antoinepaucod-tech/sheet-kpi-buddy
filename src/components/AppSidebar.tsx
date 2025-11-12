@@ -14,10 +14,10 @@ import {
 
 const menuItems = [
   { title: "KPI Revenu", url: "/", icon: BarChart3 },
-  { title: "KPI Cours", url: "/course-kpi", icon: Calendar },
-  { title: "Comptabilité", url: "/accounting", icon: Receipt },
-  { title: "Parcours Client", url: "/customer-journey", icon: Users },
   { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
+  { title: "KPI Cours", url: "/course-kpi", icon: Calendar },
+  { title: "Parcours Client", url: "/customer-journey", icon: Users },
+  { title: "Comptabilité", url: "/accounting", icon: Receipt },
 ];
 
 const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap };
