@@ -75,6 +75,29 @@ const requiresTrainingTracking = (membership: string): boolean => {
   return trackingRequiredMemberships.includes(membership);
 };
 
+// Map membership types to accounting revenue categories
+const mapMembershipToRevenueCategory = (membership: string): string => {
+  const mapping: Record<string, string> = {
+    "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT": "THE COACH PASS MENSUEL",
+    "Hybrid FULL - paiement tous les 28 jours avec engagement": "THE COACH PASS MENSUEL",
+    "Hybrid FULL - Paiement x1 Annuel": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL",
+    "Hybrid FULL DUO . Paiement x1 Annuel": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1",
+    "Unlimited Access (ancien membership)": "UNLIMITED ACCESS - PAIEMENT MENSUEL",
+    "Unlimited Access 6 mois (ancien membership)": "OFFRE 6 MOIS - 499 CHF",
+    "Abonnement offert": "THE COACH PASS MENSUEL",
+    "Hybrid OPEN GYM tous les 28 jours - avec engagement": "OPEN GYM - PAIEMENT MENSUEL",
+    "hybrid OPEN GYM - Paiement x1 - Annuel": "OPEN GYM - PAIEMENT ANNUEL X1",
+    "Open Gym (ancien membership)": "OPEN GYM - PAIEMENT MENSUEL",
+    "Hybrid FULL tous les 28 jours - sans engagement": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL",
+    "Pack 20 sessions": "PT ANTOINE",
+    "Pack 10": "PT ANTOINE",
+    "6 Weeks Challenge": "OFFRE 3 MOIS",
+    "IFRC Paiement Mensuel": "THE COACH PASS MENSUEL",
+  };
+  
+  return mapping[membership] || "THE COACH PASS MENSUEL";
+};
+
 const CustomerJourney = () => {
   const { t } = useTranslations();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -262,14 +285,15 @@ const CustomerJourney = () => {
           const currentMonth = new Date().getMonth() + 1;
           const currentYear = new Date().getFullYear();
           
-          // Map member type to revenue category
-          let revenueCategory = "THE COACH PASS MENSUEL";
-          let productDescription = "Revenu EFT Général";
+          // Map membership to revenue category
+          const revenueCategory = mapMembershipToRevenueCategory(newMember.membership);
           
+          // Map member type to product description
+          let productDescription = "Revenu EFT Général";
           if (newMember.member_type === "Membres PT") {
             productDescription = "Revenu PT";
           } else if (newMember.member_type === "Membres PIF") {
-            revenueCategory = "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL";
+            productDescription = "Revenu Fast Cash";
           }
           
           // Create accounting transaction
@@ -349,14 +373,15 @@ const CustomerJourney = () => {
           const currentMonth = new Date().getMonth() + 1;
           const currentYear = new Date().getFullYear();
           
-          // Map member type to revenue category
-          let revenueCategory = "THE COACH PASS MENSUEL";
-          let productDescription = "Revenu EFT Général";
+          // Map membership to revenue category
+          const revenueCategory = mapMembershipToRevenueCategory(member.membership);
           
+          // Map member type to product description
+          let productDescription = "Revenu EFT Général";
           if (member.member_type === "Membres PT") {
             productDescription = "Revenu PT";
           } else if (member.member_type === "Membres PIF") {
-            revenueCategory = "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL";
+            productDescription = "Revenu Fast Cash";
           }
           
           // Create accounting transaction
