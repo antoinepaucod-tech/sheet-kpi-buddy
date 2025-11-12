@@ -758,63 +758,81 @@ const Accounting = () => {
       return;
     }
 
-    if (newName === oldName) {
-      handleCancelEditCategory();
-      return;
-    }
-
+    // Prevent duplicate names when renaming
     const categories = type === "revenue" ? revenueCategories : expenseCategories;
-    if (categories.includes(newName)) {
+    if (newName !== oldName && categories.includes(newName)) {
       toast.error("Cette catégorie existe déjà");
       return;
     }
 
     try {
-      // Update category name and recurrence data in database
+      // Always persist recurrence settings, even if name unchanged
+      const updatePayload: any = {
+        is_recurring: editingCategoryRecurring,
+        is_indefinite_recurrence: editingCategoryIndefinite,
+        recurrence_end_date: editingCategoryEndDate,
+      };
+
+      if (newName !== oldName) {
+        updatePayload.name = newName;
+      }
+
       const { error: categoryError } = await (supabase as any)
         .from('accounting_categories')
-        .update({
-          name: newName,
-          is_recurring: editingCategoryRecurring,
-          is_indefinite_recurrence: editingCategoryIndefinite
-        })
+        .update(updatePayload)
         .eq('type', type)
         .eq('name', oldName);
 
       if (categoryError) throw categoryError;
 
-      // Update all transactions with the old category name to the new one
-      const { error: transError } = await supabase
-        .from("accounting_transactions")
-        .update({ category: newName })
-        .eq("category", oldName)
-        .eq("transaction_type", type);
-
-      if (transError) throw transError;
+      // If renaming, update all transactions with the old category name
+      if (newName !== oldName) {
+        const { error: transError } = await supabase
+          .from("accounting_transactions")
+          .update({ category: newName })
+          .eq("category", oldName)
+          .eq("transaction_type", type);
+        if (transError) throw transError;
+      }
 
       // Update local state
-      if (type === "revenue") {
-        const updatedCategories = [...revenueCategories];
-        const index = updatedCategories.indexOf(oldName);
-        if (index !== -1) {
-          updatedCategories[index] = newName;
-          setRevenueCategories(updatedCategories);
+      if (newName !== oldName) {
+        if (type === "revenue") {
+          const updatedCategories = [...revenueCategories];
+          const index = updatedCategories.indexOf(oldName);
+          if (index !== -1) {
+            updatedCategories[index] = newName;
+            setRevenueCategories(updatedCategories);
+          }
+          toast.success("Catégorie de revenu modifiée et paramètres enregistrés");
+        } else {
+          const updatedCategories = [...expenseCategories];
+          const index = updatedCategories.indexOf(oldName);
+          if (index !== -1) {
+            updatedCategories[index] = newName;
+            setExpenseCategories(updatedCategories);
+          }
+          toast.success("Catégorie de dépense modifiée et paramètres enregistrés");
         }
-        toast.success("Catégorie de revenu modifiée et transactions mises à jour");
       } else {
-        const updatedCategories = [...expenseCategories];
-        const index = updatedCategories.indexOf(oldName);
-        if (index !== -1) {
-          updatedCategories[index] = newName;
-          setExpenseCategories(updatedCategories);
-        }
-        toast.success("Catégorie de dépense modifiée et transactions mises à jour");
+        toast.success("Paramètres de récurrence enregistrés");
       }
 
       handleCancelEditCategory();
-      
+      // Refresh categories list to reflect new recurrence badges
+      const { data } = await (supabase as any)
+        .from('accounting_categories')
+        .select('*')
+        .order('position', { ascending: true });
+      if (data) {
+        const revenues = data.filter((d: any) => d.type === 'revenue').sort((a: any,b: any)=>a.position-b.position).map((d: any) => d.name);
+        const expenses = data.filter((d: any) => d.type === 'expense').sort((a: any,b: any)=>a.position-b.position).map((d: any) => d.name);
+        setRevenueCategories(revenues);
+        setExpenseCategories(expenses);
+      }
       // Refresh transactions using React Query instead of page reload
       queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounting-categories-with-recurrence"] });
     } catch (error) {
       console.error("Error updating category:", error);
       toast.error("Erreur lors de la modification de la catégorie");
