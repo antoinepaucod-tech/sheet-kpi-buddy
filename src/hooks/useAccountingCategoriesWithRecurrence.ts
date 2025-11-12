@@ -11,6 +11,7 @@ export interface AccountingCategoryWithRecurrence {
   recurrence_day: number;
   default_amount: number;
   is_indefinite_recurrence: boolean;
+  recurrence_end_date: string | null;
 }
 
 export const useAccountingCategoriesWithRecurrence = () => {
@@ -40,6 +41,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
           default_amount: updates.default_amount,
           position: updates.position,
           is_indefinite_recurrence: updates.is_indefinite_recurrence,
+          recurrence_end_date: updates.recurrence_end_date,
         })
         .eq("id", updates.id);
       if (error) throw error;

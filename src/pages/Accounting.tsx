@@ -138,13 +138,16 @@ const SortableCategoryItem = ({
   editingName,
   editingRecurring,
   editingIndefinite,
+  editingEndDate,
   onStartEdit, 
   onSaveEdit, 
   onCancelEdit, 
   onDelete, 
   onEditNameChange,
   onEditRecurringChange,
-  onEditIndefiniteChange
+  onEditIndefiniteChange,
+  onEditEndDateChange,
+  onToggleEndDate
 }: {
   category: string;
   index: number;
@@ -152,6 +155,7 @@ const SortableCategoryItem = ({
   editingName: string;
   editingRecurring: boolean;
   editingIndefinite: boolean;
+  editingEndDate: string | null;
   onStartEdit: () => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
@@ -159,6 +163,8 @@ const SortableCategoryItem = ({
   onEditNameChange: (value: string) => void;
   onEditRecurringChange: (value: boolean) => void;
   onEditIndefiniteChange: (value: boolean) => void;
+  onEditEndDateChange: (value: string | null) => void;
+  onToggleEndDate: () => void;
 }) => {
   const {
     attributes,
@@ -227,14 +233,14 @@ const SortableCategoryItem = ({
             >
               {category}
             </span>
-            {editingRecurring && !editingIndefinite && (
-              <Badge variant="secondary" className="text-xs">
-                Récurrent
-              </Badge>
-            )}
             {editingRecurring && editingIndefinite && (
               <Badge variant="secondary" className="text-xs flex items-center gap-1">
                 Récurrent <span className="text-base">∞</span>
+              </Badge>
+            )}
+            {editingRecurring && !editingIndefinite && editingEndDate && (
+              <Badge variant="secondary" className="text-xs">
+                Récurrent (fin: {new Date(editingEndDate).toLocaleDateString('fr-FR')})
               </Badge>
             )}
             <div className="flex gap-1">
@@ -270,14 +276,36 @@ const SortableCategoryItem = ({
           </div>
           {editingRecurring && (
             <>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={editingIndefinite}
-                  onCheckedChange={onEditIndefiniteChange}
-                />
-                <Label className="text-sm flex items-center gap-1">
-                  Indéterminée <span className="text-lg">∞</span>
-                </Label>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editingIndefinite}
+                    onCheckedChange={onEditIndefiniteChange}
+                  />
+                  <Label className="text-sm flex items-center gap-1">
+                    Indéterminée <span className="text-lg">∞</span>
+                  </Label>
+                </div>
+                {!editingIndefinite && (
+                  <div className="flex flex-col gap-2 pl-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={onToggleEndDate}
+                    >
+                      {editingEndDate ? "Retirer fin de récurrence" : "Fin de récurrence"}
+                    </Button>
+                    {editingEndDate && (
+                      <Input
+                        type="date"
+                        value={editingEndDate || ""}
+                        onChange={(e) => onEditEndDateChange(e.target.value || null)}
+                        className="w-full"
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -302,7 +330,8 @@ const Accounting = () => {
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
   const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
-  const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(false);
+  const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(true);
+  const [editingCategoryEndDate, setEditingCategoryEndDate] = useState<string | null>(null);
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -682,14 +711,15 @@ const Accounting = () => {
     // Load recurrence data from database
     const { data } = await (supabase as any)
       .from('accounting_categories')
-      .select('is_recurring, is_indefinite_recurrence')
+      .select('is_recurring, is_indefinite_recurrence, recurrence_end_date')
       .eq('name', currentName)
       .eq('type', categoryDialogType)
       .single();
 
     if (data) {
       setEditingCategoryRecurring(data.is_recurring || false);
-      setEditingCategoryIndefinite(data.is_indefinite_recurrence || false);
+      setEditingCategoryIndefinite(data.is_indefinite_recurrence !== false);
+      setEditingCategoryEndDate(data.recurrence_end_date || null);
     }
   };
 
@@ -697,7 +727,8 @@ const Accounting = () => {
     setEditingCategoryIndex(null);
     setEditingCategoryName("");
     setEditingCategoryRecurring(false);
-    setEditingCategoryIndefinite(false);
+    setEditingCategoryIndefinite(true);
+    setEditingCategoryEndDate(null);
   };
 
   const handleSaveEditCategory = async (oldName: string, type: "revenue" | "expense") => {
@@ -2141,13 +2172,30 @@ const Accounting = () => {
                         editingName={editingCategoryName}
                         editingRecurring={editingCategoryRecurring}
                         editingIndefinite={editingCategoryIndefinite}
+                        editingEndDate={editingCategoryEndDate}
                         onStartEdit={() => handleStartEditCategory(index, category)}
                         onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
                         onCancelEdit={handleCancelEditCategory}
                         onDelete={() => handleDeleteCategory(category, categoryDialogType)}
                         onEditNameChange={setEditingCategoryName}
-                        onEditRecurringChange={setEditingCategoryRecurring}
+                        onEditRecurringChange={(checked) => {
+                          setEditingCategoryRecurring(checked);
+                          if (checked) {
+                            setEditingCategoryIndefinite(true);
+                            setEditingCategoryEndDate(null);
+                          }
+                        }}
                         onEditIndefiniteChange={setEditingCategoryIndefinite}
+                        onEditEndDateChange={setEditingCategoryEndDate}
+                        onToggleEndDate={() => {
+                          if (editingCategoryEndDate) {
+                            setEditingCategoryEndDate(null);
+                            setEditingCategoryIndefinite(true);
+                          } else {
+                            setEditingCategoryIndefinite(false);
+                            setEditingCategoryEndDate(new Date().toISOString().split('T')[0]);
+                          }
+                        }}
                       />
                     ))}
                   </SortableContext>

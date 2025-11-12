@@ -17,25 +17,40 @@ export type Database = {
       accounting_categories: {
         Row: {
           created_at: string
+          default_amount: number | null
           id: string
+          is_indefinite_recurrence: boolean | null
+          is_recurring: boolean | null
           name: string
           position: number
+          recurrence_day: number | null
+          recurrence_end_date: string | null
           type: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          default_amount?: number | null
           id?: string
+          is_indefinite_recurrence?: boolean | null
+          is_recurring?: boolean | null
           name: string
           position?: number
+          recurrence_day?: number | null
+          recurrence_end_date?: string | null
           type: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          default_amount?: number | null
           id?: string
+          is_indefinite_recurrence?: boolean | null
+          is_recurring?: boolean | null
           name?: string
           position?: number
+          recurrence_day?: number | null
+          recurrence_end_date?: string | null
           type?: string
           updated_at?: string
         }
