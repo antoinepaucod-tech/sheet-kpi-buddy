@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Edit } from "lucide-react";
 import { MonthlyKPIData } from "@/hooks/useMonthlyKPIData";
+import { useAccountingCategories } from "@/hooks/useAccountingCategories";
 
 interface MonthlyDataInputProps {
   monthData: MonthlyKPIData;
@@ -16,6 +17,7 @@ interface MonthlyDataInputProps {
 export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataInputProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<MonthlyKPIData>(monthData);
+  const { expenseCategories, isLoading: categoriesLoading } = useAccountingCategories();
 
   useEffect(() => {
     setFormData(monthData);
@@ -31,6 +33,33 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
       ...prev,
       [field]: parseFloat(value) || 0
     }));
+  };
+  
+  // Mapping entre les noms de catégories et les colonnes de monthly_kpis
+  const getCategoryField = (categoryName: string): keyof MonthlyKPIData | null => {
+    const normalized = categoryName.toUpperCase().trim();
+    const mappings: Record<string, keyof MonthlyKPIData> = {
+      "DÉPENSES PUBLICITAIRES": "ad_spend",
+      "PUBLICITÉ": "ad_spend",
+      "LOYER": "rent",
+      "LOYERS": "rent",
+      "RÉPARATIONS & MAINTENANCE": "repairs_maintenance",
+      "LOGICIELS": "computer_software",
+      "INTERNET & TÉLÉPHONE": "internet_telephone",
+      "INTERNET & TELEPHONIE": "internet_telephone",
+      "TELEPHONIE": "internet_telephone",
+      "ABONNEMENTS": "subscriptions",
+      "FRAIS BANCAIRES": "bank_finance_charges",
+      "ASSURANCE": "insurance",
+      "SALAIRES": "salaries",
+      "SALAIRES COACH": "salaries",
+      "ALIMENTAIRE": "food_expenses",
+      "DÉPENSES ALIMENTAIRES": "food_expenses",
+      "REMBOURSEMENT CRÉDIT": "credit_repayment",
+      "REMBOURSEMENT PRÊT": "credit_repayment",
+      "RETRAIT BANCOMAT": "bank_finance_charges", // Mapping to bank charges for now
+    };
+    return mappings[normalized] || null;
   };
 
   return (
@@ -271,94 +300,27 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
 
           <TabsContent value="expenses" className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Dépenses Publicitaires</Label>
-                <Input 
-                  type="number" 
-                  value={formData.ad_spend}
-                  onChange={(e) => updateField('ad_spend', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Loyer</Label>
-                <Input 
-                  type="number" 
-                  value={formData.rent}
-                  onChange={(e) => updateField('rent', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Réparations & Maintenance</Label>
-                <Input 
-                  type="number" 
-                  value={formData.repairs_maintenance}
-                  onChange={(e) => updateField('repairs_maintenance', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Logiciels</Label>
-                <Input 
-                  type="number" 
-                  value={formData.computer_software}
-                  onChange={(e) => updateField('computer_software', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Internet & Téléphone</Label>
-                <Input 
-                  type="number" 
-                  value={formData.internet_telephone}
-                  onChange={(e) => updateField('internet_telephone', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Abonnements</Label>
-                <Input 
-                  type="number" 
-                  value={formData.subscriptions}
-                  onChange={(e) => updateField('subscriptions', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Frais Bancaires</Label>
-                <Input 
-                  type="number" 
-                  value={formData.bank_finance_charges}
-                  onChange={(e) => updateField('bank_finance_charges', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Assurance</Label>
-                <Input 
-                  type="number" 
-                  value={formData.insurance}
-                  onChange={(e) => updateField('insurance', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Salaires</Label>
-                <Input 
-                  type="number" 
-                  value={formData.salaries || 0}
-                  onChange={(e) => updateField('salaries', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Dépenses alimentaires</Label>
-                <Input 
-                  type="number" 
-                  value={formData.food_expenses || 0}
-                  onChange={(e) => updateField('food_expenses', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Remboursement crédit</Label>
-                <Input 
-                  type="number" 
-                  value={formData.credit_repayment || 0}
-                  onChange={(e) => updateField('credit_repayment', e.target.value)}
-                />
-              </div>
+              {categoriesLoading ? (
+                <div className="col-span-2 text-center text-muted-foreground">
+                  Chargement des catégories...
+                </div>
+              ) : (
+                expenseCategories.map((category) => {
+                  const field = getCategoryField(category.name);
+                  if (!field) return null;
+                  
+                  return (
+                    <div key={category.id} className="space-y-2">
+                      <Label>{category.name}</Label>
+                      <Input 
+                        type="number" 
+                        value={formData[field] || 0}
+                        onChange={(e) => updateField(field, e.target.value)}
+                      />
+                    </div>
+                  );
+                })
+              )}
             </div>
           </TabsContent>
 
