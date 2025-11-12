@@ -302,9 +302,10 @@ const CustomerJourney = () => {
   };
 
   const updateMember = async (id: string, field: string, value: any) => {
+    const member = members.find(m => m.id === id);
+    
     // If updating exit_date and it's being set, delete accounting transactions
     if (field === "exit_date" && value) {
-      const member = members.find(m => m.id === id);
       if (member) {
         // Delete all associated accounting transactions when member exits
         await supabase
@@ -312,6 +313,24 @@ const CustomerJourney = () => {
           .delete()
           .eq('client_name', member.name);
       }
+    }
+    
+    // If updating member_type, sync with accounting transactions
+    if (field === "member_type" && member) {
+      // Map member type to product description
+      let productDescription = "Revenu EFT Général";
+      if (value === "Membres PT") {
+        productDescription = "Revenu PT";
+      } else if (value === "Membres PIF") {
+        productDescription = "Revenu Fast Cash";
+      }
+      
+      // Update all accounting transactions for this member
+      await supabase
+        .from('accounting_transactions')
+        .update({ product_description: productDescription })
+        .eq('client_name', member.name)
+        .eq('transaction_type', 'revenue');
     }
     
     // Log onboarding changes to history (only when completing, not when unchecking)
@@ -332,7 +351,6 @@ const CustomerJourney = () => {
         .eq('action_type', field);
 
       // Log the new completion
-      const member = members.find(m => m.id === id);
       if (member) {
         const previousValue = member[field as keyof Member] as boolean;
         
@@ -349,7 +367,6 @@ const CustomerJourney = () => {
     
     // If updating cash_collected, sync with accounting
     if (field === "cash_collected") {
-      const member = members.find(m => m.id === id);
       if (member) {
         const newAmount = parseFloat(value) || 0;
         const oldAmount = member.cash_collected || 0;
