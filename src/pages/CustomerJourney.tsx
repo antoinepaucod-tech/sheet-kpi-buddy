@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
+import { AddMemberDialog, type MemberFormData } from "@/components/AddMemberDialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -101,9 +102,6 @@ const mapMembershipToRevenueCategory = (membership: string): string => {
 const CustomerJourney = () => {
   const { t } = useTranslations();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [newMemberName, setNewMemberName] = useState("");
-  const [newMemberType, setNewMemberType] = useState("");
-  const [newCashCollected, setNewCashCollected] = useState("");
   const [selectedView, setSelectedView] = useState("index");
   const [selectedYear, setSelectedYear] = useState<number | "all">(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
@@ -246,13 +244,14 @@ const CustomerJourney = () => {
     });
   }, [members, selectedView, selectedYear, selectedMonth, searchTerm, memberStatus]);
 
-  const addMember = async () => {
-    if (newMemberName.trim()) {
+  const addMember = async (memberData: MemberFormData) => {
+    if (memberData.name.trim()) {
       const newMember = {
-        name: newMemberName,
-        membership: membershipTypes[0],
-        member_type: newMemberType || null,
-        cash_collected: newCashCollected ? parseFloat(newCashCollected) : 0,
+        name: memberData.name,
+        membership: memberData.membership,
+        member_type: memberData.memberType,
+        cash_collected: memberData.cashCollected || 0,
+        contract_signed_date: memberData.contractDate ? format(memberData.contractDate, "yyyy-MM-dd") : null,
       };
       
       // Add member to database
@@ -272,18 +271,17 @@ const CustomerJourney = () => {
       
       if (createdMemberData) {
         // Update with additional fields
-        if (newMember.member_type || newMember.cash_collected) {
-          await updateMemberInDb(createdMemberData.id, {
-            member_type: newMember.member_type,
-            cash_collected: newMember.cash_collected,
-          });
-        }
+        await updateMemberInDb(createdMemberData.id, {
+          member_type: newMember.member_type,
+          cash_collected: newMember.cash_collected,
+          contract_signed_date: newMember.contract_signed_date,
+        });
         
         // Create accounting transaction if cash collected
         if (newMember.cash_collected > 0) {
-          const today = format(new Date(), "yyyy-MM-dd");
-          const currentMonth = new Date().getMonth() + 1;
-          const currentYear = new Date().getFullYear();
+          const transactionDate = memberData.contractDate || new Date();
+          const currentMonth = transactionDate.getMonth() + 1;
+          const currentYear = transactionDate.getFullYear();
           
           // Map membership to revenue category
           const revenueCategory = mapMembershipToRevenueCategory(newMember.membership);
@@ -296,30 +294,27 @@ const CustomerJourney = () => {
             productDescription = "Revenu Fast Cash";
           }
           
-          // Create accounting transaction
+          // Create accounting transaction with complete information
           await supabase
             .from('accounting_transactions')
             .insert({
-              transaction_date: today,
+              transaction_date: format(transactionDate, "yyyy-MM-dd"),
               transaction_type: "revenue",
               category: revenueCategory,
               client_name: newMember.name,
-              service_description: newMember.membership,
+              service_description: memberData.serviceDescription || newMember.membership,
               product_description: productDescription,
               amount: newMember.cash_collected,
               amount_received: newMember.cash_collected,
-              payment_method: "Prélèvement Automatique",
+              payment_method: memberData.paymentMethod,
+              invoice_number: memberData.invoiceNumber || null,
               notes: "Ajouté depuis Parcours Client",
               year: currentYear,
               month: currentMonth,
-              month_name: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date()),
+              month_name: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(transactionDate),
             });
         }
       }
-      
-      setNewMemberName("");
-      setNewMemberType("");
-      setNewCashCollected("");
     }
   };
 
@@ -623,39 +618,7 @@ const CustomerJourney = () => {
               {selectedView === "index" && (
                 <>
                   <div className="flex-1" />
-                  <Input
-                    placeholder="Nom du nouveau membre"
-                    value={newMemberName}
-                    onChange={(e) => setNewMemberName(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && addMember()}
-                    className="w-[200px] h-10"
-                  />
-                  <Select
-                    value={newMemberType}
-                    onValueChange={setNewMemberType}
-                  >
-                    <SelectTrigger className="w-[200px] h-10">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border shadow-lg z-50">
-                      <SelectItem value="Membres Généraux Récurrents">Membres Généraux Récurrents</SelectItem>
-                      <SelectItem value="Membres PIF">Membres PIF</SelectItem>
-                      <SelectItem value="Membres PT">Membres PT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="Cash Collectée"
-                    value={newCashCollected}
-                    onChange={(e) => setNewCashCollected(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && addMember()}
-                    className="w-[150px] h-10"
-                  />
-                  <Button onClick={addMember} className="gap-2 h-10">
-                    <Plus className="h-4 w-4" />
-                    Ajouter
-                  </Button>
+                  <AddMemberDialog onAdd={addMember} />
                 </>
               )}
             </div>
