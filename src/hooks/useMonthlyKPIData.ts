@@ -87,22 +87,22 @@ export interface MonthlyKPIData {
   gym_floor_sqft?: number;
 }
 
-export const useMonthlyKPIData = () => {
+export const useMonthlyKPIData = (selectedYear?: number) => {
   const [monthlyData, setMonthlyData] = useState<MonthlyKPIData[]>([]);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
   const [isLoading, setIsLoading] = useState(true);
+  const [currentYear, setCurrentYear] = useState(selectedYear || new Date().getFullYear());
 
   // Load monthly data directly from monthly_kpis table
-  const loadMonthlyData = async () => {
+  const loadMonthlyData = async (year: number) => {
     setIsLoading(true);
     try {
-      const currentYear = new Date().getFullYear();
       
       // Fetch all monthly KPIs for the year
       const { data: existingData, error } = await supabase
         .from('monthly_kpis')
         .select('*')
-        .eq('year', currentYear)
+        .eq('year', year)
         .order('month', { ascending: true });
 
       if (error) throw error;
@@ -122,7 +122,7 @@ export const useMonthlyKPIData = () => {
         } else {
           // Create empty entry for missing months
           const emptyMonth: MonthlyKPIData = {
-            year: currentYear,
+            year: year,
             month: m,
             month_name: MONTHS[m],
             general_eft_revenue: 0,
@@ -192,7 +192,7 @@ export const useMonthlyKPIData = () => {
   };
 
   useEffect(() => {
-    loadMonthlyData();
+    loadMonthlyData(currentYear);
 
     // Subscribe to monthly KPI changes
     const channel = supabase
@@ -205,7 +205,7 @@ export const useMonthlyKPIData = () => {
           table: 'monthly_kpis'
         },
         () => {
-          loadMonthlyData();
+          loadMonthlyData(currentYear);
         }
       )
       .subscribe();
@@ -213,7 +213,7 @@ export const useMonthlyKPIData = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [currentYear]);
 
   const getCurrentMonthData = () => monthlyData[currentMonthIndex];
 
@@ -223,6 +223,8 @@ export const useMonthlyKPIData = () => {
     setCurrentMonthIndex,
     getCurrentMonthData,
     isLoading,
-    refreshData: loadMonthlyData,
+    refreshData: () => loadMonthlyData(currentYear),
+    currentYear,
+    setCurrentYear,
   };
 };

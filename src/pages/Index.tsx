@@ -11,6 +11,7 @@ import { VideoSettings } from "@/components/VideoSettings";
 import { MonthlyDataInput } from "@/components/MonthlyDataInput";
 import { EmailReminderButton } from "@/components/EmailReminderButton";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -35,7 +36,9 @@ const Index = () => {
     setCurrentMonthIndex, 
     getCurrentMonthData,
     isLoading,
-    refreshData 
+    refreshData,
+    currentYear,
+    setCurrentYear 
   } = useMonthlyKPIData();
   
   const currentMonth = getCurrentMonthData() || monthlyData[currentMonthIndex];
@@ -160,29 +163,42 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToPreviousMonth}
-                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
-              >
-                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-1.5 sm:py-2 bg-muted/50 rounded-lg min-w-[140px] sm:min-w-[180px] justify-center">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-                <span className="font-medium text-sm sm:text-lg tracking-wide">
-                  {MONTHS[currentMonthIndex].toUpperCase()}
-                </span>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+              <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
+                <SelectTrigger className="w-[120px] bg-muted/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                  <SelectItem value="2027">2027</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToPreviousMonth}
+                  className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
+                >
+                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-1.5 sm:py-2 bg-muted/50 rounded-lg min-w-[140px] sm:min-w-[180px] justify-center">
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                  <span className="font-medium text-sm sm:text-lg tracking-wide">
+                    {MONTHS[currentMonthIndex].toUpperCase()}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToNextMonth}
+                  className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
+                >
+                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goToNextMonth}
-                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
-              >
-                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
             </div>
           </div>
         </VideoBackground>
