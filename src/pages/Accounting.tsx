@@ -939,7 +939,7 @@ const Accounting = () => {
 
           <TabsContent value="dashboard" className="space-y-6">
             {/* KPIs Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <Card className="border-l-4 border-l-emerald-400">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -967,7 +967,23 @@ const Accounting = () => {
                     CHF {summary.totalRevenueReceived.toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Différence: CHF {(summary.totalRevenue - summary.totalRevenueReceived).toFixed(2)}
+                    Cash collecté
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-orange-400">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Impayés
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                    CHF {(summary.totalRevenue - summary.totalRevenueReceived).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    À encaisser
                   </p>
                 </CardContent>
               </Card>
