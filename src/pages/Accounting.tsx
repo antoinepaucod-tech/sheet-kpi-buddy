@@ -1662,7 +1662,7 @@ const Accounting = () => {
                                   <SelectValue placeholder="Sélectionner" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {PRODUCT_DESCRIPTIONS_EXPENSE.map((desc) => (
+                                  {expenseCategories.map((desc) => (
                                     <SelectItem key={desc} value={desc}>
                                       {desc}
                                     </SelectItem>
@@ -1860,7 +1860,7 @@ const Accounting = () => {
                         <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
                       <SelectContent>
-                        {PRODUCT_DESCRIPTIONS_EXPENSE.map((desc) => (
+                        {expenseCategories.map((desc) => (
                           <SelectItem key={desc} value={desc}>
                             {desc}
                           </SelectItem>
