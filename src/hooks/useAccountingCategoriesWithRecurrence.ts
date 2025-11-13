@@ -156,9 +156,13 @@ export const useAccountingCategoriesWithRecurrence = () => {
           matchingMembers.forEach((member: any) => {
             const prevKey = `${cat.type}|${cat.name}|${member.name}`;
             const carriedAmount = prevAmountMap.get(prevKey)?.amount;
-            const amount = carriedAmount !== undefined ? carriedAmount : Number(cat.default_amount) || 0;
+            
+            // Only generate if there was a transaction in previous month
+            if (carriedAmount === undefined) {
+              return; // Skip if no previous transaction
+            }
 
-            const dupKey = `${dateStr}|${cat.type}|${cat.name}|${member.name}|${amount}`;
+            const dupKey = `${dateStr}|${cat.type}|${cat.name}|${member.name}|${carriedAmount}`;
             if (existingKeys.has(dupKey)) {
               skipped++;
               return;
@@ -175,7 +179,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
                 : (member.member_type || "").includes("PIF")
                 ? "Membre PIF"
                 : "Revenu EFT Général",
-              amount,
+              amount: carriedAmount,
               amount_received: 0, // cash resets to 0 each recurrence
               year: year,
               month: month + 1,
@@ -185,12 +189,16 @@ export const useAccountingCategoriesWithRecurrence = () => {
             });
           });
         } else {
-          // No matching members, create a generic transaction
+          // No matching members - only generate if there was a transaction in previous month
           const prevKey = `${cat.type}|${cat.name}|`;
           const carriedAmount = prevAmountMap.get(prevKey)?.amount;
-          const amount = carriedAmount !== undefined ? carriedAmount : Number(cat.default_amount) || 0;
+          
+          // Only generate if there was a transaction in previous month
+          if (carriedAmount === undefined) {
+            return; // Skip if no previous transaction
+          }
 
-          const dupKey = `${dateStr}|${cat.type}|${cat.name}||${amount}`;
+          const dupKey = `${dateStr}|${cat.type}|${cat.name}||${carriedAmount}`;
           if (existingKeys.has(dupKey)) {
             skipped++;
             return;
@@ -200,7 +208,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
             transaction_date: dateStr,
             transaction_type: cat.type,
             category: cat.name,
-            amount,
+            amount: carriedAmount,
             amount_received: 0, // cash resets to 0 each recurrence
             year: year,
             month: month + 1,
