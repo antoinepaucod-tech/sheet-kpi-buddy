@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import Dashboard from "./pages/Dashboard";
 import Index from "./pages/Index";
 import Annual from "./pages/Annual";
 import CustomerJourney from "./pages/CustomerJourney";
@@ -33,7 +34,8 @@ const App = () => (
                 </header>
                 <main className="flex-1 overflow-x-hidden">
                   <Routes>
-                    <Route path="/" element={<Index />} />
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/kpi-revenue" element={<Index />} />
                     <Route path="/annual" element={<Annual />} />
                     <Route path="/course-kpi" element={<CourseKPI />} />
                     <Route path="/accounting" element={<Accounting />} />
