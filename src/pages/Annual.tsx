@@ -6,6 +6,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { VideoBackground } from '@/components/VideoBackground';
 import { VideoSettings } from '@/components/VideoSettings';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   DollarSign, 
   Users, 
@@ -26,7 +27,8 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
 const Annual = () => {
-  const { annualData, monthlyData, isLoading } = useAnnualKPIData();
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const { annualData, monthlyData, isLoading } = useAnnualKPIData(selectedYear);
   const { t } = useTranslations();
   
   const [videoConfig, setVideoConfig] = useState(() => {
@@ -130,13 +132,26 @@ const Annual = () => {
         >
           <div className="container mx-auto px-6 py-6">
             <div className="flex items-center justify-between gap-8">
-              <div className="flex-1">
-                <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
-                  {t('annual.title')} {annualData.year}
-                </h1>
-                <p className="text-muted-foreground text-sm tracking-wide">
-                  {t('annual.subtitle')}
-                </p>
+              <div className="flex-1 flex items-center gap-4">
+                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                  <SelectTrigger className="w-[120px] bg-muted/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2025">2025</SelectItem>
+                    <SelectItem value="2026">2026</SelectItem>
+                    <SelectItem value="2027">2027</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <div>
+                  <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
+                    {t('annual.title')} {selectedYear}
+                  </h1>
+                  <p className="text-muted-foreground text-sm tracking-wide">
+                    {t('annual.subtitle')}
+                  </p>
+                </div>
               </div>
               
               <div className="flex items-center gap-2">

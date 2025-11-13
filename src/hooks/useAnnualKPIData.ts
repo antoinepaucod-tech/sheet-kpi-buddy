@@ -51,20 +51,20 @@ export interface AnnualKPIData {
   gymFloorSQFT: number;
 }
 
-export const useAnnualKPIData = () => {
+export const useAnnualKPIData = (selectedYear?: number) => {
   const [annualData, setAnnualData] = useState<AnnualKPIData | null>(null);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentYear, setCurrentYear] = useState(selectedYear || new Date().getFullYear());
 
-  const loadAnnualData = async () => {
+  const loadAnnualData = async (year: number) => {
     try {
       setIsLoading(true);
-      const currentYear = new Date().getFullYear();
 
       const { data: monthlyData, error } = await supabase
         .from('monthly_kpis')
         .select('*')
-        .eq('year', currentYear)
+        .eq('year', year)
         .order('month', { ascending: true });
 
       if (error) throw error;
@@ -80,7 +80,7 @@ export const useAnnualKPIData = () => {
 
       // Aggregate all monthly data into annual totals
       const annual: AnnualKPIData = {
-        year: currentYear,
+        year: year,
         totalRevenue: 0,
         generalEFTRevenue: 0,
         ptRevenue: 0,
@@ -213,7 +213,7 @@ export const useAnnualKPIData = () => {
   };
 
   useEffect(() => {
-    loadAnnualData();
+    loadAnnualData(currentYear);
 
     const channel = supabase
       .channel('monthly_kpis_changes')
@@ -225,7 +225,7 @@ export const useAnnualKPIData = () => {
           table: 'monthly_kpis',
         },
         () => {
-          loadAnnualData();
+          loadAnnualData(currentYear);
         }
       )
       .subscribe();
@@ -233,12 +233,12 @@ export const useAnnualKPIData = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [currentYear]);
 
   return {
     annualData,
     monthlyData,
     isLoading,
-    refreshData: loadAnnualData,
+    refreshData: () => loadAnnualData(currentYear),
   };
 };
