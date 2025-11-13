@@ -86,9 +86,26 @@ export const useCourseKPIData = (year: number, month: number) => {
         ? (totalAttendance / (nonZeroWeeks * maxCapacity)) * 100 
         : 0;
 
+      // Calculate monthly expenses based on instructor hourly rate and weeks with attendance
+      let monthlyExpenses = updates.monthly_expenses || 0;
+      
+      if (updates.instructor) {
+        // Get instructor hourly rate
+        const { data: instructorData, error: instructorError } = await supabase
+          .from("instructors")
+          .select("hourly_rate")
+          .eq("name", updates.instructor)
+          .single();
+
+        if (!instructorError && instructorData) {
+          // Calculate: number of weeks with attendance × hourly rate
+          monthlyExpenses = nonZeroWeeks * instructorData.hourly_rate;
+        }
+      }
+
       const { data, error } = await supabase
         .from("course_kpis")
-        .update({ ...updates, attendance_rate: attendanceRate })
+        .update({ ...updates, attendance_rate: attendanceRate, monthly_expenses: monthlyExpenses })
         .eq("id", id)
         .select()
         .single();
