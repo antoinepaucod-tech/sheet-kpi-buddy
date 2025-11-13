@@ -1241,15 +1241,16 @@ const Accounting = () => {
                   <Card key={category} className="overflow-hidden border-0 shadow-none">
                     {/* Header Row - Subtle Gray */}
                     <div className="bg-muted/80 text-foreground border border-border">
-                      <div className="grid grid-cols-8">
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM DU SERVICE</div>
+                      <div className="grid grid-cols-9">
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">N° / ÉTAT</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Prénom</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Prestation</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Produit</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">Montant</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">État</div>
-                        <div className="px-3 py-2 font-bold text-sm text-left">Réglé le</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">Cash</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-left">Notes</div>
+                        <div className="px-3 py-2 font-bold text-sm text-center">Actions</div>
                       </div>
                     </div>
 
@@ -1275,40 +1276,19 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className="grid grid-cols-8 border-b border-border hover:bg-accent/50 transition-colors group"
+                            className="grid grid-cols-9 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
-                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center gap-2">
-                              <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
+                            <div className="px-3 py-2 border-r border-border text-sm flex flex-col gap-1">
+                              <span className="font-medium">#{String(index + 1).padStart(2, '0')}</span>
                               {hasExitDate && (
-                                <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
+                                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 w-fit">
                                   Terminé
                                 </Badge>
                               )}
                               {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 w-fit bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
                                   À valider
                                 </Badge>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => deleteTransaction.mutate(transaction.id)}
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="h-3 w-3 text-destructive" />
-                              </Button>
-                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    is_validated: true 
-                                  })}
-                                  className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-600 hover:bg-emerald-700 text-white"
-                                >
-                                  ✓ Valider
-                                </Button>
                               )}
                             </div>
                             <Input
@@ -1416,7 +1396,7 @@ const Accounting = () => {
                             />
                             <Input
                               key={`notes-${transaction.id}`}
-                              className="px-3 py-2 border-r-0 border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
                               defaultValue={transaction.notes || ""}
                               placeholder="Notes..."
                               onBlur={(e) => {
@@ -1428,6 +1408,30 @@ const Accounting = () => {
                                 }
                               }}
                             />
+                            <div className="px-2 py-2 flex items-center justify-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteTransaction.mutate(transaction.id)}
+                                className="h-7 w-7 p-0 hover:bg-destructive/10"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    is_validated: true 
+                                  })}
+                                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  title="Valider"
+                                >
+                                  ✓
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -1678,13 +1682,14 @@ const Accounting = () => {
                   <Card key={category} className="overflow-hidden border-0 shadow-none">
                     {/* Header Row - Subtle Gray */}
                     <div className="bg-muted/80 text-foreground border border-border">
-                      <div className="grid grid-cols-6">
+                      <div className="grid grid-cols-7">
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm">N° / ÉTAT</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">DESCRIPTION</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">DÉTAILS</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">FOURNISSEUR</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Service</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">MONTANT</div>
-                        <div className="px-3 py-2 font-bold text-sm text-left">NOTES</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-left">NOTES</div>
+                        <div className="px-3 py-2 font-bold text-sm text-center">Actions</div>
                       </div>
                     </div>
 
@@ -1701,35 +1706,14 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className="grid grid-cols-6 border-b border-border hover:bg-accent/50 transition-colors group"
+                            className="grid grid-cols-7 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
-                            <div className="px-3 py-2 border-r border-border font-medium text-sm flex items-center gap-2">
-                              <span className="mr-2">#{String(index + 1).padStart(2, '0')}</span>
+                            <div className="px-3 py-2 border-r border-border text-sm flex flex-col gap-1">
+                              <span className="font-medium">#{String(index + 1).padStart(2, '0')}</span>
                               {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 w-fit bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
                                   À valider
                                 </Badge>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => deleteTransaction.mutate(transaction.id)}
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="h-3 w-3 text-destructive" />
-                              </Button>
-                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    is_validated: true 
-                                  })}
-                                  className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-600 hover:bg-emerald-700 text-white"
-                                >
-                                  ✓ Valider
-                                </Button>
                               )}
                             </div>
                             <Input
@@ -1798,7 +1782,7 @@ const Accounting = () => {
                             />
                             <Input
                               key={`notes-${transaction.id}`}
-                              className="px-3 py-2 border-r-0 border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
                               defaultValue={transaction.notes || ""}
                               placeholder="Notes..."
                               onBlur={(e) => {
@@ -1810,6 +1794,30 @@ const Accounting = () => {
                                 }
                               }}
                             />
+                            <div className="px-2 py-2 flex items-center justify-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteTransaction.mutate(transaction.id)}
+                                className="h-7 w-7 p-0 hover:bg-destructive/10"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    is_validated: true 
+                                  })}
+                                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  title="Valider"
+                                >
+                                  ✓
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
