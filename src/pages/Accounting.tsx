@@ -968,13 +968,11 @@ const Accounting = () => {
 
           <Button 
             variant="default"
-            onClick={() => {
-              generateMonthlyTransactions.mutate({ year: selectedYear, month: selectedMonth });
-            }}
+            onClick={handleGenerateRecurringTransactions}
             className="gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            Générer Transactions Récurrentes
+            Générer Paiements Récurrents
           </Button>
 
           <Dialog>
