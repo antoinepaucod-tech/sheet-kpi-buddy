@@ -74,12 +74,26 @@ export const useAccountingCategoriesWithRecurrence = () => {
         throw new Error("Aucune catégorie récurrente configurée");
       }
 
-      // Generate transactions - skip indefinite recurrences
+      // Generate transactions - include indefinite, exclude expired finite recurrences
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const transactionsToCreate = recurringCategories
-        .filter((cat: any) => !cat.is_indefinite_recurrence) // Skip indefinite
+        .filter((cat: any) => {
+          // Always include indefinite recurrences
+          if (cat.is_indefinite_recurrence) return true;
+          
+          // For finite recurrences, check if we're before the end date
+          if (cat.recurrence_end_date) {
+            const day = Math.min(cat.recurrence_day || 1, daysInMonth);
+            const transactionDate = new Date(year, month, day);
+            const endDate = new Date(cat.recurrence_end_date);
+            return transactionDate <= endDate;
+          }
+          
+          // No end date specified, include it
+          return true;
+        })
         .map((cat: any) => {
-          const day = Math.min(cat.recurrence_day, daysInMonth);
+          const day = Math.min(cat.recurrence_day || 1, daysInMonth);
           const transactionDate = new Date(year, month, day);
 
           return {
