@@ -71,51 +71,82 @@ export default function KPICourses() {
     const syncInstructorCosts = async () => {
       if (!courses || courses.length === 0) return;
       
-      const totalExpenses = courses.reduce((sum, course) => sum + (Number(course.monthly_expenses) || 0), 0);
-      
-      // Check if there's already an entry for this month
-      const { data: existing } = await supabase
-        .from('accounting_transactions')
-        .select('*')
-        .eq('year', selectedYear)
-        .eq('month', selectedMonth)
-        .eq('category', 'SALAIRES COACH')
-        .eq('notes', 'Synchronisé depuis KPI Cours')
-        .maybeSingle();
+      // Group expenses by instructor
+      const instructorExpenses = new Map<string, number>();
+      courses.forEach((course) => {
+        if (course.instructor) {
+          const currentTotal = instructorExpenses.get(course.instructor) || 0;
+          instructorExpenses.set(course.instructor, currentTotal + (Number(course.monthly_expenses) || 0));
+        }
+      });
       
       const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
                           "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
       
-      if (existing) {
-        // Update existing entry (even if totalExpenses is 0)
-        await supabase
+      // For each instructor, create or update their transaction
+      for (const [instructorName, totalExpense] of instructorExpenses.entries()) {
+        // Check if there's already an entry for this instructor this month
+        const { data: existing } = await supabase
           .from('accounting_transactions')
-          .update({
-            amount: totalExpenses,
-            transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
-          })
-          .eq('id', existing.id);
-      } else if (totalExpenses > 0) {
-        // Create new entry only if there are expenses
-        await supabase
-          .from('accounting_transactions')
-          .insert({
-            transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
-            transaction_type: 'expense',
-            category: 'SALAIRES COACH',
-            client_name: 'Instructeurs',
-            service_description: 'Salaires instructeurs cours',
-            product_description: 'SALAIRES COACH',
-            amount: totalExpenses,
-            amount_received: 0,
-            payment_method: 'Virement Bancaire',
-            notes: 'Synchronisé depuis KPI Cours',
-            year: selectedYear,
-            month: selectedMonth,
-            month_name: monthNames[selectedMonth - 1],
-            is_auto_generated: true,
-            is_validated: false,
-          });
+          .select('*')
+          .eq('year', selectedYear)
+          .eq('month', selectedMonth)
+          .eq('category', 'SALAIRES COACH')
+          .eq('service_description', instructorName)
+          .maybeSingle();
+        
+        if (existing) {
+          // Update existing entry
+          await supabase
+            .from('accounting_transactions')
+            .update({
+              amount: totalExpense,
+              transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
+            })
+            .eq('id', existing.id);
+        } else if (totalExpense > 0) {
+          // Create new entry only if there are expenses
+          await supabase
+            .from('accounting_transactions')
+            .insert({
+              transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
+              transaction_type: 'expense',
+              category: 'SALAIRES COACH',
+              client_name: null,
+              service_description: instructorName,
+              product_description: 'SALAIRES COACH',
+              amount: totalExpense,
+              amount_received: 0,
+              payment_method: 'Virement Bancaire',
+              notes: 'Synchronisé depuis KPI Cours',
+              year: selectedYear,
+              month: selectedMonth,
+              month_name: monthNames[selectedMonth - 1],
+              is_auto_generated: true,
+              is_validated: false,
+            });
+        }
+      }
+      
+      // Clean up old entries for instructors that no longer have courses this month
+      const { data: allCoachTransactions } = await supabase
+        .from('accounting_transactions')
+        .select('id, service_description')
+        .eq('year', selectedYear)
+        .eq('month', selectedMonth)
+        .eq('category', 'SALAIRES COACH')
+        .eq('notes', 'Synchronisé depuis KPI Cours');
+      
+      if (allCoachTransactions) {
+        for (const transaction of allCoachTransactions) {
+          if (!instructorExpenses.has(transaction.service_description)) {
+            // Delete transaction for instructors no longer in this month
+            await supabase
+              .from('accounting_transactions')
+              .delete()
+              .eq('id', transaction.id);
+          }
+        }
       }
     };
     
