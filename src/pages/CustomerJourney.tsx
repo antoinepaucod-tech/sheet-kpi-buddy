@@ -333,7 +333,7 @@ const CustomerJourney = () => {
         .eq('transaction_type', 'revenue');
     }
     
-    // Log onboarding changes to history (only when completing, not when unchecking)
+    // Log onboarding changes to history
     const onboardingFields = [
       'onboarding_bsport',
       'onboarding_hubfit', 
@@ -342,26 +342,35 @@ const CustomerJourney = () => {
       'session_introduction'
     ];
 
-    if (onboardingFields.includes(field) && value === true) {
-      // Delete any previous entry for this action_type and member
-      await supabase
-        .from('member_onboarding_history')
-        .delete()
-        .eq('member_id', id)
-        .eq('action_type', field);
-
-      // Log the new completion
-      if (member) {
-        const previousValue = member[field as keyof Member] as boolean;
-        
+    if (onboardingFields.includes(field)) {
+      if (value === true) {
+        // Delete any previous entry for this action_type and member
         await supabase
           .from('member_onboarding_history')
-          .insert([{
-            member_id: id,
-            action_type: field,
-            previous_value: previousValue,
-            new_value: value
-          }]);
+          .delete()
+          .eq('member_id', id)
+          .eq('action_type', field);
+
+        // Log the new completion
+        if (member) {
+          const previousValue = member[field as keyof Member] as boolean;
+          
+          await supabase
+            .from('member_onboarding_history')
+            .insert([{
+              member_id: id,
+              action_type: field,
+              previous_value: previousValue,
+              new_value: value
+            }]);
+        }
+      } else {
+        // When unchecking, remove the history entry so it doesn't appear as completed
+        await supabase
+          .from('member_onboarding_history')
+          .delete()
+          .eq('member_id', id)
+          .eq('action_type', field);
       }
     }
     
