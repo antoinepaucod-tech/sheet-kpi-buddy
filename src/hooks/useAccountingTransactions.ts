@@ -34,7 +34,7 @@ export const useAccountingTransactions = (year: number, month: number) => {
         .from("accounting_transactions")
         .select("*")
         .eq("year", year)
-        .eq("month", month + 1)
+        .eq("month", month)
         .order("transaction_date", { ascending: false });
 
       if (error) throw error;
