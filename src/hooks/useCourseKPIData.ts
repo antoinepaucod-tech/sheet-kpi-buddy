@@ -69,55 +69,10 @@ export const useCourseKPIData = (year: number, month: number) => {
       id: string;
       updates: Partial<CourseKPI>;
     }) => {
-      // Get the current course data to have all fields
-      const { data: currentCourse } = await supabase
-        .from("course_kpis")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (!currentCourse) throw new Error("Course not found");
-
-      // Merge current data with updates
-      const mergedData = { ...currentCourse, ...updates };
-
-      // Calculate attendance rate based on weekly attendance
-      const weeks = [
-        mergedData.week1_attendance || 0,
-        mergedData.week2_attendance || 0,
-        mergedData.week3_attendance || 0,
-        mergedData.week4_attendance || 0,
-        mergedData.week5_attendance || 0,
-      ];
-      
-      const nonZeroWeeks = weeks.filter(w => w > 0).length;
-      const totalAttendance = weeks.reduce((sum, w) => sum + w, 0);
-      const maxCapacity = mergedData.max_capacity || 10;
-      
-      const attendanceRate = nonZeroWeeks > 0 
-        ? (totalAttendance / (nonZeroWeeks * maxCapacity)) * 100 
-        : 0;
-
-      // Calculate monthly expenses based on instructor hourly rate and weeks with attendance
-      let monthlyExpenses = 0;
-      
-      if (mergedData.instructor) {
-        // Get instructor hourly rate
-        const { data: instructorData, error: instructorError } = await supabase
-          .from("instructors")
-          .select("hourly_rate")
-          .eq("name", mergedData.instructor)
-          .single();
-
-        if (!instructorError && instructorData) {
-          // Calculate: number of weeks with attendance × hourly rate
-          monthlyExpenses = nonZeroWeeks * instructorData.hourly_rate;
-        }
-      }
-
+      // Simply update - the database trigger will handle calculations
       const { data, error } = await supabase
         .from("course_kpis")
-        .update({ ...updates, attendance_rate: attendanceRate, monthly_expenses: monthlyExpenses })
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
