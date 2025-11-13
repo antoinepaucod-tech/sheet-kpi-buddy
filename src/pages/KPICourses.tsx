@@ -157,7 +157,9 @@ export default function KPICourses() {
   };
 
   const handleSave = async (id: string) => {
-    await updateCourse.mutateAsync({ id, updates: editingValues });
+    // Remove monthly_expenses from updates to force recalculation
+    const { monthly_expenses, ...updatesWithoutExpenses } = editingValues;
+    await updateCourse.mutateAsync({ id, updates: updatesWithoutExpenses });
     setEditingId(null);
     setEditingValues({});
   };
@@ -440,19 +442,9 @@ export default function KPICourses() {
                           ))}
                           <TableCell>
                             {editingId === course.id ? (
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={editingValues.monthly_expenses || 0}
-                                onChange={(e) =>
-                                  setEditingValues({
-                                    ...editingValues,
-                                    monthly_expenses: parseFloat(e.target.value) || 0,
-                                  })
-                                }
-                                className="w-[100px]"
-                              />
+                              <div className="w-[100px] text-muted-foreground">
+                                {editingValues.monthly_expenses || 0} CHF
+                              </div>
                             ) : (
                               `CHF ${course.monthly_expenses}`
                             )}
