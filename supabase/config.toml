@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-recurring-transactions]
 verify_jwt = false
+
+[functions.analyze-business]
+verify_jwt = false

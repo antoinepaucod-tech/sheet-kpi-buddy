@@ -12,7 +12,9 @@ import {
   CalendarPlus,
   FileText,
   ArrowRight,
-  BarChart3
+  BarChart3,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -21,8 +23,10 @@ import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import { useCourseKPIData } from "@/hooks/useCourseKPIData";
 import { useAccountingTransactions } from "@/hooks/useAccountingTransactions";
 import { useTranslations } from "@/hooks/useTranslations";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { KPIChart } from "@/components/KPIChart";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -31,6 +35,9 @@ const Dashboard = () => {
   const { members } = useCustomerMembers();
   const { courses } = useCourseKPIData(currentYear, new Date().getMonth() + 1);
   const { transactions } = useAccountingTransactions(currentYear, new Date().getMonth() + 1);
+
+  const [aiAnalysis, setAiAnalysis] = useState<string>("");
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
   // Calculate current month KPIs
   const currentMonthData = monthlyData[new Date().getMonth()];
@@ -54,6 +61,44 @@ const Dashboard = () => {
       (t.amount_received || 0) < t.amount
     ).length;
   }, [transactions]);
+
+  // Load AI analysis on mount
+  useEffect(() => {
+    if (monthlyData.length > 0 && transactions.length > 0) {
+      loadAiAnalysis();
+    }
+  }, [monthlyData.length, activeMembers, monthlyRevenue, monthlyExpenses, courses.length]);
+
+  const loadAiAnalysis = async () => {
+    setIsLoadingAnalysis(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-business', {
+        body: {
+          monthlyData,
+          activeMembers,
+          monthlyRevenue,
+          monthlyExpenses,
+          courses: courses.length
+        }
+      });
+
+      if (error) throw error;
+      if (data?.analysis) {
+        setAiAnalysis(data.analysis);
+      }
+    } catch (error: any) {
+      console.error('Error loading AI analysis:', error);
+      if (error.message?.includes('429')) {
+        toast.error("Trop de requêtes. Veuillez patienter quelques instants.");
+      } else if (error.message?.includes('402')) {
+        toast.error("Crédits AI épuisés. Ajoutez des crédits dans les paramètres.");
+      } else {
+        toast.error("Erreur lors du chargement de l'analyse");
+      }
+    } finally {
+      setIsLoadingAnalysis(false);
+    }
+  };
 
   // Chart data for revenue trends
   const revenueChartData = useMemo(() => {
@@ -82,9 +127,9 @@ const Dashboard = () => {
     },
     {
       title: "Gérer les cours",
-      description: "Planning et présences",
+      description: "Planning de base",
       icon: CalendarPlus,
-      onClick: () => navigate("/course-kpi"),
+      onClick: () => navigate("/course-kpi?tab=schedule-templates"),
       color: "text-purple-600 dark:text-purple-400"
     },
     {
@@ -269,83 +314,51 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Navigation to detailed pages */}
-        <Card>
+        {/* AI-Powered Forecast & Goals */}
+        <Card className="border-t-4 border-t-primary">
           <CardHeader>
-            <CardTitle>Accès aux Modules</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Prévisions & Objectifs
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadAiAnalysis}
+                disabled={isLoadingAnalysis}
+              >
+                {isLoadingAnalysis ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyse en cours...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Actualiser
+                  </>
+                )}
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Button 
-              variant="outline" 
-              className="justify-start h-auto py-3"
-              onClick={() => navigate("/kpi-revenue")}
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              <div className="text-left">
-                <div className="font-medium">KPI Revenu</div>
-                <div className="text-xs text-muted-foreground">Analyse mensuelle détaillée</div>
+          <CardContent>
+            {isLoadingAnalysis ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="justify-start h-auto py-3"
-              onClick={() => navigate("/kpi-client")}
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              <div className="text-left">
-                <div className="font-medium">KPI Client</div>
-                <div className="text-xs text-muted-foreground">Activité des membres</div>
+            ) : aiAnalysis ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <p className="text-foreground whitespace-pre-line leading-relaxed">
+                  {aiAnalysis}
+                </p>
               </div>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="justify-start h-auto py-3"
-              onClick={() => navigate("/course-kpi")}
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              <div className="text-left">
-                <div className="font-medium">KPI Cours</div>
-                <div className="text-xs text-muted-foreground">Gestion des cours</div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Cliquez sur "Actualiser" pour obtenir une analyse intelligente de vos performances</p>
               </div>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="justify-start h-auto py-3"
-              onClick={() => navigate("/customer-journey")}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              <div className="text-left">
-                <div className="font-medium">Parcours Client</div>
-                <div className="text-xs text-muted-foreground">Suivi individuel</div>
-              </div>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="justify-start h-auto py-3"
-              onClick={() => navigate("/accounting")}
-            >
-              <Receipt className="h-4 w-4 mr-2" />
-              <div className="text-left">
-                <div className="font-medium">Comptabilité</div>
-                <div className="text-xs text-muted-foreground">Revenus et dépenses</div>
-              </div>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="justify-start h-auto py-3"
-              onClick={() => navigate("/annual")}
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              <div className="text-left">
-                <div className="font-medium">Vue Annuelle</div>
-                <div className="text-xs text-muted-foreground">Synthèse de l'année</div>
-              </div>
-            </Button>
+            )}
           </CardContent>
         </Card>
       </div>
