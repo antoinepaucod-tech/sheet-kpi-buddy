@@ -51,9 +51,8 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
       "ABONNEMENTS": "subscriptions",
       "FRAIS BANCAIRES": "bank_finance_charges",
       "ASSURANCE": "insurance",
-      // IMPORTANT: On n'agrège que SALAIRES COACH dans monthly_kpis.salaries
-      // La catégorie "SALAIRES" (administratif) n'est pas suivie dans le KPI pour éviter le doublon
-      "SALAIRES COACH": "salaries",
+      "SALAIRES": "salaries",
+      "SALAIRES COACH": "salaries_coach",
       "ALIMENTAIRE": "food_expenses",
       "DÉPENSES ALIMENTAIRES": "food_expenses",
       "REMBOURSEMENT CRÉDIT": "credit_repayment",
