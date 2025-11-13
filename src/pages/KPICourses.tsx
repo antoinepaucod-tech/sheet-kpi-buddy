@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -63,93 +62,10 @@ export default function KPICourses() {
     monthly_expenses: 0,
   });
 
+
   const { courses, isLoading, createCourse, updateCourse, deleteCourse } =
     useCourseKPIData(selectedYear, selectedMonth);
 
-  // Synchronize instructor costs to accounting table
-  useEffect(() => {
-    const syncInstructorCosts = async () => {
-      // Group expenses by instructor from current courses
-      const instructorExpenses = new Map<string, number>();
-      
-      if (courses && courses.length > 0) {
-        courses.forEach((course) => {
-          if (course.instructor) {
-            const currentTotal = instructorExpenses.get(course.instructor) || 0;
-            instructorExpenses.set(course.instructor, currentTotal + (Number(course.monthly_expenses) || 0));
-          }
-        });
-      }
-      
-      const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
-                          "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-      
-      // Get all existing coach transactions for this month
-      const { data: allCoachTransactions } = await supabase
-        .from('accounting_transactions')
-        .select('id, client_name')
-        .eq('year', selectedYear)
-        .eq('month', selectedMonth)
-        .eq('category', 'SALAIRES COACH')
-        .eq('notes', 'Synchronisé depuis KPI Cours');
-      
-      // For each instructor with expenses, create or update their transaction
-      for (const [instructorName, totalExpense] of instructorExpenses.entries()) {
-        if (totalExpense === 0) continue; // Skip if no expenses
-        
-        // Check if there's already an entry for this instructor this month
-        const existing = allCoachTransactions?.find(t => t.client_name === instructorName);
-        
-        if (existing) {
-          // Update existing entry
-          await supabase
-            .from('accounting_transactions')
-            .update({
-              amount: totalExpense,
-              transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
-            })
-            .eq('id', existing.id);
-        } else {
-          // Create new entry
-          await supabase
-            .from('accounting_transactions')
-            .insert({
-              transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
-              transaction_type: 'expense',
-              category: 'SALAIRES COACH',
-              client_name: instructorName,
-              service_description: 'Cours collectif',
-              product_description: 'SALAIRES COACH',
-              amount: totalExpense,
-              amount_received: 0,
-              payment_method: 'Virement Bancaire',
-              notes: 'Synchronisé depuis KPI Cours',
-              year: selectedYear,
-              month: selectedMonth,
-              month_name: monthNames[selectedMonth - 1],
-              is_auto_generated: true,
-              is_validated: false,
-            });
-        }
-      }
-      
-      // Clean up: Delete transactions for instructors that no longer have courses this month
-      if (allCoachTransactions && allCoachTransactions.length > 0) {
-        for (const transaction of allCoachTransactions) {
-          // If instructor is not in the current expense map, delete their transaction
-          if (!instructorExpenses.has(transaction.client_name)) {
-            console.log(`Deleting transaction for ${transaction.client_name} - no longer has courses`);
-            await supabase
-              .from('accounting_transactions')
-              .delete()
-              .eq('id', transaction.id);
-          }
-        }
-      }
-    };
-    
-    syncInstructorCosts();
-  }, [courses, selectedYear, selectedMonth]);
 
   const handleEdit = (course: CourseKPI) => {
     setEditingId(course.id);
