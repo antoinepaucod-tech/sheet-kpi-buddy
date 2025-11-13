@@ -92,7 +92,7 @@ export default function KPICourses() {
           .eq('year', selectedYear)
           .eq('month', selectedMonth)
           .eq('category', 'SALAIRES COACH')
-          .eq('service_description', instructorName)
+          .eq('client_name', instructorName)
           .maybeSingle();
         
         if (existing) {
@@ -112,8 +112,8 @@ export default function KPICourses() {
               transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
               transaction_type: 'expense',
               category: 'SALAIRES COACH',
-              client_name: null,
-              service_description: instructorName,
+              client_name: instructorName,
+              service_description: 'Cours collectif',
               product_description: 'SALAIRES COACH',
               amount: totalExpense,
               amount_received: 0,
@@ -131,7 +131,7 @@ export default function KPICourses() {
       // Clean up old entries for instructors that no longer have courses this month
       const { data: allCoachTransactions } = await supabase
         .from('accounting_transactions')
-        .select('id, service_description')
+        .select('id, client_name')
         .eq('year', selectedYear)
         .eq('month', selectedMonth)
         .eq('category', 'SALAIRES COACH')
@@ -139,7 +139,7 @@ export default function KPICourses() {
       
       if (allCoachTransactions) {
         for (const transaction of allCoachTransactions) {
-          if (!instructorExpenses.has(transaction.service_description)) {
+          if (!instructorExpenses.has(transaction.client_name)) {
             // Delete transaction for instructors no longer in this month
             await supabase
               .from('accounting_transactions')
