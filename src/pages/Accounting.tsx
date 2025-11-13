@@ -334,6 +334,7 @@ const Accounting = () => {
   const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
   const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(true);
   const [editingCategoryEndDate, setEditingCategoryEndDate] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   
   // Load all category data with recurrence info
   const { categories: allCategories } = useAccountingCategoriesWithRecurrence();
@@ -713,10 +714,10 @@ const Accounting = () => {
     setEditingCategoryIndex(index);
     setEditingCategoryName(currentName);
     
-    // Load recurrence data from database
+    // Load recurrence data from database (also capture the category id)
     const { data, error } = await (supabase as any)
       .from('accounting_categories')
-      .select('is_recurring, is_indefinite_recurrence, recurrence_end_date')
+      .select('id, is_recurring, is_indefinite_recurrence, recurrence_end_date')
       .eq('name', currentName)
       .eq('type', categoryDialogType)
       .maybeSingle();
@@ -727,6 +728,7 @@ const Accounting = () => {
       setEditingCategoryRecurring(false);
       setEditingCategoryIndefinite(true);
       setEditingCategoryEndDate(null);
+      setEditingCategoryId(null);
       return;
     }
 
@@ -734,11 +736,13 @@ const Accounting = () => {
       setEditingCategoryRecurring(data.is_recurring === true);
       setEditingCategoryIndefinite(data.is_indefinite_recurrence === true);
       setEditingCategoryEndDate(data.recurrence_end_date || null);
+      setEditingCategoryId(data.id || null);
     } else {
       // No data found, use defaults
       setEditingCategoryRecurring(false);
       setEditingCategoryIndefinite(true);
       setEditingCategoryEndDate(null);
+      setEditingCategoryId(null);
     }
   };
 
@@ -748,6 +752,7 @@ const Accounting = () => {
     setEditingCategoryRecurring(false);
     setEditingCategoryIndefinite(true);
     setEditingCategoryEndDate(null);
+    setEditingCategoryId(null);
   };
 
   const handleSaveEditCategory = async (oldName: string, type: "revenue" | "expense") => {
@@ -777,11 +782,17 @@ const Accounting = () => {
         updatePayload.name = newName;
       }
 
-      const { error: categoryError } = await (supabase as any)
+      let updateQuery = (supabase as any)
         .from('accounting_categories')
-        .update(updatePayload)
-        .eq('type', type)
-        .eq('name', oldName);
+        .update(updatePayload);
+
+      if (editingCategoryId) {
+        updateQuery = updateQuery.eq('id', editingCategoryId);
+      } else {
+        updateQuery = updateQuery.eq('type', type).eq('name', oldName);
+      }
+
+      const { error: categoryError } = await updateQuery;
 
       if (categoryError) throw categoryError;
 
