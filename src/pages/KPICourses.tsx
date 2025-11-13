@@ -73,23 +73,21 @@ export default function KPICourses() {
       
       const totalExpenses = courses.reduce((sum, course) => sum + (Number(course.monthly_expenses) || 0), 0);
       
-      if (totalExpenses === 0) return;
-      
       // Check if there's already an entry for this month
       const { data: existing } = await supabase
         .from('accounting_transactions')
         .select('*')
         .eq('year', selectedYear)
         .eq('month', selectedMonth)
-        .eq('category', 'Salaires')
+        .eq('category', 'SALAIRES COACH')
         .eq('notes', 'Synchronisé depuis KPI Cours')
-        .single();
+        .maybeSingle();
       
       const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
                           "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
       
       if (existing) {
-        // Update existing entry
+        // Update existing entry (even if totalExpenses is 0)
         await supabase
           .from('accounting_transactions')
           .update({
@@ -97,17 +95,17 @@ export default function KPICourses() {
             transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
           })
           .eq('id', existing.id);
-      } else {
-        // Create new entry
+      } else if (totalExpenses > 0) {
+        // Create new entry only if there are expenses
         await supabase
           .from('accounting_transactions')
           .insert({
             transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
             transaction_type: 'expense',
-            category: 'Salaires',
+            category: 'SALAIRES COACH',
             client_name: 'Instructeurs',
             service_description: 'Salaires instructeurs cours',
-            product_description: 'Salaires',
+            product_description: 'SALAIRES COACH',
             amount: totalExpenses,
             amount_received: 0,
             payment_method: 'Virement Bancaire',
@@ -115,6 +113,8 @@ export default function KPICourses() {
             year: selectedYear,
             month: selectedMonth,
             month_name: monthNames[selectedMonth - 1],
+            is_auto_generated: true,
+            is_validated: false,
           });
       }
     };
