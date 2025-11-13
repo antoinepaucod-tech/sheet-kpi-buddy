@@ -157,17 +157,23 @@ export const useAccountingCategoriesWithRecurrence = () => {
             const prevKey = `${cat.type}|${cat.name}|${member.name}`;
             const carriedAmount = prevAmountMap.get(prevKey)?.amount;
             
+            // Check if member has exited this month or before
+            if (member.exit_date) {
+              const exitDate = new Date(member.exit_date);
+              const currentMonthEnd = new Date(year, month + 1, 0);
+              
+              // If exit date is in this month or before, stop generating
+              if (exitDate <= currentMonthEnd) {
+                return; // Skip - member has exited
+              }
+            }
+            
             // Determine if member should have a recurring transaction
             let shouldGenerate = false;
             let amount = 0;
 
-            // Check if member had a transaction last month (continuing membership)
-            if (carriedAmount !== undefined) {
-              shouldGenerate = true;
-              amount = carriedAmount;
-            } 
-            // OR check if member's contract started this month (new member)
-            else if (member.contract_signed_date) {
+            // Check if member's contract started this month (new member - first transaction)
+            if (member.contract_signed_date) {
               const contractDate = new Date(member.contract_signed_date);
               const currentMonthStart = new Date(year, month, 1);
               const currentMonthEnd = new Date(year, month + 1, 0);
@@ -177,6 +183,12 @@ export const useAccountingCategoriesWithRecurrence = () => {
                 shouldGenerate = true;
                 amount = Number(cat.default_amount) || 0;
               }
+            }
+            
+            // OR check if member had a transaction last month (continuing membership)
+            if (!shouldGenerate && carriedAmount !== undefined) {
+              shouldGenerate = true;
+              amount = carriedAmount;
             }
 
             if (!shouldGenerate) {
