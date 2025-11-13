@@ -304,16 +304,8 @@ const CustomerJourney = () => {
   const updateMember = async (id: string, field: string, value: any) => {
     const member = members.find(m => m.id === id);
     
-    // If updating exit_date and it's being set, delete accounting transactions
-    if (field === "exit_date" && value) {
-      if (member) {
-        // Delete all associated accounting transactions when member exits
-        await supabase
-          .from('accounting_transactions')
-          .delete()
-          .eq('client_name', member.name);
-      }
-    }
+    // When exit_date is set, we keep existing transactions
+    // The recurring generation logic will naturally stop creating new transactions after this date
     
     // If updating member_type, sync with accounting transactions
     if (field === "member_type" && member) {
