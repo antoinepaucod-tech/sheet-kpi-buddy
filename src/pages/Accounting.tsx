@@ -525,52 +525,6 @@ const Accounting = () => {
     }
   };
 
-  const handleCopyMonth = async (sourceYear: number, sourceMonth: number) => {
-    try {
-      const { data: sourceTransactions, error } = await supabase
-        .from("accounting_transactions")
-        .select("*")
-        .eq("year", sourceYear)
-        .eq("month", sourceMonth + 1);
-
-      if (error) throw error;
-
-      if (!sourceTransactions || sourceTransactions.length === 0) {
-        toast.error("Aucune transaction à copier");
-        return;
-      }
-
-      // Copier les transactions vers le mois actuel - SANS le montant reçu
-      const newTransactions = sourceTransactions.map(t => ({
-        transaction_date: t.transaction_date,
-        transaction_type: t.transaction_type,
-        category: t.category,
-        client_name: t.client_name,
-        service_description: t.service_description,
-        amount: t.amount,
-        amount_received: 0, // Réinitialiser à 0 lors de la copie
-        payment_method: t.payment_method,
-        notes: t.notes,
-        year: selectedYear,
-        month: selectedMonth + 1,
-        month_name: MONTHS[selectedMonth],
-      }));
-
-      const { error: insertError } = await supabase
-        .from("accounting_transactions")
-        .insert(newTransactions);
-
-      if (insertError) throw insertError;
-
-      toast.success(`${sourceTransactions.length} transactions copiées`);
-      
-      // Rafraîchir les données
-      window.location.reload();
-    } catch (error) {
-      toast.error("Erreur lors de la copie");
-      console.error(error);
-    }
-  };
 
   const handleSubmit = () => {
     if (!formData.category || formData.amount === 0) {
@@ -972,55 +926,7 @@ const Accounting = () => {
             className="gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            Générer Paiements Récurrents
           </Button>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <RefreshCw className="h-4 w-4" />
-                Copier depuis un autre mois
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Copier les transactions d'un autre mois</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>Mois source</Label>
-                  <div className="flex gap-2">
-                    <Select
-                      onValueChange={(value) => {
-                        const [sourceYear, sourceMonth] = value.split('-');
-                        handleCopyMonth(parseInt(sourceYear), parseInt(sourceMonth));
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un mois" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[2025, 2026, 2027].map((year) =>
-                          MONTHS.map((month, monthIndex) => (
-                            <SelectItem 
-                              key={`${year}-${monthIndex}`} 
-                              value={`${year}-${monthIndex}`}
-                              disabled={year === selectedYear && monthIndex === selectedMonth}
-                            >
-                              {month} {year}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Les transactions du mois source seront copiées vers {MONTHS[selectedMonth]} {selectedYear}
-                </p>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         <Tabs defaultValue="revenues" className="w-full">
