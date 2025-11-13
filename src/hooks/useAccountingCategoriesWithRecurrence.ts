@@ -157,12 +157,33 @@ export const useAccountingCategoriesWithRecurrence = () => {
             const prevKey = `${cat.type}|${cat.name}|${member.name}`;
             const carriedAmount = prevAmountMap.get(prevKey)?.amount;
             
-            // Only generate if there was a transaction in previous month
-            if (carriedAmount === undefined) {
-              return; // Skip if no previous transaction
+            // Determine if member should have a recurring transaction
+            let shouldGenerate = false;
+            let amount = 0;
+
+            // Check if member had a transaction last month (continuing membership)
+            if (carriedAmount !== undefined) {
+              shouldGenerate = true;
+              amount = carriedAmount;
+            } 
+            // OR check if member's contract started this month (new member)
+            else if (member.contract_signed_date) {
+              const contractDate = new Date(member.contract_signed_date);
+              const currentMonthStart = new Date(year, month, 1);
+              const currentMonthEnd = new Date(year, month + 1, 0);
+              
+              // If contract was signed this month, generate with default amount
+              if (contractDate >= currentMonthStart && contractDate <= currentMonthEnd) {
+                shouldGenerate = true;
+                amount = Number(cat.default_amount) || 0;
+              }
             }
 
-            const dupKey = `${dateStr}|${cat.type}|${cat.name}|${member.name}|${carriedAmount}`;
+            if (!shouldGenerate) {
+              return; // Skip if no previous transaction and not a new member
+            }
+
+            const dupKey = `${dateStr}|${cat.type}|${cat.name}|${member.name}|${amount}`;
             if (existingKeys.has(dupKey)) {
               skipped++;
               return;
@@ -179,7 +200,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
                 : (member.member_type || "").includes("PIF")
                 ? "Membre PIF"
                 : "Revenu EFT Général",
-              amount: carriedAmount,
+              amount,
               amount_received: 0, // cash resets to 0 each recurrence
               year: year,
               month: month + 1,
