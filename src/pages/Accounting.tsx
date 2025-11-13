@@ -1278,15 +1278,15 @@ const Accounting = () => {
                             key={transaction.id}
                             className="grid grid-cols-9 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
-                            <div className="px-3 py-2 border-r border-border text-sm flex flex-col gap-1">
+                            <div className="px-3 py-2 border-r border-border text-sm flex items-center gap-2 flex-wrap">
                               <span className="font-medium">#{String(index + 1).padStart(2, '0')}</span>
                               {hasExitDate && (
-                                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 w-fit">
+                                <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
                                   Terminé
                                 </Badge>
                               )}
                               {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 w-fit bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
                                   À valider
                                 </Badge>
                               )}
@@ -1708,10 +1708,10 @@ const Accounting = () => {
                             key={transaction.id}
                             className="grid grid-cols-7 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
-                            <div className="px-3 py-2 border-r border-border text-sm flex flex-col gap-1">
+                            <div className="px-3 py-2 border-r border-border text-sm flex items-center gap-2 flex-wrap">
                               <span className="font-medium">#{String(index + 1).padStart(2, '0')}</span>
                               {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 w-fit bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
+                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
                                   À valider
                                 </Badge>
                               )}

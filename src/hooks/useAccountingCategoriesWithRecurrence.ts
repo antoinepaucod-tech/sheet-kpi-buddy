@@ -74,29 +74,72 @@ export const useAccountingCategoriesWithRecurrence = () => {
         throw new Error("Aucune catégorie récurrente configurée");
       }
 
+      // Get active members (no exit_date or exit_date in the future)
+      const { data: members, error: membersError } = await supabase
+        .from("customer_members")
+        .select("*")
+        .or(`exit_date.is.null,exit_date.gt.${new Date().toISOString()}`);
+
+      if (membersError) throw membersError;
+
       // Generate transactions - include indefinite, exclude expired finite recurrences
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const transactionsToCreate = recurringCategories
-        .filter((cat: any) => {
-          // Always include indefinite recurrences
-          if (cat.is_indefinite_recurrence) return true;
-          
-          // For finite recurrences, check if we're before the end date
-          if (cat.recurrence_end_date) {
-            const day = Math.min(cat.recurrence_day || 1, daysInMonth);
-            const transactionDate = new Date(year, month, day);
-            const endDate = new Date(cat.recurrence_end_date);
-            return transactionDate <= endDate;
-          }
-          
-          // No end date specified, include it
-          return true;
-        })
-        .map((cat: any) => {
+      const transactionsToCreate: any[] = [];
+
+      recurringCategories.forEach((cat: any) => {
+        // Check if category should be included
+        let includeCategory = false;
+        
+        // Always include indefinite recurrences
+        if (cat.is_indefinite_recurrence) {
+          includeCategory = true;
+        } 
+        // For finite recurrences, check if we're before the end date
+        else if (cat.recurrence_end_date) {
           const day = Math.min(cat.recurrence_day || 1, daysInMonth);
           const transactionDate = new Date(year, month, day);
+          const endDate = new Date(cat.recurrence_end_date);
+          includeCategory = transactionDate <= endDate;
+        } else {
+          includeCategory = true;
+        }
 
-          return {
+        if (!includeCategory) return;
+
+        // Find members with matching membership
+        const matchingMembers = members?.filter((member: any) => 
+          member.membership === cat.name
+        ) || [];
+
+        const day = Math.min(cat.recurrence_day || 1, daysInMonth);
+        const transactionDate = new Date(year, month, day);
+
+        if (matchingMembers.length > 0) {
+          // Create a transaction for each matching member
+          matchingMembers.forEach((member: any) => {
+            transactionsToCreate.push({
+              transaction_date: transactionDate.toISOString().split('T')[0],
+              transaction_type: cat.type,
+              category: cat.name,
+              client_name: member.name,
+              service_description: cat.name,
+              product_description: (member.member_type || "").includes("PT") 
+                ? "Revenu PT" 
+                : (member.member_type || "").includes("PIF")
+                ? "Membre PIF"
+                : "Revenu EFT Général",
+              amount: cat.default_amount || 0,
+              amount_received: 0,
+              year: year,
+              month: month + 1,
+              month_name: MONTHS[month],
+              is_auto_generated: true,
+              is_validated: false,
+            });
+          });
+        } else {
+          // No matching members, create a generic transaction
+          transactionsToCreate.push({
             transaction_date: transactionDate.toISOString().split('T')[0],
             transaction_type: cat.type,
             category: cat.name,
@@ -107,8 +150,9 @@ export const useAccountingCategoriesWithRecurrence = () => {
             month_name: MONTHS[month],
             is_auto_generated: true,
             is_validated: false,
-          };
-        });
+          });
+        }
+      });
 
       const { error: insertError } = await (supabase as any)
         .from("accounting_transactions")
