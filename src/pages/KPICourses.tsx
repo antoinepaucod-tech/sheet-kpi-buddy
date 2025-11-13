@@ -69,31 +69,36 @@ export default function KPICourses() {
   // Synchronize instructor costs to accounting table
   useEffect(() => {
     const syncInstructorCosts = async () => {
-      if (!courses || courses.length === 0) return;
-      
-      // Group expenses by instructor
+      // Group expenses by instructor from current courses
       const instructorExpenses = new Map<string, number>();
-      courses.forEach((course) => {
-        if (course.instructor) {
-          const currentTotal = instructorExpenses.get(course.instructor) || 0;
-          instructorExpenses.set(course.instructor, currentTotal + (Number(course.monthly_expenses) || 0));
-        }
-      });
+      
+      if (courses && courses.length > 0) {
+        courses.forEach((course) => {
+          if (course.instructor) {
+            const currentTotal = instructorExpenses.get(course.instructor) || 0;
+            instructorExpenses.set(course.instructor, currentTotal + (Number(course.monthly_expenses) || 0));
+          }
+        });
+      }
       
       const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
                           "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
       
-      // For each instructor, create or update their transaction
+      // Get all existing coach transactions for this month
+      const { data: allCoachTransactions } = await supabase
+        .from('accounting_transactions')
+        .select('id, client_name')
+        .eq('year', selectedYear)
+        .eq('month', selectedMonth)
+        .eq('category', 'SALAIRES COACH')
+        .eq('notes', 'Synchronisé depuis KPI Cours');
+      
+      // For each instructor with expenses, create or update their transaction
       for (const [instructorName, totalExpense] of instructorExpenses.entries()) {
+        if (totalExpense === 0) continue; // Skip if no expenses
+        
         // Check if there's already an entry for this instructor this month
-        const { data: existing } = await supabase
-          .from('accounting_transactions')
-          .select('*')
-          .eq('year', selectedYear)
-          .eq('month', selectedMonth)
-          .eq('category', 'SALAIRES COACH')
-          .eq('client_name', instructorName)
-          .maybeSingle();
+        const existing = allCoachTransactions?.find(t => t.client_name === instructorName);
         
         if (existing) {
           // Update existing entry
@@ -104,8 +109,8 @@ export default function KPICourses() {
               transaction_date: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
             })
             .eq('id', existing.id);
-        } else if (totalExpense > 0) {
-          // Create new entry only if there are expenses
+        } else {
+          // Create new entry
           await supabase
             .from('accounting_transactions')
             .insert({
@@ -128,19 +133,12 @@ export default function KPICourses() {
         }
       }
       
-      // Clean up old entries for instructors that no longer have courses this month
-      const { data: allCoachTransactions } = await supabase
-        .from('accounting_transactions')
-        .select('id, client_name')
-        .eq('year', selectedYear)
-        .eq('month', selectedMonth)
-        .eq('category', 'SALAIRES COACH')
-        .eq('notes', 'Synchronisé depuis KPI Cours');
-      
-      if (allCoachTransactions) {
+      // Clean up: Delete transactions for instructors that no longer have courses this month
+      if (allCoachTransactions && allCoachTransactions.length > 0) {
         for (const transaction of allCoachTransactions) {
+          // If instructor is not in the current expense map, delete their transaction
           if (!instructorExpenses.has(transaction.client_name)) {
-            // Delete transaction for instructors no longer in this month
+            console.log(`Deleting transaction for ${transaction.client_name} - no longer has courses`);
             await supabase
               .from('accounting_transactions')
               .delete()
