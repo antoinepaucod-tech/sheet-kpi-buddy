@@ -39,7 +39,7 @@ const Dashboard = () => {
   const { monthlyData, currentYear } = useMonthlyKPIData();
   const { members } = useCustomerMembers();
   const { courses } = useCourseKPIData(currentYear, new Date().getMonth() + 1);
-  const { transactions } = useAccountingTransactions(currentYear, new Date().getMonth() + 1);
+  const { transactions } = useAccountingTransactions(currentYear, new Date().getMonth());
 
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
