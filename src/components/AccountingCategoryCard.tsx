@@ -8,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from "lucide-react";
 import { AccountingTransaction } from "@/hooks/useAccountingTransactions";
 import { format } from "date-fns";
 
@@ -20,6 +20,7 @@ interface AccountingCategoryCardProps {
   onUpdateAmount: (id: string, amount: number) => void;
   onUpdateAmountReceived: (id: string, amountReceived: number) => void;
   onToggleValidation: (id: string, currentStatus: boolean) => void;
+  onAddNew: (category: string) => void;
   customerMembers: any[];
   type: "revenue" | "expense";
 }
@@ -32,6 +33,7 @@ export const AccountingCategoryCard = ({
   onUpdateAmount,
   onUpdateAmountReceived,
   onToggleValidation,
+  onAddNew,
   customerMembers,
   type,
 }: AccountingCategoryCardProps) => {
@@ -91,6 +93,18 @@ export const AccountingCategoryCard = ({
                     {unvalidatedCount} à valider
                   </Badge>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddNew(category);
+                  }}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Ajouter
+                </Button>
                 <div className="text-right">
                   <div className="font-bold text-lg text-foreground">
                     {totalReceived.toFixed(2)} CHF
