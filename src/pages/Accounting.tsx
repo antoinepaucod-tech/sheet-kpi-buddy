@@ -48,7 +48,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, RefreshCw, CalendarIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, RefreshCw, CalendarIcon, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -1175,8 +1175,30 @@ const Accounting = () => {
           </TabsContent>
 
           <TabsContent value="revenues" className="space-y-6">
-            {/* Manage Categories Button */}
-            <div className="flex justify-end mb-4">
+            {/* Add and Manage Buttons */}
+            <div className="flex justify-end gap-2 mb-4">
+              <Button
+                onClick={() => {
+                  setEditingTransaction(null);
+                  setFormData({
+                    transaction_date: format(new Date(selectedYear, selectedMonth, 1), "yyyy-MM-dd"),
+                    transaction_type: "revenue",
+                    category: "",
+                    client_name: "",
+                    service_description: "",
+                    product_description: "",
+                    amount: 0,
+                    amount_received: 0,
+                    payment_method: "",
+                    notes: "",
+                  });
+                  setIsDialogOpen(true);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter un revenu
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1185,7 +1207,7 @@ const Accounting = () => {
                 }}
                 className="gap-2"
               >
-                <Plus className="h-4 w-4" />
+                <Settings className="h-4 w-4" />
                 Gérer les types de revenus
               </Button>
             </div>
@@ -1469,8 +1491,30 @@ const Accounting = () => {
           </TabsContent>
 
           <TabsContent value="expenses" className="space-y-6">
-            {/* Manage Categories Button */}
-            <div className="flex justify-end mb-4">
+            {/* Add and Manage Buttons */}
+            <div className="flex justify-end gap-2 mb-4">
+              <Button
+                onClick={() => {
+                  setEditingTransaction(null);
+                  setFormData({
+                    transaction_date: format(new Date(selectedYear, selectedMonth, 1), "yyyy-MM-dd"),
+                    transaction_type: "expense",
+                    category: "",
+                    client_name: "",
+                    service_description: "",
+                    product_description: "",
+                    amount: 0,
+                    amount_received: 0,
+                    payment_method: "",
+                    notes: "",
+                  });
+                  setIsDialogOpen(true);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter une dépense
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1479,7 +1523,7 @@ const Accounting = () => {
                 }}
                 className="gap-2"
               >
-                <Plus className="h-4 w-4" />
+                <Settings className="h-4 w-4" />
                 Gérer les types de dépenses
               </Button>
             </div>
