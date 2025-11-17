@@ -345,6 +345,7 @@ const Accounting = () => {
   const [revenueSelectedCategories, setRevenueSelectedCategories] = useState<string[]>([]);
   const [revenueShowValidatedOnly, setRevenueShowValidatedOnly] = useState(false);
   const [revenueShowUnvalidatedOnly, setRevenueShowUnvalidatedOnly] = useState(false);
+  const [revenueFilterKey, setRevenueFilterKey] = useState(0);
   
   // Filter states for expense
   const [expenseSearchText, setExpenseSearchText] = useState("");
@@ -353,6 +354,7 @@ const Accounting = () => {
   const [expenseSelectedCategories, setExpenseSelectedCategories] = useState<string[]>([]);
   const [expenseShowValidatedOnly, setExpenseShowValidatedOnly] = useState(false);
   const [expenseShowUnvalidatedOnly, setExpenseShowUnvalidatedOnly] = useState(false);
+  const [expenseFilterKey, setExpenseFilterKey] = useState(0);
   
   // Manage custom categories
   const [revenueCategories, setRevenueCategories] = useState<string[]>(DEFAULT_REVENUE_CATEGORIES);
@@ -1189,8 +1191,9 @@ const Accounting = () => {
 
             {/* Revenue Filters */}
             <AccountingFilters
+              key={`revenue-${revenueFilterKey}`}
               categories={revenueCategories}
-              selectedCategories={revenueSelectedCategories.length === 0 ? revenueCategories : revenueSelectedCategories}
+              selectedCategories={revenueSelectedCategories}
               onCategoryChange={setRevenueSelectedCategories}
               searchText={revenueSearchText}
               onSearchChange={setRevenueSearchText}
@@ -1209,6 +1212,7 @@ const Accounting = () => {
                 setRevenueSelectedCategories([]);
                 setRevenueShowValidatedOnly(false);
                 setRevenueShowUnvalidatedOnly(false);
+                setRevenueFilterKey(prev => prev + 1);
               }}
               totalTransactions={transactions.filter((t) => t.transaction_type === "revenue").length}
               filteredTransactions={transactions.filter((t) => {
@@ -1691,8 +1695,9 @@ const Accounting = () => {
 
             {/* Expense Filters */}
             <AccountingFilters
+              key={`expense-${expenseFilterKey}`}
               categories={expenseCategories}
-              selectedCategories={expenseSelectedCategories.length === 0 ? expenseCategories : expenseSelectedCategories}
+              selectedCategories={expenseSelectedCategories}
               onCategoryChange={setExpenseSelectedCategories}
               searchText={expenseSearchText}
               onSearchChange={setExpenseSearchText}
@@ -1711,6 +1716,7 @@ const Accounting = () => {
                 setExpenseSelectedCategories([]);
                 setExpenseShowValidatedOnly(false);
                 setExpenseShowUnvalidatedOnly(false);
+                setExpenseFilterKey(prev => prev + 1);
               }}
               totalTransactions={transactions.filter((t) => t.transaction_type === "expense").length}
               filteredTransactions={transactions.filter((t) => {
