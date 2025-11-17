@@ -1619,17 +1619,20 @@ const Accounting = () => {
                   .filter((t) => t.transaction_type === "expense" && t.category === category);
                 
                 const totalAmount = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
+                const totalReceived = categoryTransactions.reduce((sum, t) => sum + (t.amount_received || 0), 0);
+                const difference = totalAmount - totalReceived;
 
                 return (
                   <Card key={category} className="overflow-hidden border-0 shadow-none">
                     {/* Header Row - Subtle Gray */}
                     <div className="bg-muted/80 text-foreground border border-border">
-                      <div className="grid grid-cols-7">
+                      <div className="grid grid-cols-8">
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">N° / ÉTAT</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">DESCRIPTION</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">FOURNISSEUR</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Service</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">MONTANT</div>
+                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">CASH</div>
                         <div className="px-3 py-2 font-bold border-r border-border text-sm text-left">NOTES</div>
                         <div className="px-3 py-2 font-bold text-sm text-center">Actions</div>
                       </div>
@@ -1648,7 +1651,7 @@ const Accounting = () => {
                         return (
                           <div 
                             key={transaction.id}
-                            className="grid grid-cols-7 border-b border-border hover:bg-accent/50 transition-colors group"
+                            className="grid grid-cols-8 border-b border-border hover:bg-accent/50 transition-colors group"
                           >
                             <div className="px-3 py-2 border-r border-border text-sm flex items-center gap-2 flex-wrap">
                               <span className="font-medium">#{String(index + 1).padStart(2, '0')}</span>
@@ -1723,6 +1726,22 @@ const Accounting = () => {
                               }}
                             />
                             <Input
+                              key={`amount-received-${transaction.id}`}
+                              type="number"
+                              step="0.1"
+                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-center font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
+                              defaultValue={transaction.amount_received || 0}
+                              onBlur={(e) => {
+                                const newAmountReceived = parseFloat(e.target.value) || 0;
+                                if (newAmountReceived !== (transaction.amount_received || 0)) {
+                                  updateTransaction.mutate({ 
+                                    id: transaction.id, 
+                                    amount_received: newAmountReceived 
+                                  });
+                                }
+                              }}
+                            />
+                            <Input
                               key={`notes-${transaction.id}`}
                               className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
                               defaultValue={transaction.notes || ""}
@@ -1791,16 +1810,34 @@ const Accounting = () => {
                       </div>
                     </div>
 
-                    {/* Total Row - Subtle Purple */}
-                    <div className="bg-purple-100 dark:bg-purple-950/30 text-foreground border-x border-b-2 border-border">
-                      <div className="grid grid-cols-6">
+                    {/* Total Row - Subtle Orange */}
+                    <div className="bg-orange-100 dark:bg-orange-950/30 text-foreground border-x border-b border-border">
+                      <div className="grid grid-cols-8">
                         <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
                           TOTAL {category}
                         </div>
                         <div className="px-3 py-2 text-right font-bold text-sm border-l border-border">
                           {totalAmount.toFixed(1)}
                         </div>
-                        <div className="px-3 py-2 border-l border-border"></div>
+                        <div className="px-3 py-2 text-center font-bold text-sm border-l border-border">
+                          {totalReceived.toFixed(1)}
+                        </div>
+                        <div className="px-3 py-2 col-span-2 border-l border-border"></div>
+                      </div>
+                    </div>
+
+                    {/* Difference Row - Light Gray */}
+                    <div className="bg-muted/40 border-x border-b-2 border-border">
+                      <div className="grid grid-cols-8">
+                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
+                          DIFFERENCE
+                        </div>
+                        <div className={`px-3 py-2 text-right font-bold col-span-2 text-sm ${
+                          difference > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                        }`}>
+                          {difference.toFixed(1)}
+                        </div>
+                        <div className="px-3 py-2 col-span-2"></div>
                       </div>
                     </div>
                   </Card>
@@ -1922,6 +1959,17 @@ const Accounting = () => {
                       value={formData.amount}
                       onChange={(e) =>
                         setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Cash Payé</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.amount_received || 0}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount_received: parseFloat(e.target.value) || 0 })
                       }
                     />
                   </div>
