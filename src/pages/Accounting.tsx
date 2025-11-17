@@ -140,6 +140,7 @@ const SortableCategoryItem = ({
   editingRecurring,
   editingIndefinite,
   editingEndDate,
+  editingDefaultAmount,
   onStartEdit, 
   onSaveEdit, 
   onCancelEdit, 
@@ -148,7 +149,8 @@ const SortableCategoryItem = ({
   onEditRecurringChange,
   onEditIndefiniteChange,
   onEditEndDateChange,
-  onToggleEndDate
+  onToggleEndDate,
+  onEditDefaultAmountChange
 }: {
   category: string;
   categoryData?: { is_recurring: boolean; is_indefinite_recurrence: boolean; recurrence_end_date: string | null };
@@ -158,6 +160,7 @@ const SortableCategoryItem = ({
   editingRecurring: boolean;
   editingIndefinite: boolean;
   editingEndDate: string | null;
+  editingDefaultAmount: number;
   onStartEdit: () => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
@@ -167,6 +170,7 @@ const SortableCategoryItem = ({
   onEditIndefiniteChange: (value: boolean) => void;
   onEditEndDateChange: (value: string | null) => void;
   onToggleEndDate: () => void;
+  onEditDefaultAmountChange: (value: number) => void;
 }) => {
   const {
     attributes,
@@ -278,6 +282,16 @@ const SortableCategoryItem = ({
           </div>
           {editingRecurring && (
             <>
+              <div className="space-y-2">
+                <Label>Montant par défaut (CHF)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editingDefaultAmount}
+                  onChange={(e) => onEditDefaultAmountChange(Number(e.target.value))}
+                  placeholder="Montant par défaut pour les nouveaux membres"
+                />
+              </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -335,6 +349,7 @@ const Accounting = () => {
   const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(true);
   const [editingCategoryEndDate, setEditingCategoryEndDate] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryDefaultAmount, setEditingCategoryDefaultAmount] = useState(0);
   
   // Load all category data with recurrence info
   const { categories: allCategories } = useAccountingCategoriesWithRecurrence();
@@ -671,7 +686,7 @@ const Accounting = () => {
     // Load recurrence data from database (also capture the category id)
     const { data, error } = await (supabase as any)
       .from('accounting_categories')
-      .select('id, is_recurring, is_indefinite_recurrence, recurrence_end_date')
+      .select('id, is_recurring, is_indefinite_recurrence, recurrence_end_date, default_amount')
       .eq('name', currentName)
       .eq('type', categoryDialogType)
       .maybeSingle();
@@ -683,6 +698,7 @@ const Accounting = () => {
       setEditingCategoryIndefinite(true);
       setEditingCategoryEndDate(null);
       setEditingCategoryId(null);
+      setEditingCategoryDefaultAmount(0);
       return;
     }
 
@@ -691,12 +707,14 @@ const Accounting = () => {
       setEditingCategoryIndefinite(data.is_indefinite_recurrence === true);
       setEditingCategoryEndDate(data.recurrence_end_date || null);
       setEditingCategoryId(data.id || null);
+      setEditingCategoryDefaultAmount(data.default_amount || 0);
     } else {
       // No data found, use defaults
       setEditingCategoryRecurring(false);
       setEditingCategoryIndefinite(true);
       setEditingCategoryEndDate(null);
       setEditingCategoryId(null);
+      setEditingCategoryDefaultAmount(0);
     }
   };
 
@@ -707,6 +725,7 @@ const Accounting = () => {
     setEditingCategoryIndefinite(true);
     setEditingCategoryEndDate(null);
     setEditingCategoryId(null);
+    setEditingCategoryDefaultAmount(0);
   };
 
   const handleSaveEditCategory = async (oldName: string, type: "revenue" | "expense") => {
@@ -730,6 +749,7 @@ const Accounting = () => {
         is_recurring: editingCategoryRecurring,
         is_indefinite_recurrence: editingCategoryIndefinite,
         recurrence_end_date: editingCategoryEndDate,
+        default_amount: editingCategoryDefaultAmount,
       };
 
       if (newName !== oldName) {
@@ -2142,43 +2162,45 @@ const Accounting = () => {
                      {(categoryDialogType === "revenue" ? revenueCategories : expenseCategories).map((category, index) => {
                        const categoryData = allCategories.find(c => c.name === category && c.type === categoryDialogType);
                        return (
-                         <SortableCategoryItem
-                           key={category}
-                           category={category}
-                           categoryData={categoryData ? {
-                             is_recurring: categoryData.is_recurring,
-                             is_indefinite_recurrence: categoryData.is_indefinite_recurrence,
-                             recurrence_end_date: categoryData.recurrence_end_date
-                           } : undefined}
-                           index={index}
-                           isEditing={editingCategoryIndex === index}
-                           editingName={editingCategoryName}
-                           editingRecurring={editingCategoryRecurring}
-                           editingIndefinite={editingCategoryIndefinite}
-                           editingEndDate={editingCategoryEndDate}
-                           onStartEdit={() => handleStartEditCategory(index, category)}
-                           onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
-                           onCancelEdit={handleCancelEditCategory}
-                           onDelete={() => handleDeleteCategory(category, categoryDialogType)}
-                           onEditNameChange={setEditingCategoryName}
-                           onEditRecurringChange={(checked) => {
-                             setEditingCategoryRecurring(checked);
-                             if (checked) {
-                               setEditingCategoryIndefinite(true);
-                               setEditingCategoryEndDate(null);
-                             }
-                           }}
-                           onEditIndefiniteChange={setEditingCategoryIndefinite}
-                           onEditEndDateChange={setEditingCategoryEndDate}
-                           onToggleEndDate={() => {
-                             if (editingCategoryEndDate) {
-                               setEditingCategoryEndDate(null);
-                               setEditingCategoryIndefinite(true);
-                             } else {
-                               setEditingCategoryIndefinite(false);
-                               setEditingCategoryEndDate(new Date().toISOString().split('T')[0]);
-                             }
-                           }}
+                          <SortableCategoryItem
+                            key={category}
+                            category={category}
+                            categoryData={categoryData ? {
+                              is_recurring: categoryData.is_recurring,
+                              is_indefinite_recurrence: categoryData.is_indefinite_recurrence,
+                              recurrence_end_date: categoryData.recurrence_end_date
+                            } : undefined}
+                            index={index}
+                            isEditing={editingCategoryIndex === index}
+                            editingName={editingCategoryName}
+                            editingRecurring={editingCategoryRecurring}
+                            editingIndefinite={editingCategoryIndefinite}
+                            editingEndDate={editingCategoryEndDate}
+                            editingDefaultAmount={editingCategoryDefaultAmount}
+                            onStartEdit={() => handleStartEditCategory(index, category)}
+                            onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
+                            onCancelEdit={handleCancelEditCategory}
+                            onDelete={() => handleDeleteCategory(category, categoryDialogType)}
+                            onEditNameChange={setEditingCategoryName}
+                            onEditRecurringChange={(checked) => {
+                              setEditingCategoryRecurring(checked);
+                              if (checked) {
+                                setEditingCategoryIndefinite(true);
+                                setEditingCategoryEndDate(null);
+                              }
+                            }}
+                            onEditIndefiniteChange={setEditingCategoryIndefinite}
+                            onEditEndDateChange={setEditingCategoryEndDate}
+                            onEditDefaultAmountChange={setEditingCategoryDefaultAmount}
+                            onToggleEndDate={() => {
+                              if (editingCategoryEndDate) {
+                                setEditingCategoryEndDate(null);
+                                setEditingCategoryIndefinite(true);
+                              } else {
+                                setEditingCategoryIndefinite(false);
+                                setEditingCategoryEndDate(new Date().toISOString().split('T')[0]);
+                              }
+                            }}
                          />
                        );
                      })}
