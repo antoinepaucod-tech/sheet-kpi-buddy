@@ -430,6 +430,7 @@ export type Database = {
           retail_revenue: number | null
           ro_ads: number | null
           salaries: number | null
+          salaries_coach: number | null
           scheduled: number | null
           show: number | null
           stationary: number | null
@@ -494,6 +495,7 @@ export type Database = {
           retail_revenue?: number | null
           ro_ads?: number | null
           salaries?: number | null
+          salaries_coach?: number | null
           scheduled?: number | null
           show?: number | null
           stationary?: number | null
@@ -558,6 +560,7 @@ export type Database = {
           retail_revenue?: number | null
           ro_ads?: number | null
           salaries?: number | null
+          salaries_coach?: number | null
           scheduled?: number | null
           show?: number | null
           stationary?: number | null
