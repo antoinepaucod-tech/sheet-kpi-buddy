@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AccountingFilters } from "@/components/AccountingFilters";
+import { AccountingCategoryCard } from "@/components/AccountingCategoryCard";
 import {
   DndContext,
   closestCenter,
@@ -1233,291 +1234,81 @@ const Accounting = () => {
               }).length}
             />
 
-            {/* Revenue Tables by Category - Same structure as before */}
-            {revenueCategories
-              .filter(category => {
-                const categoriesToUse = revenueSelectedCategories.length === 0 ? revenueCategories : revenueSelectedCategories;
-                return categoriesToUse.includes(category);
-              })
-              .map((category) => {
-                const categoryTransactions = transactions
-                  .filter((t) => {
-                    if (t.transaction_type !== "revenue" || t.category !== category) return false;
-                    
-                    if (revenueSearchText && !t.client_name?.toLowerCase().includes(revenueSearchText.toLowerCase())) return false;
-                    
-                    if (revenueMinAmount && t.amount < parseFloat(revenueMinAmount)) return false;
-                    if (revenueMaxAmount && t.amount > parseFloat(revenueMaxAmount)) return false;
-                    
-                    if (revenueShowValidatedOnly && !t.is_validated) return false;
-                    if (revenueShowUnvalidatedOnly && t.is_validated) return false;
-                    
-                    return true;
-                  });
-                
-                const totalAmount = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
-                const totalReceived = categoryTransactions.reduce((sum, t) => sum + (t.amount_received || 0), 0);
-                const difference = totalAmount - totalReceived;
-
-                return (
-                  <Card key={category} className="overflow-hidden border-0 shadow-none">
-                    {/* Header Row - Subtle Gray */}
-                    <div className="bg-muted/80 text-foreground border border-border">
-                      <div className="grid grid-cols-9">
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">N° / ÉTAT</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">NOM</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Prénom</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Prestation</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Produit</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">Montant</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">Cash</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-left">Notes</div>
-                        <div className="px-3 py-2 font-bold text-sm text-center">Actions</div>
-                      </div>
-                    </div>
-
-                    {/* Category Header - Soft Blue */}
-                    <div className="bg-blue-100 dark:bg-blue-950/30 text-foreground border-x border-b border-border">
-                      <div className="px-3 py-2 font-bold uppercase text-sm">
-                        {category}
-                      </div>
-                    </div>
-
-                    {/* Transaction Rows */}
-                    <div className="border-x border-border">
-                      {categoryTransactions.map((transaction, index) => {
-                        const status = getPaymentStatus(transaction);
-                        const nameParts = (transaction.client_name || "").split(" ");
-                        const lastName = nameParts[0] || "";
-                        const firstName = nameParts.slice(1).join(" ") || "";
-                        
-                        // Check if member has exit date
-                        const member = customerMembers.find(m => m.name === transaction.client_name);
-                        const hasExitDate = member && member.exit_date && new Date(member.exit_date) <= new Date();
-                        
-                        return (
-                          <div 
-                            key={transaction.id}
-                            className="grid grid-cols-9 border-b border-border hover:bg-accent/50 transition-colors group"
-                          >
-                            <div className="px-3 py-2 border-r border-border text-sm flex items-center gap-2 flex-wrap">
-                              <span className="font-medium">#{String(index + 1).padStart(2, '0')}</span>
-                              {hasExitDate && (
-                                <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
-                                  Terminé
-                                </Badge>
-                              )}
-                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
-                                  À valider
-                                </Badge>
-                              )}
-                            </div>
-                            <Input
-                              key={`lastname-${transaction.id}`}
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none font-medium uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={lastName}
-                              onBlur={(e) => {
-                                const newLastName = e.target.value.trim();
-                                const newFullName = `${newLastName} ${firstName}`.trim();
-                                if (newFullName !== transaction.client_name) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    client_name: newFullName 
-                                  });
-                                }
-                              }}
-                            />
-                            <Input
-                              key={`firstname-${transaction.id}`}
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none capitalize text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={firstName}
-                              onBlur={(e) => {
-                                const newFirstName = e.target.value.trim();
-                                const newFullName = `${lastName} ${newFirstName}`.trim();
-                                if (newFullName !== transaction.client_name) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    client_name: newFullName 
-                                  });
-                                }
-                              }}
-                            />
-                            <Input
-                              key={`service-${transaction.id}`}
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={transaction.service_description || category}
-                              onBlur={(e) => {
-                                if (e.target.value !== transaction.service_description) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    service_description: e.target.value 
-                                  });
-                                }
-                              }}
-                            />
-                            <div className="px-2 py-2 border-r border-border">
-                              <Select
-                                value={(transaction as any).product_description || ""}
-                                onValueChange={(value) => {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    product_description: value 
-                                  });
-                                }}
-                              >
-                                <SelectTrigger className="h-8 border-0 focus:ring-1 bg-transparent text-sm">
-                                  <SelectValue placeholder="Sélectionner" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {PRODUCT_DESCRIPTIONS_REVENUE.map((desc) => (
-                                    <SelectItem key={desc} value={desc}>
-                                      {desc}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Input
-                              key={`amount-${transaction.id}`}
-                              type="number"
-                              step="0.1"
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-right font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={transaction.amount}
-                              onBlur={(e) => {
-                                const newAmount = parseFloat(e.target.value) || 0;
-                                if (newAmount !== transaction.amount) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    amount: newAmount 
-                                  });
-                                }
-                              }}
-                            />
-                            <Input
-                              key={`received-${transaction.id}`}
-                              type="number"
-                              step="0.1"
-                              className={`px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-center font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 ${
-                                status === "paid" 
-                                  ? "bg-emerald-100 dark:bg-emerald-950/30 text-foreground" 
-                                  : status === "pending"
-                                  ? "bg-amber-100 dark:bg-amber-950/30 text-foreground"
-                                  : "bg-rose-100 dark:bg-rose-950/30 text-foreground"
-                              }`}
-                              defaultValue={transaction.amount_received || 0}
-                              onBlur={(e) => {
-                                const newReceived = parseFloat(e.target.value) || 0;
-                                if (newReceived !== (transaction.amount_received || 0)) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    amount_received: newReceived 
-                                  });
-                                }
-                              }}
-                            />
-                            <Input
-                              key={`notes-${transaction.id}`}
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
-                              defaultValue={transaction.notes || ""}
-                              placeholder="Notes..."
-                              onBlur={(e) => {
-                                if (e.target.value !== (transaction.notes || "")) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    notes: e.target.value 
-                                  });
-                                }
-                              }}
-                            />
-                            <div className="px-2 py-2 flex items-center justify-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => deleteTransaction.mutate(transaction.id)}
-                                className="h-7 w-7 p-0 hover:bg-destructive/10"
-                                title="Supprimer"
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    is_validated: true 
-                                  })}
-                                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                                  title="Valider"
-                                >
-                                  ✓
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+            {/* Revenue Cards by Category */}
+            <div className="space-y-4">
+              {revenueCategories
+                .filter(category => {
+                  const categoriesToUse = revenueSelectedCategories.length === 0 ? revenueCategories : revenueSelectedCategories;
+                  return categoriesToUse.includes(category);
+                })
+                .map((category) => {
+                  const categoryTransactions = transactions
+                    .filter((t) => {
+                      if (t.transaction_type !== "revenue" || t.category !== category) return false;
                       
-                      {/* Add Row Button */}
-                      <div className="border-b border-border hover:bg-accent/30 transition-colors">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/20 py-3 h-auto rounded-none"
-                          onClick={() => {
-                            setFormData({
-                              transaction_date: format(new Date(), "yyyy-MM-dd"),
-                              transaction_type: "revenue",
-                              category: category,
-                              client_name: "",
-                              service_description: "",
-                              product_description: "",
-                              amount: 0,
-                              amount_received: 0,
-                              payment_method: "",
-                              notes: "",
-                            });
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Ajouter une ligne
-                        </Button>
-                      </div>
-                    </div>
+                      if (revenueSearchText && !t.client_name?.toLowerCase().includes(revenueSearchText.toLowerCase())) return false;
+                      
+                      if (revenueMinAmount && t.amount < parseFloat(revenueMinAmount)) return false;
+                      if (revenueMaxAmount && t.amount > parseFloat(revenueMaxAmount)) return false;
+                      
+                      if (revenueShowValidatedOnly && !t.is_validated) return false;
+                      if (revenueShowUnvalidatedOnly && t.is_validated) return false;
+                      
+                      return true;
+                    });
 
-                    {/* Total Row - Subtle Purple */}
-                    <div className="bg-purple-100 dark:bg-purple-950/30 text-foreground border-x border-b border-border">
-                      <div className="grid grid-cols-8">
-                        <div className="px-3 py-2 col-span-5 font-bold uppercase text-sm">
-                          TOTAL {category}
-                        </div>
-                        <div className="px-3 py-2 text-right font-bold text-sm border-l border-border">
-                          {totalAmount.toFixed(1)}
-                        </div>
-                        <div className="px-3 py-2 text-center font-bold text-sm border-l border-border">
-                          {totalReceived.toFixed(1)}
-                        </div>
-                        <div className="px-3 py-2 border-l border-border"></div>
-                      </div>
-                    </div>
+                  if (categoryTransactions.length === 0) return null;
 
-                    {/* Difference Row - Light Gray */}
-                    <div className="bg-muted/40 border-x border-b-2 border-border">
-                      <div className="grid grid-cols-8">
-                        <div className="px-3 py-2 col-span-5 font-bold uppercase text-sm">
-                          DIFFERENCE
-                        </div>
-                        <div className={`px-3 py-2 text-right font-bold col-span-2 text-sm ${
-                          difference > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
-                        }`}>
-                          {difference.toFixed(1)}
-                        </div>
-                        <div className="px-3 py-2"></div>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
+                  return (
+                    <AccountingCategoryCard
+                      key={category}
+                      category={category}
+                      transactions={categoryTransactions}
+                      onEdit={(transaction) => {
+                        setEditingTransaction(transaction);
+                        setFormData({
+                          transaction_date: transaction.transaction_date,
+                          transaction_type: "revenue",
+                          category: transaction.category,
+                          client_name: transaction.client_name || "",
+                          service_description: transaction.service_description || "",
+                          product_description: transaction.product_description || "",
+                          amount: transaction.amount,
+                          amount_received: transaction.amount_received || 0,
+                          payment_method: transaction.payment_method || "",
+                          notes: transaction.notes || "",
+                        });
+                        setIsDialogOpen(true);
+                      }}
+                      onDelete={(id) => {
+                        if (confirm("Supprimer cette transaction ?")) {
+                          deleteTransaction.mutate(id);
+                        }
+                      }}
+                      onUpdateAmount={(id, amount) => {
+                        updateTransaction.mutate({
+                          id,
+                          amount,
+                        });
+                      }}
+                      onUpdateAmountReceived={(id, amount_received) => {
+                        updateTransaction.mutate({
+                          id,
+                          amount_received,
+                        });
+                      }}
+                      onToggleValidation={(id, currentStatus) => {
+                        updateTransaction.mutate({
+                          id,
+                          is_validated: !currentStatus,
+                        });
+                      }}
+                      customerMembers={customerMembers}
+                      type="revenue"
+                    />
+                  );
+                })}
+            </div>
 
             {/* Hidden Dialog for Quick Add */}
             <Dialog open={isDialogOpen && formData.transaction_type === "revenue"} 
@@ -1737,253 +1528,81 @@ const Accounting = () => {
               }).length}
             />
 
-            {/* Expense Tables by Category - Same structure as Revenue */}
-            {expenseCategories
-              .filter(category => {
-                const categoriesToUse = expenseSelectedCategories.length === 0 ? expenseCategories : expenseSelectedCategories;
-                return categoriesToUse.includes(category);
-              })
-              .map((category) => {
-                const categoryTransactions = transactions
-                  .filter((t) => {
-                    if (t.transaction_type !== "expense" || t.category !== category) return false;
-                    
-                    if (expenseSearchText && !t.client_name?.toLowerCase().includes(expenseSearchText.toLowerCase())) return false;
-                    
-                    if (expenseMinAmount && t.amount < parseFloat(expenseMinAmount)) return false;
-                    if (expenseMaxAmount && t.amount > parseFloat(expenseMaxAmount)) return false;
-                    
-                    if (expenseShowValidatedOnly && !t.is_validated) return false;
-                    if (expenseShowUnvalidatedOnly && t.is_validated) return false;
-                    
-                    return true;
-                  });
-                
-                const totalAmount = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
-                const totalReceived = categoryTransactions.reduce((sum, t) => sum + (t.amount_received || 0), 0);
-                const difference = totalAmount - totalReceived;
-
-                return (
-                  <Card key={category} className="overflow-hidden border-0 shadow-none">
-                    {/* Header Row - Subtle Gray */}
-                    <div className="bg-muted/80 text-foreground border border-border">
-                      <div className="grid grid-cols-8">
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">N° / ÉTAT</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">DESCRIPTION</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">FOURNISSEUR</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm">Description Service</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-right">MONTANT</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-center">CASH</div>
-                        <div className="px-3 py-2 font-bold border-r border-border text-sm text-left">NOTES</div>
-                        <div className="px-3 py-2 font-bold text-sm text-center">Actions</div>
-                      </div>
-                    </div>
-
-                    {/* Category Header - Soft Orange */}
-                    <div className="bg-orange-100 dark:bg-orange-950/30 text-foreground border-x border-b border-border">
-                      <div className="px-3 py-2 font-bold uppercase text-sm">
-                        {category}
-                      </div>
-                    </div>
-
-                    {/* Transaction Rows */}
-                    <div className="border-x border-border">
-                      {categoryTransactions.map((transaction, index) => {
-                        return (
-                          <div 
-                            key={transaction.id}
-                            className="grid grid-cols-8 border-b border-border hover:bg-accent/50 transition-colors group"
-                          >
-                            <div className="px-3 py-2 border-r border-border text-sm flex items-center gap-2 flex-wrap">
-                              <span className="font-medium">#{String(index + 1).padStart(2, '0')}</span>
-                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300">
-                                  À valider
-                                </Badge>
-                              )}
-                            </div>
-                            <Input
-                              key={`service-${transaction.id}`}
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none uppercase text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={transaction.service_description || category}
-                              onBlur={(e) => {
-                                if (e.target.value !== transaction.service_description) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    service_description: e.target.value 
-                                  });
-                                }
-                              }}
-                            />
-                            <Input
-                              key={`client-${transaction.id}`}
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={transaction.client_name || ""}
-                              onBlur={(e) => {
-                                if (e.target.value !== transaction.client_name) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    client_name: e.target.value 
-                                  });
-                                }
-                              }}
-                            />
-                            <div className="px-2 py-2 border-r border-border">
-                              <Select
-                                value={(transaction as any).product_description || ""}
-                                onValueChange={(value) => {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    product_description: value 
-                                  });
-                                }}
-                              >
-                                <SelectTrigger className="h-8 border-0 focus:ring-1 bg-transparent text-sm">
-                                  <SelectValue placeholder="Sélectionner" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {expenseCategories.map((desc) => (
-                                    <SelectItem key={desc} value={desc}>
-                                      {desc}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Input
-                              key={`amount-${transaction.id}`}
-                              type="number"
-                              step="0.1"
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-right font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={transaction.amount}
-                              onBlur={(e) => {
-                                const newAmount = parseFloat(e.target.value) || 0;
-                                if (newAmount !== transaction.amount) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    amount: newAmount 
-                                  });
-                                }
-                              }}
-                            />
-                            <Input
-                              key={`amount-received-${transaction.id}`}
-                              type="number"
-                              step="0.1"
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-center font-medium text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent"
-                              defaultValue={transaction.amount_received || 0}
-                              onBlur={(e) => {
-                                const newAmountReceived = parseFloat(e.target.value) || 0;
-                                if (newAmountReceived !== (transaction.amount_received || 0)) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    amount_received: newAmountReceived 
-                                  });
-                                }
-                              }}
-                            />
-                            <Input
-                              key={`notes-${transaction.id}`}
-                              className="px-3 py-2 border-r border-border border-y-0 border-l-0 rounded-none text-sm h-auto focus-visible:ring-1 focus-visible:ring-offset-0 bg-transparent uppercase text-xs"
-                              defaultValue={transaction.notes || ""}
-                              placeholder="Notes..."
-                              onBlur={(e) => {
-                                if (e.target.value !== (transaction.notes || "")) {
-                                  updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    notes: e.target.value 
-                                  });
-                                }
-                              }}
-                            />
-                            <div className="px-2 py-2 flex items-center justify-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => deleteTransaction.mutate(transaction.id)}
-                                className="h-7 w-7 p-0 hover:bg-destructive/10"
-                                title="Supprimer"
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                              {(transaction as any).is_auto_generated && !(transaction as any).is_validated && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => updateTransaction.mutate({ 
-                                    id: transaction.id, 
-                                    is_validated: true 
-                                  })}
-                                  className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                                  title="Valider"
-                                >
-                                  ✓
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+            {/* Expense Cards by Category */}
+            <div className="space-y-4">
+              {expenseCategories
+                .filter(category => {
+                  const categoriesToUse = expenseSelectedCategories.length === 0 ? expenseCategories : expenseSelectedCategories;
+                  return categoriesToUse.includes(category);
+                })
+                .map((category) => {
+                  const categoryTransactions = transactions
+                    .filter((t) => {
+                      if (t.transaction_type !== "expense" || t.category !== category) return false;
                       
-                      {/* Add Row Button */}
-                      <div className="border-b border-border hover:bg-accent/30 transition-colors">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/20 py-3 h-auto rounded-none"
-                          onClick={() => {
-                            setFormData({
-                              transaction_date: format(new Date(), "yyyy-MM-dd"),
-                              transaction_type: "expense",
-                              category: category,
-                              client_name: "",
-                              service_description: "",
-                              product_description: "",
-                              amount: 0,
-                              amount_received: 0,
-                              payment_method: "",
-                              notes: "",
-                            });
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Ajouter une ligne
-                        </Button>
-                      </div>
-                    </div>
+                      if (expenseSearchText && !t.client_name?.toLowerCase().includes(expenseSearchText.toLowerCase())) return false;
+                      
+                      if (expenseMinAmount && t.amount < parseFloat(expenseMinAmount)) return false;
+                      if (expenseMaxAmount && t.amount > parseFloat(expenseMaxAmount)) return false;
+                      
+                      if (expenseShowValidatedOnly && !t.is_validated) return false;
+                      if (expenseShowUnvalidatedOnly && t.is_validated) return false;
+                      
+                      return true;
+                    });
 
-                    {/* Total Row - Subtle Orange */}
-                    <div className="bg-orange-100 dark:bg-orange-950/30 text-foreground border-x border-b border-border">
-                      <div className="grid grid-cols-8">
-                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
-                          TOTAL {category}
-                        </div>
-                        <div className="px-3 py-2 text-right font-bold text-sm border-l border-border">
-                          {totalAmount.toFixed(1)}
-                        </div>
-                        <div className="px-3 py-2 text-center font-bold text-sm border-l border-border">
-                          {totalReceived.toFixed(1)}
-                        </div>
-                        <div className="px-3 py-2 col-span-2 border-l border-border"></div>
-                      </div>
-                    </div>
+                  if (categoryTransactions.length === 0) return null;
 
-                    {/* Difference Row - Light Gray */}
-                    <div className="bg-muted/40 border-x border-b-2 border-border">
-                      <div className="grid grid-cols-8">
-                        <div className="px-3 py-2 col-span-4 font-bold uppercase text-sm">
-                          DIFFERENCE
-                        </div>
-                        <div className={`px-3 py-2 text-right font-bold col-span-2 text-sm ${
-                          difference > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
-                        }`}>
-                          {difference.toFixed(1)}
-                        </div>
-                        <div className="px-3 py-2 col-span-2"></div>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
+                  return (
+                    <AccountingCategoryCard
+                      key={category}
+                      category={category}
+                      transactions={categoryTransactions}
+                      onEdit={(transaction) => {
+                        setEditingTransaction(transaction);
+                        setFormData({
+                          transaction_date: transaction.transaction_date,
+                          transaction_type: "expense",
+                          category: transaction.category,
+                          client_name: transaction.client_name || "",
+                          service_description: transaction.service_description || "",
+                          product_description: transaction.product_description || "",
+                          amount: transaction.amount,
+                          amount_received: transaction.amount_received || 0,
+                          payment_method: transaction.payment_method || "",
+                          notes: transaction.notes || "",
+                        });
+                        setIsDialogOpen(true);
+                      }}
+                      onDelete={(id) => {
+                        if (confirm("Supprimer cette transaction ?")) {
+                          deleteTransaction.mutate(id);
+                        }
+                      }}
+                      onUpdateAmount={(id, amount) => {
+                        updateTransaction.mutate({
+                          id,
+                          amount,
+                        });
+                      }}
+                      onUpdateAmountReceived={(id, amount_received) => {
+                        updateTransaction.mutate({
+                          id,
+                          amount_received,
+                        });
+                      }}
+                      onToggleValidation={(id, currentStatus) => {
+                        updateTransaction.mutate({
+                          id,
+                          is_validated: !currentStatus,
+                        });
+                      }}
+                      customerMembers={customerMembers}
+                      type="expense"
+                    />
+                  );
+                })}
+            </div>
 
             {/* Hidden Dialog for Quick Add */}
             <Dialog open={isDialogOpen && formData.transaction_type === "expense"} 
