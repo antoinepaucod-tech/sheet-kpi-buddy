@@ -1303,22 +1303,6 @@ const Accounting = () => {
                           is_validated: !currentStatus,
                         });
                       }}
-                      onAddNew={(cat) => {
-                        setEditingTransaction(null);
-                        setFormData({
-                          transaction_date: format(new Date(selectedYear, selectedMonth, 1), "yyyy-MM-dd"),
-                          transaction_type: "revenue",
-                          category: cat,
-                          client_name: "",
-                          service_description: "",
-                          product_description: "",
-                          amount: 0,
-                          amount_received: 0,
-                          payment_method: "",
-                          notes: "",
-                        });
-                        setIsDialogOpen(true);
-                      }}
                       customerMembers={customerMembers}
                       type="revenue"
                     />
@@ -1612,22 +1596,6 @@ const Accounting = () => {
                           id,
                           is_validated: !currentStatus,
                         });
-                      }}
-                      onAddNew={(cat) => {
-                        setEditingTransaction(null);
-                        setFormData({
-                          transaction_date: format(new Date(selectedYear, selectedMonth, 1), "yyyy-MM-dd"),
-                          transaction_type: "expense",
-                          category: cat,
-                          client_name: "",
-                          service_description: "",
-                          product_description: "",
-                          amount: 0,
-                          amount_received: 0,
-                          payment_method: "",
-                          notes: "",
-                        });
-                        setIsDialogOpen(true);
                       }}
                       customerMembers={customerMembers}
                       type="expense"
