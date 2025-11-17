@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { AccountingFilters } from "@/components/AccountingFilters";
 import {
   DndContext,
   closestCenter,
@@ -336,6 +337,22 @@ const Accounting = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<AccountingTransaction | null>(null);
+  
+  // Filter states for revenue
+  const [revenueSearchText, setRevenueSearchText] = useState("");
+  const [revenueMinAmount, setRevenueMinAmount] = useState("");
+  const [revenueMaxAmount, setRevenueMaxAmount] = useState("");
+  const [revenueSelectedCategories, setRevenueSelectedCategories] = useState<string[]>([]);
+  const [revenueShowValidatedOnly, setRevenueShowValidatedOnly] = useState(false);
+  const [revenueShowUnvalidatedOnly, setRevenueShowUnvalidatedOnly] = useState(false);
+  
+  // Filter states for expense
+  const [expenseSearchText, setExpenseSearchText] = useState("");
+  const [expenseMinAmount, setExpenseMinAmount] = useState("");
+  const [expenseMaxAmount, setExpenseMaxAmount] = useState("");
+  const [expenseSelectedCategories, setExpenseSelectedCategories] = useState<string[]>([]);
+  const [expenseShowValidatedOnly, setExpenseShowValidatedOnly] = useState(false);
+  const [expenseShowUnvalidatedOnly, setExpenseShowUnvalidatedOnly] = useState(false);
   
   // Manage custom categories
   const [revenueCategories, setRevenueCategories] = useState<string[]>(DEFAULT_REVENUE_CATEGORIES);
@@ -1170,10 +1187,69 @@ const Accounting = () => {
               </Button>
             </div>
 
-            {/* Revenue Tables by Category - Show ALL categories */}
-            {revenueCategories.map((category) => {
+            {/* Revenue Filters */}
+            <AccountingFilters
+              categories={revenueCategories}
+              selectedCategories={revenueSelectedCategories.length === 0 ? revenueCategories : revenueSelectedCategories}
+              onCategoryChange={setRevenueSelectedCategories}
+              searchText={revenueSearchText}
+              onSearchChange={setRevenueSearchText}
+              minAmount={revenueMinAmount}
+              maxAmount={revenueMaxAmount}
+              onMinAmountChange={setRevenueMinAmount}
+              onMaxAmountChange={setRevenueMaxAmount}
+              showValidatedOnly={revenueShowValidatedOnly}
+              showUnvalidatedOnly={revenueShowUnvalidatedOnly}
+              onValidatedOnlyChange={setRevenueShowValidatedOnly}
+              onUnvalidatedOnlyChange={setRevenueShowUnvalidatedOnly}
+              onReset={() => {
+                setRevenueSearchText("");
+                setRevenueMinAmount("");
+                setRevenueMaxAmount("");
+                setRevenueSelectedCategories([]);
+                setRevenueShowValidatedOnly(false);
+                setRevenueShowUnvalidatedOnly(false);
+              }}
+              totalTransactions={transactions.filter((t) => t.transaction_type === "revenue").length}
+              filteredTransactions={transactions.filter((t) => {
+                if (t.transaction_type !== "revenue") return false;
+                
+                const categoriesToUse = revenueSelectedCategories.length === 0 ? revenueCategories : revenueSelectedCategories;
+                if (!categoriesToUse.includes(t.category)) return false;
+                
+                if (revenueSearchText && !t.client_name?.toLowerCase().includes(revenueSearchText.toLowerCase())) return false;
+                
+                if (revenueMinAmount && t.amount < parseFloat(revenueMinAmount)) return false;
+                if (revenueMaxAmount && t.amount > parseFloat(revenueMaxAmount)) return false;
+                
+                if (revenueShowValidatedOnly && !t.is_validated) return false;
+                if (revenueShowUnvalidatedOnly && t.is_validated) return false;
+                
+                return true;
+              }).length}
+            />
+
+            {/* Revenue Tables by Category - Same structure as before */}
+            {revenueCategories
+              .filter(category => {
+                const categoriesToUse = revenueSelectedCategories.length === 0 ? revenueCategories : revenueSelectedCategories;
+                return categoriesToUse.includes(category);
+              })
+              .map((category) => {
                 const categoryTransactions = transactions
-                  .filter((t) => t.transaction_type === "revenue" && t.category === category);
+                  .filter((t) => {
+                    if (t.transaction_type !== "revenue" || t.category !== category) return false;
+                    
+                    if (revenueSearchText && !t.client_name?.toLowerCase().includes(revenueSearchText.toLowerCase())) return false;
+                    
+                    if (revenueMinAmount && t.amount < parseFloat(revenueMinAmount)) return false;
+                    if (revenueMaxAmount && t.amount > parseFloat(revenueMaxAmount)) return false;
+                    
+                    if (revenueShowValidatedOnly && !t.is_validated) return false;
+                    if (revenueShowUnvalidatedOnly && t.is_validated) return false;
+                    
+                    return true;
+                  });
                 
                 const totalAmount = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
                 const totalReceived = categoryTransactions.reduce((sum, t) => sum + (t.amount_received || 0), 0);
@@ -1613,10 +1689,69 @@ const Accounting = () => {
               </Button>
             </div>
 
+            {/* Expense Filters */}
+            <AccountingFilters
+              categories={expenseCategories}
+              selectedCategories={expenseSelectedCategories.length === 0 ? expenseCategories : expenseSelectedCategories}
+              onCategoryChange={setExpenseSelectedCategories}
+              searchText={expenseSearchText}
+              onSearchChange={setExpenseSearchText}
+              minAmount={expenseMinAmount}
+              maxAmount={expenseMaxAmount}
+              onMinAmountChange={setExpenseMinAmount}
+              onMaxAmountChange={setExpenseMaxAmount}
+              showValidatedOnly={expenseShowValidatedOnly}
+              showUnvalidatedOnly={expenseShowUnvalidatedOnly}
+              onValidatedOnlyChange={setExpenseShowValidatedOnly}
+              onUnvalidatedOnlyChange={setExpenseShowUnvalidatedOnly}
+              onReset={() => {
+                setExpenseSearchText("");
+                setExpenseMinAmount("");
+                setExpenseMaxAmount("");
+                setExpenseSelectedCategories([]);
+                setExpenseShowValidatedOnly(false);
+                setExpenseShowUnvalidatedOnly(false);
+              }}
+              totalTransactions={transactions.filter((t) => t.transaction_type === "expense").length}
+              filteredTransactions={transactions.filter((t) => {
+                if (t.transaction_type !== "expense") return false;
+                
+                const categoriesToUse = expenseSelectedCategories.length === 0 ? expenseCategories : expenseSelectedCategories;
+                if (!categoriesToUse.includes(t.category)) return false;
+                
+                if (expenseSearchText && !t.client_name?.toLowerCase().includes(expenseSearchText.toLowerCase())) return false;
+                
+                if (expenseMinAmount && t.amount < parseFloat(expenseMinAmount)) return false;
+                if (expenseMaxAmount && t.amount > parseFloat(expenseMaxAmount)) return false;
+                
+                if (expenseShowValidatedOnly && !t.is_validated) return false;
+                if (expenseShowUnvalidatedOnly && t.is_validated) return false;
+                
+                return true;
+              }).length}
+            />
+
             {/* Expense Tables by Category - Same structure as Revenue */}
-            {expenseCategories.map((category) => {
+            {expenseCategories
+              .filter(category => {
+                const categoriesToUse = expenseSelectedCategories.length === 0 ? expenseCategories : expenseSelectedCategories;
+                return categoriesToUse.includes(category);
+              })
+              .map((category) => {
                 const categoryTransactions = transactions
-                  .filter((t) => t.transaction_type === "expense" && t.category === category);
+                  .filter((t) => {
+                    if (t.transaction_type !== "expense" || t.category !== category) return false;
+                    
+                    if (expenseSearchText && !t.client_name?.toLowerCase().includes(expenseSearchText.toLowerCase())) return false;
+                    
+                    if (expenseMinAmount && t.amount < parseFloat(expenseMinAmount)) return false;
+                    if (expenseMaxAmount && t.amount > parseFloat(expenseMaxAmount)) return false;
+                    
+                    if (expenseShowValidatedOnly && !t.is_validated) return false;
+                    if (expenseShowUnvalidatedOnly && t.is_validated) return false;
+                    
+                    return true;
+                  });
                 
                 const totalAmount = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
                 const totalReceived = categoryTransactions.reduce((sum, t) => sum + (t.amount_received || 0), 0);
