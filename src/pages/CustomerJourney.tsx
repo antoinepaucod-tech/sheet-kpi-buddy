@@ -218,6 +218,7 @@ const CustomerJourney = () => {
         member_type: memberData.memberType,
         cash_collected: memberData.cashCollected || 0,
         contract_signed_date: memberData.contractDate ? format(memberData.contractDate, "yyyy-MM-dd") : null,
+        subscription_end_date: memberData.subscriptionEndDate ? format(memberData.subscriptionEndDate, "yyyy-MM-dd") : null,
       };
       
       // Add member to database
@@ -241,6 +242,7 @@ const CustomerJourney = () => {
           member_type: newMember.member_type,
           cash_collected: newMember.cash_collected,
           contract_signed_date: newMember.contract_signed_date,
+          subscription_end_date: newMember.subscription_end_date,
         });
         
         // Create accounting transaction if cash collected
@@ -700,6 +702,7 @@ const CustomerJourney = () => {
                       <TableHead className="min-w-[150px]">Cash Collectée</TableHead>
                       <TableHead className="min-w-[180px]">Date Signature Contrat</TableHead>
                       <TableHead className="min-w-[180px]">Date de Sortie</TableHead>
+                      <TableHead className="min-w-[180px]">Date de Fin d'Abonnement</TableHead>
                       <TableHead className="text-center">Onboarding Bsport</TableHead>
                       <TableHead className="text-center">Onboarding Hubfit</TableHead>
                       <TableHead className="text-center">Onboarding Nutrition</TableHead>
@@ -862,6 +865,47 @@ const CustomerJourney = () => {
                                   size="sm"
                                   className="h-8 w-8 p-0"
                                   onClick={() => updateMember(member.id, "exit_date", null)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-[180px] justify-start text-left font-normal",
+                                      !member.subscription_end_date && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {member.subscription_end_date
+                                      ? format(new Date(member.subscription_end_date), "dd/MM/yyyy")
+                                      : "Sélectionner"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={member.subscription_end_date ? new Date(member.subscription_end_date) : undefined}
+                                    onSelect={(date) =>
+                                      updateMember(member.id, "subscription_end_date", date?.toISOString().split('T')[0] || null)
+                                    }
+                                    initialFocus
+                                    className="pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              {member.subscription_end_date && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => updateMember(member.id, "subscription_end_date", null)}
                                 >
                                   <X className="h-4 w-4" />
                                 </Button>

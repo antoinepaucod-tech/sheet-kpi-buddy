@@ -46,6 +46,7 @@ export interface MemberFormData {
   memberType: string;
   cashCollected: number;
   contractDate: Date | null;
+  subscriptionEndDate: Date | null;
   paymentMethod: string;
   invoiceNumber?: string;
   serviceDescription?: string;
@@ -60,6 +61,7 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
     memberType: "",
     cashCollected: 0,
     contractDate: new Date(),
+    subscriptionEndDate: null,
     paymentMethod: "Prélèvement Automatique",
     invoiceNumber: "",
     serviceDescription: "",
@@ -75,6 +77,7 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
         memberType: "",
         cashCollected: 0,
         contractDate: new Date(),
+        subscriptionEndDate: null,
         paymentMethod: "Prélèvement Automatique",
         invoiceNumber: "",
         serviceDescription: "",
@@ -193,6 +196,38 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
                     mode="single"
                     selected={formData.contractDate || undefined}
                     onSelect={(date) => setFormData({ ...formData, contractDate: date || null })}
+                    locale={fr}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Date de fin d'abonnement */}
+            <div className="space-y-2">
+              <Label htmlFor="subscriptionEndDate">Date de Fin d'Abonnement</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.subscriptionEndDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.subscriptionEndDate ? (
+                      format(formData.subscriptionEndDate, "dd MMMM yyyy", { locale: fr })
+                    ) : (
+                      <span>Sélectionner une date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.subscriptionEndDate || undefined}
+                    onSelect={(date) => setFormData({ ...formData, subscriptionEndDate: date || null })}
                     locale={fr}
                     initialFocus
                   />
