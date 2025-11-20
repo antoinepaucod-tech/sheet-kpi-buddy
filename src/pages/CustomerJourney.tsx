@@ -492,6 +492,36 @@ const CustomerJourney = () => {
     }
   };
 
+  const getMembershipStyle = (membership: string) => {
+    // Define color categories for different membership types
+    const membershipCategories: Record<string, { bg: string; text: string; border: string }> = {
+      // Unlimited/Full access - Blue
+      "Unlimited Access": { bg: "bg-blue-500/10", text: "text-blue-700 dark:text-blue-400", border: "border-blue-500/30" },
+      "Hybrid FULL": { bg: "bg-blue-500/10", text: "text-blue-700 dark:text-blue-400", border: "border-blue-500/30" },
+      
+      // Regular/Basic plans - Green
+      "Hybrid Matin": { bg: "bg-green-500/10", text: "text-green-700 dark:text-green-400", border: "border-green-500/30" },
+      "Hybrid Soir": { bg: "bg-green-500/10", text: "text-green-700 dark:text-green-400", border: "border-green-500/30" },
+      
+      // Packs/Challenges - Purple
+      "Pack 20 sessions": { bg: "bg-purple-500/10", text: "text-purple-700 dark:text-purple-400", border: "border-purple-500/30" },
+      "Pack 10": { bg: "bg-purple-500/10", text: "text-purple-700 dark:text-purple-400", border: "border-purple-500/30" },
+      "6 Weeks Challenge": { bg: "bg-purple-500/10", text: "text-purple-700 dark:text-purple-400", border: "border-purple-500/30" },
+      
+      // Special/Free - Orange
+      "Abonnement offert": { bg: "bg-orange-500/10", text: "text-orange-700 dark:text-orange-400", border: "border-orange-500/30" },
+      
+      // Paused/Inactive - Gray
+      "Pause": { bg: "bg-gray-500/10", text: "text-gray-700 dark:text-gray-400", border: "border-gray-500/30" },
+    };
+
+    return membershipCategories[membership] || { 
+      bg: "bg-slate-500/10", 
+      text: "text-slate-700 dark:text-slate-400", 
+      border: "border-slate-500/30" 
+    };
+  };
+
   const getMemberWeekNumber = (contractDate: string | null | undefined): number | null => {
     if (!contractDate) return null;
     
@@ -768,23 +798,42 @@ const CustomerJourney = () => {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <Select
-                              value={member.membership}
-                              onValueChange={(value) =>
-                                updateMember(member.id, "membership", value)
-                              }
-                            >
-                              <SelectTrigger className="min-w-[180px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-background border shadow-lg z-50">
-                                {membershipTypes.map((type) => (
-                                  <SelectItem key={type} value={type}>
-                                    {type}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="flex items-center gap-2">
+                              <div className={cn(
+                                "px-3 py-1.5 rounded-md border font-medium text-sm whitespace-nowrap",
+                                getMembershipStyle(member.membership).bg,
+                                getMembershipStyle(member.membership).text,
+                                getMembershipStyle(member.membership).border
+                              )}>
+                                {member.membership}
+                              </div>
+                              <Select
+                                value={member.membership}
+                                onValueChange={(value) =>
+                                  updateMember(member.id, "membership", value)
+                                }
+                              >
+                                <SelectTrigger className="w-[40px] h-8 px-2">
+                                  <span className="text-xs">✏️</span>
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border shadow-lg z-50">
+                                  {membershipTypes.map((type) => {
+                                    const style = getMembershipStyle(type);
+                                    return (
+                                      <SelectItem key={type} value={type}>
+                                        <div className={cn(
+                                          "px-2 py-1 rounded-md text-sm font-medium inline-block",
+                                          style.bg,
+                                          style.text
+                                        )}>
+                                          {type}
+                                        </div>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Select
@@ -1042,7 +1091,16 @@ const CustomerJourney = () => {
                               {member.name}
                             </span>
                           </TableCell>
-                          <TableCell>{member.membership}</TableCell>
+                          <TableCell>
+                            <div className={cn(
+                              "inline-flex px-3 py-1.5 rounded-md border font-medium text-sm",
+                              getMembershipStyle(member.membership).bg,
+                              getMembershipStyle(member.membership).text,
+                              getMembershipStyle(member.membership).border
+                            )}>
+                              {member.membership}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center">
                             {memberWeek !== null && memberWeek > 0 ? (
                               <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">
