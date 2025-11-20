@@ -567,6 +567,12 @@ const Accounting = () => {
       return;
     }
 
+    // Block adding revenue transactions from accounting page - must be done from customer journey
+    if (formData.transaction_type === "revenue" && !editingTransaction) {
+      toast.error("Les revenus membres doivent être ajoutés depuis le Parcours Client, pas depuis la comptabilité");
+      return;
+    }
+
     const transactionData = {
       ...formData,
       year: selectedYear,
