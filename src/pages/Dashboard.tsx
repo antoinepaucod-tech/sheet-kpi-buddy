@@ -46,7 +46,8 @@ const Dashboard = () => {
 
   // Calculate current month KPIs
   const currentMonthData = monthlyData[new Date().getMonth()];
-  const activeMembers = members.filter(m => !m.exit_date || new Date(m.exit_date) > new Date()).length;
+  // Active members are based on KPI data (from accounting transactions), not customer_members table
+  const activeMembers = currentMonthData?.total_active_members || 0;
   
   const monthlyRevenue = useMemo(() => {
     return transactions
