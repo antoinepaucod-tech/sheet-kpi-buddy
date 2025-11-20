@@ -176,10 +176,10 @@ const CustomerJourney = () => {
 
     return members.filter(member => {
       // Apply status filter first
-      const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
+      const hasExitDate = !!member.exit_date;
       
-      if (memberStatus === "active" && isExited) return false;
-      if (memberStatus === "exited" && !isExited) return false;
+      if (memberStatus === "active" && hasExitDate) return false;
+      if (memberStatus === "exited" && !hasExitDate) return false;
 
       // If search term is present, only filter by search (ignore date filters)
       if (searchTerm) {
@@ -191,7 +191,22 @@ const CustomerJourney = () => {
         return true;
       }
 
-      // If no contract date, show member only if viewing all
+      // For "exited" members, filter by exit_date instead of contract_signed_date
+      if (memberStatus === "exited" && member.exit_date) {
+        const exitDate = parseISO(member.exit_date);
+        const exitYear = exitDate.getFullYear();
+        const exitMonth = exitDate.getMonth();
+
+        // Apply year filter if not "all"
+        if (selectedYear !== "all" && exitYear !== selectedYear) return false;
+        
+        // Apply month filter if not "all"
+        if (selectedMonth !== "all" && exitMonth !== selectedMonth) return false;
+
+        return true;
+      }
+
+      // For "active" members, filter by contract_signed_date
       if (!member.contract_signed_date) {
         return selectedYear === "all";
       }
