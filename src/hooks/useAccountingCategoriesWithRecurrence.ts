@@ -96,6 +96,12 @@ export const useAccountingCategoriesWithRecurrence = () => {
         )
       );
 
+      const existingClientMonthKeys = new Set(
+        (existingTx || []).map((tx: any) =>
+          `${tx.year}-${tx.month}|${tx.category}|${tx.client_name || ''}`
+        )
+      );
+
       // Fetch previous month transactions to carry over the recurring amount
       const prevDate = new Date(year, month, 1);
       prevDate.setMonth(prevDate.getMonth() - 1);
@@ -156,6 +162,9 @@ export const useAccountingCategoriesWithRecurrence = () => {
           matchingMembers.forEach((member: any) => {
             const prevKey = `${cat.type}|${cat.name}|${member.name}`;
             const carriedAmount = prevAmountMap.get(prevKey)?.amount;
+
+            const clientMonthKey = `${year}-${month + 1}|${cat.name}|${member.name}`;
+            const hasExistingThisMonthForClient = existingClientMonthKeys.has(clientMonthKey);
             
             // Check if member has exited this month or before
             if (member.exit_date) {
@@ -178,8 +187,14 @@ export const useAccountingCategoriesWithRecurrence = () => {
               const currentMonthStart = new Date(year, month, 1);
               const currentMonthEnd = new Date(year, month + 1, 0);
               
-              // If contract was signed this month AND no previous transaction exists, generate with default amount
-              if (contractDate >= currentMonthStart && contractDate <= currentMonthEnd && carriedAmount === undefined) {
+              // If contract was signed this month AND no previous transaction exists,
+              // AND no existing transaction in this month (manual entry), generate with default amount
+              if (
+                contractDate >= currentMonthStart &&
+                contractDate <= currentMonthEnd &&
+                carriedAmount === undefined &&
+                !hasExistingThisMonthForClient
+              ) {
                 shouldGenerate = true;
                 amount = Number(cat.default_amount) || 0;
               }
