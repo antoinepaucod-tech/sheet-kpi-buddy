@@ -425,6 +425,7 @@ const Accounting = () => {
     transaction_date: format(new Date(), "yyyy-MM-dd"),
     transaction_type: "revenue" as "revenue" | "expense",
     category: "",
+    revenue_type: "" as "membre" | "service" | "produit" | "",
     client_name: "",
     service_description: "",
     product_description: "",
@@ -485,6 +486,7 @@ const Accounting = () => {
       transaction_date: format(new Date(), "yyyy-MM-dd"),
       transaction_type: "revenue",
       category: "",
+      revenue_type: "",
       client_name: "",
       service_description: "",
       product_description: "",
@@ -567,9 +569,15 @@ const Accounting = () => {
       return;
     }
 
-    // Block adding revenue transactions from accounting page - must be done from customer journey
-    if (formData.transaction_type === "revenue" && !editingTransaction) {
+    // Block adding member revenue transactions from accounting page - must be done from customer journey
+    if (formData.transaction_type === "revenue" && !editingTransaction && formData.revenue_type === "membre") {
       toast.error("Les revenus membres doivent être ajoutés depuis le Parcours Client, pas depuis la comptabilité");
+      return;
+    }
+
+    // Require revenue_type for new revenue transactions
+    if (formData.transaction_type === "revenue" && !editingTransaction && !formData.revenue_type) {
+      toast.error("Veuillez sélectionner le type de revenu (Membre/Service/Produit)");
       return;
     }
 
@@ -595,6 +603,7 @@ const Accounting = () => {
       transaction_date: transaction.transaction_date,
       transaction_type: transaction.transaction_type,
       category: transaction.category,
+      revenue_type: "",
       client_name: transaction.client_name || "",
       service_description: transaction.service_description || "",
       product_description: (transaction as any).product_description || "",
@@ -1190,6 +1199,7 @@ const Accounting = () => {
                     transaction_date: format(new Date(selectedYear, selectedMonth, 1), "yyyy-MM-dd"),
                     transaction_type: "revenue",
                     category: "",
+                    revenue_type: "",
                     client_name: "",
                     service_description: "",
                     product_description: "",
@@ -1298,6 +1308,7 @@ const Accounting = () => {
                           transaction_date: transaction.transaction_date,
                           transaction_type: "revenue",
                           category: transaction.category,
+                          revenue_type: "",
                           client_name: transaction.client_name || "",
                           service_description: transaction.service_description || "",
                           product_description: transaction.product_description || "",
@@ -1405,6 +1416,27 @@ const Accounting = () => {
                        </SelectContent>
                     </Select>
                   </div>
+                  {/* Type de Revenu (only for new revenue transactions) */}
+                  {!editingTransaction && (
+                    <div>
+                      <Label>Type de Revenu *</Label>
+                      <Select
+                        value={formData.revenue_type}
+                        onValueChange={(value: "membre" | "service" | "produit") =>
+                          setFormData({ ...formData, revenue_type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner le type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="membre">Membre</SelectItem>
+                          <SelectItem value="service">Service</SelectItem>
+                          <SelectItem value="produit">Produit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div>
                     <Label>Nom du Client</Label>
                     <Input
@@ -1506,6 +1538,7 @@ const Accounting = () => {
                     transaction_date: format(new Date(selectedYear, selectedMonth, 1), "yyyy-MM-dd"),
                     transaction_type: "expense",
                     category: "",
+                    revenue_type: "",
                     client_name: "",
                     service_description: "",
                     product_description: "",
@@ -1614,6 +1647,7 @@ const Accounting = () => {
                           transaction_date: transaction.transaction_date,
                           transaction_type: "expense",
                           category: transaction.category,
+                          revenue_type: "",
                           client_name: transaction.client_name || "",
                           service_description: transaction.service_description || "",
                           product_description: transaction.product_description || "",
