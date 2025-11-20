@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 import { AddMemberDialog, type MemberFormData } from "@/components/AddMemberDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -364,6 +365,28 @@ const CustomerJourney = () => {
           .eq('member_id', id)
           .eq('action_type', field);
       }
+    }
+    
+    // If updating contract_signed_date, sync with accounting transactions
+    if (field === "contract_signed_date" && member && value) {
+      const newDate = new Date(value);
+      const newYear = newDate.getFullYear();
+      const newMonth = newDate.getMonth() + 1;
+      const newMonthName = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(newDate);
+      
+      // Update all accounting transactions for this member to reflect new contract date
+      await supabase
+        .from('accounting_transactions')
+        .update({
+          transaction_date: value,
+          year: newYear,
+          month: newMonth,
+          month_name: newMonthName
+        })
+        .eq('client_name', member.name)
+        .eq('transaction_type', 'revenue');
+        
+      toast.success("Date de contrat mise à jour dans la comptabilité");
     }
     
     // If updating cash_collected, sync with accounting
