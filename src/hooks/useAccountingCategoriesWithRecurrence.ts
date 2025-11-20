@@ -178,8 +178,8 @@ export const useAccountingCategoriesWithRecurrence = () => {
               const currentMonthStart = new Date(year, month, 1);
               const currentMonthEnd = new Date(year, month + 1, 0);
               
-              // If contract was signed this month, generate with default amount
-              if (contractDate >= currentMonthStart && contractDate <= currentMonthEnd) {
+              // If contract was signed this month AND no previous transaction exists, generate with default amount
+              if (contractDate >= currentMonthStart && contractDate <= currentMonthEnd && carriedAmount === undefined) {
                 shouldGenerate = true;
                 amount = Number(cat.default_amount) || 0;
               }
