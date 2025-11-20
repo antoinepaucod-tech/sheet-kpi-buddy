@@ -936,7 +936,7 @@ const Accounting = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[2025, 2026, 2027].map((year) => (
+              {[2024, 2025, 2026, 2027].map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
                 </SelectItem>
