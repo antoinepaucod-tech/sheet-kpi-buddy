@@ -112,7 +112,7 @@ export const AccountingCategoryCard = ({
         {/* Expanded Content */}
         <CollapsibleContent className="animate-accordion-down">
           <div className="divide-y divide-border/50">
-            {transactions.map((transaction) => {
+            {transactions.map((transaction, index) => {
               const memberStatus = getMemberStatus(transaction.client_name);
               return (
                 <div
@@ -122,6 +122,13 @@ export const AccountingCategoryCard = ({
                   }`}
                 >
                   <div className="grid grid-cols-12 gap-3 items-center">
+                    {/* Line Number */}
+                    <div className="col-span-1 flex items-center justify-center">
+                      <span className="text-xs font-medium text-muted-foreground bg-muted/50 rounded-full w-6 h-6 flex items-center justify-center">
+                        {index + 1}
+                      </span>
+                    </div>
+
                     {/* Date & Validation Status */}
                     <div className="col-span-2">
                       <div className="text-sm font-medium text-foreground">
@@ -152,7 +159,7 @@ export const AccountingCategoryCard = ({
                     </div>
 
                     {/* Client/Provider Name */}
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <div className="text-sm font-medium text-foreground">
                         {transaction.client_name || "-"}
                       </div>
