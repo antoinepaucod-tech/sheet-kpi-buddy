@@ -425,9 +425,14 @@ const CustomerJourney = () => {
         const oldAmount = member.cash_collected || 0;
         
         if (newAmount > 0 && newAmount !== oldAmount) {
-          const today = format(new Date(), "yyyy-MM-dd");
-          const currentMonth = new Date().getMonth() + 1;
-          const currentYear = new Date().getFullYear();
+          // Use contract_signed_date if available, otherwise use current date
+          const transactionDate = member.contract_signed_date 
+            ? parseISO(member.contract_signed_date) 
+            : new Date();
+          const currentMonth = transactionDate.getMonth() + 1;
+          const currentYear = transactionDate.getFullYear();
+          const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 
+                             'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
           
           // Use membership directly as category (1:1 synchronization)
           const category = member.membership;
@@ -440,11 +445,11 @@ const CustomerJourney = () => {
             productDescription = "Membre PIF";
           }
           
-          // Create accounting transaction
+          // Create accounting transaction with member's contract date
           await supabase
             .from('accounting_transactions')
             .insert({
-              transaction_date: today,
+              transaction_date: format(transactionDate, "yyyy-MM-dd"),
               transaction_type: "revenue",
               category: category,
               client_name: member.name,
@@ -456,7 +461,7 @@ const CustomerJourney = () => {
               notes: "Synchronisé depuis Parcours Client",
               year: currentYear,
               month: currentMonth,
-              month_name: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date()),
+              month_name: monthNames[currentMonth - 1],
             });
         }
       }
