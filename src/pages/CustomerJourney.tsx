@@ -243,6 +243,7 @@ const CustomerJourney = () => {
           cash_collected: newMember.cash_collected,
           contract_signed_date: newMember.contract_signed_date,
           subscription_end_date: newMember.subscription_end_date,
+          exit_date: newMember.subscription_end_date, // Sync with subscription_end_date
         });
         
         // Create accounting transaction if cash collected
@@ -389,6 +390,16 @@ const CustomerJourney = () => {
         .eq('transaction_type', 'revenue');
         
       toast.success("Date de contrat mise à jour dans la comptabilité");
+    }
+    
+    // If updating subscription_end_date, sync with exit_date
+    if (field === "subscription_end_date") {
+      // Synchronize subscription_end_date with exit_date
+      await updateMemberInDb(id, { exit_date: value });
+      
+      if (value) {
+        toast.success("Date de fin d'abonnement synchronisée avec la date de sortie");
+      }
     }
     
     // If updating cash_collected, sync with accounting
