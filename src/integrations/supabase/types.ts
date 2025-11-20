@@ -221,6 +221,7 @@ export type Database = {
           onboarding_nutrition: boolean
           questionnaire_coaching: boolean
           session_introduction: boolean
+          subscription_end_date: string | null
           updated_at: string
         }
         Insert: {
@@ -237,6 +238,7 @@ export type Database = {
           onboarding_nutrition?: boolean
           questionnaire_coaching?: boolean
           session_introduction?: boolean
+          subscription_end_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -253,6 +255,7 @@ export type Database = {
           onboarding_nutrition?: boolean
           questionnaire_coaching?: boolean
           session_introduction?: boolean
+          subscription_end_date?: string | null
           updated_at?: string
         }
         Relationships: []

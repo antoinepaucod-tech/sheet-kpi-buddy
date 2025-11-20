@@ -14,6 +14,7 @@ import KPIClient from "./pages/KPIClient";
 import CourseKPI from "./pages/CourseKPI";
 import Accounting from "./pages/Accounting";
 import Tutorial from "./pages/Tutorial";
+import ExpiringSubscriptions from "./pages/ExpiringSubscriptions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
                     <Route path="/accounting" element={<Accounting />} />
                     <Route path="/customer-journey" element={<CustomerJourney />} />
                     <Route path="/kpi-client" element={<KPIClient />} />
+                    <Route path="/expiring-subscriptions" element={<ExpiringSubscriptions />} />
                     <Route path="/tutorial" element={<Tutorial />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
