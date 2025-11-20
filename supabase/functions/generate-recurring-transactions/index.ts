@@ -34,7 +34,7 @@ serve(async (req) => {
     const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
     const currentMonthName = monthNames[now.getMonth()];
 
-    // Monthly membership keywords - EXCLUDE annual payments
+    // Membership type keywords
     const monthlyKeywords = ['MENSUEL', 'PAIEMENT MENSUEL', 'THE COACH PASS MENSUEL'];
     const annualKeywords = ['ANNUEL', 'X1', 'PIF', 'PAIEMENT ANNUEL'];
 
@@ -54,23 +54,19 @@ serve(async (req) => {
     const transactionsToCreate = [];
 
     for (const member of members as Member[]) {
-      // Skip annual/PIF memberships - they are paid once, no monthly recurrence
+      // Check if membership is annual/PIF (generates 0 amount recurrence)
       const isAnnual = annualKeywords.some(keyword => 
         member.membership.toUpperCase().includes(keyword)
       );
 
-      if (isAnnual) {
-        console.log(`Skipping ${member.name} - annual membership (${member.membership}) - no monthly recurrence needed`);
-        continue;
-      }
-
-      // Check if membership is monthly
+      // Check if membership is monthly (generates recurrence with previous month amount)
       const isMonthly = monthlyKeywords.some(keyword => 
         member.membership.toUpperCase().includes(keyword)
       );
 
-      if (!isMonthly) {
-        console.log(`Skipping ${member.name} - not a monthly membership (${member.membership})`);
+      // Skip if neither annual nor monthly
+      if (!isAnnual && !isMonthly) {
+        console.log(`Skipping ${member.name} - membership type not recognized (${member.membership})`);
         continue;
       }
 
@@ -94,29 +90,38 @@ serve(async (req) => {
         continue;
       }
 
-      // Get the previous month's transaction to copy the amount
-      const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-      const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+      // Determine the amount based on membership type
+      let estimatedAmount = 0;
 
-      const { data: previousTransactions, error: prevError } = await supabase
-        .from('accounting_transactions')
-        .select('amount')
-        .eq('client_name', member.name)
-        .eq('year', previousYear)
-        .eq('month', previousMonth)
-        .eq('transaction_type', 'revenue')
-        .eq('category', member.membership)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      if (isAnnual) {
+        // Annual/PIF memberships always generate 0 amount recurring transactions
+        estimatedAmount = 0;
+        console.log(`Creating 0 amount recurring transaction for annual/PIF member: ${member.name}`);
+      } else {
+        // For monthly memberships, get the previous month's transaction to copy the amount
+        const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+        const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
-      if (prevError) {
-        console.error(`Error fetching previous transaction for ${member.name}:`, prevError);
+        const { data: previousTransactions, error: prevError } = await supabase
+          .from('accounting_transactions')
+          .select('amount')
+          .eq('client_name', member.name)
+          .eq('year', previousYear)
+          .eq('month', previousMonth)
+          .eq('transaction_type', 'revenue')
+          .eq('category', member.membership)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (prevError) {
+          console.error(`Error fetching previous transaction for ${member.name}:`, prevError);
+        }
+
+        // Use previous month's amount, or 0 if no previous transaction found
+        estimatedAmount = previousTransactions && previousTransactions.length > 0 
+          ? previousTransactions[0].amount 
+          : 0;
       }
-
-      // Use previous month's amount, or 0 if no previous transaction found
-      const estimatedAmount = previousTransactions && previousTransactions.length > 0 
-        ? previousTransactions[0].amount 
-        : 0;
 
       // Map member type to product description
       let productDescription = "Revenu EFT Général";
