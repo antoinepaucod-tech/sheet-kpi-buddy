@@ -180,6 +180,14 @@ export const useAccountingCategoriesWithRecurrence = () => {
             // Determine if member should have a recurring transaction
             let shouldGenerate = false;
             let amount = 0;
+            
+            // Check if this is an annual/paid-in-full membership
+            const isAnnualPaidInFull = [
+              'OPEN GYM - PAIEMENT ANNUEL X1',
+              'UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL',
+              'UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1',
+              'OFFRE 6 MOIS - 499 CHF'
+            ].includes(cat.name);
 
             // Check if member's contract started this month (new member - first transaction)
             if (member.contract_signed_date) {
@@ -203,7 +211,8 @@ export const useAccountingCategoriesWithRecurrence = () => {
             // OR check if member had a transaction last month (continuing membership)
             if (!shouldGenerate && carriedAmount !== undefined) {
               shouldGenerate = true;
-              amount = carriedAmount;
+              // For annual/paid-in-full memberships, recurring amount is 0
+              amount = isAnnualPaidInFull ? 0 : carriedAmount;
             }
 
             if (!shouldGenerate) {

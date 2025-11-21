@@ -37,6 +37,14 @@ serve(async (req) => {
     // Membership type keywords
     const monthlyKeywords = ['MENSUEL', 'PAIEMENT MENSUEL', 'THE COACH PASS MENSUEL'];
     const annualKeywords = ['ANNUEL', 'X1', 'PIF', 'PAIEMENT ANNUEL'];
+    
+    // Specific annual/paid-in-full memberships that should have 0 recurring amount
+    const annualPaidInFullMemberships = [
+      'OPEN GYM - PAIEMENT ANNUEL X1',
+      'UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL',
+      'UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1',
+      'OFFRE 6 MOIS - 499 CHF'
+    ];
 
     // Get all active members
     const { data: members, error: membersError } = await supabase
@@ -92,6 +100,9 @@ serve(async (req) => {
 
       // Determine the amount based on membership type
       let estimatedAmount = 0;
+      
+      // Check if this is a specific annual/paid-in-full membership
+      const isAnnualPaidInFull = annualPaidInFullMemberships.includes(member.membership);
 
       if (isAnnual) {
         // Annual/PIF memberships always generate 0 amount recurring transactions
@@ -117,10 +128,13 @@ serve(async (req) => {
           console.error(`Error fetching previous transaction for ${member.name}:`, prevError);
         }
 
-        // Use previous month's amount, or 0 if no previous transaction found
-        estimatedAmount = previousTransactions && previousTransactions.length > 0 
-          ? previousTransactions[0].amount 
-          : 0;
+        // If previous transaction exists and this is an annual/paid-in-full membership, use 0
+        // Otherwise use previous month's amount, or 0 if no previous transaction found
+        if (previousTransactions && previousTransactions.length > 0) {
+          estimatedAmount = isAnnualPaidInFull ? 0 : previousTransactions[0].amount;
+        } else {
+          estimatedAmount = 0;
+        }
       }
 
       // Map member type to product description
