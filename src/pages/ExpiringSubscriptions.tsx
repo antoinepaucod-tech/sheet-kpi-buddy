@@ -3,7 +3,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Bell } from "lucide-react";
+import { Bell, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -20,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface Member {
   id: string;
@@ -92,6 +94,27 @@ const ExpiringSubscriptions = () => {
     return "secondary";
   };
 
+  const handleRenewSubscription = async (member: Member, renewalMonths: number = 12) => {
+    if (!member.subscription_end_date) return;
+
+    const currentEndDate = new Date(member.subscription_end_date);
+    const newEndDate = addMonths(currentEndDate, renewalMonths);
+
+    const { error } = await supabase
+      .from('customer_members')
+      .update({ subscription_end_date: format(newEndDate, 'yyyy-MM-dd') })
+      .eq('id', member.id);
+
+    if (error) {
+      console.error("Error renewing subscription:", error);
+      toast.error("Erreur lors du renouvellement");
+      return;
+    }
+
+    toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}`);
+    loadExpiringSubscriptions();
+  };
+
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-6">
       <div className="flex items-center gap-3">
@@ -136,6 +159,7 @@ const ExpiringSubscriptions = () => {
                     <TableHead>Date de Signature</TableHead>
                     <TableHead>Date d'Expiration</TableHead>
                     <TableHead className="text-right">Jours Restants</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -164,6 +188,17 @@ const ExpiringSubscriptions = () => {
                           <Badge variant={getExpiryBadgeVariant(daysUntil)}>
                             {daysUntil === 0 ? "Aujourd'hui" : `${daysUntil} jour${daysUntil !== 1 ? 's' : ''}`}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRenewSubscription(member)}
+                            className="gap-2"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Renouveler (12 mois)
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
