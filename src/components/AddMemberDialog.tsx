@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus } from "lucide-react";
-import { format } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAccountingCategories } from "@/hooks/useAccountingCategories";
@@ -46,6 +46,7 @@ export interface MemberFormData {
   memberType: string;
   cashCollected: number;
   contractDate: Date | null;
+  subscriptionDurationMonths: number;
   subscriptionEndDate: Date | null;
   paymentMethod: string;
   invoiceNumber?: string;
@@ -61,6 +62,7 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
     memberType: "",
     cashCollected: 0,
     contractDate: new Date(),
+    subscriptionDurationMonths: 12,
     subscriptionEndDate: null,
     paymentMethod: "Prélèvement Automatique",
     invoiceNumber: "",
@@ -77,6 +79,7 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
         memberType: "",
         cashCollected: 0,
         contractDate: new Date(),
+        subscriptionDurationMonths: 12,
         subscriptionEndDate: null,
         paymentMethod: "Prélèvement Automatique",
         invoiceNumber: "",
@@ -195,7 +198,16 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
                   <Calendar
                     mode="single"
                     selected={formData.contractDate || undefined}
-                    onSelect={(date) => setFormData({ ...formData, contractDate: date || null })}
+                    onSelect={(date) => {
+                      const endDate = date && formData.subscriptionDurationMonths > 0
+                        ? addMonths(date, formData.subscriptionDurationMonths)
+                        : null;
+                      setFormData({ 
+                        ...formData, 
+                        contractDate: date || null,
+                        subscriptionEndDate: endDate
+                      });
+                    }}
                     locale={fr}
                     initialFocus
                   />
@@ -203,36 +215,40 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
               </Popover>
             </div>
 
-            {/* Date de fin d'abonnement */}
+            {/* Durée d'abonnement */}
             <div className="space-y-2">
-              <Label htmlFor="subscriptionEndDate">Date de Fin d'Abonnement</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.subscriptionEndDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.subscriptionEndDate ? (
-                      format(formData.subscriptionEndDate, "dd MMMM yyyy", { locale: fr })
-                    ) : (
-                      <span>Sélectionner une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.subscriptionEndDate || undefined}
-                    onSelect={(date) => setFormData({ ...formData, subscriptionEndDate: date || null })}
-                    locale={fr}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="subscriptionDuration">Durée d'Abonnement</Label>
+              <Select
+                value={formData.subscriptionDurationMonths.toString()}
+                onValueChange={(value) => {
+                  const months = parseInt(value);
+                  const endDate = formData.contractDate 
+                    ? new Date(formData.contractDate.getFullYear(), formData.contractDate.getMonth() + months, formData.contractDate.getDate())
+                    : null;
+                  setFormData({ 
+                    ...formData, 
+                    subscriptionDurationMonths: months,
+                    subscriptionEndDate: endDate
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((months) => (
+                    <SelectItem key={months} value={months.toString()}>
+                      {months} mois après signature
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="0">Sans échéance</SelectItem>
+                </SelectContent>
+              </Select>
+              {formData.subscriptionEndDate && formData.subscriptionDurationMonths > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Date de fin: {format(formData.subscriptionEndDate, "dd MMMM yyyy", { locale: fr })}
+                </p>
+              )}
             </div>
           </div>
 
