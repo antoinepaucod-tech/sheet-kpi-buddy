@@ -44,6 +44,7 @@ interface MembershipCategoryCardProps {
   onDeleteMember: (id: string) => void;
   membershipTypes: string[];
   getMembershipStyle: (membership: string) => { bg: string; text: string; border: string };
+  getMemberEngagement?: (member: Member) => 'high' | 'medium' | 'low' | 'at-risk';
 }
 
 export const MembershipCategoryCard = ({
@@ -56,8 +57,18 @@ export const MembershipCategoryCard = ({
   onDeleteMember,
   membershipTypes,
   getMembershipStyle,
+  getMemberEngagement,
 }: MembershipCategoryCardProps) => {
   const [isOpen, setIsOpen] = useState(true);
+
+  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk') => {
+    switch (engagement) {
+      case 'high': return 'border-l-4 border-l-green-500 bg-green-500/5';
+      case 'medium': return 'border-l-4 border-l-yellow-500 bg-yellow-500/5';
+      case 'low': return 'border-l-4 border-l-orange-500 bg-orange-500/5';
+      case 'at-risk': return 'border-l-4 border-l-red-500 bg-red-500/5';
+    }
+  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -131,8 +142,9 @@ export const MembershipCategoryCard = ({
                 <TableBody>
                   {members.map((member, index) => {
                     const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
+                    const engagement = getMemberEngagement ? getMemberEngagement(member) : 'medium';
                     return (
-                      <TableRow key={member.id}>
+                      <TableRow key={member.id} className={cn(getMemberEngagement && getEngagementStyle(engagement))}>
                         <TableCell className="text-center font-medium text-muted-foreground">
                           {index + 1}
                         </TableCell>
