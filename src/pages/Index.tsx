@@ -8,8 +8,6 @@ import { KPISummaryCard } from "@/components/KPISummaryCard";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { VideoBackground } from "@/components/VideoBackground";
-import { VideoSettings } from "@/components/VideoSettings";
 import { MonthlyDataInput } from "@/components/MonthlyDataInput";
 import { EmailReminderButton } from "@/components/EmailReminderButton";
 import { Button } from "@/components/ui/button";
@@ -49,11 +47,6 @@ const Index = () => {
   
   const currentMonth = getCurrentMonthData() || monthlyData[currentMonthIndex];
   const previousMonth = monthlyData[currentMonthIndex === 0 ? 11 : currentMonthIndex - 1];
-  
-  const [videoConfig, setVideoConfig] = useState(() => {
-    const saved = localStorage.getItem("video-config");
-    return saved ? JSON.parse(saved) : { url: "", overlayOpacity: 0.7, enabled: false };
-  });
 
   const saveMonthData = async (data: any) => {
     const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue + data.cash_collected;
@@ -205,84 +198,78 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10">
-        <VideoBackground 
-          videoUrl="/videos/fitness-background.mp4"
-          overlayOpacity={0.4}
-        >
-          <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-display mb-1 sm:mb-2">
-                  {t('header.title')}
-                </h1>
-                <p className="text-muted-foreground text-xs sm:text-sm tracking-wide">
-                  {t('header.subtitle')}
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                <MonthlyDataInput 
-                  monthData={currentMonth} 
-                  monthLabel={MONTHS[currentMonthIndex]} 
-                  onSave={saveMonthData}
-                />
-                <EmailReminderButton />
-                <VideoSettings onConfigChange={setVideoConfig} />
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/annual')}
-                  className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5 text-xs sm:text-sm"
-                  size="sm"
-                >
-                  <span className="hidden sm:inline">{t('header.annualView')}</span>
-                  <span className="sm:hidden">Annuel</span>
-                </Button>
-                <LanguageToggle />
-                <ThemeToggle />
-              </div>
+      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10 bg-background/95">
+        <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-display mb-1 sm:mb-2">
+                {t('header.title')}
+              </h1>
+              <p className="text-muted-foreground text-xs sm:text-sm tracking-wide">
+                {t('header.subtitle')}
+              </p>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
-              <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
-                <SelectTrigger className="w-[120px] bg-muted/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2026">2026</SelectItem>
-                  <SelectItem value="2027">2027</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={goToPreviousMonth}
-                  className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
-                >
-                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-1.5 sm:py-2 bg-muted/50 rounded-lg min-w-[140px] sm:min-w-[180px] justify-center">
-                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm sm:text-lg tracking-wide">
-                    {MONTHS[currentMonthIndex].toUpperCase()}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={goToNextMonth}
-                  className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
-                >
-                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </div>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              <MonthlyDataInput 
+                monthData={currentMonth} 
+                monthLabel={MONTHS[currentMonthIndex]} 
+                onSave={saveMonthData}
+              />
+              <EmailReminderButton />
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/annual')}
+                className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5 text-xs sm:text-sm"
+                size="sm"
+              >
+                <span className="hidden sm:inline">{t('header.annualView')}</span>
+                <span className="sm:hidden">Annuel</span>
+              </Button>
+              <LanguageToggle />
+              <ThemeToggle />
             </div>
           </div>
-        </VideoBackground>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+            <Select value={currentYear.toString()} onValueChange={(value) => setCurrentYear(parseInt(value))}>
+              <SelectTrigger className="w-[120px] bg-muted/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToPreviousMonth}
+                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
+              >
+                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-1.5 sm:py-2 bg-muted/50 rounded-lg min-w-[140px] sm:min-w-[180px] justify-center">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span className="font-medium text-sm sm:text-lg tracking-wide">
+                  {MONTHS[currentMonthIndex].toUpperCase()}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToNextMonth}
+                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-foreground/5"
+              >
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </header>
 
       {/* Main Content */}
