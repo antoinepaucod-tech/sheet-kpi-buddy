@@ -4,8 +4,6 @@ import { MetricCard } from '@/components/MetricCard';
 import { KPIChart } from '@/components/KPIChart';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { VideoBackground } from '@/components/VideoBackground';
-import { VideoSettings } from '@/components/VideoSettings';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   DollarSign, 
@@ -30,11 +28,6 @@ const Annual = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const { annualData, monthlyData, isLoading } = useAnnualKPIData(selectedYear);
   const { t } = useTranslations();
-  
-  const [videoConfig, setVideoConfig] = useState(() => {
-    const saved = localStorage.getItem("video-config");
-    return saved ? JSON.parse(saved) : { url: "", overlayOpacity: 0.7, enabled: false };
-  });
 
   const formatCurrency = (value: number) => {
     return `${t('currency')} ${new Intl.NumberFormat('fr-CH', {
@@ -125,52 +118,44 @@ const Annual = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10">
-        <VideoBackground 
-          videoUrl="/videos/fitness-background.mp4"
-          overlayOpacity={0.4}
-        >
-          <div className="container mx-auto px-6 py-6">
-            <div className="flex items-center justify-between gap-8">
-              <div className="flex-1 flex items-center gap-4">
-                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                  <SelectTrigger className="w-[120px] bg-muted/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2025">2025</SelectItem>
-                    <SelectItem value="2026">2026</SelectItem>
-                    <SelectItem value="2027">2027</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <div>
-                  <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
-                    {t('annual.title')} {selectedYear}
-                  </h1>
-                  <p className="text-muted-foreground text-sm tracking-wide">
-                    {t('annual.subtitle')}
-                  </p>
-                </div>
-              </div>
+      <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10 bg-background/95">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between gap-8">
+            <div className="flex-1 flex items-center gap-4">
+              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                <SelectTrigger className="w-[120px] bg-muted/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                  <SelectItem value="2027">2027</SelectItem>
+                </SelectContent>
+              </Select>
               
-              <div className="flex items-center gap-2">
-                <Link to="/">
-                  <Button variant="outline" className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('header.monthlyView')}
-                  </Button>
-                </Link>
-                <VideoSettings onConfigChange={setVideoConfig} />
-                <LanguageToggle />
-                <ThemeToggle />
+              <div>
+                <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
+                  {t('annual.title')} {selectedYear}
+                </h1>
+                <p className="text-muted-foreground text-sm tracking-wide">
+                  {t('annual.subtitle')}
+                </p>
               </div>
             </div>
             
-            {/* Spacer to match monthly view height */}
-            <div className="h-[52px]"></div>
+            <div className="flex items-center gap-2">
+              <Link to="/kpi-revenue">
+                <Button variant="outline" className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {t('header.monthlyView')}
+                </Button>
+              </Link>
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
           </div>
-        </VideoBackground>
+        </div>
       </header>
 
       {/* Main Content */}
