@@ -1,9 +1,13 @@
+import { useMemo } from 'react';
 import { useAnnualKPIData } from '@/hooks/useAnnualKPIData';
 import { useTranslations } from '@/hooks/useTranslations';
 import { MetricCard } from '@/components/MetricCard';
-import { KPIChart } from '@/components/KPIChart';
+import { InteractiveChart } from '@/components/InteractiveChart';
+import { KPISummaryCard } from '@/components/KPISummaryCard';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   DollarSign, 
@@ -12,13 +16,12 @@ import {
   Activity,
   UserPlus,
   UserMinus,
-  Phone,
-  Calendar,
-  Eye,
   Target,
   Wallet,
   PiggyBank,
-  ArrowLeft
+  ArrowLeft,
+  BarChart3,
+  PieChart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -40,6 +43,94 @@ const Annual = () => {
     return `${value.toFixed(1)}%`;
   };
 
+  // Calculated metrics
+  const closeRate = annualData && annualData.show > 0 ? (annualData.close / annualData.show) * 100 : 0;
+  const profitMargin = annualData && annualData.totalRevenue > 0 ? (annualData.profit / annualData.totalRevenue) * 100 : 0;
+  const roAds = annualData && annualData.adSpend > 0 ? (annualData.cashCollected / annualData.adSpend) * 100 : 0;
+  const avgPerSale = annualData && annualData.close > 0 ? annualData.cashCollected / annualData.close : 0;
+
+  // Summary items
+  const summaryItems = useMemo(() => {
+    if (!annualData) return [];
+    return [
+      {
+        label: "Revenus Totaux",
+        value: formatCurrency(annualData.totalRevenue),
+        currentValue: annualData.totalRevenue,
+        previousValue: 0,
+      },
+      {
+        label: "Profit",
+        value: formatCurrency(annualData.profit),
+        currentValue: annualData.profit,
+        previousValue: 0,
+      },
+      {
+        label: "Membres Actifs",
+        value: annualData.totalActiveMembers,
+        currentValue: annualData.totalActiveMembers,
+        previousValue: 0,
+      },
+      {
+        label: "Conversions",
+        value: annualData.close,
+        currentValue: annualData.close,
+        previousValue: 0,
+      },
+      {
+        label: "Cash Collecté",
+        value: formatCurrency(annualData.cashCollected),
+        currentValue: annualData.cashCollected,
+        previousValue: 0,
+      },
+      {
+        label: "ROI Ads",
+        value: `${roAds.toFixed(0)}%`,
+        currentValue: roAds,
+        previousValue: 0,
+      },
+    ];
+  }, [annualData, roAds]);
+
+  // Chart data
+  const revenueChartData = useMemo(() => monthlyData.map((month) => ({
+    month: month.month_name,
+    totalRevenue: Number(month.total_revenue || 0),
+    profit: Number(month.profit || 0),
+    expenses: Number(month.total_expenses || 0),
+  })), [monthlyData]);
+
+  const expensesChartData = useMemo(() => monthlyData.map((month) => ({
+    month: month.month_name,
+    adSpend: Number(month.ad_spend || 0),
+    rent: Number(month.rent || 0),
+    software: Number(month.computer_software || 0),
+    salaries: Number(month.salaries || 0),
+    salariesCoach: Number(month.salaries_coach || 0),
+  })), [monthlyData]);
+
+  const membersChartData = useMemo(() => monthlyData.map((month) => ({
+    month: month.month_name,
+    recurringGeneralMembers: Number(month.recurring_general_members || 0),
+    ptMembers: Number(month.pt_members || 0),
+    pifMembers: Number(month.pif_members || 0),
+  })), [monthlyData]);
+
+  const funnelChartData = useMemo(() => monthlyData.map((month) => ({
+    month: month.month_name,
+    leads: Number(month.leads || 0),
+    scheduled: Number(month.scheduled || 0),
+    show: Number(month.show || 0),
+    close: Number(month.close || 0),
+  })), [monthlyData]);
+
+  const churnChartData = useMemo(() => monthlyData.map((month) => ({
+    month: month.month_name,
+    pifChurn: Number(month.pif_churn || 0),
+    generalChurn: Number(month.general_churn || 0),
+    ptChurn: Number(month.pt_churn || 0),
+  })), [monthlyData]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -52,8 +143,8 @@ const Annual = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-lg">{t('empty.noData')} {new Date().getFullYear()}</p>
-          <Link to="/">
+          <p className="text-lg">{t('empty.noData')} {selectedYear}</p>
+          <Link to="/kpi-revenue">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t('button.back')}
@@ -64,66 +155,15 @@ const Annual = () => {
     );
   }
 
-  const schedRate = annualData.leads > 0 ? (annualData.scheduled / annualData.leads) * 100 : 0;
-  const showRate = annualData.scheduled > 0 ? (annualData.show / annualData.scheduled) * 100 : 0;
-  const closeRate = annualData.show > 0 ? (annualData.close / annualData.show) * 100 : 0;
-  const avgPerSale = annualData.close > 0 ? annualData.cashCollected / annualData.close : 0;
-  const organicCloseRate = annualData.organicLeads > 0 ? (annualData.organicClose / annualData.organicLeads) * 100 : 0;
-  const conversionRate = annualData.trialEnding > 0 ? (annualData.converted / annualData.trialEnding) * 100 : 0;
-  const profitMargin = annualData.totalRevenue > 0 ? (annualData.profit / annualData.totalRevenue) * 100 : 0;
-  const cac = annualData.close > 0 ? annualData.adSpend / annualData.close : 0;
-  const roAds = annualData.adSpend > 0 ? (annualData.cashCollected / annualData.adSpend) * 100 : 0;
-
-  // Prepare chart data
-  const revenueChartData = monthlyData.map((month) => ({
-    month: month.month_name,
-    revenuTotal: Number(month.total_revenue || 0),
-    generalEFT: Number(month.general_eft_revenue || 0),
-    pt: Number(month.pt_revenue || 0),
-    retail: Number(month.retail_revenue || 0),
-    cashCollecte: Number(month.cash_collected || 0),
-  }));
-
-  const membersChartData = monthlyData.map((month) => ({
-    month: month.month_name,
-    totalActifs: Number(month.total_active_members || 0),
-    pif: Number(month.pif_members || 0),
-    general: Number(month.recurring_general_members || 0),
-    pt: Number(month.pt_members || 0),
-  }));
-
-  const salesFunnelChartData = monthlyData.map((month) => ({
-    month: month.month_name,
-    leads: Number(month.leads || 0),
-    appels: Number(month.calls_made || 0),
-    rdv: Number(month.scheduled || 0),
-    presents: Number(month.show || 0),
-    ventes: Number(month.close || 0),
-  }));
-
-  const financialChartData = monthlyData.map((month) => ({
-    month: month.month_name,
-    revenu: Number(month.total_revenue || 0),
-    depenses: Number(month.total_expenses || 0),
-    profit: Number(month.profit || 0),
-  }));
-
-  const churnChartData = monthlyData.map((month) => ({
-    month: month.month_name,
-    pifChurn: Number(month.pif_churn || 0),
-    generalChurn: Number(month.general_churn || 0),
-    ptChurn: Number(month.pt_churn || 0),
-  }));
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/50 backdrop-blur-md sticky top-0 z-10 bg-background/95">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between gap-8">
+        <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1 flex items-center gap-4">
               <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger className="w-[120px] bg-muted/50">
+                <SelectTrigger className="w-[100px] bg-muted/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -135,20 +175,21 @@ const Annual = () => {
               </Select>
               
               <div>
-                <h1 className="text-4xl font-semibold tracking-tight text-display mb-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-display mb-1">
                   {t('annual.title')} {selectedYear}
                 </h1>
-                <p className="text-muted-foreground text-sm tracking-wide">
+                <p className="text-muted-foreground text-xs sm:text-sm tracking-wide">
                   {t('annual.subtitle')}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Link to="/kpi-revenue">
-                <Button variant="outline" className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5">
+                <Button variant="outline" size="sm" className="whitespace-nowrap border-foreground/20 hover:bg-foreground/5">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  {t('header.monthlyView')}
+                  <span className="hidden sm:inline">{t('header.monthlyView')}</span>
+                  <span className="sm:hidden">Mensuel</span>
                 </Button>
               </Link>
               <LanguageToggle />
@@ -159,418 +200,477 @@ const Annual = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 space-y-10">
+      <main className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+        {/* Summary Card */}
+        <KPISummaryCard 
+          items={summaryItems} 
+          title={`Résumé Annuel ${selectedYear}`} 
+        />
 
-          {/* Key Metrics Overview */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.keyMetrics')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                title={t('metric.totalRevenue')}
-                value={formatCurrency(annualData.totalRevenue)}
-                icon={DollarSign}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.profit')}
-                value={formatCurrency(annualData.profit)}
-                icon={PiggyBank}
-                trend={profitMargin}
-                suffix={` (${formatPercentage(profitMargin)})`}
-                variant={annualData.profit > 0 ? "success" : "destructive"}
-              />
-              <MetricCard
-                title={t('metric.activeMembers')}
-                value={annualData.totalActiveMembers}
-                icon={Users}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.conversionRate')}
-                value={formatPercentage(closeRate)}
-                icon={Target}
-                variant={closeRate > 50 ? "success" : "warning"}
-              />
-            </div>
-          </section>
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="revenue" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+            <TabsTrigger value="revenue" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Revenus</span>
+              <span className="sm:hidden">€</span>
+            </TabsTrigger>
+            <TabsTrigger value="funnel" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+              <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Funnel</span>
+              <span className="sm:hidden">F</span>
+            </TabsTrigger>
+            <TabsTrigger value="members" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Membres</span>
+              <span className="sm:hidden">M</span>
+            </TabsTrigger>
+            <TabsTrigger value="metrics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Métriques</span>
+              <span className="sm:hidden">KPI</span>
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Revenue Breakdown */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.revenueBreakdown')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                title={t('metric.generalEftRevenue')}
-                value={formatCurrency(annualData.generalEFTRevenue)}
-                icon={DollarSign}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.ptRevenue')}
-                value={formatCurrency(annualData.ptRevenue)}
-                icon={DollarSign}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.retailRevenue')}
-                value={formatCurrency(annualData.retailRevenue)}
-                icon={DollarSign}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.cashCollected')}
-                value={formatCurrency(annualData.cashCollected)}
-                icon={Wallet}
-                variant="default"
-              />
-            </div>
-            {revenueChartData.length > 0 && (
-              <KPIChart
-                title={t('annual.monthlyEvolutionRevenue')}
+          {/* Revenue Tab */}
+          <TabsContent value="revenue" className="space-y-4">
+            <CollapsibleSection 
+              title="Métriques Clés" 
+              icon={Wallet}
+              badge={formatCurrency(annualData.totalRevenue)}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.totalRevenue')}
+                  value={formatCurrency(annualData.totalRevenue)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.profit')}
+                  value={formatCurrency(annualData.profit)}
+                  icon={TrendingUp}
+                  variant={annualData.profit > 0 ? "success" : "destructive"}
+                  suffix={` (${formatPercentage(profitMargin)})`}
+                />
+                <MetricCard
+                  title="Cash Collecté"
+                  value={formatCurrency(annualData.cashCollected)}
+                  icon={Wallet}
+                  variant="default"
+                />
+                <MetricCard
+                  title="Dépenses"
+                  value={formatCurrency(annualData.totalExpenses)}
+                  icon={PieChart}
+                  variant="warning"
+                />
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Évolution Revenus/Profit/Dépenses" 
+              icon={TrendingUp}
+            >
+              <InteractiveChart
                 data={revenueChartData}
-                type="bar"
-                dataKeys={[
-                  { key: "revenuTotal", name: t('chart.totalRevenue'), color: "hsl(var(--primary))" },
-                  { key: "generalEFT", name: t('chart.generalEFT'), color: "hsl(var(--chart-1))" },
-                  { key: "pt", name: t('chart.pt'), color: "hsl(var(--chart-2))" },
-                  { key: "retail", name: t('chart.retail'), color: "hsl(var(--chart-3))" },
-                  { key: "cashCollecte", name: t('chart.cashCollected'), color: "hsl(var(--chart-4))" },
-                ]}
-              />
-            )}
-          </section>
-
-          {/* Members Overview */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.members')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                title={t('metric.activeMembers')}
-                value={annualData.totalActiveMembers}
-                icon={Users}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.pifMembers')}
-                value={annualData.pifMembers}
-                icon={Users}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.generalMembers')}
-                value={annualData.recurringGeneralMembers}
-                icon={Users}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.ptMembers')}
-                value={annualData.ptMembers}
-                icon={Users}
-                variant="default"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                title={t('metric.totalExits')}
-                value={annualData.totalExits}
-                icon={UserMinus}
-                variant="destructive"
-              />
-              <MetricCard
-                title={t('metric.pifExits')}
-                value={annualData.pifExits}
-                icon={UserMinus}
-                variant="destructive"
-              />
-              <MetricCard
-                title={t('metric.generalExits')}
-                value={annualData.generalExits}
-                icon={UserMinus}
-                variant="destructive"
-              />
-              <MetricCard
-                title={t('metric.ptExits')}
-                value={annualData.ptExits}
-                icon={UserMinus}
-                variant="destructive"
-              />
-            </div>
-            {membersChartData.length > 0 && (
-              <KPIChart
-                title={t('annual.monthlyEvolutionMembers')}
-                data={membersChartData}
-                type="bar"
-                dataKeys={[
-                  { key: "totalActifs", name: t('chart.totalActive'), color: "hsl(var(--primary))" },
-                  { key: "pif", name: t('chart.pif'), color: "hsl(var(--chart-1))" },
-                  { key: "general", name: t('chart.general'), color: "hsl(var(--chart-2))" },
-                  { key: "pt", name: t('chart.pt'), color: "hsl(var(--chart-3))" },
-                ]}
-              />
-            )}
-          </section>
-
-          {/* Sales Funnel */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.salesFunnel')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                title={t('metric.leads')}
-                value={annualData.leads}
-                icon={UserPlus}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.calls')}
-                value={annualData.callsMade}
-                icon={Phone}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.appointments')}
-                value={annualData.scheduled}
-                icon={Calendar}
-                trend={schedRate}
-                suffix={` (${formatPercentage(schedRate)})`}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.present')}
-                value={annualData.show}
-                icon={Eye}
-                trend={showRate}
-                suffix={` (${formatPercentage(showRate)})`}
-                variant="default"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <MetricCard
-                title={t('metric.salesClosed')}
-                value={annualData.close}
-                icon={Target}
-                trend={closeRate}
-                suffix={` (${formatPercentage(closeRate)})`}
-                variant={closeRate > 50 ? "success" : "default"}
-              />
-              <MetricCard
-                title={t('metric.cashCollected')}
-                value={formatCurrency(annualData.cashCollected)}
-                icon={Wallet}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.avgPerSale')}
-                value={formatCurrency(avgPerSale)}
-                icon={DollarSign}
-                variant="default"
-              />
-            </div>
-            {salesFunnelChartData.length > 0 && (
-              <KPIChart
-                title={t('annual.monthlyEvolutionSales')}
-                data={salesFunnelChartData}
-                type="bar"
-                dataKeys={[
-                  { key: "leads", name: t('chart.leads'), color: "hsl(var(--chart-1))" },
-                  { key: "appels", name: t('chart.calls'), color: "hsl(var(--chart-2))" },
-                  { key: "rdv", name: t('chart.rdv'), color: "hsl(var(--chart-3))" },
-                  { key: "presents", name: t('chart.present'), color: "hsl(var(--chart-4))" },
-                  { key: "ventes", name: t('chart.sales'), color: "hsl(var(--primary))" },
-                ]}
-              />
-            )}
-          </section>
-
-          {/* Organic & Trials */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.organicTrials')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                title={t('metric.organicLeads')}
-                value={annualData.organicLeads}
-                icon={UserPlus}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.organicSales')}
-                value={annualData.organicClose}
-                icon={Target}
-                trend={organicCloseRate}
-                suffix={` (${formatPercentage(organicCloseRate)})`}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.organicCash')}
-                value={formatCurrency(annualData.organicCashCollected)}
-                icon={Wallet}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.trialsConverted')}
-                value={annualData.converted}
-                icon={TrendingUp}
-                trend={conversionRate}
-                suffix={` (${formatPercentage(conversionRate)})`}
-                variant={conversionRate > 50 ? "success" : "default"}
-              />
-            </div>
-          </section>
-
-          {/* Financial Summary */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.financialSummary')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <MetricCard
-                title={t('metric.adSpend')}
-                value={formatCurrency(annualData.adSpend)}
-                icon={DollarSign}
-                variant="destructive"
-              />
-              <MetricCard
-                title={t('metric.totalExpenses')}
-                value={formatCurrency(annualData.totalExpenses)}
-                icon={DollarSign}
-                variant="destructive"
-              />
-              <MetricCard
-                title={t('metric.profit')}
-                value={formatCurrency(annualData.profit)}
-                icon={PiggyBank}
-                trend={profitMargin}
-                suffix={` (${formatPercentage(profitMargin)})`}
-                variant={annualData.profit > 0 ? "success" : "destructive"}
-              />
-              <MetricCard
-                title={t('metric.cac')}
-                value={formatCurrency(cac)}
-                icon={DollarSign}
-                variant={cac < 100 ? "success" : "warning"}
-              />
-              <MetricCard
-                title={t('metric.roAds')}
-                value={formatPercentage(roAds)}
-                icon={TrendingUp}
-                variant={roAds > 200 ? "success" : roAds > 100 ? "warning" : "destructive"}
-              />
-            </div>
-            {financialChartData.length > 0 && (
-              <KPIChart
-                title={t('annual.monthlyFinancial')}
-                data={financialChartData}
-                type="bar"
-                dataKeys={[
-                  { key: "revenu", name: t('chart.revenue'), color: "hsl(var(--chart-1))" },
-                  { key: "depenses", name: t('chart.expenses'), color: "hsl(var(--destructive))" },
-                  { key: "profit", name: t('chart.profit'), color: "hsl(var(--primary))" },
-                ]}
-              />
-            )}
-          </section>
-
-          {/* Additional Metrics */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.additionalMetrics')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                title={t('metric.totalClasses')}
-                value={annualData.totalClasses}
-                icon={Activity}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.cpl')}
-                value={formatCurrency(annualData.cpl)}
-                icon={DollarSign}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.cpr')}
-                value={formatCurrency(annualData.cpr)}
-                icon={DollarSign}
-                variant="default"
-              />
-              <MetricCard
-                title={t('metric.inTrial')}
-                value={annualData.inTrial}
-                icon={Users}
-                variant="default"
-              />
-            </div>
-          </section>
-
-          {/* Churn Rates */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.churnRates')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <MetricCard
-                title={t('metric.pifChurn')}
-                value={formatPercentage(annualData.pifChurn)}
-                icon={Users}
-                variant={annualData.pifChurn < 5 ? "success" : annualData.pifChurn < 10 ? "warning" : "destructive"}
-              />
-              <MetricCard
-                title={t('metric.generalChurn')}
-                value={formatPercentage(annualData.generalChurn)}
-                icon={Users}
-                variant={annualData.generalChurn < 5 ? "success" : annualData.generalChurn < 10 ? "warning" : "destructive"}
-              />
-              <MetricCard
-                title={t('metric.ptChurn')}
-                value={formatPercentage(annualData.ptChurn)}
-                icon={Users}
-                variant={annualData.ptChurn < 5 ? "success" : annualData.ptChurn < 10 ? "warning" : "destructive"}
-              />
-            </div>
-            {churnChartData.length > 0 && (
-              <KPIChart
-                title={t('annual.monthlyChurn')}
-                data={churnChartData}
+                title=""
                 type="line"
+                height={350}
+                showComparison
+                comparisonLabel="Moyenne"
                 dataKeys={[
-                  { key: "pifChurn", name: t('chart.pifChurn'), color: "hsl(var(--chart-1))" },
-                  { key: "generalChurn", name: t('chart.generalChurn'), color: "hsl(var(--chart-2))" },
-                  { key: "ptChurn", name: t('chart.ptChurn'), color: "hsl(var(--chart-3))" },
+                  { key: 'totalRevenue', name: 'Revenus', color: 'hsl(220, 90%, 56%)' },
+                  { key: 'profit', name: 'Profit', color: 'hsl(142, 76%, 36%)' },
+                  { key: 'expenses', name: 'Dépenses', color: 'hsl(0, 84%, 60%)' },
                 ]}
               />
-            )}
-          </section>
+            </CollapsibleSection>
 
-          {/* Advanced Metrics */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-medium text-heading tracking-tight">{t('section.advancedMetrics')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <MetricCard
-                title={t('metric.generalAcrm')}
-                value={formatCurrency(annualData.generalACRM)}
-                icon={DollarSign}
-                variant="default"
+            <CollapsibleSection 
+              title="Détail des Revenus" 
+              icon={DollarSign}
+              defaultOpen={false}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                <MetricCard
+                  title={t('metric.generalEftRevenue')}
+                  value={formatCurrency(annualData.generalEFTRevenue)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.ptRevenue')}
+                  value={formatCurrency(annualData.ptRevenue)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.retailRevenue')}
+                  value={formatCurrency(annualData.retailRevenue)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title="Moyenne/Vente"
+                  value={formatCurrency(avgPerSale)}
+                  icon={PiggyBank}
+                  variant="default"
+                />
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Détail des Dépenses" 
+              icon={PieChart}
+              defaultOpen={false}
+            >
+              <InteractiveChart
+                data={expensesChartData}
+                title=""
+                type="bar"
+                height={350}
+                dataKeys={[
+                  { key: 'adSpend', name: 'Publicité', color: 'hsl(0, 84%, 60%)' },
+                  { key: 'rent', name: 'Loyer', color: 'hsl(221, 83%, 53%)' },
+                  { key: 'software', name: 'Software', color: 'hsl(262, 83%, 58%)' },
+                  { key: 'salaries', name: 'Salaires', color: 'hsl(173, 58%, 39%)' },
+                  { key: 'salariesCoach', name: 'Salaires Coach', color: 'hsl(142, 71%, 45%)' },
+                ]}
               />
-              <MetricCard
-                title={t('metric.generalLtv')}
-                value={formatCurrency(annualData.generalLTV)}
-                icon={TrendingUp}
-                variant="success"
+            </CollapsibleSection>
+          </TabsContent>
+
+          {/* Funnel Tab */}
+          <TabsContent value="funnel" className="space-y-4">
+            <CollapsibleSection 
+              title="Entonnoir de Vente" 
+              icon={Target}
+              badge={`${annualData.close} conversions`}
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.leads')}
+                  value={annualData.leads}
+                  icon={UserPlus}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.scheduled')}
+                  value={annualData.scheduled}
+                  icon={Activity}
+                  suffix={annualData.leads > 0 ? ` (${Math.round((annualData.scheduled / annualData.leads) * 100)}%)` : ''}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.show')}
+                  value={annualData.show}
+                  icon={Target}
+                  suffix={annualData.scheduled > 0 ? ` (${Math.round((annualData.show / annualData.scheduled) * 100)}%)` : ''}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.close')}
+                  value={annualData.close}
+                  icon={TrendingUp}
+                  suffix={annualData.show > 0 ? ` (${Math.round((annualData.close / annualData.show) * 100)}%)` : ''}
+                  variant="success"
+                />
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Évolution Funnel" 
+              icon={BarChart3}
+            >
+              <InteractiveChart
+                data={funnelChartData}
+                title=""
+                type="bar"
+                height={350}
+                dataKeys={[
+                  { key: 'leads', name: 'Leads', color: 'hsl(220, 90%, 56%)' },
+                  { key: 'scheduled', name: 'RDV', color: 'hsl(262, 83%, 58%)' },
+                  { key: 'show', name: 'Présents', color: 'hsl(48, 96%, 53%)' },
+                  { key: 'close', name: 'Ventes', color: 'hsl(142, 76%, 36%)' },
+                ]}
               />
-              <MetricCard
-                title={t('metric.ptAcrm')}
-                value={formatCurrency(annualData.ptACRM)}
-                icon={DollarSign}
-                variant="default"
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Métriques Publicitaires" 
+              icon={DollarSign}
+              defaultOpen={false}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.adSpend')}
+                  value={formatCurrency(annualData.adSpend)}
+                  icon={DollarSign}
+                  variant="destructive"
+                />
+                <MetricCard
+                  title="CPL"
+                  value={formatCurrency(annualData.cpl)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title="CPR"
+                  value={formatCurrency(annualData.cpr)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title="ROI Ads"
+                  value={formatPercentage(roAds)}
+                  icon={TrendingUp}
+                  variant={roAds > 200 ? "success" : roAds > 100 ? "warning" : "destructive"}
+                />
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Organique & Essais" 
+              icon={UserPlus}
+              defaultOpen={false}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.organicLeads')}
+                  value={annualData.organicLeads}
+                  icon={UserPlus}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.organicSales')}
+                  value={annualData.organicClose}
+                  icon={Target}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.organicCash')}
+                  value={formatCurrency(annualData.organicCashCollected)}
+                  icon={Wallet}
+                  variant="default"
+                />
+                <MetricCard
+                  title="En Essai"
+                  value={annualData.inTrial}
+                  icon={Users}
+                  variant="default"
+                />
+              </div>
+            </CollapsibleSection>
+          </TabsContent>
+
+          {/* Members Tab */}
+          <TabsContent value="members" className="space-y-4">
+            <CollapsibleSection 
+              title="Membres Actifs" 
+              icon={Users}
+              badge={`${annualData.totalActiveMembers} membres`}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.activeMembers')}
+                  value={annualData.totalActiveMembers}
+                  icon={Users}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.pifMembers')}
+                  value={annualData.pifMembers}
+                  icon={Users}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.generalMembers')}
+                  value={annualData.recurringGeneralMembers}
+                  icon={Users}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.ptMembers')}
+                  value={annualData.ptMembers}
+                  icon={Users}
+                  variant="default"
+                />
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Évolution Membres" 
+              icon={TrendingUp}
+            >
+              <InteractiveChart
+                data={membersChartData}
+                title=""
+                type="bar"
+                height={350}
+                dataKeys={[
+                  { key: 'recurringGeneralMembers', name: 'Général', color: 'hsl(220, 90%, 56%)' },
+                  { key: 'ptMembers', name: 'PT', color: 'hsl(262, 83%, 58%)' },
+                  { key: 'pifMembers', name: 'PIF', color: 'hsl(142, 76%, 36%)' },
+                ]}
               />
-              <MetricCard
-                title={t('metric.ptLtv')}
-                value={formatCurrency(annualData.ptLTV)}
-                icon={TrendingUp}
-                variant="success"
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Sorties" 
+              icon={UserMinus}
+              defaultOpen={false}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.totalExits')}
+                  value={annualData.totalExits}
+                  icon={UserMinus}
+                  variant="destructive"
+                />
+                <MetricCard
+                  title={t('metric.pifExits')}
+                  value={annualData.pifExits}
+                  icon={UserMinus}
+                  variant="destructive"
+                />
+                <MetricCard
+                  title={t('metric.generalExits')}
+                  value={annualData.generalExits}
+                  icon={UserMinus}
+                  variant="destructive"
+                />
+                <MetricCard
+                  title={t('metric.ptExits')}
+                  value={annualData.ptExits}
+                  icon={UserMinus}
+                  variant="destructive"
+                />
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Taux de Churn" 
+              icon={Activity}
+              defaultOpen={false}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                <MetricCard
+                  title={t('metric.pifChurn')}
+                  value={formatPercentage(annualData.pifChurn)}
+                  icon={Users}
+                  variant={annualData.pifChurn < 5 ? "success" : annualData.pifChurn < 10 ? "warning" : "destructive"}
+                />
+                <MetricCard
+                  title={t('metric.generalChurn')}
+                  value={formatPercentage(annualData.generalChurn)}
+                  icon={Users}
+                  variant={annualData.generalChurn < 5 ? "success" : annualData.generalChurn < 10 ? "warning" : "destructive"}
+                />
+                <MetricCard
+                  title={t('metric.ptChurn')}
+                  value={formatPercentage(annualData.ptChurn)}
+                  icon={Users}
+                  variant={annualData.ptChurn < 5 ? "success" : annualData.ptChurn < 10 ? "warning" : "destructive"}
+                />
+              </div>
+              <InteractiveChart
+                data={churnChartData}
+                title=""
+                type="line"
+                height={300}
+                dataKeys={[
+                  { key: 'pifChurn', name: 'Churn PIF', color: 'hsl(0, 84%, 60%)' },
+                  { key: 'generalChurn', name: 'Churn Général', color: 'hsl(48, 96%, 53%)' },
+                  { key: 'ptChurn', name: 'Churn PT', color: 'hsl(262, 83%, 58%)' },
+                ]}
               />
-              <MetricCard
-                title={t('metric.gymFloorSqft')}
-                value={annualData.gymFloorSQFT}
-                icon={Activity}
-                variant="default"
-              />
-            </div>
-          </section>
-        </main>
+            </CollapsibleSection>
+          </TabsContent>
+
+          {/* Metrics Tab */}
+          <TabsContent value="metrics" className="space-y-4">
+            <CollapsibleSection 
+              title="Performance Financière" 
+              icon={PiggyBank}
+              badge={formatCurrency(annualData.profit)}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.profit')}
+                  value={formatCurrency(annualData.profit)}
+                  icon={PiggyBank}
+                  suffix={` (${formatPercentage(profitMargin)})`}
+                  variant={annualData.profit > 0 ? "success" : "destructive"}
+                />
+                <MetricCard
+                  title={t('metric.adSpend')}
+                  value={formatCurrency(annualData.adSpend)}
+                  icon={DollarSign}
+                  variant="destructive"
+                />
+                <MetricCard
+                  title={t('metric.totalExpenses')}
+                  value={formatCurrency(annualData.totalExpenses)}
+                  icon={DollarSign}
+                  variant="warning"
+                />
+                <MetricCard
+                  title="CAC"
+                  value={formatCurrency(annualData.close > 0 ? annualData.adSpend / annualData.close : 0)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title="ROI Ads"
+                  value={formatPercentage(roAds)}
+                  icon={TrendingUp}
+                  variant={roAds > 200 ? "success" : roAds > 100 ? "warning" : "destructive"}
+                />
+              </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection 
+              title="Métriques Avancées" 
+              icon={BarChart3}
+              defaultOpen={false}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <MetricCard
+                  title={t('metric.generalAcrm')}
+                  value={formatCurrency(annualData.generalACRM)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.generalLtv')}
+                  value={formatCurrency(annualData.generalLTV)}
+                  icon={TrendingUp}
+                  variant="success"
+                />
+                <MetricCard
+                  title={t('metric.ptAcrm')}
+                  value={formatCurrency(annualData.ptACRM)}
+                  icon={DollarSign}
+                  variant="default"
+                />
+                <MetricCard
+                  title={t('metric.ptLtv')}
+                  value={formatCurrency(annualData.ptLTV)}
+                  icon={TrendingUp}
+                  variant="success"
+                />
+                <MetricCard
+                  title={t('metric.totalClasses')}
+                  value={annualData.totalClasses}
+                  icon={Activity}
+                  variant="default"
+                />
+              </div>
+            </CollapsibleSection>
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 };
