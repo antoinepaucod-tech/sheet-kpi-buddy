@@ -154,23 +154,22 @@ export const useAnnualKPIData = (selectedYear?: number) => {
         annual.pauses += Number(month.pauses || 0);
       });
 
-      // For members, use the most recent month's values (not sum)
+      // For members, use the maximum values across all months (peak membership)
+      const maxPifMembers = Math.max(...monthlyData.map(m => Number(m.pif_members || 0)));
+      const maxRecurringMembers = Math.max(...monthlyData.map(m => Number(m.recurring_general_members || 0)));
+      const maxPtMembers = Math.max(...monthlyData.map(m => Number(m.pt_members || 0)));
+      const maxTotalMembers = Math.max(...monthlyData.map(m => Number(m.total_active_members || 0)));
+
+      annual.pifMembers = maxPifMembers;
+      annual.recurringGeneralMembers = maxRecurringMembers;
+      annual.ptMembers = maxPtMembers;
+      annual.totalActiveMembers = maxTotalMembers || (maxPifMembers + maxRecurringMembers + maxPtMembers);
+
+      // Keep reference to latest month with data for ACRM/LTV values
       const latestMonth = [...monthlyData].reverse().find((m) =>
         Number(m.total_active_members || 0) > 0 ||
-        Number(m.pif_members || 0) > 0 ||
-        Number(m.recurring_general_members || 0) > 0 ||
-        Number(m.pt_members || 0) > 0
+        Number(m.pif_members || 0) > 0
       ) || monthlyData[monthlyData.length - 1];
-
-      const computedTotalActive =
-        Number(latestMonth.total_active_members ?? 0) ||
-        (Number(latestMonth.pif_members || 0) +
-         Number(latestMonth.recurring_general_members || 0) +
-         Number(latestMonth.pt_members || 0));
-      annual.totalActiveMembers = computedTotalActive;
-      annual.pifMembers = Number(latestMonth.pif_members || 0);
-      annual.recurringGeneralMembers = Number(latestMonth.recurring_general_members || 0);
-      annual.ptMembers = Number(latestMonth.pt_members || 0);
 
       annual.totalExits = annual.pifExits + annual.generalExits + annual.ptExits;
 
