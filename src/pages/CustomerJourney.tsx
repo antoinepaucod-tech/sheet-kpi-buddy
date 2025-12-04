@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { format, differenceInWeeks, startOfWeek, parseISO, addWeeks, startOfYear } from "date-fns";
+import { format, differenceInWeeks, startOfWeek, parseISO, addWeeks, startOfYear, subWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Users, Wallet, CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -41,6 +41,7 @@ import { useAccountingCategories } from "@/hooks/useAccountingCategories";
 import { cn } from "@/lib/utils";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import type { Member } from "@/hooks/useCustomerMembers";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const CustomerJourney = () => {
   const { t } = useTranslations();
@@ -578,6 +579,109 @@ const CustomerJourney = () => {
     });
   };
 
+  // Summary statistics calculations
+  const summaryStats = useMemo(() => {
+    const activeMembers = members.filter(m => !m.exit_date);
+    const totalCashCollected = activeMembers.reduce((sum, m) => sum + (m.cash_collected || 0), 0);
+    
+    const onboardingComplete = activeMembers.filter(m => 
+      m.onboarding_bsport && m.onboarding_hubfit && m.onboarding_nutrition && 
+      m.questionnaire_coaching && m.session_introduction
+    ).length;
+    
+    const onboardingRate = activeMembers.length > 0 
+      ? Math.round((onboardingComplete / activeMembers.length) * 100) 
+      : 0;
+
+    // Members at risk (no training in last 2 weeks for tracking required memberships)
+    const atRiskMembers = activeMembers.filter(member => {
+      if (!requiresTrainingTracking(member.membership)) return false;
+      if (!member.contract_signed_date) return false;
+      
+      const memberWeek = getMemberWeekNumber(member.contract_signed_date);
+      if (!memberWeek || memberWeek < 3) return false;
+      
+      const lastTwoWeeksTrainings = 
+        getWeeklyTraining(member.id, memberWeek) + 
+        getWeeklyTraining(member.id, memberWeek - 1);
+      
+      return lastTwoWeeksTrainings === 0;
+    });
+
+    return {
+      totalActive: activeMembers.length,
+      totalCash: totalCashCollected,
+      onboardingRate,
+      onboardingComplete,
+      atRiskCount: atRiskMembers.length,
+      atRiskMembers
+    };
+  }, [members, weeklyTrainings]);
+
+  // Member evolution data for chart (last 6 months)
+  const evolutionData = useMemo(() => {
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 0);
+      
+      const activeInMonth = members.filter(member => {
+        if (!member.contract_signed_date) return false;
+        const contractDate = parseISO(member.contract_signed_date);
+        if (contractDate > monthEnd) return false;
+        
+        if (member.exit_date) {
+          const exitDate = parseISO(member.exit_date);
+          if (exitDate < monthDate) return false;
+        }
+        return true;
+      }).length;
+      
+      const newInMonth = members.filter(member => {
+        if (!member.contract_signed_date) return false;
+        const contractDate = parseISO(member.contract_signed_date);
+        return contractDate.getMonth() === monthDate.getMonth() && 
+               contractDate.getFullYear() === monthDate.getFullYear();
+      }).length;
+      
+      data.push({
+        month: format(monthDate, 'MMM yy', { locale: fr }),
+        actifs: activeInMonth,
+        nouveaux: newInMonth
+      });
+    }
+    
+    return data;
+  }, [members]);
+
+  // Get engagement level for a member
+  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' => {
+    if (!requiresTrainingTracking(member.membership)) return 'high';
+    if (!member.contract_signed_date) return 'medium';
+    
+    const memberWeek = getMemberWeekNumber(member.contract_signed_date);
+    if (!memberWeek || memberWeek < 2) return 'medium';
+    
+    const recentTrainings = getWeeklyTraining(member.id, memberWeek) + 
+                           getWeeklyTraining(member.id, memberWeek - 1);
+    
+    if (recentTrainings >= 4) return 'high';
+    if (recentTrainings >= 2) return 'medium';
+    if (recentTrainings >= 1) return 'low';
+    return 'at-risk';
+  };
+
+  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk') => {
+    switch (engagement) {
+      case 'high': return 'border-l-4 border-l-green-500';
+      case 'medium': return 'border-l-4 border-l-yellow-500';
+      case 'low': return 'border-l-4 border-l-orange-500';
+      case 'at-risk': return 'border-l-4 border-l-red-500';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
@@ -603,6 +707,153 @@ const CustomerJourney = () => {
             <ThemeToggle />
           </div>
         </div>
+
+        {/* Summary Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/20">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Membres Actifs</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{summaryStats.totalActive}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/20">
+                <Wallet className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Cash Collecté Total</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{summaryStats.totalCash.toLocaleString()} CHF</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/20">
+                <CheckCircle2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Onboarding Complété</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {summaryStats.onboardingRate}%
+                  <span className="text-sm font-normal ml-1">({summaryStats.onboardingComplete}/{summaryStats.totalActive})</span>
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className={cn(
+            "p-4 border",
+            summaryStats.atRiskCount > 0 
+              ? "bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20" 
+              : "bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "p-2 rounded-lg",
+                summaryStats.atRiskCount > 0 ? "bg-red-500/20" : "bg-emerald-500/20"
+              )}>
+                <AlertTriangle className={cn(
+                  "h-5 w-5",
+                  summaryStats.atRiskCount > 0 
+                    ? "text-red-600 dark:text-red-400" 
+                    : "text-emerald-600 dark:text-emerald-400"
+                )} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Membres à Risque</p>
+                <p className={cn(
+                  "text-2xl font-bold",
+                  summaryStats.atRiskCount > 0 
+                    ? "text-red-600 dark:text-red-400" 
+                    : "text-emerald-600 dark:text-emerald-400"
+                )}>
+                  {summaryStats.atRiskCount}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Evolution Chart */}
+        {selectedView === "index" && (
+          <Card className="p-4">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              Évolution des Membres (6 derniers mois)
+            </h3>
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={evolutionData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="month" className="text-xs" tick={{ fill: 'currentColor' }} />
+                  <YAxis className="text-xs" tick={{ fill: 'currentColor' }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="actifs" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    name="Membres actifs"
+                    dot={{ fill: 'hsl(var(--primary))' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="nouveaux" 
+                    stroke="hsl(142, 76%, 36%)" 
+                    strokeWidth={2}
+                    name="Nouveaux"
+                    dot={{ fill: 'hsl(142, 76%, 36%)' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        )}
+
+        {/* At-Risk Members Alert */}
+        {selectedView === "index" && summaryStats.atRiskCount > 0 && (
+          <Card className="p-4 bg-red-500/5 border-red-500/20">
+            <h3 className="font-semibold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Membres à Risque ({summaryStats.atRiskCount})
+            </h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Ces membres n'ont pas d'entraînement enregistré depuis 2 semaines :
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {summaryStats.atRiskMembers.slice(0, 10).map(member => (
+                <Button
+                  key={member.id}
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500/30 hover:bg-red-500/10"
+                  onClick={() => setSelectedMemberId(member.id)}
+                >
+                  {member.name}
+                </Button>
+              ))}
+              {summaryStats.atRiskCount > 10 && (
+                <span className="text-sm text-muted-foreground self-center">
+                  +{summaryStats.atRiskCount - 10} autres
+                </span>
+              )}
+            </div>
+          </Card>
+        )}
 
         <Card className="p-6">
           <div className="space-y-4 mb-6">
@@ -754,6 +1005,26 @@ const CustomerJourney = () => {
 
           {selectedView === "index" ? (
             <div className="space-y-4">
+              {/* Engagement Legend */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                <span className="font-medium">Niveau d'engagement :</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-green-500" />
+                  <span>Élevé (4+ séances/2 sem.)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-yellow-500" />
+                  <span>Moyen (2-3 séances)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-orange-500" />
+                  <span>Faible (1 séance)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-red-500" />
+                  <span>À risque (0 séance)</span>
+                </div>
+              </div>
               {Object.entries(
                 filteredMembers.reduce((acc, member) => {
                   const category = member.membership || "Sans abonnement";
@@ -777,6 +1048,7 @@ const CustomerJourney = () => {
                     onDeleteMember={deleteMember}
                     membershipTypes={membershipTypes}
                     getMembershipStyle={getMembershipStyle}
+                    getMemberEngagement={getMemberEngagement}
                   />
                 );
               })}
