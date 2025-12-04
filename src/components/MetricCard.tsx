@@ -42,8 +42,16 @@ export const MetricCard = ({
           <div className="space-y-2 sm:space-y-3 flex-1 min-w-0">
             <p className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider truncate">{title}</p>
             <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
-              <p className="text-xl sm:text-3xl font-semibold tracking-tight break-all">
-                {value}{suffix}
+              <p className="text-xl sm:text-3xl font-semibold tracking-tight">
+                {typeof value === 'string' && value.startsWith('CHF') ? (
+                  <>
+                    <span className="text-xs sm:text-sm font-normal text-muted-foreground mr-1">CHF</span>
+                    {value.replace('CHF ', '')}
+                  </>
+                ) : (
+                  value
+                )}
+                {suffix}
               </p>
               {trend !== undefined && (
                 <span className={cn(
