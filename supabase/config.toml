@@ -1,10 +1,10 @@
 project_id = "rujpspjvyndjtkvjbbhq"
 
 [functions.send-weekly-reminder]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-recurring-transactions]
-verify_jwt = false
+verify_jwt = true
 
 [functions.analyze-business]
-verify_jwt = false
+verify_jwt = true

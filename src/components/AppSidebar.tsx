@@ -1,5 +1,6 @@
-import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell } from "lucide-react";
+import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +28,7 @@ const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const { signOut, user } = useAuth();
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -70,6 +72,19 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
+              {user && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    tooltip="Déconnexion"
+                    onClick={signOut}
+                    className="flex items-center gap-3 hover:bg-destructive/10 text-destructive transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span className={collapsed ? "sr-only" : ""}>Déconnexion</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
