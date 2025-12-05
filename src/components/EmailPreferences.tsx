@@ -10,6 +10,10 @@ import { Mail, Plus, Trash2, Clock, Share2, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from "@/hooks/useTranslations";
+import { z } from "zod";
+
+// Email validation schema
+const emailSchema = z.string().email("Format d'email invalide").max(255, "Email trop long");
 
 interface EmailPref {
   id: string;
@@ -65,10 +69,12 @@ export const EmailPreferences = () => {
   };
 
   const addEmail = async () => {
-    if (!newEmail || !newEmail.includes("@")) {
+    // Validate email with Zod
+    const emailValidation = emailSchema.safeParse(newEmail.trim());
+    if (!emailValidation.success) {
       toast({
         title: t('toast.invalidEmail'),
-        description: t('toast.validEmail'),
+        description: emailValidation.error.errors[0]?.message || t('toast.validEmail'),
         variant: "destructive",
       });
       return;
@@ -89,7 +95,7 @@ export const EmailPreferences = () => {
     const { error } = await supabase
       .from("email_preferences")
       .insert({ 
-        email: newEmail, 
+        email: emailValidation.data, 
         enabled: true,
         send_hour: parseInt(newHour),
         timezone: newTimezone,
