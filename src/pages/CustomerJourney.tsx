@@ -657,28 +657,28 @@ const CustomerJourney = () => {
   }, [members]);
 
   // Get engagement level for a member
-  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' => {
-    if (!requiresTrainingTracking(member.membership)) return 'high';
-    if (!member.contract_signed_date) return 'medium';
+  // Vert = 3+ fois/semaine, Orange = 2x/semaine, Rouge = 0-1x/semaine, N/A = non suivi
+  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'na' => {
+    if (!requiresTrainingTracking(member.membership)) return 'na';
+    if (!member.contract_signed_date) return 'na';
     
     const memberWeek = getMemberWeekNumber(member.contract_signed_date);
-    if (!memberWeek || memberWeek < 2) return 'medium';
+    if (!memberWeek || memberWeek < 1) return 'na';
     
-    const recentTrainings = getWeeklyTraining(member.id, memberWeek) + 
-                           getWeeklyTraining(member.id, memberWeek - 1);
+    // Regarder les entraînements de la semaine en cours
+    const weeklyTrainings = getWeeklyTraining(member.id, memberWeek);
     
-    if (recentTrainings >= 4) return 'high';
-    if (recentTrainings >= 2) return 'medium';
-    if (recentTrainings >= 1) return 'low';
-    return 'at-risk';
+    if (weeklyTrainings >= 3) return 'high';    // Vert: 3+ fois
+    if (weeklyTrainings === 2) return 'medium'; // Orange: 2 fois
+    return 'low';                               // Rouge: 0-1 fois
   };
 
-  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk') => {
+  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'na') => {
     switch (engagement) {
-      case 'high': return 'border-l-4 border-l-green-500';
-      case 'medium': return 'border-l-4 border-l-yellow-500';
-      case 'low': return 'border-l-4 border-l-orange-500';
-      case 'at-risk': return 'border-l-4 border-l-red-500';
+      case 'high': return 'border-l-4 border-l-green-500';    // Vert: 3+ fois
+      case 'medium': return 'border-l-4 border-l-orange-500'; // Orange: 2 fois
+      case 'low': return 'border-l-4 border-l-red-500';       // Rouge: 0-1 fois
+      case 'na': return 'border-l-4 border-l-muted';          // Gris: non suivi
     }
   };
 

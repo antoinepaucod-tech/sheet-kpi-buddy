@@ -44,7 +44,7 @@ interface MembershipCategoryCardProps {
   onDeleteMember: (id: string) => void;
   membershipTypes: string[];
   getMembershipStyle: (membership: string) => { bg: string; text: string; border: string };
-  getMemberEngagement?: (member: Member) => 'high' | 'medium' | 'low' | 'at-risk';
+  getMemberEngagement?: (member: Member) => 'high' | 'medium' | 'low' | 'na';
 }
 
 export const MembershipCategoryCard = ({
@@ -61,12 +61,13 @@ export const MembershipCategoryCard = ({
 }: MembershipCategoryCardProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
-  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk') => {
+  // Vert = 3+ fois, Orange = 2 fois, Rouge = 0-1 fois, Gris = non suivi
+  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'na') => {
     switch (engagement) {
-      case 'high': return 'border-l-4 border-l-green-500 bg-green-500/5';
-      case 'medium': return 'border-l-4 border-l-yellow-500 bg-yellow-500/5';
-      case 'low': return 'border-l-4 border-l-orange-500 bg-orange-500/5';
-      case 'at-risk': return 'border-l-4 border-l-red-500 bg-red-500/5';
+      case 'high': return 'border-l-4 border-l-green-500 bg-green-500/5';    // Vert: 3+ fois
+      case 'medium': return 'border-l-4 border-l-orange-500 bg-orange-500/5'; // Orange: 2 fois
+      case 'low': return 'border-l-4 border-l-red-500 bg-red-500/5';          // Rouge: 0-1 fois
+      case 'na': return 'border-l-4 border-l-muted bg-muted/5';               // Gris: non suivi
     }
   };
 
