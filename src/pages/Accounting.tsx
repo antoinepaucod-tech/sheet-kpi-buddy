@@ -929,14 +929,6 @@ const Accounting = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold">Comptabilité</h1>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleGenerateRecurringTransactions}
-              disabled={isGenerating}
-            >
-              <RefreshCw className={cn("h-4 w-4 mr-2", isGenerating && "animate-spin")} />
-              {isGenerating ? "Génération..." : "Générer Paiements Récurrents"}
-            </Button>
             <LanguageToggle />
             <ThemeToggle />
           </div>
