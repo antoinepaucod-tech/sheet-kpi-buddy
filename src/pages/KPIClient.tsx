@@ -66,21 +66,26 @@ const requiresTrainingTracking = (membership: string): boolean => {
   return trackingRequiredMemberships.includes(membership);
 };
 
-// Engagement level calculation
+// Engagement level calculation based on average trainings per week
+// Élevé: 3+ séances/semaine, Moyen: 2 séances, Faible: 1 séance, À risque: 0 séance
 type EngagementLevel = "high" | "medium" | "low" | "at-risk";
 
 const getEngagementLevel = (averagePerWeek: number, weeksSinceLastTraining: number): EngagementLevel => {
-  if (weeksSinceLastTraining >= 3) return "at-risk";
-  if (averagePerWeek >= 2) return "high";
-  if (averagePerWeek >= 1) return "medium";
-  return "low";
+  // À risque si 0 séance par semaine (arrondi)
+  if (Math.round(averagePerWeek) === 0) return "at-risk";
+  // Faible si 1 séance par semaine
+  if (Math.round(averagePerWeek) === 1) return "low";
+  // Moyen si 2 séances par semaine
+  if (Math.round(averagePerWeek) === 2) return "medium";
+  // Élevé si 3+ séances par semaine
+  return "high";
 };
 
 const engagementStyles: Record<EngagementLevel, { bg: string; text: string; label: string; icon: typeof CheckCircle2 }> = {
-  high: { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", label: "Très actif", icon: CheckCircle2 },
-  medium: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", label: "Modéré", icon: Clock },
-  low: { bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", label: "Faible", icon: AlertTriangle },
-  "at-risk": { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", label: "À risque", icon: XCircle },
+  high: { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", label: "Élevé (3+ séances/sem.)", icon: CheckCircle2 },
+  medium: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", label: "Moyen (2 séances)", icon: Clock },
+  low: { bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", label: "Faible (1 séance)", icon: AlertTriangle },
+  "at-risk": { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", label: "À risque (0 séance)", icon: XCircle },
 };
 
 export default function KPIClient() {
