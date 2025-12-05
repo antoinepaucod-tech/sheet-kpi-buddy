@@ -679,6 +679,7 @@ const CustomerJourney = () => {
       case 'medium': return 'border-l-4 border-l-orange-500'; // Orange: 2 fois
       case 'low': return 'border-l-4 border-l-red-500';       // Rouge: 0-1 fois
       case 'na': return 'border-l-4 border-l-muted';          // Gris: non suivi
+      default: return '';
     }
   };
 
