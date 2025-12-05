@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,20 @@ export const MembershipCategoryCard = ({
 }: MembershipCategoryCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Calculate engagement counts for the header
+  const engagementCounts = useMemo(() => {
+    if (!getMemberEngagement) return null;
+    
+    const counts = { high: 0, medium: 0, low: 0, 'at-risk': 0 };
+    members.forEach(member => {
+      const engagement = getMemberEngagement(member);
+      if (engagement !== 'none' && counts[engagement] !== undefined) {
+        counts[engagement]++;
+      }
+    });
+    return counts;
+  }, [members, getMemberEngagement]);
+
   const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk' | 'none') => {
     switch (engagement) {
       case 'high': return 'border-l-4 border-l-green-500 bg-green-500/5';
@@ -92,7 +106,7 @@ export const MembershipCategoryCard = ({
                     <ChevronDown className="h-4 w-4" />
                   )}
                 </Button>
-                <div>
+                <div className="flex-1">
                   <div
                     className={cn(
                       "font-semibold text-base inline-flex items-center gap-2 px-3 py-1.5 rounded-md border",
@@ -103,9 +117,39 @@ export const MembershipCategoryCard = ({
                   >
                     {category}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1.5">
-                    {members.length} membre{members.length > 1 ? "s" : ""}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <p className="text-xs text-muted-foreground">
+                      {members.length} membre{members.length > 1 ? "s" : ""}
+                    </p>
+                    {engagementCounts && (engagementCounts.high > 0 || engagementCounts.medium > 0 || engagementCounts.low > 0 || engagementCounts['at-risk'] > 0) && (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        {engagementCounts.high > 0 && (
+                          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-500/20 text-green-600 dark:text-green-400">
+                            <span className="w-2 h-2 rounded-full bg-green-500" />
+                            {engagementCounts.high}
+                          </span>
+                        )}
+                        {engagementCounts.medium > 0 && (
+                          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-600 dark:text-yellow-400">
+                            <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                            {engagementCounts.medium}
+                          </span>
+                        )}
+                        {engagementCounts.low > 0 && (
+                          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-600 dark:text-orange-400">
+                            <span className="w-2 h-2 rounded-full bg-orange-500" />
+                            {engagementCounts.low}
+                          </span>
+                        )}
+                        {engagementCounts['at-risk'] > 0 && (
+                          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-500/20 text-red-600 dark:text-red-400">
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            {engagementCounts['at-risk']}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="text-right">
