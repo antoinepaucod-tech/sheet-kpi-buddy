@@ -44,7 +44,7 @@ interface MembershipCategoryCardProps {
   onDeleteMember: (id: string) => void;
   membershipTypes: string[];
   getMembershipStyle: (membership: string) => { bg: string; text: string; border: string };
-  getMemberEngagement?: (member: Member) => 'high' | 'medium' | 'low' | 'at-risk';
+  getMemberEngagement?: (member: Member) => 'high' | 'medium' | 'low' | 'at-risk' | 'none';
 }
 
 export const MembershipCategoryCard = ({
@@ -61,12 +61,13 @@ export const MembershipCategoryCard = ({
 }: MembershipCategoryCardProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
-  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk') => {
+  const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk' | 'none') => {
     switch (engagement) {
       case 'high': return 'border-l-4 border-l-green-500 bg-green-500/5';
       case 'medium': return 'border-l-4 border-l-yellow-500 bg-yellow-500/5';
       case 'low': return 'border-l-4 border-l-orange-500 bg-orange-500/5';
       case 'at-risk': return 'border-l-4 border-l-red-500 bg-red-500/5';
+      case 'none': return ''; // No engagement styling for members without tracking
       default: return '';
     }
   };
@@ -143,9 +144,9 @@ export const MembershipCategoryCard = ({
                 <TableBody>
                   {members.map((member, index) => {
                     const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
-                    const engagement = getMemberEngagement ? getMemberEngagement(member) : 'medium';
+                    const engagement = getMemberEngagement ? getMemberEngagement(member) : 'none';
                     return (
-                      <TableRow key={member.id} className={cn(getMemberEngagement && getEngagementStyle(engagement))}>
+                      <TableRow key={member.id} className={cn(getMemberEngagement && engagement !== 'none' && getEngagementStyle(engagement))}>
                         <TableCell className="text-center font-medium text-muted-foreground">
                           {index + 1}
                         </TableCell>

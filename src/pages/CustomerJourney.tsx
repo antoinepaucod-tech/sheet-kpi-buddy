@@ -657,19 +657,24 @@ const CustomerJourney = () => {
   }, [members]);
 
   // Get engagement level for a member
-  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' => {
-    if (!requiresTrainingTracking(member.membership)) return 'high';
-    if (!member.contract_signed_date) return 'medium';
+  // Returns 'none' for members that don't require tracking (they stay gray/neutral)
+  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
+    // Members without tracking requirement stay neutral (gray)
+    if (!requiresTrainingTracking(member.membership)) return 'none';
+    if (!member.contract_signed_date) return 'none';
     
     const memberWeek = getMemberWeekNumber(member.contract_signed_date);
-    if (!memberWeek || memberWeek < 2) return 'medium';
+    if (!memberWeek || memberWeek < 2) return 'none';
     
+    // Calculate average trainings per week over recent weeks
     const recentTrainings = getWeeklyTraining(member.id, memberWeek) + 
                            getWeeklyTraining(member.id, memberWeek - 1);
+    const avgPerWeek = recentTrainings / 2;
     
-    if (recentTrainings >= 4) return 'high';
-    if (recentTrainings >= 2) return 'medium';
-    if (recentTrainings >= 1) return 'low';
+    // Élevé: 3+ séances/sem, Moyen: 2 séances, Faible: 1 séance, À risque: 0
+    if (Math.round(avgPerWeek) >= 3) return 'high';
+    if (Math.round(avgPerWeek) === 2) return 'medium';
+    if (Math.round(avgPerWeek) === 1) return 'low';
     return 'at-risk';
   };
 
