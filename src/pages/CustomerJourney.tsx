@@ -679,7 +679,6 @@ const CustomerJourney = () => {
       case 'medium': return 'border-l-4 border-l-yellow-500';
       case 'low': return 'border-l-4 border-l-orange-500';
       case 'at-risk': return 'border-l-4 border-l-red-500';
-      default: return '';
     }
   };
 
