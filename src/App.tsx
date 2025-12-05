@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { ThemeProvider } from "next-themes";
 import Dashboard from "./pages/Dashboard";
 import Index from "./pages/Index";
 import Annual from "./pages/Annual";
@@ -41,27 +42,29 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
-            <Route path="/kpi-revenue" element={<ProtectedLayout><Index /></ProtectedLayout>} />
-            <Route path="/annual" element={<ProtectedLayout><Annual /></ProtectedLayout>} />
-            <Route path="/course-kpi" element={<ProtectedLayout><CourseKPI /></ProtectedLayout>} />
-            <Route path="/accounting" element={<ProtectedLayout><Accounting /></ProtectedLayout>} />
-            <Route path="/customer-journey" element={<ProtectedLayout><CustomerJourney /></ProtectedLayout>} />
-            <Route path="/kpi-client" element={<ProtectedLayout><KPIClient /></ProtectedLayout>} />
-            <Route path="/expiring-subscriptions" element={<ProtectedLayout><ExpiringSubscriptions /></ProtectedLayout>} />
-            <Route path="/tutorial" element={<ProtectedLayout><Tutorial /></ProtectedLayout>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </LanguageProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
+              <Route path="/kpi-revenue" element={<ProtectedLayout><Index /></ProtectedLayout>} />
+              <Route path="/annual" element={<ProtectedLayout><Annual /></ProtectedLayout>} />
+              <Route path="/course-kpi" element={<ProtectedLayout><CourseKPI /></ProtectedLayout>} />
+              <Route path="/accounting" element={<ProtectedLayout><Accounting /></ProtectedLayout>} />
+              <Route path="/customer-journey" element={<ProtectedLayout><CustomerJourney /></ProtectedLayout>} />
+              <Route path="/kpi-client" element={<ProtectedLayout><KPIClient /></ProtectedLayout>} />
+              <Route path="/expiring-subscriptions" element={<ProtectedLayout><ExpiringSubscriptions /></ProtectedLayout>} />
+              <Route path="/tutorial" element={<ProtectedLayout><Tutorial /></ProtectedLayout>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
