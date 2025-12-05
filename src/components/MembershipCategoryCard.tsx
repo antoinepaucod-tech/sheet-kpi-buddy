@@ -59,7 +59,7 @@ export const MembershipCategoryCard = ({
   getMembershipStyle,
   getMemberEngagement,
 }: MembershipCategoryCardProps) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk' | 'none') => {
     switch (engagement) {
