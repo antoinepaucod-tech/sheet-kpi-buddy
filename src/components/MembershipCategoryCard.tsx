@@ -68,6 +68,7 @@ export const MembershipCategoryCard = ({
       case 'medium': return 'border-l-4 border-l-orange-500 bg-orange-500/5'; // Orange: 2 fois
       case 'low': return 'border-l-4 border-l-red-500 bg-red-500/5';          // Rouge: 0-1 fois
       case 'na': return 'border-l-4 border-l-muted bg-muted/5';               // Gris: non suivi
+      default: return '';
     }
   };
 
