@@ -74,6 +74,17 @@ export const EmailPreferences = () => {
       return;
     }
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: t('toast.error'),
+        description: "Vous devez être connecté pour ajouter des préférences email",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase
       .from("email_preferences")
@@ -81,7 +92,8 @@ export const EmailPreferences = () => {
         email: newEmail, 
         enabled: true,
         send_hour: parseInt(newHour),
-        timezone: newTimezone
+        timezone: newTimezone,
+        user_id: user.id
       });
 
     if (error) {
