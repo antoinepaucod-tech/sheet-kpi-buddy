@@ -1011,11 +1011,11 @@ const CustomerJourney = () => {
                 <span className="font-medium">Niveau d'engagement :</span>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-sm bg-green-500" />
-                  <span>Élevé (4+ séances/2 sem.)</span>
+                  <span>Élevé (3+ séances/sem.)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-sm bg-yellow-500" />
-                  <span>Moyen (2-3 séances)</span>
+                  <span>Moyen (2 séances)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-sm bg-orange-500" />
