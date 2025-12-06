@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format, differenceInWeeks, startOfWeek, parseISO, addWeeks, startOfYear, subWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Users, Wallet, CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { CalendarIcon, Users, Wallet, CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -53,6 +53,7 @@ const CustomerJourney = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [memberStatus, setMemberStatus] = useState<"active" | "exited" | "all">("active");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [engagementViewMode, setEngagementViewMode] = useState<"week" | "year">("week");
 
   const {
     members,
@@ -658,33 +659,62 @@ const CustomerJourney = () => {
 
   // Get engagement level for a member
   // Returns 'none' for members that don't require tracking (they stay gray/neutral)
-  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
-    // Members without tracking requirement stay neutral (gray)
+  // Get current calendar week number
+  const getCurrentCalendarWeek = (): number => {
+    const today = new Date();
+    const year = selectedYear === "all" ? today.getFullYear() : selectedYear;
+    const jan1 = new Date(year, 0, 1);
+    const firstMonday = startOfWeek(jan1, { weekStartsOn: 1 });
+    const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const weeksSinceStart = differenceInWeeks(currentWeekStart, firstMonday);
+    return weeksSinceStart + 1;
+  };
+
+  // Weekly engagement: based on current calendar week trainings only
+  const getWeeklyEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
     if (!requiresTrainingTracking(member.membership)) return 'none';
     if (!member.contract_signed_date) return 'none';
     
     const memberWeek = getMemberWeekNumber(member.contract_signed_date);
     if (!memberWeek || memberWeek < 1) return 'none';
     
-    // For week 1 members, just check current week trainings
-    if (memberWeek === 1) {
-      const currentWeekTrainings = getWeeklyTraining(member.id, memberWeek);
-      if (currentWeekTrainings >= 3) return 'high';
-      if (currentWeekTrainings === 2) return 'medium';
-      if (currentWeekTrainings === 1) return 'low';
-      return 'at-risk';
+    // Get trainings for current member week
+    const currentWeekTrainings = getWeeklyTraining(member.id, memberWeek);
+    
+    if (currentWeekTrainings >= 3) return 'high';
+    if (currentWeekTrainings === 2) return 'medium';
+    if (currentWeekTrainings === 1) return 'low';
+    return 'at-risk';
+  };
+
+  // Yearly engagement: average over all weeks since contract signature
+  const getYearlyEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
+    if (!requiresTrainingTracking(member.membership)) return 'none';
+    if (!member.contract_signed_date) return 'none';
+    
+    const memberWeek = getMemberWeekNumber(member.contract_signed_date);
+    if (!memberWeek || memberWeek < 1) return 'none';
+    
+    // Calculate total trainings and average over all weeks
+    let totalTrainings = 0;
+    for (let week = 1; week <= memberWeek; week++) {
+      totalTrainings += getWeeklyTraining(member.id, week);
     }
     
-    // Calculate average trainings per week over recent weeks
-    const recentTrainings = getWeeklyTraining(member.id, memberWeek) + 
-                           getWeeklyTraining(member.id, memberWeek - 1);
-    const avgPerWeek = recentTrainings / 2;
+    const avgPerWeek = totalTrainings / memberWeek;
     
-    // Élevé: 3+ séances/sem, Moyen: 2 séances, Faible: 1 séance, À risque: 0
-    if (Math.round(avgPerWeek) >= 3) return 'high';
-    if (Math.round(avgPerWeek) === 2) return 'medium';
-    if (Math.round(avgPerWeek) === 1) return 'low';
+    if (avgPerWeek >= 3) return 'high';
+    if (avgPerWeek >= 2) return 'medium';
+    if (avgPerWeek >= 1) return 'low';
     return 'at-risk';
+  };
+
+  // Combined function that uses the selected mode
+  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
+    if (engagementViewMode === "year") {
+      return getYearlyEngagement(member);
+    }
+    return getWeeklyEngagement(member);
   };
 
   const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk') => {
@@ -979,6 +1009,30 @@ const CustomerJourney = () => {
 
               {selectedView === "index" && (
                 <>
+                  <div className="h-8 w-px bg-border" />
+                  
+                  {/* Engagement View Mode Toggle */}
+                  <div className="flex gap-1 items-center bg-muted/50 rounded-lg p-1">
+                    <Button
+                      variant={engagementViewMode === "week" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setEngagementViewMode("week")}
+                      className="h-8 gap-1.5"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      Semaine
+                    </Button>
+                    <Button
+                      variant={engagementViewMode === "year" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setEngagementViewMode("year")}
+                      className="h-8 gap-1.5"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Moyenne
+                    </Button>
+                  </div>
+                  
                   <div className="flex-1" />
                   <AddMemberDialog onAdd={addMember} />
                 </>
