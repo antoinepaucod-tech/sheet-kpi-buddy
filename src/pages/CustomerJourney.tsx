@@ -664,7 +664,16 @@ const CustomerJourney = () => {
     if (!member.contract_signed_date) return 'none';
     
     const memberWeek = getMemberWeekNumber(member.contract_signed_date);
-    if (!memberWeek || memberWeek < 2) return 'none';
+    if (!memberWeek || memberWeek < 1) return 'none';
+    
+    // For week 1 members, just check current week trainings
+    if (memberWeek === 1) {
+      const currentWeekTrainings = getWeeklyTraining(member.id, memberWeek);
+      if (currentWeekTrainings >= 3) return 'high';
+      if (currentWeekTrainings === 2) return 'medium';
+      if (currentWeekTrainings === 1) return 'low';
+      return 'at-risk';
+    }
     
     // Calculate average trainings per week over recent weeks
     const recentTrainings = getWeeklyTraining(member.id, memberWeek) + 
