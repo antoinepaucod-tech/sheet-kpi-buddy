@@ -5,8 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar } from "lucide-react";
+import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar, Pencil, Save, X } from "lucide-react";
 import { useMemberHistory } from "@/hooks/useMemberHistory";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +35,42 @@ export function MemberActivityDialog({
   const [newComment, setNewComment] = useState("");
   const [renewalMonths, setRenewalMonths] = useState("12");
   const [isRenewing, setIsRenewing] = useState(false);
+  const [isEditingEndDate, setIsEditingEndDate] = useState(false);
+  const [editedEndDate, setEditedEndDate] = useState(member.subscription_end_date || "");
+  const [isSavingEndDate, setIsSavingEndDate] = useState(false);
   const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member.id);
+
+  const handleSaveEndDate = async () => {
+    if (!editedEndDate) {
+      toast.error("Veuillez saisir une date valide");
+      return;
+    }
+
+    setIsSavingEndDate(true);
+    try {
+      const { error } = await supabase
+        .from('customer_members')
+        .update({
+          subscription_end_date: editedEndDate,
+          exit_date: editedEndDate,
+        })
+        .eq('id', member.id);
+
+      if (error) throw error;
+
+      toast.success("Date de fin mise à jour");
+      setIsEditingEndDate(false);
+      
+      if (onMemberUpdated) {
+        onMemberUpdated();
+      }
+    } catch (error) {
+      console.error('Error updating end date:', error);
+      toast.error("Erreur lors de la mise à jour");
+    } finally {
+      setIsSavingEndDate(false);
+    }
+  };
 
   // Check if subscription is near expiration or expired
   const subscriptionStatus = useMemo(() => {
@@ -254,15 +291,58 @@ export function MemberActivityDialog({
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Fin d'abonnement</p>
-                <p className={`font-medium ${
-                  subscriptionStatus?.status === 'expired' ? 'text-destructive' :
-                  subscriptionStatus?.status === 'expiring_soon' ? 'text-warning' : ''
-                }`}>
-                  {member.subscription_end_date 
-                    ? format(parseISO(member.subscription_end_date), "dd MMMM yyyy", { locale: fr })
-                    : "Non définie"}
+                <p className="text-muted-foreground flex items-center gap-2">
+                  Fin d'abonnement
+                  {!isEditingEndDate && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => {
+                        setEditedEndDate(member.subscription_end_date || "");
+                        setIsEditingEndDate(true);
+                      }}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
                 </p>
+                {isEditingEndDate ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="date"
+                      value={editedEndDate}
+                      onChange={(e) => setEditedEndDate(e.target.value)}
+                      className="h-8 w-[140px]"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={handleSaveEndDate}
+                      disabled={isSavingEndDate}
+                    >
+                      <Save className="h-3 w-3 text-success" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setIsEditingEndDate(false)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <p className={`font-medium ${
+                    subscriptionStatus?.status === 'expired' ? 'text-destructive' :
+                    subscriptionStatus?.status === 'expiring_soon' ? 'text-warning' : ''
+                  }`}>
+                    {member.subscription_end_date 
+                      ? format(parseISO(member.subscription_end_date), "dd MMMM yyyy", { locale: fr })
+                      : "Non définie"}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-muted-foreground">Statut</p>
