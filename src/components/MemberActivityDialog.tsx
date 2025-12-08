@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react";
-import { parseISO, format, addWeeks, startOfWeek, differenceInWeeks, differenceInMonths } from "date-fns";
+import { parseISO, format, addWeeks, startOfWeek, differenceInWeeks, differenceInMonths, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink, MessageSquare, CheckCircle2, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar } from "lucide-react";
 import { useMemberHistory } from "@/hooks/useMemberHistory";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import type { Member, WeeklyTraining } from "@/hooks/useCustomerMembers";
 
 interface MemberActivityDialogProps {
@@ -15,19 +17,116 @@ interface MemberActivityDialogProps {
   weeklyTrainings: WeeklyTraining[];
   onClose: () => void;
   onNavigateToWeek?: (week: number, year: number, memberId: string) => void;
+  onMemberUpdated?: () => void;
 }
 
 export function MemberActivityDialog({ 
   member, 
   weeklyTrainings, 
   onClose,
-  onNavigateToWeek 
+  onNavigateToWeek,
+  onMemberUpdated
 }: MemberActivityDialogProps) {
   // Check member first, before any hooks
   if (!member) return null;
 
   const [newComment, setNewComment] = useState("");
+  const [renewalMonths, setRenewalMonths] = useState("12");
+  const [isRenewing, setIsRenewing] = useState(false);
   const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member.id);
+
+  // Check if subscription is near expiration or expired
+  const subscriptionStatus = useMemo(() => {
+    if (!member.subscription_end_date) return null;
+    
+    const endDate = parseISO(member.subscription_end_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const daysUntilExpiration = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiration < 0) {
+      return { status: 'expired', days: Math.abs(daysUntilExpiration), date: endDate };
+    } else if (daysUntilExpiration <= 30) {
+      return { status: 'expiring_soon', days: daysUntilExpiration, date: endDate };
+    }
+    return { status: 'active', days: daysUntilExpiration, date: endDate };
+  }, [member.subscription_end_date]);
+
+  const handleRenewSubscription = async () => {
+    if (!member.subscription_end_date) {
+      toast.error("Ce membre n'a pas de date de fin d'abonnement définie");
+      return;
+    }
+
+    setIsRenewing(true);
+    try {
+      const currentEndDate = parseISO(member.subscription_end_date);
+      const today = new Date();
+      
+      // Calculate new end date: from current end date (or today if expired) + renewal months
+      const baseDate = currentEndDate > today ? currentEndDate : today;
+      const newEndDate = addMonths(baseDate, parseInt(renewalMonths));
+      
+      // Update the member's subscription_end_date and exit_date
+      const { error: updateError } = await supabase
+        .from('customer_members')
+        .update({
+          subscription_end_date: format(newEndDate, "yyyy-MM-dd"),
+          exit_date: format(newEndDate, "yyyy-MM-dd"),
+        })
+        .eq('id', member.id);
+
+      if (updateError) throw updateError;
+
+      // Create a new accounting transaction for the renewal
+      const renewalDate = new Date();
+      const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+      
+      // Determine product description based on member type
+      let productDescription = "Revenu EFT Général";
+      if (member.member_type === "Membres PT") {
+        productDescription = "Revenu PT";
+      } else if (member.member_type === "Membres PIF") {
+        productDescription = "Membre PIF";
+      }
+
+      const { error: transactionError } = await supabase
+        .from('accounting_transactions')
+        .insert({
+          transaction_date: format(renewalDate, "yyyy-MM-dd"),
+          transaction_type: 'revenue',
+          category: member.membership,
+          client_name: member.name,
+          service_description: `Renouvellement ${renewalMonths} mois - ${member.membership}`,
+          product_description: productDescription,
+          amount: member.cash_collected || 0,
+          amount_received: 0, // Not validated yet
+          payment_method: 'Prélèvement Automatique',
+          notes: `Renouvellement abonnement - nouvelle échéance: ${format(newEndDate, "dd/MM/yyyy")}`,
+          year: renewalDate.getFullYear(),
+          month: renewalDate.getMonth() + 1,
+          month_name: monthNames[renewalDate.getMonth()],
+          is_auto_generated: false,
+          is_validated: false,
+        });
+
+      if (transactionError) throw transactionError;
+
+      toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}`);
+      
+      if (onMemberUpdated) {
+        onMemberUpdated();
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error renewing subscription:', error);
+      toast.error("Erreur lors du renouvellement de l'abonnement");
+    } finally {
+      setIsRenewing(false);
+    }
+  };
 
   const handleAddComment = async () => {
     if (!newComment.trim()) {
@@ -141,7 +240,7 @@ export function MemberActivityDialog({
         <div className="space-y-6 mt-4">
           <Card className="p-4 bg-muted/30">
             <h3 className="font-semibold mb-3">Informations Générales</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Abonnement</p>
                 <p className="font-medium">{member.membership}</p>
@@ -154,8 +253,82 @@ export function MemberActivityDialog({
                     : "Non définie"}
                 </p>
               </div>
+              <div>
+                <p className="text-muted-foreground">Fin d'abonnement</p>
+                <p className={`font-medium ${
+                  subscriptionStatus?.status === 'expired' ? 'text-destructive' :
+                  subscriptionStatus?.status === 'expiring_soon' ? 'text-warning' : ''
+                }`}>
+                  {member.subscription_end_date 
+                    ? format(parseISO(member.subscription_end_date), "dd MMMM yyyy", { locale: fr })
+                    : "Non définie"}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Statut</p>
+                <p className={`font-medium ${
+                  subscriptionStatus?.status === 'expired' ? 'text-destructive' :
+                  subscriptionStatus?.status === 'expiring_soon' ? 'text-warning' :
+                  'text-success'
+                }`}>
+                  {subscriptionStatus?.status === 'expired' 
+                    ? `Expiré (${subscriptionStatus.days}j)` 
+                    : subscriptionStatus?.status === 'expiring_soon'
+                    ? `Expire dans ${subscriptionStatus.days}j`
+                    : member.subscription_end_date ? 'Actif' : '-'}
+                </p>
+              </div>
             </div>
           </Card>
+
+          {/* Renewal Section - only show if subscription_end_date exists */}
+          {member.subscription_end_date && (
+            <Card className={`p-4 ${
+              subscriptionStatus?.status === 'expired' 
+                ? 'bg-destructive/10 border-destructive/30' 
+                : subscriptionStatus?.status === 'expiring_soon'
+                ? 'bg-warning/10 border-warning/30'
+                : 'bg-muted/30'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="h-5 w-5" />
+                  <h3 className="font-semibold">Renouvellement</h3>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Select value={renewalMonths} onValueChange={setRenewalMonths}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Durée" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 mois</SelectItem>
+                      <SelectItem value="3">3 mois</SelectItem>
+                      <SelectItem value="6">6 mois</SelectItem>
+                      <SelectItem value="12">12 mois</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={handleRenewSubscription} 
+                    disabled={isRenewing}
+                    className="gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    {isRenewing ? 'Renouvellement...' : 'Renouveler'}
+                  </Button>
+                </div>
+              </div>
+              {subscriptionStatus?.status === 'expired' && (
+                <p className="text-sm text-destructive mt-2">
+                  Abonnement expiré depuis {subscriptionStatus.days} jours. Le membre n'apparaîtra plus dans la comptabilité tant qu'il n'est pas renouvelé.
+                </p>
+              )}
+              {subscriptionStatus?.status === 'expiring_soon' && (
+                <p className="text-sm text-warning mt-2">
+                  Abonnement expire dans {subscriptionStatus.days} jours. Pensez à proposer un renouvellement.
+                </p>
+              )}
+            </Card>
+          )}
 
           <div className="space-y-3">
             <div className="flex gap-3">
