@@ -581,8 +581,11 @@ const Accounting = () => {
       return;
     }
 
+    // Exclude revenue_type from the data sent to database (it's only for frontend validation)
+    const { revenue_type, ...formDataWithoutRevenueType } = formData;
+    
     const transactionData = {
-      ...formData,
+      ...formDataWithoutRevenueType,
       year: selectedYear,
       month: selectedMonth + 1,
       month_name: MONTHS[selectedMonth],
