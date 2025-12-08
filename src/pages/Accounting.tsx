@@ -155,7 +155,12 @@ const SortableCategoryItem = ({
   onEditDefaultAmountChange
 }: {
   category: string;
-  categoryData?: { is_recurring: boolean; is_indefinite_recurrence: boolean; recurrence_end_date: string | null };
+  categoryData?: { 
+    is_recurring: boolean; 
+    is_indefinite_recurrence: boolean; 
+    recurrence_end_date: string | null;
+    revenue_type?: "membre" | "produit" | "service" | null;
+  };
   index: number;
   isEditing: boolean;
   editingName: string;
@@ -174,6 +179,9 @@ const SortableCategoryItem = ({
   onToggleEndDate: () => void;
   onEditDefaultAmountChange: (value: number) => void;
 }) => {
+  // For "membre" type, recurrence end date is controlled by customer journey
+  const isMemberType = categoryData?.revenue_type === "membre";
+  
   const {
     attributes,
     listeners,
@@ -241,6 +249,19 @@ const SortableCategoryItem = ({
             >
               {category}
             </span>
+            {/* Show revenue type badge */}
+            {categoryData?.revenue_type && (
+              <Badge 
+                variant="outline" 
+                className={`text-xs ${
+                  categoryData.revenue_type === 'membre' ? 'border-blue-500 text-blue-600' :
+                  categoryData.revenue_type === 'produit' ? 'border-purple-500 text-purple-600' :
+                  'border-green-500 text-green-600'
+                }`}
+              >
+                {categoryData.revenue_type.charAt(0).toUpperCase() + categoryData.revenue_type.slice(1)}
+              </Badge>
+            )}
             {categoryData?.is_recurring && categoryData?.is_indefinite_recurrence && (
               <Badge variant="secondary" className="text-xs flex items-center gap-1">
                 Récurrent <span className="text-base">∞</span>
@@ -249,6 +270,12 @@ const SortableCategoryItem = ({
             {categoryData?.is_recurring && !categoryData?.is_indefinite_recurrence && categoryData?.recurrence_end_date && (
               <Badge variant="secondary" className="text-xs">
                 Récurrent (fin: {new Date(categoryData.recurrence_end_date).toLocaleDateString('fr-FR')})
+              </Badge>
+            )}
+            {/* For member types, show that recurrence is managed by customer journey */}
+            {isMemberType && categoryData?.is_recurring && (
+              <Badge variant="outline" className="text-xs border-muted-foreground/30 text-muted-foreground">
+                Fin via Parcours Client
               </Badge>
             )}
             <div className="flex gap-1">
@@ -294,37 +321,46 @@ const SortableCategoryItem = ({
                   placeholder="Montant par défaut pour les nouveaux membres"
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={editingIndefinite}
-                    onCheckedChange={onEditIndefiniteChange}
-                  />
-                  <Label className="text-sm flex items-center gap-1">
-                    Indéterminée <span className="text-lg">∞</span>
-                  </Label>
-                </div>
-                {!editingIndefinite && (
-                  <div className="flex flex-col gap-2 pl-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={onToggleEndDate}
-                    >
-                      {editingEndDate ? "Retirer fin de récurrence" : "Fin de récurrence"}
-                    </Button>
-                    {editingEndDate && (
-                      <Input
-                        type="date"
-                        value={editingEndDate || ""}
-                        onChange={(e) => onEditEndDateChange(e.target.value || null)}
-                        className="w-full"
-                      />
-                    )}
+              {/* Only show end date options for non-member types */}
+              {!isMemberType && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={editingIndefinite}
+                      onCheckedChange={onEditIndefiniteChange}
+                    />
+                    <Label className="text-sm flex items-center gap-1">
+                      Indéterminée <span className="text-lg">∞</span>
+                    </Label>
                   </div>
-                )}
-              </div>
+                  {!editingIndefinite && (
+                    <div className="flex flex-col gap-2 pl-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onToggleEndDate}
+                      >
+                        {editingEndDate ? "Retirer fin de récurrence" : "Fin de récurrence"}
+                      </Button>
+                      {editingEndDate && (
+                        <Input
+                          type="date"
+                          value={editingEndDate || ""}
+                          onChange={(e) => onEditEndDateChange(e.target.value || null)}
+                          className="w-full"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Show message for member types */}
+              {isMemberType && (
+                <p className="text-xs text-muted-foreground">
+                  La fin de récurrence est gérée dans le Parcours Client via la date de fin d'abonnement.
+                </p>
+              )}
             </>
           )}
         </div>
@@ -363,6 +399,7 @@ const Accounting = () => {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [categoryDialogType, setCategoryDialogType] = useState<"revenue" | "expense">("revenue");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryRevenueType, setNewCategoryRevenueType] = useState<"membre" | "produit" | "service" | "">("");
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
   const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
@@ -370,6 +407,7 @@ const Accounting = () => {
   const [editingCategoryEndDate, setEditingCategoryEndDate] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryDefaultAmount, setEditingCategoryDefaultAmount] = useState(0);
+  const [editingCategoryRevenueType, setEditingCategoryRevenueType] = useState<"membre" | "produit" | "service" | "">("");
   
   // Load all category data with recurrence info
   const { categories: allCategories } = useAccountingCategoriesWithRecurrence();
@@ -624,6 +662,12 @@ const Accounting = () => {
       return;
     }
     
+    // For revenue categories, require revenue type selection
+    if (categoryDialogType === "revenue" && !newCategoryRevenueType) {
+      toast.error("Veuillez sélectionner le type de revenu (Membre/Produit/Service)");
+      return;
+    }
+    
     if (categoryDialogType === "revenue") {
       if (revenueCategories.includes(newCategoryName.trim())) {
         toast.error("Cette catégorie existe déjà");
@@ -632,11 +676,12 @@ const Accounting = () => {
       const newCategories = [...revenueCategories, newCategoryName.trim()];
       setRevenueCategories(newCategories);
       
-      // Persist to database
+      // Persist to database with revenue_type
       const { error } = await (supabase as any).from('accounting_categories').insert({
         type: 'revenue',
         name: newCategoryName.trim(),
-        position: revenueCategories.length
+        position: revenueCategories.length,
+        revenue_type: newCategoryRevenueType
       });
       if (error) {
         console.error('Erreur lors de l\'ajout de la catégorie', error);
@@ -653,7 +698,7 @@ const Accounting = () => {
       const newCategories = [...expenseCategories, newCategoryName.trim()];
       setExpenseCategories(newCategories);
       
-      // Persist to database
+      // Persist to database (no revenue_type for expenses)
       const { error } = await (supabase as any).from('accounting_categories').insert({
         type: 'expense',
         name: newCategoryName.trim(),
@@ -669,6 +714,7 @@ const Accounting = () => {
     }
     
     setNewCategoryName("");
+    setNewCategoryRevenueType("");
     setIsCategoryDialogOpen(false);
   };
 
@@ -2027,21 +2073,45 @@ const Accounting = () => {
             
             <div className="space-y-4">
               {/* Add new category */}
-              <div className="flex gap-2">
-                <Input
-                  placeholder={`Nouveau type de ${categoryDialogType === "revenue" ? "revenu" : "dépense"}`}
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddCategory();
-                    }
-                  }}
-                />
-                <Button onClick={handleAddCategory}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter
-                </Button>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={`Nouveau type de ${categoryDialogType === "revenue" ? "revenu" : "dépense"}`}
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && (categoryDialogType === "expense" || newCategoryRevenueType)) {
+                        handleAddCategory();
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  {categoryDialogType === "revenue" && (
+                    <Select
+                      value={newCategoryRevenueType}
+                      onValueChange={(value: "membre" | "produit" | "service") => setNewCategoryRevenueType(value)}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Type *" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="membre">Membre</SelectItem>
+                        <SelectItem value="produit">Produit</SelectItem>
+                        <SelectItem value="service">Service</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button onClick={handleAddCategory}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter
+                  </Button>
+                </div>
+                {categoryDialogType === "revenue" && (
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Membre</strong> : la fin de récurrence est gérée dans le Parcours Client • 
+                    <strong> Produit/Service</strong> : vous pouvez définir une fin de récurrence ici
+                  </p>
+                )}
               </div>
 
               {/* List existing categories with drag and drop */}
@@ -2064,7 +2134,8 @@ const Accounting = () => {
                             categoryData={categoryData ? {
                               is_recurring: categoryData.is_recurring,
                               is_indefinite_recurrence: categoryData.is_indefinite_recurrence,
-                              recurrence_end_date: categoryData.recurrence_end_date
+                              recurrence_end_date: categoryData.recurrence_end_date,
+                              revenue_type: categoryData.revenue_type
                             } : undefined}
                             index={index}
                             isEditing={editingCategoryIndex === index}
