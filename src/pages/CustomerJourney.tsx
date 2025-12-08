@@ -177,12 +177,18 @@ const CustomerJourney = () => {
   const filteredMembers = useMemo(() => {
     if (selectedView !== "index") return members;
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     return members.filter(member => {
       // Apply status filter first
+      // A member is considered "exited" only if exit_date is in the past or today
+      // A member with a future exit_date is still "active"
       const hasExitDate = !!member.exit_date;
+      const exitDateIsPastOrToday = hasExitDate && parseISO(member.exit_date!) <= today;
       
-      if (memberStatus === "active" && hasExitDate) return false;
-      if (memberStatus === "exited" && !hasExitDate) return false;
+      if (memberStatus === "active" && exitDateIsPastOrToday) return false;
+      if (memberStatus === "exited" && !exitDateIsPastOrToday) return false;
 
       // If search term is present, only filter by search (ignore date filters)
       if (searchTerm) {
