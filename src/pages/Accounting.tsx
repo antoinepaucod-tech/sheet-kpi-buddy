@@ -1411,20 +1411,29 @@ const Accounting = () => {
                   {/* Type de Revenu (only for new revenue transactions) */}
                   {!editingTransaction && (
                     <div>
-                      <Label>Type de Revenu *</Label>
+                      <Label className="flex items-center gap-2">
+                        Type de Revenu *
+                        <span className="text-xs text-muted-foreground font-normal">
+                          (Produit/Service autorisés, Membre → Parcours Client)
+                        </span>
+                      </Label>
                       <Select
                         value={formData.revenue_type}
                         onValueChange={(value: "membre" | "service" | "produit") =>
                           setFormData({ ...formData, revenue_type: value })
                         }
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner le type" />
+                        <SelectTrigger className={cn(
+                          !formData.revenue_type && "border-destructive"
+                        )}>
+                          <SelectValue placeholder="⚠️ Sélectionner le type (obligatoire)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="membre">Membre</SelectItem>
-                          <SelectItem value="service">Service</SelectItem>
-                          <SelectItem value="produit">Produit</SelectItem>
+                          <SelectItem value="produit">Produit (ex: compléments, retail)</SelectItem>
+                          <SelectItem value="service">Service (ex: coaching, consultation)</SelectItem>
+                          <SelectItem value="membre" disabled className="text-muted-foreground">
+                            Membre (ajouter via Parcours Client)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
