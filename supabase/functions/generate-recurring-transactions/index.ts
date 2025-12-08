@@ -13,6 +13,7 @@ interface Member {
   member_type: string;
   contract_signed_date: string;
   exit_date: string | null;
+  subscription_end_date: string | null;
 }
 
 serve(async (req) => {
@@ -71,22 +72,42 @@ serve(async (req) => {
       'OFFRE 6 MOIS - 499 CHF'
     ];
 
-    // Get all active members
+    // Get all active members (no exit_date filter here, we'll filter in the loop)
     const { data: members, error: membersError } = await supabase
       .from('customer_members')
-      .select('*')
-      .or('exit_date.is.null,exit_date.gt.' + now.toISOString());
+      .select('*');
 
     if (membersError) {
       console.error('Error fetching members:', membersError);
       throw membersError;
     }
 
+    // Current date for comparison (start of today)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     console.log(`Found ${members?.length || 0} active members`);
 
     const transactionsToCreate = [];
 
     for (const member of members as Member[]) {
+      // RULE: Skip members whose subscription has ended (subscription_end_date is in the past)
+      if (member.subscription_end_date) {
+        const subscriptionEndDate = new Date(member.subscription_end_date);
+        if (subscriptionEndDate < today) {
+          console.log(`Skipping ${member.name} - subscription ended on ${member.subscription_end_date}`);
+          continue;
+        }
+      }
+
+      // Skip members with exit_date in the past
+      if (member.exit_date) {
+        const exitDate = new Date(member.exit_date);
+        if (exitDate < today) {
+          console.log(`Skipping ${member.name} - exited on ${member.exit_date}`);
+          continue;
+        }
+      }
+
       // Check if membership is annual/PIF (generates 0 amount recurrence)
       const isAnnual = annualKeywords.some(keyword => 
         member.membership.toUpperCase().includes(keyword)

@@ -1273,6 +1273,7 @@ const CustomerJourney = () => {
             setSelectedYear(year);
             setSelectedView(`week-${week}`);
           }}
+          onMemberUpdated={() => window.location.reload()}
         />
       </div>
     </div>
