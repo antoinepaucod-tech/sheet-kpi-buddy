@@ -215,7 +215,7 @@ const CustomerJourney = () => {
         return true;
       }
 
-      // For "active" members, filter by contract_signed_date
+      // For "active" members, show them for ALL years between contract_signed_date and end date
       if (!member.contract_signed_date) {
         return selectedYear === "all";
       }
@@ -223,12 +223,34 @@ const CustomerJourney = () => {
       const contractDate = parseISO(member.contract_signed_date);
       const contractYear = contractDate.getFullYear();
       const contractMonth = contractDate.getMonth();
-
-      // Apply year filter if not "all"
-      if (selectedYear !== "all" && contractYear !== selectedYear) return false;
       
-      // Apply month filter if not "all"
-      if (selectedMonth !== "all" && contractMonth !== selectedMonth) return false;
+      // Determine the end date (subscription_end_date, exit_date, or current year if none)
+      let endYear = new Date().getFullYear();
+      let endMonth = 11; // December by default
+      
+      if (member.subscription_end_date) {
+        const subEndDate = parseISO(member.subscription_end_date);
+        endYear = subEndDate.getFullYear();
+        endMonth = subEndDate.getMonth();
+      } else if (member.exit_date) {
+        const exitDate = parseISO(member.exit_date);
+        endYear = exitDate.getFullYear();
+        endMonth = exitDate.getMonth();
+      }
+
+      // Apply year filter - member is visible if selected year is within their active period
+      if (selectedYear !== "all") {
+        // Member should appear in all years from contract year to end year
+        if (selectedYear < contractYear || selectedYear > endYear) return false;
+        
+        // Apply month filter only if year matches start or end year
+        if (selectedMonth !== "all") {
+          // If selected year is the contract year, member should appear from contract month onwards
+          if (selectedYear === contractYear && selectedMonth < contractMonth) return false;
+          // If selected year is the end year, member should appear until end month
+          if (selectedYear === endYear && selectedMonth > endMonth) return false;
+        }
+      }
 
       return true;
     });
