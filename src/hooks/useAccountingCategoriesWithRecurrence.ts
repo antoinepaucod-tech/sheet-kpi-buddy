@@ -12,6 +12,7 @@ export interface AccountingCategoryWithRecurrence {
   default_amount: number;
   is_indefinite_recurrence: boolean;
   recurrence_end_date: string | null;
+  revenue_type: "membre" | "produit" | "service" | null;
 }
 
 export const useAccountingCategoriesWithRecurrence = () => {

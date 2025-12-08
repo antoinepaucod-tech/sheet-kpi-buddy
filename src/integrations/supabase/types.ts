@@ -25,6 +25,7 @@ export type Database = {
           position: number
           recurrence_day: number | null
           recurrence_end_date: string | null
+          revenue_type: string | null
           type: string
           updated_at: string
         }
@@ -38,6 +39,7 @@ export type Database = {
           position?: number
           recurrence_day?: number | null
           recurrence_end_date?: string | null
+          revenue_type?: string | null
           type: string
           updated_at?: string
         }
@@ -51,6 +53,7 @@ export type Database = {
           position?: number
           recurrence_day?: number | null
           recurrence_end_date?: string | null
+          revenue_type?: string | null
           type?: string
           updated_at?: string
         }
