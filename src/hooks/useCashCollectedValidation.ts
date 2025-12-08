@@ -42,17 +42,22 @@ export const useCashCollectedValidation = (year: number, month: number) => {
           })
           .reduce((sum, m) => sum + (m.cash_collected || 0), 0);
 
-        // Get cash_collected from monthly_kpis for this month/year
-        const { data: kpiData, error: kpiError } = await supabase
-          .from('monthly_kpis')
-          .select('cash_collected')
+        // Get MEMBER-ONLY revenue from accounting_transactions for this month/year
+        // This excludes products and services to match customer_members comparison
+        const { data: memberTransactions, error: transError } = await supabase
+          .from('accounting_transactions')
+          .select('amount_received, product_description')
+          .eq('transaction_type', 'revenue')
           .eq('year', year)
           .eq('month', month + 1)
-          .single();
+          .in('product_description', ['Revenu EFT Général', 'Membre PIF', 'Revenu PT']);
 
-        if (kpiError && kpiError.code !== 'PGRST116') throw kpiError;
+        if (transError) throw transError;
 
-        const kpiRevenueTotal = kpiData?.cash_collected || 0;
+        const kpiRevenueTotal = memberTransactions?.reduce(
+          (sum, t) => sum + (t.amount_received || 0),
+          0
+        ) || 0;
         const difference = Math.abs(customerJourneyTotal - kpiRevenueTotal);
         const isValid = difference < 0.01; // Allow for minor floating point differences
 
