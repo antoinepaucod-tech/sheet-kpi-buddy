@@ -62,10 +62,14 @@ export function useMemberHistory(memberId: string | null) {
     }
   };
 
-  const addComment = async (comment: string, createdBy: string = 'User') => {
+  const addComment = async (comment: string) => {
     if (!memberId || !comment.trim()) return;
 
     try {
+      // Get current user's email
+      const { data: { user } } = await supabase.auth.getUser();
+      const createdBy = user?.email?.split('@')[0] || 'User';
+
       const { data, error } = await supabase
         .from('member_comments')
         .insert([{
