@@ -16,6 +16,7 @@ export interface OnboardingHistory {
   action_date: string;
   previous_value: boolean;
   new_value: boolean;
+  performed_by: string | null;
 }
 
 export function useMemberHistory(memberId: string | null) {
@@ -115,13 +116,18 @@ export function useMemberHistory(memberId: string | null) {
     if (!memberId) return;
 
     try {
+      // Get current user's email
+      const { data: { user } } = await supabase.auth.getUser();
+      const performedBy = user?.email?.split('@')[0] || 'User';
+
       const { data, error } = await supabase
         .from('member_onboarding_history')
         .insert([{
           member_id: memberId,
           action_type: actionType,
           previous_value: previousValue,
-          new_value: newValue
+          new_value: newValue,
+          performed_by: performedBy
         }])
         .select()
         .single();

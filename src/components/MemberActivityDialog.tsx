@@ -536,7 +536,7 @@ export function MemberActivityDialog({
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          Complété
+                          Complété{item.performed_by ? ` par ${item.performed_by}` : ''}
                         </p>
                       </div>
                     </div>
