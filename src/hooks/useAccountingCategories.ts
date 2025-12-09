@@ -9,6 +9,7 @@ export interface AccountingCategory {
   is_recurring?: boolean;
   recurrence_day?: number;
   default_amount?: number;
+  requires_training_tracking?: boolean;
 }
 
 export const useAccountingCategories = () => {

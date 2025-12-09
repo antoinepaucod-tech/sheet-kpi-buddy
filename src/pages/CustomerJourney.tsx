@@ -69,19 +69,12 @@ const CustomerJourney = () => {
   // Dynamic membership types from accounting categories
   const membershipTypes = revenueCategories.map(cat => cat.name);
 
-  // Memberships that require training tracking (updated names)
-  const trackingRequiredMemberships = [
-    "THE COACH PASS MENSUEL",
-    "HUBFIT",
-    "UNLIMITED ACCESS - PAIEMENT MENSUEL",
-    "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL",
-    "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL",
-    "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1",
-    "OFFRE 6 MOIS - 499 CHF",
-    "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL",
-    "PT ANTOINE",
-    "OFFRE 3 MOIS",
-  ];
+  // Memberships that require training tracking - now from database
+  const trackingRequiredMemberships = useMemo(() => {
+    return revenueCategories
+      .filter(cat => cat.requires_training_tracking)
+      .map(cat => cat.name);
+  }, [revenueCategories]);
 
   const requiresTrainingTracking = (membership: string): boolean => {
     return trackingRequiredMemberships.includes(membership);
