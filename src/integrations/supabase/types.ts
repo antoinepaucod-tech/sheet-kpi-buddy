@@ -397,6 +397,7 @@ export type Database = {
           id: string
           member_id: string
           new_value: boolean
+          performed_by: string | null
           previous_value: boolean
         }
         Insert: {
@@ -405,6 +406,7 @@ export type Database = {
           id?: string
           member_id: string
           new_value: boolean
+          performed_by?: string | null
           previous_value: boolean
         }
         Update: {
@@ -413,6 +415,7 @@ export type Database = {
           id?: string
           member_id?: string
           new_value?: boolean
+          performed_by?: string | null
           previous_value?: boolean
         }
         Relationships: [
