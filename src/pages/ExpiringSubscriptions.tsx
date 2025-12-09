@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Bell, RefreshCw, ChevronDown } from "lucide-react";
+import { Bell, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -23,11 +23,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface Member {
   id: string;
@@ -39,14 +50,44 @@ interface Member {
   exit_date: string | null;
 }
 
+interface MembershipCategory {
+  id: string;
+  name: string;
+}
+
 const ExpiringSubscriptions = () => {
   const { t } = useLanguage();
   const [expiringMembers, setExpiringMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [membershipCategories, setMembershipCategories] = useState<MembershipCategory[]>([]);
+  
+  // Renewal dialog state
+  const [renewalDialogOpen, setRenewalDialogOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [renewalMonths, setRenewalMonths] = useState("12");
+  const [changeMembership, setChangeMembership] = useState(false);
+  const [newMembership, setNewMembership] = useState("");
 
   useEffect(() => {
     loadExpiringSubscriptions();
+    loadMembershipCategories();
   }, []);
+
+  const loadMembershipCategories = async () => {
+    const { data, error } = await supabase
+      .from('accounting_categories')
+      .select('id, name')
+      .eq('type', 'revenue')
+      .eq('revenue_type', 'membre')
+      .order('name');
+
+    if (error) {
+      console.error("Error loading membership categories:", error);
+      return;
+    }
+
+    setMembershipCategories(data || []);
+  };
 
   const loadExpiringSubscriptions = async () => {
     setIsLoading(true);
@@ -54,7 +95,6 @@ const ExpiringSubscriptions = () => {
     const today = startOfDay(new Date());
     const oneMonthFromNow = endOfDay(addMonths(today, 1));
 
-    // Fetch all active members with subscription_end_date
     const { data, error } = await supabase
       .from('customer_members')
       .select('*')
@@ -67,7 +107,6 @@ const ExpiringSubscriptions = () => {
       return;
     }
 
-    // Filter members whose subscription ends within the next month
     const expiring = (data || []).filter(member => {
       if (!member.subscription_end_date) return false;
       
@@ -75,7 +114,6 @@ const ExpiringSubscriptions = () => {
       return isWithinInterval(endDate, { start: today, end: oneMonthFromNow });
     });
 
-    // Sort by subscription_end_date (soonest first)
     expiring.sort((a, b) => {
       const dateA = new Date(a.subscription_end_date!).getTime();
       const dateB = new Date(b.subscription_end_date!).getTime();
@@ -100,16 +138,32 @@ const ExpiringSubscriptions = () => {
     return "secondary";
   };
 
-  const handleRenewSubscription = async (member: Member, renewalMonths: number = 12) => {
-    if (!member.subscription_end_date) return;
+  const openRenewalDialog = (member: Member) => {
+    setSelectedMember(member);
+    setRenewalMonths("12");
+    setChangeMembership(false);
+    setNewMembership(member.membership);
+    setRenewalDialogOpen(true);
+  };
 
-    const currentEndDate = new Date(member.subscription_end_date);
-    const newEndDate = addMonths(currentEndDate, renewalMonths);
+  const handleRenewSubscription = async () => {
+    if (!selectedMember?.subscription_end_date) return;
+
+    const currentEndDate = new Date(selectedMember.subscription_end_date);
+    const newEndDate = addMonths(currentEndDate, parseInt(renewalMonths));
+
+    const updateData: { subscription_end_date: string; membership?: string } = {
+      subscription_end_date: format(newEndDate, 'yyyy-MM-dd')
+    };
+
+    if (changeMembership && newMembership && newMembership !== selectedMember.membership) {
+      updateData.membership = newMembership;
+    }
 
     const { error } = await supabase
       .from('customer_members')
-      .update({ subscription_end_date: format(newEndDate, 'yyyy-MM-dd') })
-      .eq('id', member.id);
+      .update(updateData)
+      .eq('id', selectedMember.id);
 
     if (error) {
       console.error("Error renewing subscription:", error);
@@ -117,7 +171,12 @@ const ExpiringSubscriptions = () => {
       return;
     }
 
-    toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}`);
+    const membershipMessage = changeMembership && newMembership !== selectedMember.membership
+      ? ` avec nouveau type: ${newMembership}`
+      : "";
+
+    toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}${membershipMessage}`);
+    setRenewalDialogOpen(false);
     loadExpiringSubscriptions();
   };
 
@@ -196,29 +255,15 @@ const ExpiringSubscriptions = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-2"
-                              >
-                                <RefreshCw className="h-3.5 w-3.5" />
-                                Renouveler
-                                <ChevronDown className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-popover">
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((months) => (
-                                <DropdownMenuItem
-                                  key={months}
-                                  onClick={() => handleRenewSubscription(member, months)}
-                                >
-                                  {months} mois
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openRenewalDialog(member)}
+                            className="gap-2"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Renouveler
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -229,6 +274,93 @@ const ExpiringSubscriptions = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Renewal Dialog */}
+      <Dialog open={renewalDialogOpen} onOpenChange={setRenewalDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Renouveler l'abonnement</DialogTitle>
+            <DialogDescription>
+              {selectedMember && (
+                <>
+                  <span className="font-medium text-foreground">{selectedMember.name}</span>
+                  <span className="block text-xs mt-1">
+                    Abonnement actuel: {selectedMember.membership}
+                  </span>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Duration Selection */}
+            <div className="space-y-2">
+              <Label>Durée du renouvellement</Label>
+              <Select value={renewalMonths} onValueChange={setRenewalMonths}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner la durée" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((months) => (
+                    <SelectItem key={months} value={months.toString()}>
+                      {months} mois
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedMember?.subscription_end_date && (
+                <p className="text-xs text-muted-foreground">
+                  Nouvelle date d'expiration: {format(
+                    addMonths(new Date(selectedMember.subscription_end_date), parseInt(renewalMonths)),
+                    "dd MMMM yyyy",
+                    { locale: fr }
+                  )}
+                </p>
+              )}
+            </div>
+
+            {/* Change Membership Toggle */}
+            <div className="flex items-center justify-between">
+              <Label htmlFor="change-membership" className="cursor-pointer">
+                Changer de type d'abonnement
+              </Label>
+              <Switch
+                id="change-membership"
+                checked={changeMembership}
+                onCheckedChange={setChangeMembership}
+              />
+            </div>
+
+            {/* New Membership Selection */}
+            {changeMembership && (
+              <div className="space-y-2">
+                <Label>Nouveau type d'abonnement</Label>
+                <Select value={newMembership} onValueChange={setNewMembership}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner le type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {membershipCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenewalDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleRenewSubscription}>
+              Confirmer le renouvellement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
