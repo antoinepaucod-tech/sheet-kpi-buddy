@@ -43,11 +43,11 @@ export const useChallengeMembers = () => {
     try {
       setIsLoading(true);
       
-      // Load members with "6WEEKS CHALLENGE" membership (case insensitive match)
+      // Load members with "6 WEEKS CHALLENGE" membership (case insensitive match, allowing space)
       const { data: membersData, error: membersError } = await supabase
         .from('customer_members')
         .select('id, name, membership, contract_signed_date, subscription_end_date, exit_date, cash_collected, member_type')
-        .ilike('membership', '%6week%')
+        .or('membership.ilike.%6week%,membership.ilike.%6 week%')
         .order('created_at', { ascending: false });
 
       if (membersError) throw membersError;

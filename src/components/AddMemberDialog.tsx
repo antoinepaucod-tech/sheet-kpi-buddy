@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Plus } from "lucide-react";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, addWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAccountingCategories } from "@/hooks/useAccountingCategories";
@@ -221,13 +221,21 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
               <Select
                 value={formData.subscriptionDurationMonths.toString()}
                 onValueChange={(value) => {
-                  const months = parseInt(value);
-                  const endDate = formData.contractDate 
-                    ? new Date(formData.contractDate.getFullYear(), formData.contractDate.getMonth() + months, formData.contractDate.getDate())
-                    : null;
+                  const durationValue = parseFloat(value);
+                  let endDate: Date | null = null;
+                  
+                  if (formData.contractDate && durationValue > 0) {
+                    // Handle 6 weeks (1.5 months equivalent stored as 1.5)
+                    if (durationValue === 1.5) {
+                      endDate = addWeeks(formData.contractDate, 6);
+                    } else {
+                      endDate = addMonths(formData.contractDate, durationValue);
+                    }
+                  }
+                  
                   setFormData({ 
                     ...formData, 
-                    subscriptionDurationMonths: months,
+                    subscriptionDurationMonths: durationValue,
                     subscriptionEndDate: endDate
                   });
                 }}
@@ -236,6 +244,7 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
+                  <SelectItem value="1.5">6 semaines après signature</SelectItem>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((months) => (
                     <SelectItem key={months} value={months.toString()}>
                       {months} mois après signature
