@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addMonths, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, addMonths, isWithinInterval, startOfDay, endOfDay, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Bell, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -39,6 +39,10 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Member {
   id: string;
@@ -67,6 +71,7 @@ const ExpiringSubscriptions = () => {
   const [renewalMonths, setRenewalMonths] = useState("12");
   const [changeMembership, setChangeMembership] = useState(false);
   const [newMembership, setNewMembership] = useState("");
+  const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     loadExpiringSubscriptions();
@@ -143,14 +148,24 @@ const ExpiringSubscriptions = () => {
     setRenewalMonths("12");
     setChangeMembership(false);
     setNewMembership(member.membership);
+    // Par défaut, la date de prise d'effet est le lendemain de la date d'expiration actuelle
+    const defaultStartDate = member.subscription_end_date 
+      ? addDays(new Date(member.subscription_end_date), 1)
+      : new Date();
+    setRenewalStartDate(defaultStartDate);
     setRenewalDialogOpen(true);
   };
 
-  const handleRenewSubscription = async () => {
-    if (!selectedMember?.subscription_end_date) return;
+  const getNewEndDate = (): Date | null => {
+    if (!renewalStartDate) return null;
+    return addMonths(renewalStartDate, parseInt(renewalMonths));
+  };
 
-    const currentEndDate = new Date(selectedMember.subscription_end_date);
-    const newEndDate = addMonths(currentEndDate, parseInt(renewalMonths));
+  const handleRenewSubscription = async () => {
+    if (!selectedMember || !renewalStartDate) return;
+
+    const newEndDate = getNewEndDate();
+    if (!newEndDate) return;
 
     const updateData: { subscription_end_date: string; membership?: string } = {
       subscription_end_date: format(newEndDate, 'yyyy-MM-dd')
@@ -293,6 +308,34 @@ const ExpiringSubscriptions = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Renewal Start Date Selection */}
+            <div className="space-y-2">
+              <Label>Date de prise d'effet</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !renewalStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {renewalStartDate ? format(renewalStartDate, "dd MMMM yyyy", { locale: fr }) : "Sélectionner une date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={renewalStartDate}
+                    onSelect={setRenewalStartDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             {/* Duration Selection */}
             <div className="space-y-2">
               <Label>Durée du renouvellement</Label>
@@ -308,10 +351,10 @@ const ExpiringSubscriptions = () => {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedMember?.subscription_end_date && (
+              {renewalStartDate && (
                 <p className="text-xs text-muted-foreground">
                   Nouvelle date d'expiration: {format(
-                    addMonths(new Date(selectedMember.subscription_end_date), parseInt(renewalMonths)),
+                    addMonths(renewalStartDate, parseInt(renewalMonths)),
                     "dd MMMM yyyy",
                     { locale: fr }
                   )}
