@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Bell, RefreshCw } from "lucide-react";
+import { Bell, RefreshCw, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -22,6 +22,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Member {
   id: string;
@@ -190,15 +196,29 @@ const ExpiringSubscriptions = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRenewSubscription(member)}
-                            className="gap-2"
-                          >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                            Renouveler (12 mois)
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                Renouveler
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-popover">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((months) => (
+                                <DropdownMenuItem
+                                  key={months}
+                                  onClick={() => handleRenewSubscription(member, months)}
+                                >
+                                  {months} mois
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
