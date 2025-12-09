@@ -3,7 +3,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, isWithinInterval, startOfDay, endOfDay, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Bell, RefreshCw } from "lucide-react";
+import { Bell, RefreshCw, Banknote } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   Card,
@@ -49,6 +50,7 @@ interface Member {
   name: string;
   membership: string;
   member_type: string | null;
+  cash_collected: number | null;
   contract_signed_date: string | null;
   subscription_end_date: string | null;
   exit_date: string | null;
@@ -72,6 +74,8 @@ const ExpiringSubscriptions = () => {
   const [changeMembership, setChangeMembership] = useState(false);
   const [newMembership, setNewMembership] = useState("");
   const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
+  const [renewalMemberType, setRenewalMemberType] = useState<string>("recurring");
+  const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
 
   useEffect(() => {
     loadExpiringSubscriptions();
@@ -153,6 +157,9 @@ const ExpiringSubscriptions = () => {
       ? addDays(new Date(member.subscription_end_date), 1)
       : new Date();
     setRenewalStartDate(defaultStartDate);
+    // Conserver le type de membre actuel ou "recurring" par défaut
+    setRenewalMemberType(member.member_type || "recurring");
+    setRenewalCashCollected("0");
     setRenewalDialogOpen(true);
   };
 
@@ -167,8 +174,21 @@ const ExpiringSubscriptions = () => {
     const newEndDate = getNewEndDate();
     if (!newEndDate) return;
 
-    const updateData: { subscription_end_date: string; membership?: string } = {
-      subscription_end_date: format(newEndDate, 'yyyy-MM-dd')
+    const cashCollectedValue = parseFloat(renewalCashCollected) || 0;
+    const finalMembership = changeMembership && newMembership ? newMembership : selectedMember.membership;
+
+    // Mise à jour du membre avec les nouvelles infos
+    const updateData: { 
+      subscription_end_date: string; 
+      membership?: string;
+      member_type: string;
+      cash_collected: number;
+      contract_signed_date: string;
+    } = {
+      subscription_end_date: format(newEndDate, 'yyyy-MM-dd'),
+      member_type: renewalMemberType,
+      cash_collected: (selectedMember.cash_collected || 0) + cashCollectedValue,
+      contract_signed_date: format(renewalStartDate, 'yyyy-MM-dd')
     };
 
     if (changeMembership && newMembership && newMembership !== selectedMember.membership) {
@@ -189,8 +209,12 @@ const ExpiringSubscriptions = () => {
     const membershipMessage = changeMembership && newMembership !== selectedMember.membership
       ? ` avec nouveau type: ${newMembership}`
       : "";
+    
+    const cashMessage = cashCollectedValue > 0 
+      ? ` | Cash collecté: CHF ${cashCollectedValue.toFixed(2)}`
+      : "";
 
-    toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}${membershipMessage}`);
+    toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}${membershipMessage}${cashMessage}`);
     setRenewalDialogOpen(false);
     loadExpiringSubscriptions();
   };
@@ -360,6 +384,39 @@ const ExpiringSubscriptions = () => {
                   )}
                 </p>
               )}
+            </div>
+
+            {/* Member Type Selection */}
+            <div className="space-y-2">
+              <Label>Type de membre</Label>
+              <Select value={renewalMemberType} onValueChange={setRenewalMemberType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le type" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="recurring">Récurrent (paiement mensuel)</SelectItem>
+                  <SelectItem value="pif">PIF (paiement intégral)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Cash Collected */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Banknote className="h-4 w-4" />
+                Cash collecté lors du renouvellement (CHF)
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={renewalCashCollected}
+                onChange={(e) => setRenewalCashCollected(e.target.value)}
+                placeholder="0.00"
+              />
+              <p className="text-xs text-muted-foreground">
+                Montant encaissé lors du renouvellement de l'abonnement
+              </p>
             </div>
 
             {/* Change Membership Toggle */}
