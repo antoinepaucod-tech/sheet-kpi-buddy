@@ -101,9 +101,17 @@ export function MemberActivityDialog({
       const currentEndDate = parseISO(member.subscription_end_date);
       const today = new Date();
       
-      // Calculate new end date: from current end date (or today if expired) + renewal months
+      // Calculate new end date: from current end date (or today if expired) + renewal duration
       const baseDate = currentEndDate > today ? currentEndDate : today;
-      const newEndDate = addMonths(baseDate, parseInt(renewalMonths));
+      const durationValue = parseFloat(renewalMonths);
+      
+      // Handle 6 weeks (1.5 months equivalent)
+      let newEndDate: Date;
+      if (durationValue === 1.5) {
+        newEndDate = addWeeks(baseDate, 6);
+      } else {
+        newEndDate = addMonths(baseDate, durationValue);
+      }
       
       // Update the member's subscription_end_date and exit_date
       const { error: updateError } = await supabase
@@ -385,6 +393,7 @@ export function MemberActivityDialog({
                       <SelectValue placeholder="Durée" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="1.5">6 semaines</SelectItem>
                       <SelectItem value="1">1 mois</SelectItem>
                       <SelectItem value="3">3 mois</SelectItem>
                       <SelectItem value="6">6 mois</SelectItem>

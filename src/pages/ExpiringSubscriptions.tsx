@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addMonths, isWithinInterval, startOfDay, endOfDay, addDays, isBefore } from "date-fns";
+import { format, addMonths, addWeeks, isWithinInterval, startOfDay, endOfDay, addDays, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Bell, RefreshCw, Banknote, Clock, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -202,7 +202,12 @@ const ExpiringSubscriptions = () => {
 
   const getNewEndDate = (): Date | null => {
     if (!renewalStartDate) return null;
-    return addMonths(renewalStartDate, parseInt(renewalMonths));
+    const durationValue = parseFloat(renewalMonths);
+    // Handle 6 weeks (1.5 months equivalent)
+    if (durationValue === 1.5) {
+      return addWeeks(renewalStartDate, 6);
+    }
+    return addMonths(renewalStartDate, durationValue);
   };
 
   const handleRenewSubscription = async () => {
@@ -481,6 +486,7 @@ const ExpiringSubscriptions = () => {
                   <SelectValue placeholder="Sélectionner la durée" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
+                  <SelectItem value="1.5">6 semaines</SelectItem>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((months) => (
                     <SelectItem key={months} value={months.toString()}>
                       {months} mois
@@ -491,7 +497,7 @@ const ExpiringSubscriptions = () => {
               {renewalStartDate && (
                 <p className="text-xs text-muted-foreground">
                   Nouvelle date d'expiration: {format(
-                    addMonths(renewalStartDate, parseInt(renewalMonths)),
+                    getNewEndDate() || renewalStartDate,
                     "dd MMMM yyyy",
                     { locale: fr }
                   )}
