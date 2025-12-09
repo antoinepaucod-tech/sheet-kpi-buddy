@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { Bell, RefreshCw, Banknote, Clock, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Card,
   CardContent,
@@ -339,15 +340,18 @@ const ExpiringSubscriptions = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Bell className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Gestion des Échéances</h1>
-          <p className="text-muted-foreground">
-            Suivez et renouvelez les abonnements de vos membres
-          </p>
+    <div className="container mx-auto p-4 sm:p-6 space-y-6 bg-background min-h-screen">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Bell className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gestion des Échéances</h1>
+            <p className="text-muted-foreground">
+              Suivez et renouvelez les abonnements de vos membres
+            </p>
+          </div>
         </div>
+        <ThemeToggle />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
