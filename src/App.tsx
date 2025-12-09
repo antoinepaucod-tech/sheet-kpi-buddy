@@ -16,6 +16,7 @@ import CourseKPI from "./pages/CourseKPI";
 import Accounting from "./pages/Accounting";
 import Tutorial from "./pages/Tutorial";
 import ExpiringSubscriptions from "./pages/ExpiringSubscriptions";
+import SixWeeksChallenge from "./pages/SixWeeksChallenge";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/course-kpi" element={<ProtectedLayout><CourseKPI /></ProtectedLayout>} />
             <Route path="/accounting" element={<ProtectedLayout><Accounting /></ProtectedLayout>} />
             <Route path="/customer-journey" element={<ProtectedLayout><CustomerJourney /></ProtectedLayout>} />
+            <Route path="/6-weeks-challenge" element={<ProtectedLayout><SixWeeksChallenge /></ProtectedLayout>} />
             <Route path="/kpi-client" element={<ProtectedLayout><KPIClient /></ProtectedLayout>} />
             <Route path="/expiring-subscriptions" element={<ProtectedLayout><ExpiringSubscriptions /></ProtectedLayout>} />
             <Route path="/tutorial" element={<ProtectedLayout><Tutorial /></ProtectedLayout>} />
