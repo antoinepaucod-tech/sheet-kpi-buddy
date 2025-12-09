@@ -125,6 +125,41 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_weekly_checkins: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          member_id: string
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          member_id: string
+          updated_at?: string
+          week_number: number
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          member_id?: string
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_weekly_checkins_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "customer_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_kpis: {
         Row: {
           attendance_rate: number | null

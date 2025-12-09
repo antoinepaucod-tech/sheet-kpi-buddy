@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut } from "lucide-react";
+import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut, Trophy } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ const menuItems = [
   { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
   { title: "KPI Cours", url: "/course-kpi", icon: Calendar },
   { title: "Parcours Client", url: "/customer-journey", icon: Users },
+  { title: "6 Weeks Challenge", url: "/6-weeks-challenge", icon: Trophy },
   { title: "Comptabilité", url: "/accounting", icon: Receipt },
   { title: "Échéances", url: "/expiring-subscriptions", icon: Bell, showAlert: true },
 ];
