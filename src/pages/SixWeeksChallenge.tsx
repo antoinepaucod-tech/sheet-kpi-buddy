@@ -25,10 +25,13 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useChallengeMembers, type ChallengeMember } from "@/hooks/useChallengeMembers";
+import { MemberActivityDialog } from "@/components/MemberActivityDialog";
+import type { Member } from "@/hooks/useCustomerMembers";
 
 const SixWeeksChallenge = () => {
   const {
     members,
+    trainings,
     isLoading,
     updateCheckin,
     getCheckin,
@@ -36,9 +39,11 @@ const SixWeeksChallenge = () => {
     getChallengeProgress,
     getEngagementLevel,
     getCheckinRate,
+    refresh,
   } = useChallengeMembers();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMember, setSelectedMember] = useState<ChallengeMember | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed" | "upcoming">("all");
 
   // Filter members
@@ -231,7 +236,14 @@ const SixWeeksChallenge = () => {
 
                     return (
                       <TableRow key={member.id} className="hover:bg-muted/50">
-                        <TableCell className="font-medium">{member.name}</TableCell>
+                        <TableCell>
+                          <button
+                            onClick={() => setSelectedMember(member)}
+                            className="font-medium text-left hover:text-primary hover:underline transition-colors cursor-pointer"
+                          >
+                            {member.name}
+                          </button>
+                        </TableCell>
                         <TableCell>
                           {startDate ? format(startDate, "dd/MM/yyyy", { locale: fr }) : "-"}
                         </TableCell>
@@ -254,7 +266,7 @@ const SixWeeksChallenge = () => {
                         {[1, 2, 3, 4, 5, 6].map((week) => {
                           const isChecked = getCheckin(member.id, week);
                           const isPastOrCurrent = week <= progress.currentWeek;
-                          const trainings = getTraining(member.id, week);
+                          const weekTrainings = getTraining(member.id, week);
                           
                           return (
                             <TableCell key={week} className="text-center">
@@ -273,12 +285,12 @@ const SixWeeksChallenge = () => {
                                 {isPastOrCurrent && (
                                   <span className={cn(
                                     "text-[10px]",
-                                    trainings >= 3 ? "text-success" : 
-                                    trainings >= 2 ? "text-warning" : 
-                                    trainings >= 1 ? "text-orange-500" : 
+                                    weekTrainings >= 3 ? "text-success" : 
+                                    weekTrainings >= 2 ? "text-warning" : 
+                                    weekTrainings >= 1 ? "text-orange-500" : 
                                     "text-destructive"
                                   )}>
-                                    {trainings}/3
+                                    {weekTrainings}/3
                                   </span>
                                 )}
                               </div>
@@ -308,6 +320,30 @@ const SixWeeksChallenge = () => {
           </div>
         </CardContent>
       </Card>
+      {/* Member Activity Dialog */}
+      {selectedMember && (
+        <MemberActivityDialog
+          member={{
+            ...selectedMember,
+            onboarding_bsport: false,
+            onboarding_hubfit: false,
+            onboarding_nutrition: false,
+            questionnaire_coaching: false,
+            session_introduction: false,
+          } as Member}
+          weeklyTrainings={trainings.map(t => ({
+            ...t,
+            id: t.id || '',
+            created_at: '',
+            updated_at: '',
+          }))}
+          onClose={() => setSelectedMember(null)}
+          onMemberUpdated={() => {
+            refresh();
+            setSelectedMember(null);
+          }}
+        />
+      )}
     </div>
   );
 };
