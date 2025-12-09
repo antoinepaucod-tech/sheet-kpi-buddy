@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addMonths, isWithinInterval, startOfDay, endOfDay, addDays } from "date-fns";
+import { format, addMonths, isWithinInterval, startOfDay, endOfDay, addDays, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Bell, RefreshCw, Banknote } from "lucide-react";
+import { Bell, RefreshCw, Banknote, Clock, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
@@ -44,6 +44,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Member {
   id: string;
@@ -63,9 +64,11 @@ interface MembershipCategory {
 
 const ExpiringSubscriptions = () => {
   const { t } = useLanguage();
-  const [expiringMembers, setExpiringMembers] = useState<Member[]>([]);
+  const [upcomingMembers, setUpcomingMembers] = useState<Member[]>([]);
+  const [expiredMembers, setExpiredMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [membershipCategories, setMembershipCategories] = useState<MembershipCategory[]>([]);
+  const [activeTab, setActiveTab] = useState("upcoming");
   
   // Renewal dialog state
   const [renewalDialogOpen, setRenewalDialogOpen] = useState(false);
@@ -78,7 +81,7 @@ const ExpiringSubscriptions = () => {
   const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
 
   useEffect(() => {
-    loadExpiringSubscriptions();
+    loadSubscriptions();
     loadMembershipCategories();
   }, []);
 
@@ -98,7 +101,7 @@ const ExpiringSubscriptions = () => {
     setMembershipCategories(data || []);
   };
 
-  const loadExpiringSubscriptions = async () => {
+  const loadSubscriptions = async () => {
     setIsLoading(true);
     
     const today = startOfDay(new Date());
@@ -107,29 +110,48 @@ const ExpiringSubscriptions = () => {
     const { data, error } = await supabase
       .from('customer_members')
       .select('*')
-      .not('subscription_end_date', 'is', null)
-      .or('exit_date.is.null,exit_date.gt.' + format(today, 'yyyy-MM-dd'));
+      .not('subscription_end_date', 'is', null);
 
     if (error) {
-      console.error("Error loading expiring subscriptions:", error);
+      console.error("Error loading subscriptions:", error);
       setIsLoading(false);
       return;
     }
 
-    const expiring = (data || []).filter(member => {
-      if (!member.subscription_end_date) return false;
+    const upcoming: Member[] = [];
+    const expired: Member[] = [];
+
+    (data || []).forEach(member => {
+      if (!member.subscription_end_date) return;
       
-      const endDate = new Date(member.subscription_end_date);
-      return isWithinInterval(endDate, { start: today, end: oneMonthFromNow });
+      const endDate = startOfDay(new Date(member.subscription_end_date));
+      
+      // Check if expired (end date is before today)
+      if (isBefore(endDate, today)) {
+        expired.push(member);
+      }
+      // Check if upcoming (within next 30 days)
+      else if (isWithinInterval(endDate, { start: today, end: oneMonthFromNow })) {
+        upcoming.push(member);
+      }
     });
 
-    expiring.sort((a, b) => {
+    // Sort upcoming by expiration date (soonest first)
+    upcoming.sort((a, b) => {
       const dateA = new Date(a.subscription_end_date!).getTime();
       const dateB = new Date(b.subscription_end_date!).getTime();
       return dateA - dateB;
     });
 
-    setExpiringMembers(expiring);
+    // Sort expired by expiration date (most recent first)
+    expired.sort((a, b) => {
+      const dateA = new Date(a.subscription_end_date!).getTime();
+      const dateB = new Date(b.subscription_end_date!).getTime();
+      return dateB - dateA;
+    });
+
+    setUpcomingMembers(upcoming);
+    setExpiredMembers(expired);
     setIsLoading(false);
   };
 
@@ -141,9 +163,23 @@ const ExpiringSubscriptions = () => {
     return diffDays;
   };
 
+  const getDaysSinceExpiry = (endDate: string): number => {
+    const today = startOfDay(new Date());
+    const expiry = startOfDay(new Date(endDate));
+    const diffTime = today.getTime() - expiry.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const getExpiryBadgeVariant = (daysUntil: number): "destructive" | "default" | "secondary" => {
     if (daysUntil <= 7) return "destructive";
     if (daysUntil <= 14) return "default";
+    return "secondary";
+  };
+
+  const getExpiredBadgeVariant = (daysSince: number): "destructive" | "default" | "secondary" => {
+    if (daysSince > 30) return "destructive";
+    if (daysSince > 14) return "default";
     return "secondary";
   };
 
@@ -216,7 +252,90 @@ const ExpiringSubscriptions = () => {
 
     toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}${membershipMessage}${cashMessage}`);
     setRenewalDialogOpen(false);
-    loadExpiringSubscriptions();
+    loadSubscriptions();
+  };
+
+  const renderMemberTable = (members: Member[], isExpired: boolean) => {
+    if (members.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          {isExpired 
+            ? "Aucun abonnement expiré."
+            : "Aucun abonnement ne nécessite de renouvellement dans les 30 prochains jours."}
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Membre</TableHead>
+              <TableHead>Membership</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Date de Signature</TableHead>
+              <TableHead>Date d'Expiration</TableHead>
+              <TableHead className="text-right">
+                {isExpired ? "Expiré depuis" : "Jours Restants"}
+              </TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {members.map((member) => {
+              const days = isExpired 
+                ? getDaysSinceExpiry(member.subscription_end_date!)
+                : getDaysUntilExpiry(member.subscription_end_date!);
+              
+              return (
+                <TableRow key={member.id}>
+                  <TableCell className="font-medium">{member.name}</TableCell>
+                  <TableCell>{member.membership}</TableCell>
+                  <TableCell>
+                    {member.member_type ? (
+                      <Badge variant="outline">{member.member_type}</Badge>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {member.contract_signed_date
+                      ? format(new Date(member.contract_signed_date), "dd MMM yyyy", { locale: fr })
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(member.subscription_end_date!), "dd MMM yyyy", { locale: fr })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {isExpired ? (
+                      <Badge variant={getExpiredBadgeVariant(days)}>
+                        {days === 0 ? "Aujourd'hui" : `${days} jour${days !== 1 ? 's' : ''}`}
+                      </Badge>
+                    ) : (
+                      <Badge variant={getExpiryBadgeVariant(days)}>
+                        {days === 0 ? "Aujourd'hui" : `${days} jour${days !== 1 ? 's' : ''}`}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openRenewalDialog(member)}
+                      className="gap-2"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Renouveler
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    );
   };
 
   return (
@@ -224,95 +343,85 @@ const ExpiringSubscriptions = () => {
       <div className="flex items-center gap-3">
         <Bell className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Abonnements Proches de l'Échéance</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Gestion des Échéances</h1>
           <p className="text-muted-foreground">
-            Membres dont l'abonnement expire dans les 30 prochains jours
+            Suivez et renouvelez les abonnements de vos membres
           </p>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Alertes d'Expiration
-          </CardTitle>
-          <CardDescription>
-            {isLoading
-              ? "Chargement..."
-              : `${expiringMembers.length} abonnement${expiringMembers.length !== 1 ? 's' : ''} à renouveler prochainement`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Chargement des abonnements...
-            </div>
-          ) : expiringMembers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucun abonnement ne nécessite de renouvellement dans les 30 prochains jours.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Membre</TableHead>
-                    <TableHead>Membership</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Date de Signature</TableHead>
-                    <TableHead>Date d'Expiration</TableHead>
-                    <TableHead className="text-right">Jours Restants</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expiringMembers.map((member) => {
-                    const daysUntil = getDaysUntilExpiry(member.subscription_end_date!);
-                    return (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">{member.name}</TableCell>
-                        <TableCell>{member.membership}</TableCell>
-                        <TableCell>
-                          {member.member_type ? (
-                            <Badge variant="outline">{member.member_type}</Badge>
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {member.contract_signed_date
-                            ? format(new Date(member.contract_signed_date), "dd MMM yyyy", { locale: fr })
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(member.subscription_end_date!), "dd MMM yyyy", { locale: fr })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant={getExpiryBadgeVariant(daysUntil)}>
-                            {daysUntil === 0 ? "Aujourd'hui" : `${daysUntil} jour${daysUntil !== 1 ? 's' : ''}`}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openRenewalDialog(member)}
-                            className="gap-2"
-                          >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                            Renouveler
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="upcoming" className="gap-2">
+            <Clock className="h-4 w-4" />
+            À venir
+            {upcomingMembers.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {upcomingMembers.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="expired" className="gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Expirés
+            {expiredMembers.length > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {expiredMembers.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upcoming" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Abonnements à renouveler
+              </CardTitle>
+              <CardDescription>
+                {isLoading
+                  ? "Chargement..."
+                  : `${upcomingMembers.length} abonnement${upcomingMembers.length !== 1 ? 's' : ''} expire${upcomingMembers.length !== 1 ? 'nt' : ''} dans les 30 prochains jours`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Chargement des abonnements...
+                </div>
+              ) : (
+                renderMemberTable(upcomingMembers, false)
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="expired" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Abonnements expirés
+              </CardTitle>
+              <CardDescription>
+                {isLoading
+                  ? "Chargement..."
+                  : `${expiredMembers.length} abonnement${expiredMembers.length !== 1 ? 's' : ''} expiré${expiredMembers.length !== 1 ? 's' : ''} nécessitant une action`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Chargement des abonnements...
+                </div>
+              ) : (
+                renderMemberTable(expiredMembers, true)
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Renewal Dialog */}
       <Dialog open={renewalDialogOpen} onOpenChange={setRenewalDialogOpen}>
