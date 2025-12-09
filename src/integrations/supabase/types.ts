@@ -262,6 +262,7 @@ export type Database = {
           onboarding_nutrition: boolean
           questionnaire_coaching: boolean
           session_introduction: boolean
+          sold_by: string | null
           subscription_end_date: string | null
           updated_at: string
         }
@@ -279,6 +280,7 @@ export type Database = {
           onboarding_nutrition?: boolean
           questionnaire_coaching?: boolean
           session_introduction?: boolean
+          sold_by?: string | null
           subscription_end_date?: string | null
           updated_at?: string
         }
@@ -296,6 +298,7 @@ export type Database = {
           onboarding_nutrition?: boolean
           questionnaire_coaching?: boolean
           session_introduction?: boolean
+          sold_by?: string | null
           subscription_end_date?: string | null
           updated_at?: string
         }

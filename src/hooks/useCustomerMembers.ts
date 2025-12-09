@@ -16,6 +16,7 @@ export interface Member {
   onboarding_nutrition: boolean;
   questionnaire_coaching: boolean;
   session_introduction: boolean;
+  sold_by?: string | null;
 }
 
 export interface WeeklyTraining {

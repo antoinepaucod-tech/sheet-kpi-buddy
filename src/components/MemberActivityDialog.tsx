@@ -277,7 +277,7 @@ export function MemberActivityDialog({
         <div className="space-y-6 mt-4">
           <Card className="p-4 bg-muted/30">
             <h3 className="font-semibold mb-3">Informations Générales</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Abonnement</p>
                 <p className="font-medium">{member.membership}</p>
@@ -357,6 +357,10 @@ export function MemberActivityDialog({
                     ? `Expire dans ${subscriptionStatus.days}j`
                     : member.subscription_end_date ? 'Actif' : '-'}
                 </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Vendu par</p>
+                <p className="font-medium">{member.sold_by || '-'}</p>
               </div>
             </div>
           </Card>

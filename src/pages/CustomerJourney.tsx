@@ -276,6 +276,10 @@ const CustomerJourney = () => {
         .single();
       
       if (createdMemberData) {
+        // Get current user's email for sold_by
+        const { data: { user } } = await supabase.auth.getUser();
+        const soldBy = user?.email?.split('@')[0] || 'User';
+        
         // Update with additional fields
         await updateMemberInDb(createdMemberData.id, {
           member_type: newMember.member_type,
@@ -283,6 +287,7 @@ const CustomerJourney = () => {
           contract_signed_date: newMember.contract_signed_date,
           subscription_end_date: newMember.subscription_end_date,
           exit_date: newMember.subscription_end_date, // Sync with subscription_end_date
+          sold_by: soldBy,
         });
         
         // Create accounting transaction if cash collected
