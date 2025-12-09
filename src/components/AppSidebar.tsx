@@ -1,6 +1,10 @@
+import { useEffect, useState } from "react";
 import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { addMonths, startOfDay, endOfDay, isWithinInterval, format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +24,7 @@ const menuItems = [
   { title: "KPI Cours", url: "/course-kpi", icon: Calendar },
   { title: "Parcours Client", url: "/customer-journey", icon: Users },
   { title: "Comptabilité", url: "/accounting", icon: Receipt },
-  { title: "Échéances", url: "/expiring-subscriptions", icon: Bell },
+  { title: "Échéances", url: "/expiring-subscriptions", icon: Bell, showAlert: true },
 ];
 
 const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap };
@@ -29,6 +33,39 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
+  const [expiringCount, setExpiringCount] = useState(0);
+
+  useEffect(() => {
+    loadExpiringCount();
+    
+    // Refresh count every 5 minutes
+    const interval = setInterval(loadExpiringCount, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadExpiringCount = async () => {
+    const today = startOfDay(new Date());
+    const oneMonthFromNow = endOfDay(addMonths(today, 1));
+
+    const { data, error } = await supabase
+      .from('customer_members')
+      .select('subscription_end_date, exit_date')
+      .not('subscription_end_date', 'is', null)
+      .or('exit_date.is.null,exit_date.gt.' + format(today, 'yyyy-MM-dd'));
+
+    if (error) {
+      console.error("Error loading expiring count:", error);
+      return;
+    }
+
+    const count = (data || []).filter(member => {
+      if (!member.subscription_end_date) return false;
+      const endDate = new Date(member.subscription_end_date);
+      return isWithinInterval(endDate, { start: today, end: oneMonthFromNow });
+    }).length;
+
+    setExpiringCount(count);
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -47,8 +84,20 @@ export function AppSidebar() {
                       className="flex items-center gap-3 hover:bg-accent/50 transition-colors"
                       activeClassName="bg-accent text-accent-foreground font-medium"
                     >
-                      <item.icon className="h-5 w-5" />
-                      <span className={collapsed ? "sr-only" : ""}>{item.title}</span>
+                      <div className="relative">
+                        <item.icon className="h-5 w-5" />
+                        {item.showAlert && expiringCount > 0 && (
+                          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+                        )}
+                      </div>
+                      <span className={collapsed ? "sr-only" : ""}>
+                        {item.title}
+                      </span>
+                      {item.showAlert && expiringCount > 0 && !collapsed && (
+                        <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0.5 h-5">
+                          {expiringCount}
+                        </Badge>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
