@@ -301,66 +301,68 @@ const SortableCategoryItem = ({
       </div>
       
       {isEditing && (
-        <div className="ml-8 flex items-center gap-4 pt-2 border-t">
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={editingRecurring}
-              onCheckedChange={onEditRecurringChange}
-            />
-            <Label className="text-sm">Récurrente</Label>
-          </div>
-          {editingRecurring && (
+        <div className="ml-8 flex flex-col gap-2 pt-2 border-t">
+          {/* For member types, show message that recurrence is managed by customer journey */}
+          {isMemberType ? (
+            <p className="text-xs text-muted-foreground">
+              La récurrence est gérée automatiquement dans le Parcours Client via les dates d'abonnement.
+            </p>
+          ) : (
             <>
-              <div className="space-y-2">
-                <Label>Montant par défaut (CHF)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editingDefaultAmount}
-                  onChange={(e) => onEditDefaultAmountChange(Number(e.target.value))}
-                  placeholder="Montant par défaut pour les nouveaux membres"
-                />
-              </div>
-              {/* Only show end date options for non-member types */}
-              {!isMemberType && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={editingIndefinite}
-                      onCheckedChange={onEditIndefiniteChange}
-                    />
-                    <Label className="text-sm flex items-center gap-1">
-                      Indéterminée <span className="text-lg">∞</span>
-                    </Label>
-                  </div>
-                  {!editingIndefinite && (
-                    <div className="flex flex-col gap-2 pl-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={onToggleEndDate}
-                      >
-                        {editingEndDate ? "Retirer fin de récurrence" : "Fin de récurrence"}
-                      </Button>
-                      {editingEndDate && (
-                        <Input
-                          type="date"
-                          value={editingEndDate || ""}
-                          onChange={(e) => onEditEndDateChange(e.target.value || null)}
-                          className="w-full"
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editingRecurring}
+                    onCheckedChange={onEditRecurringChange}
+                  />
+                  <Label className="text-sm">Récurrente</Label>
+                </div>
+                {editingRecurring && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Montant par défaut (CHF)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={editingDefaultAmount}
+                        onChange={(e) => onEditDefaultAmountChange(Number(e.target.value))}
+                        placeholder="Montant par défaut"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={editingIndefinite}
+                          onCheckedChange={onEditIndefiniteChange}
                         />
+                        <Label className="text-sm flex items-center gap-1">
+                          Indéterminée <span className="text-lg">∞</span>
+                        </Label>
+                      </div>
+                      {!editingIndefinite && (
+                        <div className="flex flex-col gap-2 pl-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={onToggleEndDate}
+                          >
+                            {editingEndDate ? "Retirer fin de récurrence" : "Fin de récurrence"}
+                          </Button>
+                          {editingEndDate && (
+                            <Input
+                              type="date"
+                              value={editingEndDate || ""}
+                              onChange={(e) => onEditEndDateChange(e.target.value || null)}
+                              className="w-full"
+                            />
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              )}
-              {/* Show message for member types */}
-              {isMemberType && (
-                <p className="text-xs text-muted-foreground">
-                  La fin de récurrence est gérée dans le Parcours Client via la date de fin d'abonnement.
-                </p>
-              )}
+                  </>
+                )}
+              </div>
             </>
           )}
         </div>
