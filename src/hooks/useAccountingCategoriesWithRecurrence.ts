@@ -13,6 +13,7 @@ export interface AccountingCategoryWithRecurrence {
   is_indefinite_recurrence: boolean;
   recurrence_end_date: string | null;
   revenue_type: "membre" | "produit" | "service" | null;
+  requires_training_tracking: boolean;
 }
 
 export const useAccountingCategoriesWithRecurrence = () => {
@@ -43,6 +44,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
           position: updates.position,
           is_indefinite_recurrence: updates.is_indefinite_recurrence,
           recurrence_end_date: updates.recurrence_end_date,
+          requires_training_tracking: updates.requires_training_tracking,
         })
         .eq("id", updates.id);
       if (error) throw error;

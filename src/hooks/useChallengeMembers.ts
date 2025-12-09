@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAccountingCategories } from '@/hooks/useAccountingCategories';
 import { differenceInWeeks, parseISO, addWeeks } from 'date-fns';
 
 export interface ChallengeMember {

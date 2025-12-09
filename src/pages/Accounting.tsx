@@ -143,6 +143,7 @@ const SortableCategoryItem = ({
   editingIndefinite,
   editingEndDate,
   editingDefaultAmount,
+  editingTrainingTracking,
   onStartEdit, 
   onSaveEdit, 
   onCancelEdit, 
@@ -152,7 +153,8 @@ const SortableCategoryItem = ({
   onEditIndefiniteChange,
   onEditEndDateChange,
   onToggleEndDate,
-  onEditDefaultAmountChange
+  onEditDefaultAmountChange,
+  onEditTrainingTrackingChange
 }: {
   category: string;
   categoryData?: { 
@@ -160,6 +162,7 @@ const SortableCategoryItem = ({
     is_indefinite_recurrence: boolean; 
     recurrence_end_date: string | null;
     revenue_type?: "membre" | "produit" | "service" | null;
+    requires_training_tracking?: boolean;
   };
   index: number;
   isEditing: boolean;
@@ -168,6 +171,7 @@ const SortableCategoryItem = ({
   editingIndefinite: boolean;
   editingEndDate: string | null;
   editingDefaultAmount: number;
+  editingTrainingTracking: boolean;
   onStartEdit: () => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
@@ -178,6 +182,7 @@ const SortableCategoryItem = ({
   onEditEndDateChange: (value: string | null) => void;
   onToggleEndDate: () => void;
   onEditDefaultAmountChange: (value: number) => void;
+  onEditTrainingTrackingChange: (value: boolean) => void;
 }) => {
   // For "membre" type, recurrence end date is controlled by customer journey
   const isMemberType = categoryData?.revenue_type === "membre";
@@ -262,6 +267,11 @@ const SortableCategoryItem = ({
                 {categoryData.revenue_type.charAt(0).toUpperCase() + categoryData.revenue_type.slice(1)}
               </Badge>
             )}
+            {categoryData?.requires_training_tracking && (
+              <Badge variant="outline" className="text-xs border-primary/50 text-primary">
+                Suivi entraînements
+              </Badge>
+            )}
             {categoryData?.is_recurring && categoryData?.is_indefinite_recurrence && (
               <Badge variant="secondary" className="text-xs flex items-center gap-1">
                 Récurrent <span className="text-base">∞</span>
@@ -301,7 +311,18 @@ const SortableCategoryItem = ({
       </div>
       
       {isEditing && (
-        <div className="ml-8 flex flex-col gap-2 pt-2 border-t">
+        <div className="ml-8 flex flex-col gap-3 pt-2 border-t">
+          {/* Training tracking toggle - only for member types */}
+          {isMemberType && (
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={editingTrainingTracking}
+                onCheckedChange={onEditTrainingTrackingChange}
+              />
+              <Label className="text-sm">Suivi des entraînements requis</Label>
+            </div>
+          )}
+          
           {/* For member types, show message that recurrence is managed by customer journey */}
           {isMemberType ? (
             <p className="text-xs text-muted-foreground">
@@ -407,6 +428,7 @@ const Accounting = () => {
   const [editingCategoryRecurring, setEditingCategoryRecurring] = useState(false);
   const [editingCategoryIndefinite, setEditingCategoryIndefinite] = useState(true);
   const [editingCategoryEndDate, setEditingCategoryEndDate] = useState<string | null>(null);
+  const [editingCategoryTrainingTracking, setEditingCategoryTrainingTracking] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryDefaultAmount, setEditingCategoryDefaultAmount] = useState(0);
   const [editingCategoryRevenueType, setEditingCategoryRevenueType] = useState<"membre" | "produit" | "service" | "">("");
@@ -772,7 +794,7 @@ const Accounting = () => {
     // Load recurrence data from database (also capture the category id)
     const { data, error } = await (supabase as any)
       .from('accounting_categories')
-      .select('id, is_recurring, is_indefinite_recurrence, recurrence_end_date, default_amount')
+      .select('id, is_recurring, is_indefinite_recurrence, recurrence_end_date, default_amount, requires_training_tracking')
       .eq('name', currentName)
       .eq('type', categoryDialogType)
       .maybeSingle();
@@ -785,6 +807,7 @@ const Accounting = () => {
       setEditingCategoryEndDate(null);
       setEditingCategoryId(null);
       setEditingCategoryDefaultAmount(0);
+      setEditingCategoryTrainingTracking(false);
       return;
     }
 
@@ -794,6 +817,7 @@ const Accounting = () => {
       setEditingCategoryEndDate(data.recurrence_end_date || null);
       setEditingCategoryId(data.id || null);
       setEditingCategoryDefaultAmount(data.default_amount || 0);
+      setEditingCategoryTrainingTracking(data.requires_training_tracking === true);
     } else {
       // No data found, use defaults
       setEditingCategoryRecurring(false);
@@ -801,6 +825,7 @@ const Accounting = () => {
       setEditingCategoryEndDate(null);
       setEditingCategoryId(null);
       setEditingCategoryDefaultAmount(0);
+      setEditingCategoryTrainingTracking(false);
     }
   };
 
@@ -812,6 +837,7 @@ const Accounting = () => {
     setEditingCategoryEndDate(null);
     setEditingCategoryId(null);
     setEditingCategoryDefaultAmount(0);
+    setEditingCategoryTrainingTracking(false);
   };
 
   const handleSaveEditCategory = async (oldName: string, type: "revenue" | "expense") => {
@@ -836,6 +862,7 @@ const Accounting = () => {
         is_indefinite_recurrence: editingCategoryIndefinite,
         recurrence_end_date: editingCategoryEndDate,
         default_amount: editingCategoryDefaultAmount,
+        requires_training_tracking: editingCategoryTrainingTracking,
       };
 
       if (newName !== oldName) {
@@ -2137,7 +2164,8 @@ const Accounting = () => {
                               is_recurring: categoryData.is_recurring,
                               is_indefinite_recurrence: categoryData.is_indefinite_recurrence,
                               recurrence_end_date: categoryData.recurrence_end_date,
-                              revenue_type: categoryData.revenue_type
+                              revenue_type: categoryData.revenue_type,
+                              requires_training_tracking: categoryData.requires_training_tracking
                             } : undefined}
                             index={index}
                             isEditing={editingCategoryIndex === index}
@@ -2146,6 +2174,7 @@ const Accounting = () => {
                             editingIndefinite={editingCategoryIndefinite}
                             editingEndDate={editingCategoryEndDate}
                             editingDefaultAmount={editingCategoryDefaultAmount}
+                            editingTrainingTracking={editingCategoryTrainingTracking}
                             onStartEdit={() => handleStartEditCategory(index, category)}
                             onSaveEdit={() => handleSaveEditCategory(category, categoryDialogType)}
                             onCancelEdit={handleCancelEditCategory}
@@ -2161,6 +2190,7 @@ const Accounting = () => {
                             onEditIndefiniteChange={setEditingCategoryIndefinite}
                             onEditEndDateChange={setEditingCategoryEndDate}
                             onEditDefaultAmountChange={setEditingCategoryDefaultAmount}
+                            onEditTrainingTrackingChange={setEditingCategoryTrainingTracking}
                             onToggleEndDate={() => {
                               if (editingCategoryEndDate) {
                                 setEditingCategoryEndDate(null);
