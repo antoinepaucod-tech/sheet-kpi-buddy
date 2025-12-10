@@ -46,6 +46,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MemberActivityDialog } from "@/components/MemberActivityDialog";
+import type { Member as CustomerMember, WeeklyTraining } from "@/hooks/useCustomerMembers";
 
 interface Member {
   id: string;
@@ -80,6 +82,10 @@ const ExpiringSubscriptions = () => {
   const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
   const [renewalMemberType, setRenewalMemberType] = useState<string>("recurring");
   const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
+  
+  // Activity dialog state
+  const [activityMember, setActivityMember] = useState<CustomerMember | null>(null);
+  const [weeklyTrainings, setWeeklyTrainings] = useState<WeeklyTraining[]>([]);
 
   useEffect(() => {
     loadSubscriptions();
@@ -200,6 +206,29 @@ const ExpiringSubscriptions = () => {
     setRenewalDialogOpen(true);
   };
 
+  const openActivityDialog = async (member: Member) => {
+    // Load full member data with onboarding fields
+    const { data: fullMember, error } = await supabase
+      .from('customer_members')
+      .select('*')
+      .eq('id', member.id)
+      .single();
+
+    if (error || !fullMember) {
+      toast.error("Erreur lors du chargement des données du membre");
+      return;
+    }
+
+    // Load weekly trainings for this member
+    const { data: trainings } = await supabase
+      .from('weekly_trainings')
+      .select('*')
+      .eq('member_id', member.id);
+
+    setWeeklyTrainings(trainings || []);
+    setActivityMember(fullMember as CustomerMember);
+  };
+
   const getNewEndDate = (): Date | null => {
     if (!renewalStartDate) return null;
     const durationValue = parseFloat(renewalMonths);
@@ -313,7 +342,14 @@ const ExpiringSubscriptions = () => {
               
               return (
                 <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <button
+                      onClick={() => openActivityDialog(member)}
+                      className="text-left hover:text-primary hover:underline transition-colors cursor-pointer"
+                    >
+                      {member.name}
+                    </button>
+                  </TableCell>
                   <TableCell>{member.membership}</TableCell>
                   <TableCell>
                     {member.member_type ? (
@@ -597,6 +633,19 @@ const ExpiringSubscriptions = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Member Activity Dialog */}
+      {activityMember && (
+        <MemberActivityDialog
+          member={activityMember}
+          weeklyTrainings={weeklyTrainings}
+          onClose={() => setActivityMember(null)}
+          onMemberUpdated={() => {
+            loadSubscriptions();
+            setActivityMember(null);
+          }}
+        />
+      )}
     </div>
   );
 };
