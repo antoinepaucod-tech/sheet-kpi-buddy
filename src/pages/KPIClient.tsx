@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
+import { useClubAttendance } from "@/hooks/useClubAttendance";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { KPIChart } from "@/components/KPIChart";
 import { 
   ArrowLeft,
   Users,
@@ -22,6 +24,7 @@ import {
   ChevronDown,
   ChevronRight,
   Target,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfMonth, endOfMonth, getWeek } from "date-fns";
@@ -125,6 +128,9 @@ export default function KPIClient() {
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().getMonth() + 1 + "");
   const [trackingMemberships, setTrackingMemberships] = useState<string[]>([]);
   const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
+  
+  // Club attendance data
+  const { monthlyAttendance, annualSummary, isLoading: isLoadingAttendance } = useClubAttendance(selectedYear);
 
   // Current calendar week
   const currentWeek = useMemo(() => {
@@ -416,6 +422,60 @@ export default function KPIClient() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Club Attendance Chart */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <KPIChart
+            data={monthlyAttendance}
+            title="Fréquentation Club - Total séances/mois"
+            dataKeys={[
+              { key: "totalSessions", name: "Total séances", color: "hsl(var(--primary))" },
+            ]}
+            type="bar"
+            showFilter={false}
+            height={280}
+          />
+          <KPIChart
+            data={monthlyAttendance}
+            title="Moyenne séances par membre actif"
+            dataKeys={[
+              { key: "averagePerMember", name: "Moy. séances/membre", color: "hsl(142, 71%, 45%)" },
+            ]}
+            type="line"
+            showFilter={false}
+            height={280}
+          />
+        </div>
+
+        {/* Annual Summary Card */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Résumé annuel {selectedYear}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold">{annualSummary.totalSessions}</p>
+                <p className="text-sm text-muted-foreground">Total séances (année)</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold">{annualSummary.totalActiveMembers}</p>
+                <p className="text-sm text-muted-foreground">Membres actifs (année)</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold">{annualSummary.averagePerMember.toFixed(1)}</p>
+                <p className="text-sm text-muted-foreground">Moy. séances/membre</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold">{annualSummary.averageSessionsPerMonth.toFixed(0)}</p>
+                <p className="text-sm text-muted-foreground">Moy. séances/mois</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Members Table with Expandable Weekly Details */}
         <Card>
