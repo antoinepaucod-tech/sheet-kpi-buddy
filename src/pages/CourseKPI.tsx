@@ -40,6 +40,7 @@ import { useScheduleTemplates, type ScheduleTemplate } from "@/hooks/useSchedule
 import { ScheduleCalendarView } from "@/components/ScheduleCalendarView";
 import { InteractiveChart } from "@/components/InteractiveChart";
 import { cn } from "@/lib/utils";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -98,6 +99,7 @@ const TrendIndicator = ({ current, previous }: { current: number; previous: numb
 
 const CourseKPI = () => {
   const [searchParams] = useSearchParams();
+  const { isAdmin, isStaff, isCoach, canAccessCourseKPITab } = useUserRole();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "dashboard");
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -460,8 +462,15 @@ const CourseKPI = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-auto">
+        <Tabs value={activeTab} onValueChange={(tab) => {
+          if (canAccessCourseKPITab(tab)) {
+            setActiveTab(tab);
+          }
+        }} className="w-full">
+          <TabsList className={cn(
+            "grid w-full h-auto",
+            isCoach ? "grid-cols-2" : "grid-cols-5"
+          )}>
             <TabsTrigger value="dashboard" className="text-xs sm:text-sm py-2">
               <BarChart3 className="h-4 w-4 mr-1 hidden sm:inline" />
               Dashboard
@@ -470,16 +479,20 @@ const CourseKPI = () => {
               <Calendar className="h-4 w-4 mr-1 hidden sm:inline" />
               Planning
             </TabsTrigger>
-            <TabsTrigger value="instructors" className="text-xs sm:text-sm py-2">
-              <Users className="h-4 w-4 mr-1 hidden sm:inline" />
-              Instructeurs
-            </TabsTrigger>
-            <TabsTrigger value="course-templates" className="text-xs sm:text-sm py-2">
-              Cours
-            </TabsTrigger>
-            <TabsTrigger value="schedule-templates" className="text-xs sm:text-sm py-2">
-              Planning Base
-            </TabsTrigger>
+            {(isAdmin || isStaff) && (
+              <>
+                <TabsTrigger value="instructors" className="text-xs sm:text-sm py-2">
+                  <Users className="h-4 w-4 mr-1 hidden sm:inline" />
+                  Instructeurs
+                </TabsTrigger>
+                <TabsTrigger value="course-templates" className="text-xs sm:text-sm py-2">
+                  Cours
+                </TabsTrigger>
+                <TabsTrigger value="schedule-templates" className="text-xs sm:text-sm py-2">
+                  Planning Base
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4">
