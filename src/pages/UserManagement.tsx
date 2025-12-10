@@ -38,7 +38,7 @@ const roleBadgeVariants: Record<AppRole, "default" | "secondary" | "outline" | "
 };
 
 export default function UserManagement() {
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { role, isAdmin, loading: roleLoading } = useUserRole();
   const { user } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,7 +200,8 @@ export default function UserManagement() {
     }
   };
 
-  if (roleLoading) {
+  // Show loading while role is being fetched
+  if (roleLoading || role === null) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -208,6 +209,7 @@ export default function UserManagement() {
     );
   }
 
+  // Only redirect after role is confirmed
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
