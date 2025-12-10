@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfMonth, endOfMonth, getWeek } from "date-fns";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Membership categories for filtering
 const membershipCategories = [
@@ -288,6 +289,7 @@ export default function KPIClient() {
           </div>
           
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {/* Year selector */}
             <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
               <SelectTrigger className="w-[100px]">
