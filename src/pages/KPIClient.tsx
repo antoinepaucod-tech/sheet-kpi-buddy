@@ -21,6 +21,7 @@ import {
   BarChart3,
   ChevronDown,
   ChevronRight,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfMonth, endOfMonth, getWeek } from "date-fns";
@@ -123,6 +124,11 @@ export default function KPIClient() {
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().getMonth() + 1 + "");
   const [trackingMemberships, setTrackingMemberships] = useState<string[]>([]);
   const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
+
+  // Current calendar week
+  const currentWeek = useMemo(() => {
+    return getWeek(new Date(), { weekStartsOn: 1 });
+  }, []);
 
   // Fetch memberships that require training tracking from accounting_categories
   useEffect(() => {
@@ -410,9 +416,15 @@ export default function KPIClient() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-medium">Détail des membres</CardTitle>
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  Détail des membres
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-0 gap-1">
+                    <Target className="h-3 w-3" />
+                    Semaine actuelle : S{currentWeek}
+                  </Badge>
+                </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Semaines calendaires {targetWeeks.join(", ")} • Cliquez sur une ligne pour voir le détail
+                  Semaines calendaires : {targetWeeks.map(w => w === currentWeek ? `[S${w}]` : `S${w}`).join(", ")} • Cliquez sur une ligne pour voir le détail
                 </p>
               </div>
               <Button 
@@ -491,24 +503,29 @@ export default function KPIClient() {
                                   <div className="px-8 py-3">
                                     <div className="flex items-center gap-4 flex-wrap">
                                       <span className="text-sm font-medium text-muted-foreground">Détail par semaine :</span>
-                                      {stat.weeklyDetails.map((week) => (
-                                        <div 
-                                          key={week.weekNumber} 
-                                          className={cn(
-                                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm",
-                                            week.trainings === 0 
-                                              ? "bg-muted text-muted-foreground" 
-                                              : week.trainings >= 3 
-                                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                                : week.trainings >= 2
-                                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                                  : "bg-orange-500/10 text-orange-600 dark:text-orange-400"
-                                          )}
-                                        >
-                                          <span className="font-medium">S{week.weekNumber}</span>
-                                          <span>{week.trainings} séance{week.trainings !== 1 ? "s" : ""}</span>
-                                        </div>
-                                      ))}
+                                      {stat.weeklyDetails.map((week) => {
+                                        const isCurrentWeek = week.weekNumber === currentWeek;
+                                        return (
+                                          <div 
+                                            key={week.weekNumber} 
+                                            className={cn(
+                                              "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm",
+                                              isCurrentWeek && "ring-2 ring-primary ring-offset-1",
+                                              week.trainings === 0 
+                                                ? "bg-muted text-muted-foreground" 
+                                                : week.trainings >= 3 
+                                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                                  : week.trainings >= 2
+                                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                                    : "bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                                            )}
+                                          >
+                                            <span className="font-medium">S{week.weekNumber}</span>
+                                            <span>{week.trainings} séance{week.trainings !== 1 ? "s" : ""}</span>
+                                            {isCurrentWeek && <Target className="h-3 w-3" />}
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   </div>
                                 </TableCell>
