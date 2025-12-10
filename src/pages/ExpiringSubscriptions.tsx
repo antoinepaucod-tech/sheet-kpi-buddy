@@ -248,6 +248,23 @@ const ExpiringSubscriptions = () => {
       return;
     }
 
+    // Get current user email for audit trail
+    const { data: { user } } = await supabase.auth.getUser();
+    const performedBy = user?.email?.split('@')[0] || 'unknown';
+
+    // Record renewal in history
+    const durationValue = parseFloat(renewalMonths);
+    const durationLabel = durationValue === 1.5 ? "6 semaines" : `${renewalMonths} mois`;
+    
+    await supabase.from('member_renewal_history').insert({
+      member_id: selectedMember.id,
+      previous_end_date: selectedMember.subscription_end_date,
+      new_end_date: format(newEndDate, "yyyy-MM-dd"),
+      renewal_duration: durationLabel,
+      performed_by: performedBy,
+      notes: `Renouvellement via page Échéances${changeMembership && newMembership !== selectedMember.membership ? ` - Changement: ${newMembership}` : ''}`
+    });
+
     const membershipMessage = changeMembership && newMembership !== selectedMember.membership
       ? ` avec nouveau type: ${newMembership}`
       : "";

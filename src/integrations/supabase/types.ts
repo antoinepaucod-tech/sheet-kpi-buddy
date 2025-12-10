@@ -431,6 +431,50 @@ export type Database = {
           },
         ]
       }
+      member_renewal_history: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          new_end_date: string
+          notes: string | null
+          performed_by: string | null
+          previous_end_date: string
+          renewal_date: string
+          renewal_duration: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          new_end_date: string
+          notes?: string | null
+          performed_by?: string | null
+          previous_end_date: string
+          renewal_date?: string
+          renewal_duration: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          new_end_date?: string
+          notes?: string | null
+          performed_by?: string | null
+          previous_end_date?: string
+          renewal_date?: string
+          renewal_duration?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_renewal_history_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "customer_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_kpis: {
         Row: {
           ad_spend: number | null
