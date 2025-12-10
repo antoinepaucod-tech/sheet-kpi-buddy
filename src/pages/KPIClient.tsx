@@ -15,8 +15,14 @@ import {
   differenceInMonths, 
   differenceInDays, 
   parseISO,
-  subWeeks,
-  isAfter 
+  startOfMonth,
+  endOfMonth,
+  getWeek,
+  startOfYear,
+  endOfYear,
+  isWithinInterval,
+  getYear,
+  getMonth
 } from "date-fns";
 import { 
   Users, 
@@ -27,7 +33,8 @@ import {
   BarChart3,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +60,23 @@ const membershipCategories = [
   { value: "unlimited", label: "Unlimited Access" },
   { value: "pack", label: "Packs (10/20 sessions)" },
   { value: "other", label: "Autres" },
+];
+
+// Month options for filtering
+const monthOptions = [
+  { value: "annual", label: "Vue annuelle (moyenne)" },
+  { value: "1", label: "Janvier" },
+  { value: "2", label: "Février" },
+  { value: "3", label: "Mars" },
+  { value: "4", label: "Avril" },
+  { value: "5", label: "Mai" },
+  { value: "6", label: "Juin" },
+  { value: "7", label: "Juillet" },
+  { value: "8", label: "Août" },
+  { value: "9", label: "Septembre" },
+  { value: "10", label: "Octobre" },
+  { value: "11", label: "Novembre" },
+  { value: "12", label: "Décembre" },
 ];
 
 const getMembershipCategory = (membership: string): string => {
@@ -88,16 +112,39 @@ const engagementStyles: Record<EngagementLevel, { bg: string; text: string; labe
   "at-risk": { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", label: "À risque (0 séance)", icon: XCircle },
 };
 
+// Helper to get week numbers for a specific month
+const getWeeksInMonth = (year: number, month: number): number[] => {
+  const weeks: number[] = [];
+  const start = startOfMonth(new Date(year, month - 1));
+  const end = endOfMonth(new Date(year, month - 1));
+  
+  let current = start;
+  while (current <= end) {
+    const weekNum = getWeek(current, { weekStartsOn: 1 });
+    if (!weeks.includes(weekNum)) {
+      weeks.push(weekNum);
+    }
+    current = new Date(current.getTime() + 7 * 24 * 60 * 60 * 1000);
+  }
+  return weeks;
+};
+
 export default function KPIClient() {
   const navigate = useNavigate();
   const { members, weeklyTrainings, isLoading } = useCustomerMembers();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [membershipFilter, setMembershipFilter] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<string>("annual");
 
   const memberStats = useMemo(() => {
     const now = new Date();
-    const twelveMonthsAgo = subMonths(now, 12);
+    const isAnnualView = selectedMonth === "annual";
+    const monthNum = isAnnualView ? null : parseInt(selectedMonth);
+    
+    // Get weeks for the selected month if not annual view
+    const targetWeeks = monthNum ? getWeeksInMonth(selectedYear, monthNum) : [];
 
     return members
       .filter(member => requiresTrainingTracking(member.membership))
@@ -115,33 +162,53 @@ export default function KPIClient() {
             weeksSinceSignature: 0,
             weeksSinceLastTraining: 999,
             engagementLevel: "at-risk" as EngagementLevel,
+            periodTrainings: 0,
+            weeksInPeriod: 0,
           };
         }
 
         const signatureDate = parseISO(member.contract_signed_date);
-        const startDate = signatureDate > twelveMonthsAgo ? signatureDate : twelveMonthsAgo;
-        
-        const daysSinceStart = differenceInDays(now, startDate);
-        const monthsSinceStart = Math.max(1, daysSinceStart / 30.44);
-        const weeksSinceStart = Math.max(1, daysSinceStart / 7);
-        
-        const monthsSinceSignature = differenceInMonths(now, startDate);
-        const weeksSinceSignature = differenceInWeeks(now, startDate);
-        
         const memberTrainings = weeklyTrainings.filter(wt => wt.member_id === member.id);
+        
+        // Calculate period-specific stats
+        let periodTrainings = 0;
+        let weeksInPeriod = 0;
+        let periodAveragePerWeek = 0;
+
+        if (isAnnualView) {
+          // Annual view: average over 12 months
+          const twelveMonthsAgo = subMonths(now, 12);
+          const startDate = signatureDate > twelveMonthsAgo ? signatureDate : twelveMonthsAgo;
+          const daysSinceStart = differenceInDays(now, startDate);
+          weeksInPeriod = Math.max(1, daysSinceStart / 7);
+          periodTrainings = memberTrainings.reduce((sum, wt) => sum + wt.trainings_count, 0);
+          periodAveragePerWeek = periodTrainings / weeksInPeriod;
+        } else {
+          // Monthly view: filter trainings for specific month's weeks
+          weeksInPeriod = targetWeeks.length;
+          periodTrainings = memberTrainings
+            .filter(wt => targetWeeks.includes(wt.week_number))
+            .reduce((sum, wt) => sum + wt.trainings_count, 0);
+          periodAveragePerWeek = weeksInPeriod > 0 ? periodTrainings / weeksInPeriod : 0;
+        }
+
+        // General stats for context
+        const daysSinceSignature = differenceInDays(now, signatureDate);
+        const monthsSinceSignature = Math.max(1, daysSinceSignature / 30.44);
+        const weeksSinceSignature = Math.max(1, daysSinceSignature / 7);
+        
         const totalTrainings = memberTrainings.reduce((sum, wt) => sum + wt.trainings_count, 0);
+        const averagePerMonth = totalTrainings / monthsSinceSignature;
+        const averagePerWeek = totalTrainings / weeksSinceSignature;
         
         // Find last training week
         const lastTraining = memberTrainings
           .filter(t => t.trainings_count > 0)
           .sort((a, b) => b.week_number - a.week_number)[0];
-        const currentWeek = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+        const currentWeek = getWeek(now, { weekStartsOn: 1 });
         const weeksSinceLastTraining = lastTraining 
           ? Math.max(0, currentWeek - lastTraining.week_number)
           : 999;
-        
-        const averagePerMonth = totalTrainings / monthsSinceStart;
-        const averagePerWeek = totalTrainings / weeksSinceStart;
 
         return {
           id: member.id,
@@ -154,10 +221,13 @@ export default function KPIClient() {
           monthsSinceSignature,
           weeksSinceSignature,
           weeksSinceLastTraining,
-          engagementLevel: getEngagementLevel(averagePerWeek, weeksSinceLastTraining),
+          engagementLevel: getEngagementLevel(periodAveragePerWeek, weeksSinceLastTraining),
+          periodTrainings,
+          weeksInPeriod,
+          periodAveragePerWeek,
         };
       });
-  }, [members, weeklyTrainings]);
+  }, [members, weeklyTrainings, selectedMonth, selectedYear]);
 
   // Filter by membership category
   const filteredStats = useMemo(() => {
@@ -207,17 +277,59 @@ export default function KPIClient() {
     );
   }
 
+  const currentYear = new Date().getFullYear();
+  const availableYears = [currentYear - 1, currentYear];
+
   return (
     <div className="container py-4 sm:py-8 px-3 sm:px-6 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">KPI Client</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Statistiques d'entraînement par membre sur les 12 derniers mois
+            {selectedMonth === "annual" 
+              ? "Statistiques d'entraînement par membre (vue annuelle)"
+              : `Statistiques d'entraînement - ${monthOptions.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
+            }
           </p>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
       </div>
+
+      {/* Period Selector */}
+      <Card className="border-border/50">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm font-medium">Période :</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* At-Risk Alert */}
       {atRiskMembers.length > 0 && (
@@ -329,8 +441,12 @@ export default function KPIClient() {
               <TableRow>
                 <TableHead>Nom</TableHead>
                 <TableHead>Engagement</TableHead>
-                <TableHead className="text-right">Total (12 mois)</TableHead>
-                <TableHead className="text-right">Moy./Mois</TableHead>
+                <TableHead className="text-right">
+                  {selectedMonth === "annual" ? "Total (12 mois)" : "Séances (période)"}
+                </TableHead>
+                <TableHead className="text-right">
+                  {selectedMonth === "annual" ? "Moy./Mois" : "Semaines"}
+                </TableHead>
                 <TableHead className="text-right">Moy./Sem.</TableHead>
                 <TableHead className="text-right">Ancienneté</TableHead>
               </TableRow>
@@ -367,9 +483,15 @@ export default function KPIClient() {
                           {style.label}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-semibold">{stat.totalTrainings}</TableCell>
-                      <TableCell className="text-right">{stat.averagePerMonth.toFixed(1)}</TableCell>
-                      <TableCell className="text-right">{stat.averagePerWeek.toFixed(1)}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {selectedMonth === "annual" ? stat.totalTrainings : stat.periodTrainings}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {selectedMonth === "annual" ? stat.averagePerMonth.toFixed(1) : stat.weeksInPeriod}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {selectedMonth === "annual" ? stat.averagePerWeek.toFixed(1) : (stat.periodAveragePerWeek?.toFixed(1) || "0.0")}
+                      </TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         {stat.monthsSinceSignature} mois
                       </TableCell>
