@@ -24,13 +24,23 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
   };
 
   const filteredDataKeys = dataKeys.filter(({ key }) => selectedKeys.includes(key));
-  const chartData = data.map(item => ({
-    name: item.month?.substring(0, 3) || item.month_name?.substring(0, 3) || '',
-    ...dataKeys.reduce((acc, { key }) => ({
-      ...acc,
-      [key]: item[key],
-    }), {}),
-  }));
+  const chartData = data.map(item => {
+    // Handle month as string or number, fallback to month_name
+    let name = '';
+    if (typeof item.month === 'string') {
+      name = item.month.substring(0, 3);
+    } else if (item.month_name && typeof item.month_name === 'string') {
+      name = item.month_name.substring(0, 3);
+    }
+    
+    return {
+      name,
+      ...dataKeys.reduce((acc, { key }) => ({
+        ...acc,
+        [key]: item[key],
+      }), {}),
+    };
+  });
 
   const Chart = type === "line" ? LineChart : BarChart;
 
