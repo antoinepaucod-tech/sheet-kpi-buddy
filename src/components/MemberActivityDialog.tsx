@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar, Pencil, Save, X } from "lucide-react";
+import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar, Pencil, Save, X, RotateCcw } from "lucide-react";
 import { useMemberHistory } from "@/hooks/useMemberHistory";
+import { useMemberRenewalHistory } from "@/hooks/useMemberRenewalHistory";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Member, WeeklyTraining } from "@/hooks/useCustomerMembers";
@@ -39,6 +40,7 @@ export function MemberActivityDialog({
   const [editedEndDate, setEditedEndDate] = useState(member.subscription_end_date || "");
   const [isSavingEndDate, setIsSavingEndDate] = useState(false);
   const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member.id);
+  const { renewalHistory, addRenewalRecord } = useMemberRenewalHistory(member.id);
 
   const handleSaveEndDate = async () => {
     if (!editedEndDate) {
@@ -157,6 +159,21 @@ export function MemberActivityDialog({
         });
 
       if (transactionError) throw transactionError;
+
+      // Get current user email for audit trail
+      const { data: { user } } = await supabase.auth.getUser();
+      const performedBy = user?.email?.split('@')[0] || 'unknown';
+
+      // Record renewal in history
+      const durationLabel = durationValue === 1.5 ? "6 semaines" : `${renewalMonths} mois`;
+      await addRenewalRecord({
+        member_id: member.id,
+        previous_end_date: member.subscription_end_date,
+        new_end_date: format(newEndDate, "yyyy-MM-dd"),
+        renewal_duration: durationLabel,
+        performed_by: performedBy,
+        notes: `Renouvellement via synthèse d'activité`
+      });
 
       toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}`);
       
@@ -520,6 +537,54 @@ export function MemberActivityDialog({
               <p className="text-center text-muted-foreground py-8">Aucune donnée d'entraînement disponible</p>
             )}
           </div>
+
+          {/* Historique Renouvellements */}
+          <Card className="p-4 bg-blue-500/5 border-blue-500/20">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-blue-600" />
+              Historique des Renouvellements
+            </h3>
+            {renewalHistory.length > 0 ? (
+              <div className="relative pl-6">
+                {/* Timeline line */}
+                <div className="absolute left-[11px] top-0 bottom-0 w-0.5 bg-blue-300 dark:bg-blue-700" />
+                
+                {/* Timeline items */}
+                <div className="space-y-4">
+                  {renewalHistory.map((renewal) => (
+                    <div key={renewal.id} className="relative">
+                      {/* Timeline dot */}
+                      <div className="absolute left-[-23px] top-1 w-5 h-5 rounded-full border-2 bg-blue-500 border-blue-600" />
+                      
+                      <div className="bg-background p-3 rounded-lg border">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <RefreshCw className="h-4 w-4 text-blue-600" />
+                            <span className="font-medium text-sm">
+                              Renouvellement {renewal.renewal_duration}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {format(parseISO(renewal.renewal_date), "dd/MM/yyyy HH:mm", { locale: fr })}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 ml-6 space-y-0.5">
+                          <p>
+                            {format(parseISO(renewal.previous_end_date), "dd/MM/yyyy")} → {format(parseISO(renewal.new_end_date), "dd/MM/yyyy")}
+                          </p>
+                          {renewal.performed_by && (
+                            <p>Par {renewal.performed_by}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucun renouvellement enregistré</p>
+            )}
+          </Card>
 
           {/* Historique Onboarding Timeline */}
           <Card className="p-4 bg-muted/20">
