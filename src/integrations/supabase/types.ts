@@ -899,7 +899,7 @@ export type Database = {
       is_authenticated: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "staff" | "viewer"
+      app_role: "admin" | "staff" | "viewer" | "coach"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1027,7 +1027,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "viewer"],
+      app_role: ["admin", "staff", "viewer", "coach"],
     },
   },
 } as const
