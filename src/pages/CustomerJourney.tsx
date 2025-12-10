@@ -508,8 +508,14 @@ const CustomerJourney = () => {
     );
   };
 
-  const updateWeeklyTraining = async (memberId: string, weekNumber: number, trainingsCount: number) => {
-    await updateWeeklyTrainingInDb(memberId, weekNumber, trainingsCount);
+  const updateWeeklyTraining = async (
+    memberId: string, 
+    weekNumber: number, 
+    trainingsCount: number,
+    calendarWeek?: number,
+    calendarYear?: number
+  ) => {
+    await updateWeeklyTrainingInDb(memberId, weekNumber, trainingsCount, calendarWeek, calendarYear);
   };
 
   const getTrainingColor = (trainings: number) => {
@@ -1179,9 +1185,8 @@ const CustomerJourney = () => {
                     }
 
                     return filteredMembers.map((member) => {
-                      const week = parseInt(selectedView.replace("week-", ""));
-                      const trainingsCalendarWeek = week; // calendar week if needed later
-                      const trainingsWeekData = weekData;
+                      const calendarWeekNum = parseInt(selectedView.replace("week-", ""));
+                      const calendarYearNum = weekData.weekStart.getFullYear();
                       const memberWeek = getAbsoluteWeekForMember(member.contract_signed_date, weekData.weekStart);
                       const trainings = memberWeek ? getWeeklyTraining(member.id, memberWeek) : 0;
                       
@@ -1228,7 +1233,13 @@ const CustomerJourney = () => {
                                 <Select
                                   value={trainings.toString()}
                                   onValueChange={(value) =>
-                                    updateWeeklyTraining(member.id, memberWeek ?? 0, parseInt(value))
+                                    updateWeeklyTraining(
+                                      member.id, 
+                                      memberWeek ?? 0, 
+                                      parseInt(value),
+                                      calendarWeekNum,
+                                      calendarYearNum
+                                    )
                                   }
                                 >
                                   <SelectTrigger

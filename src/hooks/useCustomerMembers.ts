@@ -24,6 +24,8 @@ export interface WeeklyTraining {
   member_id: string;
   week_number: number;
   trainings_count: number;
+  calendar_week?: number | null;
+  calendar_year?: number | null;
 }
 
 export const useCustomerMembers = () => {
@@ -140,10 +142,13 @@ export const useCustomerMembers = () => {
     }
   };
 
+  // Updated to include calendar_week and calendar_year
   const updateWeeklyTraining = async (
     memberId: string,
     weekNumber: number,
-    trainingsCount: number
+    trainingsCount: number,
+    calendarWeek?: number,
+    calendarYear?: number
   ) => {
     try {
       const existing = weeklyTrainings.find(
@@ -151,9 +156,19 @@ export const useCustomerMembers = () => {
       );
 
       if (existing) {
+        const updateData: { trainings_count: number; calendar_week?: number; calendar_year?: number } = { 
+          trainings_count: trainingsCount 
+        };
+        
+        // Also update calendar data if provided and not already set
+        if (calendarWeek !== undefined && calendarYear !== undefined) {
+          updateData.calendar_week = calendarWeek;
+          updateData.calendar_year = calendarYear;
+        }
+        
         const { error } = await supabase
           .from('weekly_trainings')
-          .update({ trainings_count: trainingsCount })
+          .update(updateData)
           .eq('member_id', memberId)
           .eq('week_number', weekNumber);
 
@@ -162,14 +177,31 @@ export const useCustomerMembers = () => {
         setWeeklyTrainings(
           weeklyTrainings.map(wt =>
             wt.member_id === memberId && wt.week_number === weekNumber
-              ? { ...wt, trainings_count: trainingsCount }
+              ? { ...wt, trainings_count: trainingsCount, calendar_week: calendarWeek, calendar_year: calendarYear }
               : wt
           )
         );
       } else {
+        const insertData: {
+          member_id: string;
+          week_number: number;
+          trainings_count: number;
+          calendar_week?: number;
+          calendar_year?: number;
+        } = { 
+          member_id: memberId, 
+          week_number: weekNumber, 
+          trainings_count: trainingsCount 
+        };
+        
+        if (calendarWeek !== undefined && calendarYear !== undefined) {
+          insertData.calendar_week = calendarWeek;
+          insertData.calendar_year = calendarYear;
+        }
+        
         const { data, error } = await supabase
           .from('weekly_trainings')
-          .insert([{ member_id: memberId, week_number: weekNumber, trainings_count: trainingsCount }])
+          .insert([insertData])
           .select()
           .single();
 
@@ -194,6 +226,14 @@ export const useCustomerMembers = () => {
     return training?.trainings_count ?? 0;
   };
 
+  // New function to get training by calendar week
+  const getWeeklyTrainingByCalendarWeek = (memberId: string, calendarWeek: number, calendarYear: number): number => {
+    const training = weeklyTrainings.find(
+      wt => wt.member_id === memberId && wt.calendar_week === calendarWeek && wt.calendar_year === calendarYear
+    );
+    return training?.trainings_count ?? 0;
+  };
+
   return {
     members,
     weeklyTrainings,
@@ -203,5 +243,6 @@ export const useCustomerMembers = () => {
     deleteMember,
     updateWeeklyTraining,
     getWeeklyTraining,
+    getWeeklyTrainingByCalendarWeek,
   };
 };
