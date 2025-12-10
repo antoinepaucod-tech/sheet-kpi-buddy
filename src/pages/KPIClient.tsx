@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,21 +39,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Memberships that require training tracking
-const trackingRequiredMemberships = [
-  "Hybrid FULL - paiement tous les 28 jours YOUNG / STUDENT",
-  "Hybrid FULL - paiement tous les 28 jours avec engagement",
-  "Hybrid FULL - Paiement x1 Annuel",
-  "Hybrid FULL DUO . Paiement x1 Annuel",
-  "Unlimited Access (ancien membership)",
-  "Unlimited Access 6 mois (ancien membership)",
-  "Abonnement offert",
-  "Hybrid FULL tous les 28 jours - sans engagement",
-  "Pack 20 sessions",
-  "Pack 10",
-  "6 Weeks Challenge",
-];
-
 // Membership categories for filtering
 const membershipCategories = [
   { value: "all", label: "Tous les abonnements" },
@@ -86,9 +72,72 @@ const getMembershipCategory = (membership: string): string => {
   return "other";
 };
 
-const requiresTrainingTracking = (membership: string): boolean => {
-  return trackingRequiredMemberships.includes(membership);
+// Engagement level calculation based on average trainings per week
+type EngagementLevel = "high" | "medium" | "low" | "at-risk";
+
+const getEngagementLevel = (averagePerWeek: number, weeksSinceLastTraining: number): EngagementLevel => {
+  if (Math.round(averagePerWeek) === 0) return "at-risk";
+  if (Math.round(averagePerWeek) === 1) return "low";
+  if (Math.round(averagePerWeek) === 2) return "medium";
+  return "high";
 };
+
+const engagementStyles: Record<EngagementLevel, { bg: string; text: string; label: string; icon: typeof CheckCircle2 }> = {
+  high: { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", label: "Élevé (3+ séances/sem.)", icon: CheckCircle2 },
+  medium: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", label: "Moyen (2 séances)", icon: Clock },
+  low: { bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", label: "Faible (1 séance)", icon: AlertTriangle },
+  "at-risk": { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", label: "À risque (0 séance)", icon: XCircle },
+};
+
+// Helper to get week numbers for a specific month
+const getWeeksInMonth = (year: number, month: number): number[] => {
+  const weeks: number[] = [];
+  const start = startOfMonth(new Date(year, month - 1));
+  const end = endOfMonth(new Date(year, month - 1));
+  
+  let current = start;
+  while (current <= end) {
+    const weekNum = getWeek(current, { weekStartsOn: 1 });
+    if (!weeks.includes(weekNum)) {
+      weeks.push(weekNum);
+    }
+    current = new Date(current.getTime() + 7 * 24 * 60 * 60 * 1000);
+  }
+  return weeks;
+};
+
+export default function KPIClient() {
+  const navigate = useNavigate();
+  const { members, weeklyTrainings, isLoading } = useCustomerMembers();
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [membershipFilter, setMembershipFilter] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<string>("annual");
+  const [trackingMemberships, setTrackingMemberships] = useState<string[]>([]);
+
+  // Fetch memberships that require training tracking from accounting_categories
+  useEffect(() => {
+    const fetchTrackingMemberships = async () => {
+      const { data, error } = await supabase
+        .from('accounting_categories')
+        .select('name')
+        .eq('type', 'revenue')
+        .eq('requires_training_tracking', true);
+      
+      if (data && !error) {
+        setTrackingMemberships(data.map(cat => cat.name));
+      }
+    };
+    fetchTrackingMemberships();
+  }, []);
+
+  const requiresTrainingTracking = (membership: string): boolean => {
+    return trackingMemberships.some(tm => 
+      membership.toUpperCase().includes(tm.toUpperCase()) || 
+      tm.toUpperCase().includes(membership.toUpperCase())
+    );
+  };
 
 // Engagement level calculation based on average trainings per week
 // Élevé: 3+ séances/semaine, Moyen: 2 séances, Faible: 1 séance, À risque: 0 séance
