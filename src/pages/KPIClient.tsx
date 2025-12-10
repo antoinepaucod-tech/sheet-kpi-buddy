@@ -26,7 +26,9 @@ import {
   ChevronRight,
   Target,
   TrendingUp,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { startOfMonth, endOfMonth, getWeek } from "date-fns";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -130,6 +132,7 @@ export default function KPIClient() {
   const [trackingMemberships, setTrackingMemberships] = useState<string[]>([]);
   const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
   const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Club attendance data
   const { monthlyAttendance, annualSummary, isLoading: isLoadingAttendance } = useClubAttendance(selectedYear);
@@ -230,6 +233,14 @@ export default function KPIClient() {
         return a.averagePerWeek - b.averagePerWeek;
       });
   }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks, selectedYear]);
+
+  // Filter by search query
+  const filteredMemberStats = useMemo(() => {
+    if (!searchQuery.trim()) return memberStats;
+    return memberStats.filter(m => 
+      m.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [memberStats, searchQuery]);
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
@@ -335,6 +346,17 @@ export default function KPIClient() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Search input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un membre..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-[200px]"
+              />
+            </div>
           </div>
         </div>
 
@@ -520,14 +542,14 @@ export default function KPIClient() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {memberStats.length === 0 ? (
+                  {filteredMemberStats.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         Aucun membre avec suivi d'entraînement pour cette période
                       </TableCell>
                     </TableRow>
                   ) : (
-                    memberStats.map((stat) => {
+                    filteredMemberStats.map((stat) => {
                       const style = engagementStyles[stat.engagement];
                       const Icon = style.icon;
                       const isExpanded = expandedMembers.has(stat.id);
