@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { KPIChart } from "@/components/KPIChart";
+import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 import { 
   ArrowLeft,
   Users,
@@ -128,6 +129,7 @@ export default function KPIClient() {
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().getMonth() + 1 + "");
   const [trackingMemberships, setTrackingMemberships] = useState<string[]>([]);
   const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
+  const [selectedMember, setSelectedMember] = useState<any>(null);
   
   // Club attendance data
   const { monthlyAttendance, annualSummary, isLoading: isLoadingAttendance } = useClubAttendance(selectedYear);
@@ -542,7 +544,20 @@ export default function KPIClient() {
                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                   )}
                                 </TableCell>
-                                <TableCell className="font-medium">{stat.name}</TableCell>
+                                <TableCell className="font-medium">
+                                  <button 
+                                    className="text-left hover:text-primary hover:underline transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const fullMember = members?.find(m => m.id === stat.id);
+                                      if (fullMember) {
+                                        setSelectedMember(fullMember);
+                                      }
+                                    }}
+                                  >
+                                    {stat.name}
+                                  </button>
+                                </TableCell>
                                 <TableCell>
                                   <span className="text-sm text-muted-foreground">{stat.membership}</span>
                                 </TableCell>
@@ -607,6 +622,13 @@ export default function KPIClient() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Member Activity Dialog */}
+        <MemberActivityDialog
+          member={selectedMember}
+          weeklyTrainings={weeklyTrainings || []}
+          onClose={() => setSelectedMember(null)}
+        />
       </div>
     </div>
   );
