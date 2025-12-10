@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   ArrowLeft,
   Users,
@@ -18,6 +19,8 @@ import {
   Flame,
   Calendar,
   BarChart3,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfMonth, endOfMonth, getWeek } from "date-fns";
@@ -55,11 +58,11 @@ const getEngagementLevel = (averagePerWeek: number): EngagementLevel => {
   return "high";
 };
 
-const engagementStyles: Record<EngagementLevel, { bg: string; text: string; label: string; icon: typeof CheckCircle2 }> = {
-  high: { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", label: "Élevé (3+ séances/sem.)", icon: CheckCircle2 },
-  medium: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", label: "Moyen (2 séances)", icon: Clock },
-  low: { bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", label: "Faible (1 séance)", icon: AlertTriangle },
-  "at-risk": { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", label: "À risque (0 séance)", icon: XCircle },
+const engagementStyles: Record<EngagementLevel, { bg: string; text: string; label: string; shortLabel: string; icon: typeof CheckCircle2 }> = {
+  high: { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", label: "Élevé (3+ séances/sem.)", shortLabel: "Élevé", icon: CheckCircle2 },
+  medium: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", label: "Moyen (2 séances)", shortLabel: "Moyen", icon: Clock },
+  low: { bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", label: "Faible (1 séance)", shortLabel: "Faible", icon: AlertTriangle },
+  "at-risk": { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", label: "À risque (0 séance)", shortLabel: "À risque", icon: XCircle },
 };
 
 // Helper to get week numbers for a specific month
@@ -80,7 +83,6 @@ const getWeeksInMonth = (year: number, month: number): number[] => {
 };
 
 const months = [
-  { value: "annual", label: "Vue annuelle" },
   { value: "1", label: "Janvier" },
   { value: "2", label: "Février" },
   { value: "3", label: "Mars" },
@@ -95,14 +97,32 @@ const months = [
   { value: "12", label: "Décembre" },
 ];
 
+interface WeeklyDetail {
+  weekNumber: number;
+  trainings: number;
+}
+
+interface MemberStat {
+  id: string;
+  name: string;
+  membership: string;
+  totalTrainings: number;
+  weeksWithData: number;
+  averagePerWeek: number;
+  engagement: EngagementLevel;
+  contractSignedDate: string | null;
+  weeklyDetails: WeeklyDetail[];
+}
+
 export default function KPIClient() {
   const navigate = useNavigate();
   const { members, weeklyTrainings, isLoading } = useCustomerMembers();
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [membershipFilter, setMembershipFilter] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<string>("annual");
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().getMonth() + 1 + "");
   const [trackingMemberships, setTrackingMemberships] = useState<string[]>([]);
+  const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
 
   // Fetch memberships that require training tracking from accounting_categories
   useEffect(() => {
@@ -127,19 +147,14 @@ export default function KPIClient() {
     );
   };
 
-  // Calculate member stats with optional month filtering
-  const memberStats = useMemo(() => {
-    if (!members || !weeklyTrainings) return [];
+  // Get weeks for the selected month
+  const targetWeeks = useMemo(() => {
+    return getWeeksInMonth(selectedYear, parseInt(selectedMonth));
+  }, [selectedYear, selectedMonth]);
 
-    // Determine which calendar weeks to include based on selected period
-    let targetWeeks: number[] = [];
-    if (selectedMonth === "annual") {
-      // For annual view, include all weeks (1-53)
-      targetWeeks = Array.from({ length: 53 }, (_, i) => i + 1);
-    } else {
-      // For monthly view, get the calendar weeks that fall in that month
-      targetWeeks = getWeeksInMonth(selectedYear, parseInt(selectedMonth));
-    }
+  // Calculate member stats for the selected month
+  const memberStats = useMemo((): MemberStat[] => {
+    if (!members || !weeklyTrainings) return [];
 
     return members
       .filter(member => {
@@ -158,12 +173,21 @@ export default function KPIClient() {
           t.member_id === member.id && targetWeeks.includes(t.week_number)
         );
         
-        const totalTrainings = memberTrainings.reduce((sum, t) => sum + t.trainings_count, 0);
-        const weeksWithData = memberTrainings.length;
+        // Build weekly details
+        const weeklyDetails: WeeklyDetail[] = targetWeeks.map(weekNum => {
+          const training = memberTrainings.find(t => t.week_number === weekNum);
+          return {
+            weekNumber: weekNum,
+            trainings: training?.trainings_count || 0,
+          };
+        });
         
-        // Calculate average per week based on weeks with data or target weeks count
-        const averagePerWeek = weeksWithData > 0 
-          ? totalTrainings / weeksWithData 
+        const totalTrainings = memberTrainings.reduce((sum, t) => sum + t.trainings_count, 0);
+        const weeksWithData = memberTrainings.filter(t => t.trainings_count > 0).length;
+        
+        // Calculate average per week based on weeks in the month
+        const averagePerWeek = targetWeeks.length > 0 
+          ? totalTrainings / targetWeeks.length 
           : 0;
         
         const engagement = getEngagementLevel(averagePerWeek);
@@ -177,6 +201,7 @@ export default function KPIClient() {
           averagePerWeek,
           engagement,
           contractSignedDate: member.contract_signed_date,
+          weeklyDetails,
         };
       })
       .sort((a, b) => {
@@ -185,7 +210,7 @@ export default function KPIClient() {
         }
         return a.averagePerWeek - b.averagePerWeek;
       });
-  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, selectedYear, selectedMonth]);
+  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks]);
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
@@ -211,9 +236,19 @@ export default function KPIClient() {
   const currentYear = new Date().getFullYear();
   const years = [currentYear - 1, currentYear];
 
-  const periodLabel = selectedMonth === "annual" 
-    ? `Année ${selectedYear}` 
-    : `${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`;
+  const periodLabel = `${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`;
+
+  const toggleMemberExpanded = (memberId: string) => {
+    setExpandedMembers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(memberId)) {
+        newSet.delete(memberId);
+      } else {
+        newSet.add(memberId);
+      }
+      return newSet;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -370,11 +405,16 @@ export default function KPIClient() {
           </Card>
         </div>
 
-        {/* Members Table */}
+        {/* Members Table with Expandable Weekly Details */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium">Détail des membres</CardTitle>
+              <div>
+                <CardTitle className="text-lg font-medium">Détail des membres</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Semaines calendaires {targetWeeks.join(", ")} • Cliquez sur une ligne pour voir le détail
+                </p>
+              </div>
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -391,10 +431,10 @@ export default function KPIClient() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-8"></TableHead>
                     <TableHead>Membre</TableHead>
                     <TableHead>Abonnement</TableHead>
-                    <TableHead className="text-center">Séances ({periodLabel})</TableHead>
-                    <TableHead className="text-center">Sem. actives</TableHead>
+                    <TableHead className="text-center">Total séances</TableHead>
                     <TableHead className="text-center">Moy./sem.</TableHead>
                     <TableHead className="text-center">Engagement</TableHead>
                   </TableRow>
@@ -410,35 +450,72 @@ export default function KPIClient() {
                     memberStats.map((stat) => {
                       const style = engagementStyles[stat.engagement];
                       const Icon = style.icon;
+                      const isExpanded = expandedMembers.has(stat.id);
                       
                       return (
-                        <TableRow 
-                          key={stat.id}
-                          className="hover:bg-muted/50"
-                        >
-                          <TableCell className="font-medium">{stat.name}</TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">{stat.membership}</span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span className="font-semibold">{stat.totalTrainings}</span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span className="text-muted-foreground">{stat.weeksWithData}</span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span className="font-medium">{stat.averagePerWeek.toFixed(1)}</span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge 
-                              variant="outline" 
-                              className={cn("gap-1", style.bg, style.text, "border-0")}
-                            >
-                              <Icon className="h-3 w-3" />
-                              {style.label}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
+                        <Collapsible key={stat.id} open={isExpanded} onOpenChange={() => toggleMemberExpanded(stat.id)} asChild>
+                          <>
+                            <CollapsibleTrigger asChild>
+                              <TableRow className="cursor-pointer hover:bg-muted/50">
+                                <TableCell className="w-8">
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </TableCell>
+                                <TableCell className="font-medium">{stat.name}</TableCell>
+                                <TableCell>
+                                  <span className="text-sm text-muted-foreground">{stat.membership}</span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span className="font-semibold">{stat.totalTrainings}</span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span className="font-medium">{stat.averagePerWeek.toFixed(1)}</span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn("gap-1", style.bg, style.text, "border-0")}
+                                  >
+                                    <Icon className="h-3 w-3" />
+                                    {style.shortLabel}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent asChild>
+                              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                                <TableCell colSpan={6} className="p-0">
+                                  <div className="px-8 py-3">
+                                    <div className="flex items-center gap-4 flex-wrap">
+                                      <span className="text-sm font-medium text-muted-foreground">Détail par semaine :</span>
+                                      {stat.weeklyDetails.map((week) => (
+                                        <div 
+                                          key={week.weekNumber} 
+                                          className={cn(
+                                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm",
+                                            week.trainings === 0 
+                                              ? "bg-muted text-muted-foreground" 
+                                              : week.trainings >= 3 
+                                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                                : week.trainings >= 2
+                                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                                  : "bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                                          )}
+                                        >
+                                          <span className="font-medium">S{week.weekNumber}</span>
+                                          <span>{week.trainings} séance{week.trainings !== 1 ? "s" : ""}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            </CollapsibleContent>
+                          </>
+                        </Collapsible>
                       );
                     })
                   )}
@@ -447,7 +524,6 @@ export default function KPIClient() {
             </div>
           </CardContent>
         </Card>
-
       </div>
     </div>
   );
