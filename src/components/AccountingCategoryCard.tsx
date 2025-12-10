@@ -11,6 +11,10 @@ import {
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { AccountingTransaction } from "@/hooks/useAccountingTransactions";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { MemberActivityDialog } from "@/components/MemberActivityDialog";
+import type { Member as CustomerMember, WeeklyTraining } from "@/hooks/useCustomerMembers";
 
 interface AccountingCategoryCardProps {
   category: string;
@@ -36,6 +40,8 @@ export const AccountingCategoryCard = ({
   type,
 }: AccountingCategoryCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [activityMember, setActivityMember] = useState<CustomerMember | null>(null);
+  const [weeklyTrainings, setWeeklyTrainings] = useState<WeeklyTraining[]>([]);
 
   const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
   const totalReceived = transactions.reduce((sum, t) => sum + (t.amount_received || 0), 0);
@@ -52,6 +58,40 @@ export const AccountingCategoryCard = ({
       return "departed";
     }
     return "active";
+  };
+
+  const openActivityDialog = async (clientName: string | null) => {
+    if (!clientName) return;
+    
+    const member = customerMembers.find(
+      (m) => m.name.toLowerCase() === clientName.toLowerCase()
+    );
+    
+    if (!member) {
+      toast.error("Membre non trouvé dans le parcours client");
+      return;
+    }
+
+    // Load full member data
+    const { data: fullMember, error } = await supabase
+      .from('customer_members')
+      .select('*')
+      .eq('id', member.id)
+      .single();
+
+    if (error || !fullMember) {
+      toast.error("Erreur lors du chargement des données du membre");
+      return;
+    }
+
+    // Load weekly trainings for this member
+    const { data: trainings } = await supabase
+      .from('weekly_trainings')
+      .select('*')
+      .eq('member_id', member.id);
+
+    setWeeklyTrainings(trainings || []);
+    setActivityMember(fullMember as CustomerMember);
   };
 
   return (
@@ -160,9 +200,20 @@ export const AccountingCategoryCard = ({
 
                     {/* Client/Provider Name */}
                     <div className="col-span-2">
-                      <div className="text-sm font-medium text-foreground">
-                        {transaction.client_name || "-"}
-                      </div>
+                      {customerMembers.find(
+                        (m) => m.name.toLowerCase() === transaction.client_name?.toLowerCase()
+                      ) ? (
+                        <button
+                          onClick={() => openActivityDialog(transaction.client_name)}
+                          className="text-sm font-medium text-foreground text-left hover:text-primary hover:underline transition-colors cursor-pointer"
+                        >
+                          {transaction.client_name}
+                        </button>
+                      ) : (
+                        <div className="text-sm font-medium text-foreground">
+                          {transaction.client_name || "-"}
+                        </div>
+                      )}
                       {memberStatus === "departed" && (
                         <Badge variant="outline" className="mt-1 text-xs border-orange-500 text-orange-600">
                           Parti
@@ -252,6 +303,16 @@ export const AccountingCategoryCard = ({
           </div>
         </CollapsibleContent>
       </Card>
+
+      {/* Member Activity Dialog */}
+      {activityMember && (
+        <MemberActivityDialog
+          member={activityMember}
+          weeklyTrainings={weeklyTrainings}
+          onClose={() => setActivityMember(null)}
+          onMemberUpdated={() => setActivityMember(null)}
+        />
+      )}
     </Collapsible>
   );
 };
