@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfMonth, endOfMonth, getWeek } from "date-fns";
-import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 
 // Membership categories for filtering
 const membershipCategories = [
@@ -99,7 +98,6 @@ const months = [
 export default function KPIClient() {
   const navigate = useNavigate();
   const { members, weeklyTrainings, isLoading } = useCustomerMembers();
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [membershipFilter, setMembershipFilter] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -128,11 +126,6 @@ export default function KPIClient() {
       tm.toUpperCase().includes(membership.toUpperCase())
     );
   };
-
-  const selectedMember = useMemo(() => {
-    if (!selectedMemberId) return null;
-    return members.find(m => m.id === selectedMemberId) || null;
-  }, [selectedMemberId, members]);
 
   // Calculate member stats with optional month filtering
   const memberStats = useMemo(() => {
@@ -421,8 +414,7 @@ export default function KPIClient() {
                       return (
                         <TableRow 
                           key={stat.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => setSelectedMemberId(stat.id)}
+                          className="hover:bg-muted/50"
                         >
                           <TableCell className="font-medium">{stat.name}</TableCell>
                           <TableCell>
@@ -456,14 +448,6 @@ export default function KPIClient() {
           </CardContent>
         </Card>
 
-        {/* Member Activity Dialog */}
-        {selectedMember && (
-          <MemberActivityDialog
-            member={selectedMember}
-            isOpen={!!selectedMemberId}
-            onClose={() => setSelectedMemberId(null)}
-          />
-        )}
       </div>
     </div>
   );
