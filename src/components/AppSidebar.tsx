@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut, Trophy } from "lucide-react";
+import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut, Trophy, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -31,6 +31,7 @@ const allMenuItems = [
 ];
 
 const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap, roles: ["admin", "staff", "viewer", "coach"] };
+const adminItem = { title: "Gestion Utilisateurs", url: "/users", icon: Settings, roles: ["admin"] };
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -132,6 +133,21 @@ export function AppSidebar() {
                     >
                       <tutorialItem.icon className="h-5 w-5" />
                       <span className={collapsed ? "sr-only" : ""}>{tutorialItem.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              
+              {adminItem.roles.includes(role || "") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={adminItem.title}>
+                    <NavLink 
+                      to={adminItem.url} 
+                      className="flex items-center gap-3 hover:bg-accent/50 transition-colors"
+                      activeClassName="bg-accent text-accent-foreground font-medium"
+                    >
+                      <adminItem.icon className="h-5 w-5" />
+                      <span className={collapsed ? "sr-only" : ""}>{adminItem.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

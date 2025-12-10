@@ -18,6 +18,7 @@ import Tutorial from "./pages/Tutorial";
 import ExpiringSubscriptions from "./pages/ExpiringSubscriptions";
 import SixWeeksChallenge from "./pages/SixWeeksChallenge";
 import Auth from "./pages/Auth";
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/kpi-client" element={<ProtectedLayout><KPIClient /></ProtectedLayout>} />
             <Route path="/expiring-subscriptions" element={<ProtectedLayout><ExpiringSubscriptions /></ProtectedLayout>} />
             <Route path="/tutorial" element={<ProtectedLayout><Tutorial /></ProtectedLayout>} />
+            <Route path="/users" element={<ProtectedLayout><UserManagement /></ProtectedLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
