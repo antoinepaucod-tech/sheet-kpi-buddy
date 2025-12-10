@@ -199,6 +199,42 @@ export function MemberActivityDialog({
       const { data: { user } } = await supabase.auth.getUser();
       const performedBy = user?.email?.split('@')[0] || 'unknown';
 
+      // Create accounting transaction for renewal if cash collected > 0
+      if (cashCollectedValue > 0) {
+        const transactionMonth = renewalStartDate.getMonth() + 1;
+        const transactionYear = renewalStartDate.getFullYear();
+        const monthName = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(renewalStartDate);
+        
+        // Map member type to product description
+        let productDescription = "Revenu EFT Général";
+        if (renewalMemberType === "Membres PT" || renewalMemberType === "pif") {
+          productDescription = renewalMemberType === "pif" ? "Membre PIF" : "Revenu PT";
+        } else if (renewalMemberType === "Membres PIF" || renewalMemberType === "pif") {
+          productDescription = "Membre PIF";
+        }
+        
+        // Use membership as category
+        const category = finalMembership;
+        
+        await supabase
+          .from('accounting_transactions')
+          .insert({
+            transaction_date: format(renewalStartDate, "yyyy-MM-dd"),
+            transaction_type: "revenue",
+            category: category,
+            client_name: member.name,
+            service_description: finalMembership,
+            product_description: productDescription,
+            amount: cashCollectedValue,
+            amount_received: cashCollectedValue,
+            payment_method: "Prélèvement Automatique",
+            notes: "Renouvellement depuis Parcours Client",
+            year: transactionYear,
+            month: transactionMonth,
+            month_name: monthName,
+          });
+      }
+
       // Record renewal in history
       const durationValue = parseFloat(renewalMonths);
       const durationLabel = durationValue === 1.5 ? "6 semaines" : `${renewalMonths} mois`;
