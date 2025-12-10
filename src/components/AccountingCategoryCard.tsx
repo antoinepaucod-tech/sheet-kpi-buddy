@@ -77,10 +77,16 @@ export const AccountingCategoryCard = ({
       .from('customer_members')
       .select('*')
       .eq('id', member.id)
-      .single();
+      .maybeSingle();
 
-    if (error || !fullMember) {
+    if (error) {
+      console.error("Error loading member:", error);
       toast.error("Erreur lors du chargement des données du membre");
+      return;
+    }
+
+    if (!fullMember) {
+      toast.error("Membre non trouvé dans la base de données");
       return;
     }
 
