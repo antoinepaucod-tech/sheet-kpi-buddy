@@ -129,7 +129,7 @@ export const InteractiveChart = ({
         <ResponsiveContainer width="100%" height={height}>
           {type === "line" ? (
             <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.15} />
               <XAxis 
                 dataKey="month" 
                 tick={{ fontSize: 11 }}
@@ -171,7 +171,7 @@ export const InteractiveChart = ({
             </LineChart>
           ) : (
             <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.15} />
               <XAxis 
                 dataKey="month" 
                 tick={{ fontSize: 11 }}

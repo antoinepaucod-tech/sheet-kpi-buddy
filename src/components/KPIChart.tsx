@@ -49,7 +49,7 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
         )}
         <ResponsiveContainer width="100%" height={height}>
           <Chart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.15} />
             <XAxis 
               dataKey="name" 
               stroke="hsl(var(--foreground))"
