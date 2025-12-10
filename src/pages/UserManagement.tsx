@@ -37,6 +37,12 @@ const roleBadgeVariants: Record<AppRole, "default" | "secondary" | "outline" | "
   coach: "outline",
 };
 
+const availableRoles: { value: AppRole; label: string }[] = [
+  { value: "admin", label: "Administrateur" },
+  { value: "viewer", label: "Lecteur" },
+  { value: "coach", label: "Coach" },
+];
+
 export default function UserManagement() {
   const { role, isAdmin, loading: roleLoading } = useUserRole();
   const { user } = useAuth();
@@ -45,7 +51,7 @@ export default function UserManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserRole, setNewUserRole] = useState<AppRole>("staff");
+  const [newUserRole, setNewUserRole] = useState<AppRole>("viewer");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -266,10 +272,9 @@ export default function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Administrateur</SelectItem>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="viewer">Lecteur</SelectItem>
-                    <SelectItem value="coach">Coach</SelectItem>
+                    {availableRoles.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -330,10 +335,9 @@ export default function UserManagement() {
                           </Badge>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">Administrateur</SelectItem>
-                          <SelectItem value="staff">Staff</SelectItem>
-                          <SelectItem value="viewer">Lecteur</SelectItem>
-                          <SelectItem value="coach">Coach</SelectItem>
+                          {availableRoles.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
