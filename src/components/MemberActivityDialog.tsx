@@ -1,19 +1,28 @@
-import { useState, useMemo } from "react";
-import { parseISO, format, addWeeks, startOfWeek, differenceInWeeks, differenceInMonths, addMonths } from "date-fns";
+import { useState, useMemo, useEffect } from "react";
+import { parseISO, format, addWeeks, startOfWeek, differenceInWeeks, differenceInMonths, addMonths, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar, Pencil, Save, X, RotateCcw } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar as CalendarIcon, Pencil, Save, X, RotateCcw, Banknote } from "lucide-react";
 import { useMemberHistory } from "@/hooks/useMemberHistory";
 import { useMemberRenewalHistory } from "@/hooks/useMemberRenewalHistory";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import type { Member, WeeklyTraining } from "@/hooks/useCustomerMembers";
+
+interface MembershipCategory {
+  id: string;
+  name: string;
+}
 
 interface MemberActivityDialogProps {
   member: Member | null;
@@ -34,13 +43,39 @@ export function MemberActivityDialog({
   if (!member) return null;
 
   const [newComment, setNewComment] = useState("");
-  const [renewalMonths, setRenewalMonths] = useState("12");
   const [isRenewing, setIsRenewing] = useState(false);
   const [isEditingEndDate, setIsEditingEndDate] = useState(false);
   const [editedEndDate, setEditedEndDate] = useState(member.subscription_end_date || "");
   const [isSavingEndDate, setIsSavingEndDate] = useState(false);
   const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member.id);
   const { renewalHistory, addRenewalRecord } = useMemberRenewalHistory(member.id);
+  
+  // Renewal dialog state
+  const [renewalDialogOpen, setRenewalDialogOpen] = useState(false);
+  const [renewalMonths, setRenewalMonths] = useState("12");
+  const [changeMembership, setChangeMembership] = useState(false);
+  const [newMembership, setNewMembership] = useState(member.membership);
+  const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
+  const [renewalMemberType, setRenewalMemberType] = useState<string>(member.member_type || "recurring");
+  const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
+  const [membershipCategories, setMembershipCategories] = useState<MembershipCategory[]>([]);
+
+  // Load membership categories for renewal dialog
+  useEffect(() => {
+    const loadMembershipCategories = async () => {
+      const { data, error } = await supabase
+        .from('accounting_categories')
+        .select('id, name')
+        .eq('type', 'revenue')
+        .eq('revenue_type', 'membre')
+        .order('name');
+
+      if (!error && data) {
+        setMembershipCategories(data);
+      }
+    };
+    loadMembershipCategories();
+  }, []);
 
   const handleSaveEndDate = async () => {
     if (!editedEndDate) {
@@ -92,90 +127,102 @@ export function MemberActivityDialog({
     return { status: 'active', days: daysUntilExpiration, date: endDate };
   }, [member.subscription_end_date]);
 
+  const openRenewalDialog = () => {
+    // Default start date is day after current expiration
+    const defaultStartDate = member.subscription_end_date 
+      ? addDays(parseISO(member.subscription_end_date), 1)
+      : new Date();
+    setRenewalStartDate(defaultStartDate);
+    setRenewalMonths("12");
+    setChangeMembership(false);
+    setNewMembership(member.membership);
+    setRenewalMemberType(member.member_type || "recurring");
+    setRenewalCashCollected("0");
+    setRenewalDialogOpen(true);
+  };
+
+  const getNewEndDate = (): Date | null => {
+    if (!renewalStartDate) return null;
+    const durationValue = parseFloat(renewalMonths);
+    if (durationValue === 1.5) {
+      return addWeeks(renewalStartDate, 6);
+    }
+    return addMonths(renewalStartDate, durationValue);
+  };
+
   const handleRenewSubscription = async () => {
-    if (!member.subscription_end_date) {
+    if (!member.subscription_end_date || !renewalStartDate) {
       toast.error("Ce membre n'a pas de date de fin d'abonnement définie");
       return;
     }
 
     setIsRenewing(true);
     try {
-      const currentEndDate = parseISO(member.subscription_end_date);
-      const today = new Date();
-      
-      // Calculate new end date: from current end date (or today if expired) + renewal duration
-      const baseDate = currentEndDate > today ? currentEndDate : today;
-      const durationValue = parseFloat(renewalMonths);
-      
-      // Handle 6 weeks (1.5 months equivalent)
-      let newEndDate: Date;
-      if (durationValue === 1.5) {
-        newEndDate = addWeeks(baseDate, 6);
-      } else {
-        newEndDate = addMonths(baseDate, durationValue);
+      const newEndDate = getNewEndDate();
+      if (!newEndDate) {
+        toast.error("Erreur de calcul de la date");
+        setIsRenewing(false);
+        return;
       }
-      
-      // Update the member's subscription_end_date and exit_date
+
+      const cashCollectedValue = parseFloat(renewalCashCollected) || 0;
+      const finalMembership = changeMembership && newMembership ? newMembership : member.membership;
+
+      // Update member with renewal info
+      const updateData: { 
+        subscription_end_date: string; 
+        exit_date: string;
+        membership?: string;
+        member_type: string;
+        cash_collected: number;
+        contract_signed_date: string;
+      } = {
+        subscription_end_date: format(newEndDate, 'yyyy-MM-dd'),
+        exit_date: format(newEndDate, 'yyyy-MM-dd'),
+        member_type: renewalMemberType,
+        cash_collected: (member.cash_collected || 0) + cashCollectedValue,
+        contract_signed_date: format(renewalStartDate, 'yyyy-MM-dd')
+      };
+
+      if (changeMembership && newMembership && newMembership !== member.membership) {
+        updateData.membership = newMembership;
+      }
+
       const { error: updateError } = await supabase
         .from('customer_members')
-        .update({
-          subscription_end_date: format(newEndDate, "yyyy-MM-dd"),
-          exit_date: format(newEndDate, "yyyy-MM-dd"),
-        })
+        .update(updateData)
         .eq('id', member.id);
 
       if (updateError) throw updateError;
-
-      // Create a new accounting transaction for the renewal
-      const renewalDate = new Date();
-      const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-      
-      // Determine product description based on member type
-      let productDescription = "Revenu EFT Général";
-      if (member.member_type === "Membres PT") {
-        productDescription = "Revenu PT";
-      } else if (member.member_type === "Membres PIF") {
-        productDescription = "Membre PIF";
-      }
-
-      const { error: transactionError } = await supabase
-        .from('accounting_transactions')
-        .insert({
-          transaction_date: format(renewalDate, "yyyy-MM-dd"),
-          transaction_type: 'revenue',
-          category: member.membership,
-          client_name: member.name,
-          service_description: `Renouvellement ${renewalMonths} mois - ${member.membership}`,
-          product_description: productDescription,
-          amount: member.cash_collected || 0,
-          amount_received: 0, // Not validated yet
-          payment_method: 'Prélèvement Automatique',
-          notes: `Renouvellement abonnement - nouvelle échéance: ${format(newEndDate, "dd/MM/yyyy")}`,
-          year: renewalDate.getFullYear(),
-          month: renewalDate.getMonth() + 1,
-          month_name: monthNames[renewalDate.getMonth()],
-          is_auto_generated: false,
-          is_validated: false,
-        });
-
-      if (transactionError) throw transactionError;
 
       // Get current user email for audit trail
       const { data: { user } } = await supabase.auth.getUser();
       const performedBy = user?.email?.split('@')[0] || 'unknown';
 
       // Record renewal in history
+      const durationValue = parseFloat(renewalMonths);
       const durationLabel = durationValue === 1.5 ? "6 semaines" : `${renewalMonths} mois`;
+      
       await addRenewalRecord({
         member_id: member.id,
         previous_end_date: member.subscription_end_date,
         new_end_date: format(newEndDate, "yyyy-MM-dd"),
         renewal_duration: durationLabel,
         performed_by: performedBy,
-        notes: `Renouvellement via synthèse d'activité`
+        notes: `Renouvellement via synthèse d'activité${changeMembership && newMembership !== member.membership ? ` - Changement: ${newMembership}` : ''}`
       });
 
-      toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}`);
+      const membershipMessage = changeMembership && newMembership !== member.membership
+        ? ` avec nouveau type: ${newMembership}`
+        : "";
+      
+      const cashMessage = cashCollectedValue > 0 
+        ? ` | Cash collecté: CHF ${cashCollectedValue.toFixed(2)}`
+        : "";
+
+      toast.success(`Abonnement renouvelé jusqu'au ${format(newEndDate, "dd MMMM yyyy", { locale: fr })}${membershipMessage}${cashMessage}`);
+      
+      setRenewalDialogOpen(false);
       
       if (onMemberUpdated) {
         onMemberUpdated();
@@ -404,28 +451,13 @@ export function MemberActivityDialog({
                   <RefreshCw className="h-5 w-5" />
                   <h3 className="font-semibold">Renouvellement</h3>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Select value={renewalMonths} onValueChange={setRenewalMonths}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Durée" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1.5">6 semaines</SelectItem>
-                      <SelectItem value="1">1 mois</SelectItem>
-                      <SelectItem value="3">3 mois</SelectItem>
-                      <SelectItem value="6">6 mois</SelectItem>
-                      <SelectItem value="12">12 mois</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button 
-                    onClick={handleRenewSubscription} 
-                    disabled={isRenewing}
-                    className="gap-2"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    {isRenewing ? 'Renouvellement...' : 'Renouveler'}
-                  </Button>
-                </div>
+                <Button 
+                  onClick={openRenewalDialog} 
+                  className="gap-2"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  Renouveler
+                </Button>
               </div>
               {subscriptionStatus?.status === 'expired' && (
                 <p className="text-sm text-destructive mt-2">
@@ -673,6 +705,143 @@ export function MemberActivityDialog({
           </Card>
         </div>
       </DialogContent>
+
+      {/* Renewal Dialog */}
+      <Dialog open={renewalDialogOpen} onOpenChange={setRenewalDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Renouveler l'abonnement</DialogTitle>
+            <DialogDescription>
+              <span className="font-medium text-foreground">{member.name}</span>
+              <span className="block text-xs mt-1">
+                Abonnement actuel: {member.membership}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Renewal Start Date Selection */}
+            <div className="space-y-2">
+              <Label>Date de prise d'effet</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !renewalStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {renewalStartDate ? format(renewalStartDate, "dd MMMM yyyy", { locale: fr }) : "Sélectionner une date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={renewalStartDate}
+                    onSelect={setRenewalStartDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Renewal Duration Selection */}
+            <div className="space-y-2">
+              <Label>Durée du renouvellement</Label>
+              <Select value={renewalMonths} onValueChange={setRenewalMonths}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une durée" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1.5">6 semaines</SelectItem>
+                  <SelectItem value="1">1 mois</SelectItem>
+                  <SelectItem value="2">2 mois</SelectItem>
+                  <SelectItem value="3">3 mois</SelectItem>
+                  <SelectItem value="6">6 mois</SelectItem>
+                  <SelectItem value="12">12 mois</SelectItem>
+                </SelectContent>
+              </Select>
+              {renewalStartDate && getNewEndDate() && (
+                <p className="text-xs text-muted-foreground">
+                  Nouvelle date d'expiration: {format(getNewEndDate()!, "dd MMMM yyyy", { locale: fr })}
+                </p>
+              )}
+            </div>
+
+            {/* Member Type Selection */}
+            <div className="space-y-2">
+              <Label>Type de membre</Label>
+              <Select value={renewalMemberType} onValueChange={setRenewalMemberType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recurring">Récurrent</SelectItem>
+                  <SelectItem value="Membres PIF">PIF</SelectItem>
+                  <SelectItem value="Membres PT">PT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Cash Collected */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Banknote className="h-4 w-4" />
+                Cash collecté lors du renouvellement (CHF)
+              </Label>
+              <Input
+                type="number"
+                value={renewalCashCollected}
+                onChange={(e) => setRenewalCashCollected(e.target.value)}
+                placeholder="0"
+              />
+              <p className="text-xs text-muted-foreground">
+                Montant encaissé lors du renouvellement de l'abonnement
+              </p>
+            </div>
+
+            {/* Change Membership Type */}
+            <div className="flex items-center justify-between">
+              <Label htmlFor="change-membership">Changer de type d'abonnement</Label>
+              <Switch
+                id="change-membership"
+                checked={changeMembership}
+                onCheckedChange={setChangeMembership}
+              />
+            </div>
+
+            {changeMembership && (
+              <div className="space-y-2">
+                <Label>Nouveau type d'abonnement</Label>
+                <Select value={newMembership} onValueChange={setNewMembership}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un abonnement" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {membershipCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenewalDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleRenewSubscription} disabled={isRenewing}>
+              {isRenewing ? "Renouvellement..." : "Confirmer le renouvellement"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
