@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths, addWeeks, isWithinInterval, startOfDay, endOfDay, addDays, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Bell, RefreshCw, Banknote, Clock, AlertTriangle } from "lucide-react";
+import { Bell, RefreshCw, Banknote, Clock, AlertTriangle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -86,6 +86,7 @@ const ExpiringSubscriptions = () => {
   // Activity dialog state
   const [activityMember, setActivityMember] = useState<CustomerMember | null>(null);
   const [weeklyTrainings, setWeeklyTrainings] = useState<WeeklyTraining[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     loadSubscriptions();
@@ -412,27 +413,42 @@ const ExpiringSubscriptions = () => {
         <ThemeToggle />
       </div>
 
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un membre..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="upcoming" className="gap-2">
+              <Clock className="h-4 w-4" />
+              À venir
+              {upcomingMembers.length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {upcomingMembers.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="expired" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Expirés
+              {expiredMembers.length > 0 && (
+                <Badge variant="destructive" className="ml-1">
+                  {expiredMembers.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="upcoming" className="gap-2">
-            <Clock className="h-4 w-4" />
-            À venir
-            {upcomingMembers.length > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {upcomingMembers.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="expired" className="gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            Expirés
-            {expiredMembers.length > 0 && (
-              <Badge variant="destructive" className="ml-1">
-                {expiredMembers.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
 
         <TabsContent value="upcoming" className="mt-6">
           <Card>
@@ -453,7 +469,12 @@ const ExpiringSubscriptions = () => {
                   Chargement des abonnements...
                 </div>
               ) : (
-                renderMemberTable(upcomingMembers, false)
+                renderMemberTable(
+                  upcomingMembers.filter(m => 
+                    m.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ), 
+                  false
+                )
               )}
             </CardContent>
           </Card>
@@ -478,7 +499,12 @@ const ExpiringSubscriptions = () => {
                   Chargement des abonnements...
                 </div>
               ) : (
-                renderMemberTable(expiredMembers, true)
+                renderMemberTable(
+                  expiredMembers.filter(m => 
+                    m.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ), 
+                  true
+                )
               )}
             </CardContent>
           </Card>
