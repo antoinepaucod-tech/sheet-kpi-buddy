@@ -509,7 +509,7 @@ const Accounting = () => {
     const loadMembers = async () => {
       const { data } = await supabase
         .from('customer_members')
-        .select('name, exit_date');
+        .select('id, name, exit_date, membership, member_type, contract_signed_date, subscription_end_date, cash_collected, onboarding_bsport, onboarding_hubfit, onboarding_nutrition, questionnaire_coaching, session_introduction, sold_by');
       if (data) setCustomerMembers(data);
     };
     loadMembers();
