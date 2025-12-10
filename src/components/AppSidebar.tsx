@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut, Trophy } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { addMonths, startOfDay, endOfDay, isWithinInterval, format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -17,32 +18,43 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "KPI Revenu", url: "/kpi-revenue", icon: BarChart3 },
-  { title: "KPI Client", url: "/kpi-client", icon: TrendingUp },
-  { title: "KPI Cours", url: "/course-kpi", icon: Calendar },
-  { title: "Parcours Client", url: "/customer-journey", icon: Users },
-  { title: "6 Weeks Challenge", url: "/6-weeks-challenge", icon: Trophy },
-  { title: "Comptabilité", url: "/accounting", icon: Receipt },
-  { title: "Échéances", url: "/expiring-subscriptions", icon: Bell, showAlert: true },
+// All menu items with role restrictions
+const allMenuItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["admin", "staff", "viewer"] },
+  { title: "KPI Revenu", url: "/kpi-revenue", icon: BarChart3, roles: ["admin", "staff", "viewer"] },
+  { title: "KPI Client", url: "/kpi-client", icon: TrendingUp, roles: ["admin", "staff", "viewer", "coach"] },
+  { title: "KPI Cours", url: "/course-kpi", icon: Calendar, roles: ["admin", "staff", "viewer", "coach"] },
+  { title: "Parcours Client", url: "/customer-journey", icon: Users, roles: ["admin", "staff", "viewer"] },
+  { title: "6 Weeks Challenge", url: "/6-weeks-challenge", icon: Trophy, roles: ["admin", "staff", "viewer", "coach"] },
+  { title: "Comptabilité", url: "/accounting", icon: Receipt, roles: ["admin", "staff", "viewer"] },
+  { title: "Échéances", url: "/expiring-subscriptions", icon: Bell, showAlert: true, roles: ["admin", "staff", "viewer"] },
 ];
 
-const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap };
+const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap, roles: ["admin", "staff", "viewer", "coach"] };
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
+  const { role, isAdmin, isCoach } = useUserRole();
   const [expiringCount, setExpiringCount] = useState(0);
 
+  // Filter menu items based on user role
+  const menuItems = allMenuItems.filter(item => {
+    if (!role) return false;
+    return item.roles.includes(role);
+  });
+
   useEffect(() => {
+    // Only load expiring count for non-coach roles
+    if (isCoach) return;
+    
     loadExpiringCount();
     
     // Refresh count every 5 minutes
     const interval = setInterval(loadExpiringCount, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [role, isCoach]);
 
   const loadExpiringCount = async () => {
     const today = startOfDay(new Date());
@@ -110,18 +122,20 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={tutorialItem.title}>
-                  <NavLink 
-                    to={tutorialItem.url} 
-                    className="flex items-center gap-3 hover:bg-accent/50 transition-colors"
-                    activeClassName="bg-accent text-accent-foreground font-medium"
-                  >
-                    <tutorialItem.icon className="h-5 w-5" />
-                    <span className={collapsed ? "sr-only" : ""}>{tutorialItem.title}</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {tutorialItem.roles.includes(role || "") && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={tutorialItem.title}>
+                    <NavLink 
+                      to={tutorialItem.url} 
+                      className="flex items-center gap-3 hover:bg-accent/50 transition-colors"
+                      activeClassName="bg-accent text-accent-foreground font-medium"
+                    >
+                      <tutorialItem.icon className="h-5 w-5" />
+                      <span className={collapsed ? "sr-only" : ""}>{tutorialItem.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               
               {user && (
                 <SidebarMenuItem>
