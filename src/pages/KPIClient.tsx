@@ -131,13 +131,15 @@ export default function KPIClient() {
         const memberTrainings = weeklyTrainings.filter(wt => wt.member_id === member.id);
         const totalTrainings = memberTrainings.reduce((sum, wt) => sum + wt.trainings_count, 0);
         
+        // Calculate current relative week for this member (weeks since contract_signed_date)
+        const currentMemberWeek = Math.max(1, Math.ceil(differenceInDays(now, signatureDate) / 7));
+        
         // Find last training week
         const lastTraining = memberTrainings
           .filter(t => t.trainings_count > 0)
           .sort((a, b) => b.week_number - a.week_number)[0];
-        const currentWeek = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
         const weeksSinceLastTraining = lastTraining 
-          ? Math.max(0, currentWeek - lastTraining.week_number)
+          ? Math.max(0, currentMemberWeek - lastTraining.week_number)
           : 999;
         
         const averagePerMonth = totalTrainings / monthsSinceStart;
