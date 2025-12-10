@@ -2,495 +2,154 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================
-   THECOACH CLUB MANAGER - DESIGN SYSTEM
-   Cinematic Dark Mode × Athletic Minimalism
-   ============================================ */
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
 
 @layer base {
-  /* ----------------------------------------
-     DARK MODE (Primary Theme)
-     Inspired by Marchon × Linear × Swiss
-     ---------------------------------------- */
   :root {
-    /* App Background - Deep black */
-    --background: 240 7% 4%;
-    /* #0B0B0D */
-    --foreground: 0 0% 100%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
 
-    /* Surface 1 - Cards */
-    --card: 240 6% 7%;
-    /* #121214 */
-    --card-foreground: 0 0% 100%;
-
-    /* Surface 2 - Sidebars, inputs */
-    --surface: 240 5% 8%;
-    /* #151518 */
-
-    /* Hover states */
-    --hover: 240 4% 10%;
-    /* #1A1A1D */
-
-    /* Popover */
-    --popover: 240 6% 7%;
-    --popover-foreground: 0 0% 100%;
-
-    /* Brand Primary - TheCoach Purple */
-    --primary: 285 60% 50%;
-    /* #A335C9 */
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 285 60% 60%;
-    --primary-muted: 285 60% 50% / 0.15;
-
-    /* Tech Blue - Secondary accent */
-    --secondary: 210 85% 50%;
-    /* #1780E8 */
-    --secondary-foreground: 0 0% 100%;
-
-    /* Semantic Colors */
-    --success: 160 100% 41%;
-    /* #00D481 */
-    --success-foreground: 0 0% 100%;
-
-    --warning: 68 100% 61%;
-    /* #D5FF39 */
-    --warning-foreground: 0 0% 10%;
-
-    --destructive: 0 100% 65%;
-    /* #FF4D4F */
-    --destructive-foreground: 0 0% 100%;
-
-    /* Muted */
-    --muted: 240 4% 10%;
-    --muted-foreground: 0 0% 44%;
-    /* #6F6F6F */
-
-    /* Accent - same as primary for consistency */
-    --accent: 285 60% 50%;
-    --accent-foreground: 0 0% 100%;
-
-    /* Borders & Dividers */
-    --border: 240 3% 13%;
-    /* #1F1F22 */
-    --divider: 0 0% 10%;
-    /* #1A1A1A */
-    --input: 240 5% 8%;
-    --ring: 285 60% 50%;
-
-    /* Radius */
-    --radius: 0.625rem;
-    /* 10px */
-    --radius-sm: 0.375rem;
-    /* 6px */
-    --radius-lg: 0.75rem;
-    /* 12px */
-
-    /* Shadows - Very subtle */
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-
-    /* Chart Colors */
-    --chart-1: 285 60% 50%;
-    /* Primary purple */
-    --chart-2: 210 85% 50%;
-    /* Tech blue */
-    --chart-3: 160 100% 41%;
-    /* Success green */
-    --chart-4: 68 100% 61%;
-    /* Warning yellow */
-    --chart-5: 0 100% 65%;
-    /* Error red */
-
-    /* Text hierarchy */
-    --text-primary: 0 0% 100%;
-    --text-secondary: 0 0% 81%;
-    /* #CFCFCF */
-    --text-muted: 0 0% 44%;
-    /* #6F6F6F */
-
-    /* Sidebar specific */
-    --sidebar-background: 240 5% 8%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 285 60% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 3% 13%;
-    --sidebar-ring: 285 60% 50%;
-  }
-
-  /* Light mode - Maintain dark as primary but support light if needed */
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 240 7% 4%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 240 7% 4%;
-
-    --surface: 0 0% 96%;
-
-    --hover: 0 0% 94%;
+    --card: 0 0% 96%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 7% 4%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 285 60% 45%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 285 60% 55%;
+    --primary: 0 0% 15%;
+    --primary-foreground: 0 0% 98%;
+    
+    --primary-glow: 0 0% 25%;
 
-    --secondary: 210 85% 45%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
 
-    --accent: 285 60% 45%;
-    --accent-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 94%;
-    --ring: 285 60% 45%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --text-primary: 240 7% 4%;
-    --text-secondary: 0 0% 30%;
-    --text-muted: 0 0% 50%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 0 0% 15%;
+
+    --radius: 0.5rem;
+    
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.12), 0 1px 3px 0 rgb(0 0 0 / 0.08);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.12);
+
+    --chart-1: 0 0% 20%;
+    --chart-2: 0 0% 35%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 346 77% 50%;
+  }
+
+  .dark {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 10%;
+    
+    --primary-glow: 0 0% 80%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 80%;
+    
+    --shadow: 0 2px 4px -1px rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+
+    --chart-1: 0 0% 80%;
+    --chart-2: 0 0% 60%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 346 77% 50%;
   }
 }
 
-/* ----------------------------------------
-   BASE STYLES
-   ---------------------------------------- */
 @layer base {
   * {
     @apply border-border;
   }
 
-  html {
-    scroll-behavior: smooth;
-  }
-
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-    letter-spacing: -0.01em;
-    line-height: 1.6;
-  }
-
-  /* Typography Hierarchy */
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: 'Inter Tight', 'Inter', sans-serif;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-  }
-
-  h1 {
-    @apply text-4xl md:text-5xl;
-  }
-
-  h2 {
-    @apply text-3xl md:text-4xl;
-  }
-
-  h3 {
-    @apply text-xl md:text-2xl;
-  }
-
-  h4 {
-    @apply text-lg md:text-xl;
-  }
-
-  /* UI Labels */
-  label,
-  .label {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-  }
-
-  /* Links */
-  a {
-    @apply transition-colors duration-200;
-  }
-
-  /* Focus states - premium purple ring */
-  :focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
-  }
-
-  /* Scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/30;
+    letter-spacing: -0.011em;
   }
 }
 
-/* ----------------------------------------
-   COMPONENT STYLES
-   ---------------------------------------- */
-@layer components {
-  /* Cards - Cinematic style */
-  .card-cinematic {
-    @apply bg-card border border-border rounded-xl;
-    box-shadow: var(--shadow);
-  }
-
-  .card-cinematic:hover {
-    @apply border-primary/20;
-    box-shadow: var(--shadow-md);
-  }
-
-  /* Surface backgrounds */
-  .surface-1 {
-    background: hsl(var(--card));
-  }
-
-  .surface-2 {
-    background: hsl(var(--surface));
-  }
-
-  /* Brand gradient backgrounds */
-  .gradient-brand {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
-  }
-
-  .gradient-brand-subtle {
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--secondary) / 0.1) 100%);
-  }
-
-  /* Glow effects */
-  .glow-primary {
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
-  }
-
-  .glow-success {
-    box-shadow: 0 0 20px hsl(var(--success) / 0.3);
-  }
-
-  /* Premium input styling */
-  .input-premium {
-    @apply bg-surface border border-border text-foreground placeholder:text-muted-foreground;
-    @apply focus:border-secondary focus:ring-2 focus:ring-secondary/20;
-    @apply transition-all duration-200;
-  }
-
-  /* Table styles */
-  .table-premium thead {
-    @apply bg-surface;
-  }
-
-  .table-premium tbody tr {
-    @apply border-b border-divider transition-colors duration-150;
-  }
-
-  .table-premium tbody tr:hover {
-    @apply bg-hover;
-  }
-
-  /* Navigation highlight */
-  .nav-active {
-    @apply relative;
-  }
-
-  .nav-active::before {
-    content: '';
-    @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-primary rounded-r;
-  }
-
-  /* Badge variants */
-  .badge-success {
-    @apply bg-success/20 text-success border border-success/30;
-  }
-
-  .badge-warning {
-    @apply bg-warning/20 text-warning border border-warning/30;
-  }
-
-  .badge-error {
-    @apply bg-destructive/20 text-destructive border border-destructive/30;
-  }
-
-  .badge-info {
-    @apply bg-secondary/20 text-secondary border border-secondary/30;
-  }
-
-  .badge-primary {
-    @apply bg-primary/20 text-primary border border-primary/30;
-  }
-}
-
-/* ----------------------------------------
-   UTILITY CLASSES
-   ---------------------------------------- */
 @layer utilities {
-  /* Typography utilities */
-  .text-display {
-    font-family: 'Inter Tight', 'Inter', sans-serif;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  }
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
+  }
+  
+  .gradient-success {
+    background: linear-gradient(135deg, hsl(var(--success)), hsl(var(--accent)));
   }
 
-  .text-heading {
-    font-family: 'Inter Tight', 'Inter', sans-serif;
-    font-weight: 600;
-    letter-spacing: -0.015em;
+  .glow-effect {
+    box-shadow: 0 0 30px hsla(var(--foreground), 0.1);
   }
 
-  .text-label {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-  }
-
-  .text-body {
-    font-family: 'Manrope', sans-serif;
-    font-weight: 400;
-  }
-
-  .text-caption {
-    font-family: 'Inter', sans-serif;
-    font-weight: 400;
-    font-size: 0.75rem;
-  }
-
-  /* Text colors semantic */
-  .text-primary-brand {
-    color: hsl(var(--primary));
-  }
-
-  .text-secondary-brand {
-    color: hsl(var(--secondary));
-  }
-
-  /* Gradient text */
-  .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
-  }
-
-  /* Spacing utilities for premium layouts */
-  .page-padding {
-    @apply px-6 md:px-10;
-  }
-
-  .section-spacing {
-    @apply py-8 md:py-12;
-  }
-
-  .card-padding {
-    @apply p-6 md:p-8;
-  }
-
-  /* Hover scale - subtle */
-  .hover-lift {
-    @apply transition-transform duration-200;
-  }
-
-  .hover-lift:hover {
-    @apply -translate-y-0.5;
-  }
-
-  /* Animation utilities */
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.35s ease-out;
-  }
-
-  .animate-slide-in-right {
-    animation: slideInRight 0.3s ease-out;
-  }
-
-  .animate-scale-in {
-    animation: scaleIn 0.2s ease-out;
+    animation: fadeIn 0.5s ease-in;
   }
 
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-
-    to {
-      opacity: 1;
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  
+  .text-display {
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
-
-  @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes scaleIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  /* Icon styling */
-  .icon-muted {
-    @apply text-foreground/70;
-  }
-
-  /* Divider */
-  .divider {
-    @apply border-t border-divider;
-  }
-
-  /* Interactive underline for links */
-  .link-underline {
-    @apply relative inline-block;
-  }
-
-  .link-underline::after {
-    content: '';
-    @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 origin-right transition-transform duration-300;
-  }
-
-  .link-underline:hover::after {
-    @apply scale-x-100 origin-left;
+  
+  .text-heading {
+    font-weight: 500;
+    letter-spacing: -0.015em;
   }
 }
