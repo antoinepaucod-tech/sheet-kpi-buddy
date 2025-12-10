@@ -168,17 +168,17 @@ export function MemberActivityDialog({
       const cashCollectedValue = parseFloat(renewalCashCollected) || 0;
       const finalMembership = changeMembership && newMembership ? newMembership : member.membership;
 
-      // Update member with renewal info
+      // Update member with renewal info - clear exit_date so member remains visible
       const updateData: { 
         subscription_end_date: string; 
-        exit_date: string;
+        exit_date: null;
         membership?: string;
         member_type: string;
         cash_collected: number;
         contract_signed_date: string;
       } = {
         subscription_end_date: format(newEndDate, 'yyyy-MM-dd'),
-        exit_date: format(newEndDate, 'yyyy-MM-dd'),
+        exit_date: null,
         member_type: renewalMemberType,
         cash_collected: (member.cash_collected || 0) + cashCollectedValue,
         contract_signed_date: format(renewalStartDate, 'yyyy-MM-dd')
