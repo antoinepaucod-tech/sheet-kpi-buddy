@@ -851,6 +851,8 @@ export type Database = {
       }
       weekly_trainings: {
         Row: {
+          calendar_week: number | null
+          calendar_year: number | null
           created_at: string
           id: string
           member_id: string
@@ -859,6 +861,8 @@ export type Database = {
           week_number: number
         }
         Insert: {
+          calendar_week?: number | null
+          calendar_year?: number | null
           created_at?: string
           id?: string
           member_id: string
@@ -867,6 +871,8 @@ export type Database = {
           week_number: number
         }
         Update: {
+          calendar_week?: number | null
+          calendar_year?: number | null
           created_at?: string
           id?: string
           member_id?: string

@@ -158,7 +158,7 @@ export default function KPIClient() {
     return getWeeksInMonth(selectedYear, parseInt(selectedMonth));
   }, [selectedYear, selectedMonth]);
 
-  // Calculate member stats for the selected month
+  // Calculate member stats for the selected month using calendar weeks
   const memberStats = useMemo((): MemberStat[] => {
     if (!members || !weeklyTrainings) return [];
 
@@ -174,14 +174,18 @@ export default function KPIClient() {
         return true;
       })
       .map(member => {
-        // Get trainings for this member filtered by the target calendar weeks
+        // Get trainings for this member filtered by calendar weeks for the selected year and month
         const memberTrainings = weeklyTrainings.filter(t => 
-          t.member_id === member.id && targetWeeks.includes(t.week_number)
+          t.member_id === member.id && 
+          t.calendar_year === selectedYear &&
+          t.calendar_week !== null &&
+          t.calendar_week !== undefined &&
+          targetWeeks.includes(t.calendar_week)
         );
         
-        // Build weekly details
+        // Build weekly details using calendar weeks
         const weeklyDetails: WeeklyDetail[] = targetWeeks.map(weekNum => {
-          const training = memberTrainings.find(t => t.week_number === weekNum);
+          const training = memberTrainings.find(t => t.calendar_week === weekNum);
           return {
             weekNumber: weekNum,
             trainings: training?.trainings_count || 0,
@@ -216,7 +220,7 @@ export default function KPIClient() {
         }
         return a.averagePerWeek - b.averagePerWeek;
       });
-  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks]);
+  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks, selectedYear]);
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
