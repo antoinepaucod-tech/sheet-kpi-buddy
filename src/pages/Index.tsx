@@ -49,7 +49,7 @@ const Index = () => {
   const previousMonth = monthlyData[currentMonthIndex === 0 ? 11 : currentMonthIndex - 1];
 
   const saveMonthData = async (data: any) => {
-    const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue + data.cash_collected;
+    const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue;
     const total_expenses = data.ad_spend + data.rent + data.repairs_maintenance +
                           data.computer_software + data.internet_telephone + 
                           data.subscriptions + data.bank_finance_charges +
