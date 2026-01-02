@@ -60,19 +60,20 @@ serve(async (req) => {
     const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
     const currentMonthName = monthNames[now.getMonth()];
 
-    // Membership type keywords
-    const monthlyKeywords = ['MENSUEL', 'PAIEMENT MENSUEL', 'THE COACH PASS MENSUEL'];
-    const annualKeywords = ['ANNUEL', 'X1', 'PIF', 'PAIEMENT ANNUEL'];
+    // Current date for comparison (start of today)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    // Specific annual/paid-in-full memberships that should have 0 recurring amount
-    const annualPaidInFullMemberships = [
-      'OPEN GYM - PAIEMENT ANNUEL X1',
-      'UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL',
-      'UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1',
-      'OFFRE 6 MOIS - 499 CHF'
-    ];
+    // Calculate start and end of current month for comparison
+    const currentMonthStart = new Date(currentYear, currentMonth - 1, 1);
+    const currentMonthEnd = new Date(currentYear, currentMonth, 0); // Last day of current month
 
-    // Get all active members (no exit_date filter here, we'll filter in the loop)
+    // Membership type keywords for recurring payments
+    const monthlyKeywords = ['MENSUEL', 'PAIEMENT MENSUEL', 'THE COACH PASS MENSUEL'];
+    
+    // PIF/Annual memberships - appear each month but with 0 amount after first payment
+    const pifKeywords = ['PIF', '6 WEEKS', 'CHALLENGE', 'X1', 'ANNUEL', 'PAIEMENT ANNUEL'];
+
+    // Get all members
     const { data: members, error: membersError } = await supabase
       .from('customer_members')
       .select('*');
@@ -82,49 +83,47 @@ serve(async (req) => {
       throw membersError;
     }
 
-    // Current date for comparison (start of today)
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    console.log(`Found ${members?.length || 0} active members`);
+    console.log(`Found ${members?.length || 0} total members`);
 
     const transactionsToCreate = [];
 
     for (const member of members as Member[]) {
-      // RULE: Skip members whose subscription has ended (subscription_end_date is in the past)
-      if (member.subscription_end_date) {
-        const subscriptionEndDate = new Date(member.subscription_end_date);
-        if (subscriptionEndDate < today) {
-          console.log(`Skipping ${member.name} - subscription ended on ${member.subscription_end_date}`);
-          continue;
-        }
-      }
-
-      // Skip members with exit_date in the past
-      if (member.exit_date) {
-        const exitDate = new Date(member.exit_date);
-        if (exitDate < today) {
-          console.log(`Skipping ${member.name} - exited on ${member.exit_date}`);
-          continue;
-        }
-      }
-
-      // Check if membership is annual/PIF (generates 0 amount recurrence)
-      const isAnnual = annualKeywords.some(keyword => 
-        member.membership.toUpperCase().includes(keyword)
-      );
-
-      // Check if membership is monthly (generates recurrence with previous month amount)
-      const isMonthly = monthlyKeywords.some(keyword => 
-        member.membership.toUpperCase().includes(keyword)
-      );
-
-      // Skip if neither annual nor monthly
-      if (!isAnnual && !isMonthly) {
-        console.log(`Skipping ${member.name} - membership type not recognized (${member.membership})`);
+      // RULE 1: Member must have a contract_signed_date
+      if (!member.contract_signed_date) {
+        console.log(`Skipping ${member.name} - no contract signed date`);
         continue;
       }
 
-      // Check if a transaction already exists for this month
+      const contractSignedDate = new Date(member.contract_signed_date);
+      
+      // RULE 2: Contract must have started before or during the current month
+      if (contractSignedDate > currentMonthEnd) {
+        console.log(`Skipping ${member.name} - contract starts in the future (${member.contract_signed_date})`);
+        continue;
+      }
+
+      // RULE 3: For PIF/limited memberships, check subscription_end_date
+      // Member should appear until their subscription_end_date
+      if (member.subscription_end_date) {
+        const subscriptionEndDate = new Date(member.subscription_end_date);
+        // Skip if subscription ended before the current month started
+        if (subscriptionEndDate < currentMonthStart) {
+          console.log(`Skipping ${member.name} - subscription ended before this month (${member.subscription_end_date})`);
+          continue;
+        }
+      }
+
+      // RULE 4: Check exit_date (if member left the gym entirely)
+      if (member.exit_date) {
+        const exitDate = new Date(member.exit_date);
+        // Skip if exited before the current month started
+        if (exitDate < currentMonthStart) {
+          console.log(`Skipping ${member.name} - exited before this month (${member.exit_date})`);
+          continue;
+        }
+      }
+
+      // Check if a transaction already exists for this month with this membership
       const { data: existingTransactions, error: checkError } = await supabase
         .from('accounting_transactions')
         .select('id')
@@ -140,22 +139,28 @@ serve(async (req) => {
       }
 
       if (existingTransactions && existingTransactions.length > 0) {
-        console.log(`Transaction already exists for ${member.name} in ${currentMonthName}`);
+        console.log(`Transaction already exists for ${member.name} in ${currentMonthName} (${member.membership})`);
         continue;
       }
 
-      // Determine the amount based on membership type
+      // Determine if this is a PIF/limited membership or monthly recurring
+      const isPIF = pifKeywords.some(keyword => 
+        member.membership.toUpperCase().includes(keyword)
+      ) || member.member_type === "Membres PIF";
+
+      const isMonthly = monthlyKeywords.some(keyword => 
+        member.membership.toUpperCase().includes(keyword)
+      );
+
+      // Determine the amount
       let estimatedAmount = 0;
       
-      // Check if this is a specific annual/paid-in-full membership
-      const isAnnualPaidInFull = annualPaidInFullMemberships.includes(member.membership);
-
-      if (isAnnual) {
-        // Annual/PIF memberships always generate 0 amount recurring transactions
+      if (isPIF) {
+        // PIF members: 0 amount for recurring entries (they already paid in full)
         estimatedAmount = 0;
-        console.log(`Creating 0 amount recurring transaction for annual/PIF member: ${member.name}`);
-      } else {
-        // For monthly memberships, get the previous month's transaction to copy the amount
+        console.log(`Creating 0 amount transaction for PIF member: ${member.name} (${member.membership})`);
+      } else if (isMonthly) {
+        // Monthly members: get previous month's amount
         const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
         const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
@@ -174,13 +179,14 @@ serve(async (req) => {
           console.error(`Error fetching previous transaction for ${member.name}:`, prevError);
         }
 
-        // If previous transaction exists and this is an annual/paid-in-full membership, use 0
-        // Otherwise use previous month's amount, or 0 if no previous transaction found
         if (previousTransactions && previousTransactions.length > 0) {
-          estimatedAmount = isAnnualPaidInFull ? 0 : previousTransactions[0].amount;
-        } else {
-          estimatedAmount = 0;
+          estimatedAmount = previousTransactions[0].amount;
         }
+        console.log(`Creating monthly transaction for ${member.name} with amount: ${estimatedAmount}`);
+      } else {
+        // Unknown membership type - default to 0 but still create the transaction
+        estimatedAmount = 0;
+        console.log(`Creating transaction for unrecognized membership type: ${member.name} (${member.membership})`);
       }
 
       // Map member type to product description
@@ -190,8 +196,6 @@ serve(async (req) => {
       } else if (member.member_type === "Membres PIF") {
         productDescription = "Membre PIF";
       }
-
-      console.log(`Creating transaction for ${member.name} with amount: ${estimatedAmount}`);
 
       transactionsToCreate.push({
         transaction_date: now.toISOString().split('T')[0],
@@ -211,7 +215,7 @@ serve(async (req) => {
         is_validated: false,
       });
 
-      console.log(`Prepared recurring transaction for ${member.name}`);
+      console.log(`Prepared transaction for ${member.name} (${member.membership}) - Amount: ${estimatedAmount}`);
     }
 
     if (transactionsToCreate.length === 0) {
