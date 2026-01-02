@@ -102,13 +102,14 @@ serve(async (req) => {
         continue;
       }
 
-      // RULE 3: For PIF/limited memberships, check subscription_end_date
-      // Member should appear until their subscription_end_date
+      // RULE 3: Check subscription_end_date for ALL members (not just PIF)
+      // A member should NOT have a transaction generated for a month that starts AFTER their subscription ends
       if (member.subscription_end_date) {
         const subscriptionEndDate = new Date(member.subscription_end_date);
         // Skip if subscription ended before the current month started
+        // This means if subscription_end_date is 2025-12-25, no transaction for January 2026
         if (subscriptionEndDate < currentMonthStart) {
-          console.log(`Skipping ${member.name} - subscription ended before this month (${member.subscription_end_date})`);
+          console.log(`Skipping ${member.name} - subscription ended before this month started (end: ${member.subscription_end_date}, month start: ${currentMonthStart.toISOString().split('T')[0]})`);
           continue;
         }
       }
