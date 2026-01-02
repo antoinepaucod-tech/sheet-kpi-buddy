@@ -249,32 +249,51 @@ export const useAccountingCategoriesWithRecurrence = () => {
             });
           });
         } else {
-          // No matching members - only generate if there was a transaction in previous month
-          const prevKey = `${cat.type}|${cat.name}|`;
-          const carriedAmount = prevAmountMap.get(prevKey)?.amount;
+          // No matching members - find ALL previous transactions for this category and carry them over
+          // This handles expenses like Spotify which have client_name set
+          const prevTransactionsForCategory = (prevTx || []).filter((tx: any) => 
+            tx.transaction_type === cat.type && tx.category === cat.name
+          );
           
-          // Only generate if there was a transaction in previous month
-          if (carriedAmount === undefined) {
-            return; // Skip if no previous transaction
+          if (prevTransactionsForCategory.length === 0) {
+            return; // Skip if no previous transactions for this category
           }
 
-          const dupKey = `${dateStr}|${cat.type}|${cat.name}||${carriedAmount}`;
-          if (existingKeys.has(dupKey)) {
-            skipped++;
-            return;
-          }
+          // Create a transaction for each previous transaction in this category
+          prevTransactionsForCategory.forEach((prevTransaction: any) => {
+            const clientName = prevTransaction.client_name || '';
+            const amount = Number(prevTransaction.amount) || 0;
+            
+            // Check if already exists this month
+            const clientMonthKey = `${year}-${month + 1}|${cat.name}|${clientName}`;
+            if (existingClientMonthKeys.has(clientMonthKey)) {
+              skipped++;
+              return;
+            }
 
-          transactionsToCreate.push({
-            transaction_date: dateStr,
-            transaction_type: cat.type,
-            category: cat.name,
-            amount: carriedAmount,
-            amount_received: 0, // cash resets to 0 each recurrence
-            year: year,
-            month: month + 1,
-            month_name: MONTHS[month],
-            is_auto_generated: true,
-            is_validated: false,
+            const dupKey = `${dateStr}|${cat.type}|${cat.name}|${clientName}|${amount}`;
+            if (existingKeys.has(dupKey)) {
+              skipped++;
+              return;
+            }
+
+            transactionsToCreate.push({
+              transaction_date: dateStr,
+              transaction_type: cat.type,
+              category: cat.name,
+              client_name: clientName || null,
+              service_description: prevTransaction.service_description || cat.name,
+              product_description: prevTransaction.product_description || cat.name,
+              amount,
+              amount_received: 0, // cash resets to 0 each recurrence
+              year: year,
+              month: month + 1,
+              month_name: MONTHS[month],
+              is_auto_generated: true,
+              is_validated: false,
+              payment_method: prevTransaction.payment_method || null,
+              notes: prevTransaction.notes || null,
+            });
           });
         }
       });
