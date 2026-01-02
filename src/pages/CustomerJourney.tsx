@@ -614,7 +614,14 @@ const CustomerJourney = () => {
 
   // Summary statistics calculations
   const summaryStats = useMemo(() => {
-    const activeMembers = members.filter(m => !m.exit_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // A member is active if they have no exit_date OR if their exit_date is in the future
+    const activeMembers = members.filter(m => {
+      if (!m.exit_date) return true;
+      const exitDate = parseISO(m.exit_date);
+      return exitDate >= today;
+    });
     const totalCashCollected = activeMembers.reduce((sum, m) => sum + (m.cash_collected || 0), 0);
     
     const onboardingComplete = activeMembers.filter(m => 
