@@ -264,14 +264,6 @@ export const MonthlyDataInput = ({ monthData, monthLabel, onSave }: MonthlyDataI
                 />
               </div>
               <div className="space-y-2">
-                <Label>Cash Organique</Label>
-                <Input 
-                  type="number" 
-                  value={formData.organic_cash_collected}
-                  onChange={(e) => updateField('organic_cash_collected', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>En Essai</Label>
                 <Input 
                   type="number" 
