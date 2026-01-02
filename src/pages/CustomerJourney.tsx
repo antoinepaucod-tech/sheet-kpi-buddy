@@ -137,15 +137,18 @@ const CustomerJourney = () => {
     return weeks;
   }, [selectedYear]);
 
-  // Generate available years (current year - 2 to current year + 2) plus "all" option
+  // Generate available years (2023 to current year + 2) plus "all" option
   const availableYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
+    const startYear = 2023;
+    const endYear = currentYear + 2;
+    const years = [];
+    for (let year = startYear; year <= endYear; year++) {
+      years.push({ value: year, label: year.toString() });
+    }
     return [
       { value: "all", label: "Toutes les années" },
-      ...Array.from({ length: 5 }, (_, i) => ({
-        value: currentYear - 2 + i,
-        label: (currentYear - 2 + i).toString()
-      }))
+      ...years
     ];
   }, []);
 
