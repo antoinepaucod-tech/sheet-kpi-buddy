@@ -172,11 +172,22 @@ export const useAccountingCategoriesWithRecurrence = () => {
             // Check if member has exited this month or before
             if (member.exit_date) {
               const exitDate = new Date(member.exit_date);
-              const currentMonthEnd = new Date(year, month + 1, 0);
+              const currentMonthStart = new Date(year, month, 1);
               
-              // If exit date is in this month or before, stop generating
-              if (exitDate <= currentMonthEnd) {
+              // If exit date is before the current month starts, skip
+              if (exitDate < currentMonthStart) {
                 return; // Skip - member has exited
+              }
+            }
+            
+            // Check if member's subscription has ended before this month
+            if (member.subscription_end_date) {
+              const subscriptionEndDate = new Date(member.subscription_end_date);
+              const currentMonthStart = new Date(year, month, 1);
+              
+              // If subscription ended before the current month starts, skip
+              if (subscriptionEndDate < currentMonthStart) {
+                return; // Skip - subscription has ended
               }
             }
             
