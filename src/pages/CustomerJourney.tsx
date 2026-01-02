@@ -174,14 +174,21 @@ const CustomerJourney = () => {
     today.setHours(0, 0, 0, 0);
 
     return members.filter(member => {
-      // Apply status filter first
-      // A member is considered "exited" only if exit_date is in the past or today
-      // A member with a future exit_date is still "active"
-      const hasExitDate = !!member.exit_date;
-      const exitDateIsPastOrToday = hasExitDate && parseISO(member.exit_date!) <= today;
+      // Determine member's active period
+      const hasContractDate = !!member.contract_signed_date;
+      const contractDate = hasContractDate ? parseISO(member.contract_signed_date!) : null;
       
-      if (memberStatus === "active" && exitDateIsPastOrToday) return false;
-      if (memberStatus === "exited" && !exitDateIsPastOrToday) return false;
+      // End date is subscription_end_date or exit_date (whichever exists)
+      const endDateStr = member.subscription_end_date || member.exit_date;
+      const endDate = endDateStr ? parseISO(endDateStr) : null;
+      
+      // A member is "exited" if their end date is in the past (strictly before today)
+      // Members whose end date is today are still considered active for that day
+      const isExited = endDate && endDate < today;
+      
+      // Apply status filter
+      if (memberStatus === "active" && isExited) return false;
+      if (memberStatus === "exited" && !isExited) return false;
 
       // If search term is present, only filter by search (ignore date filters)
       if (searchTerm) {
@@ -193,54 +200,44 @@ const CustomerJourney = () => {
         return true;
       }
 
-      // For "exited" members, filter by exit_date instead of contract_signed_date
-      if (memberStatus === "exited" && member.exit_date) {
-        const exitDate = parseISO(member.exit_date);
-        const exitYear = exitDate.getFullYear();
-        const exitMonth = exitDate.getMonth();
+      // For "exited" members viewing, filter by exit_date
+      if (memberStatus === "exited" && endDate) {
+        const exitYear = endDate.getFullYear();
+        const exitMonth = endDate.getMonth();
 
-        // Apply year filter if not "all"
         if (selectedYear !== "all" && exitYear !== selectedYear) return false;
-        
-        // Apply month filter if not "all"
         if (selectedMonth !== "all" && exitMonth !== selectedMonth) return false;
 
         return true;
       }
 
       // For "active" members, show them for ALL years between contract_signed_date and end date
-      if (!member.contract_signed_date) {
+      if (!contractDate) {
         return selectedYear === "all";
       }
       
-      const contractDate = parseISO(member.contract_signed_date);
       const contractYear = contractDate.getFullYear();
       const contractMonth = contractDate.getMonth();
       
-      // Determine the end date (subscription_end_date, exit_date, or current year if none)
+      // Determine the end year/month for filtering
       let endYear = new Date().getFullYear();
       let endMonth = 11; // December by default
       
-      if (member.subscription_end_date) {
-        const subEndDate = parseISO(member.subscription_end_date);
-        endYear = subEndDate.getFullYear();
-        endMonth = subEndDate.getMonth();
-      } else if (member.exit_date) {
-        const exitDate = parseISO(member.exit_date);
-        endYear = exitDate.getFullYear();
-        endMonth = exitDate.getMonth();
+      if (endDate) {
+        endYear = endDate.getFullYear();
+        endMonth = endDate.getMonth();
       }
 
       // Apply year filter - member is visible if selected year is within their active period
       if (selectedYear !== "all") {
-        // Member should appear in all years from contract year to end year
+        // Member should appear in all years from contract year to end year (inclusive)
         if (selectedYear < contractYear || selectedYear > endYear) return false;
         
         // Apply month filter only if year matches start or end year
         if (selectedMonth !== "all") {
           // If selected year is the contract year, member should appear from contract month onwards
           if (selectedYear === contractYear && selectedMonth < contractMonth) return false;
-          // If selected year is the end year, member should appear until end month
+          // If selected year is the end year, member should appear until end month (inclusive)
           if (selectedYear === endYear && selectedMonth > endMonth) return false;
         }
       }
