@@ -275,6 +275,31 @@ export const useAccountingCategoriesWithRecurrence = () => {
             const clientName = prevTransaction.client_name || '';
             const amount = Number(prevTransaction.amount) || 0;
             
+            // IMPORTANT: For member revenue types, check if this client's current membership
+            // still matches this category. If not, skip (member changed membership type).
+            if (cat.revenue_type === 'membre' && clientName) {
+              const memberNow = members?.find((m: any) => m.name === clientName);
+              if (memberNow && memberNow.membership !== cat.name) {
+                // Member's current membership is different from this category - skip
+                return;
+              }
+              // Also check if member has exited or subscription ended
+              if (memberNow?.exit_date) {
+                const exitDate = new Date(memberNow.exit_date);
+                const currentMonthStart = new Date(year, month, 1);
+                if (exitDate < currentMonthStart) {
+                  return; // Skip - member has exited
+                }
+              }
+              if (memberNow?.subscription_end_date) {
+                const subscriptionEndDate = new Date(memberNow.subscription_end_date);
+                const currentMonthStart = new Date(year, month, 1);
+                if (subscriptionEndDate < currentMonthStart) {
+                  return; // Skip - subscription has ended
+                }
+              }
+            }
+            
             // Check if already exists this month
             const clientMonthKey = `${year}-${month + 1}|${cat.name}|${clientName}`;
             if (existingClientMonthKeys.has(clientMonthKey)) {
