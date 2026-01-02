@@ -178,10 +178,15 @@ export type Database = {
           time_slot: string
           updated_at: string
           week1_attendance: number | null
+          week1_instructor: string | null
           week2_attendance: number | null
+          week2_instructor: string | null
           week3_attendance: number | null
+          week3_instructor: string | null
           week4_attendance: number | null
+          week4_instructor: string | null
           week5_attendance: number | null
+          week5_instructor: string | null
           year: number
         }
         Insert: {
@@ -198,10 +203,15 @@ export type Database = {
           time_slot: string
           updated_at?: string
           week1_attendance?: number | null
+          week1_instructor?: string | null
           week2_attendance?: number | null
+          week2_instructor?: string | null
           week3_attendance?: number | null
+          week3_instructor?: string | null
           week4_attendance?: number | null
+          week4_instructor?: string | null
           week5_attendance?: number | null
+          week5_instructor?: string | null
           year: number
         }
         Update: {
@@ -218,10 +228,15 @@ export type Database = {
           time_slot?: string
           updated_at?: string
           week1_attendance?: number | null
+          week1_instructor?: string | null
           week2_attendance?: number | null
+          week2_instructor?: string | null
           week3_attendance?: number | null
+          week3_instructor?: string | null
           week4_attendance?: number | null
+          week4_instructor?: string | null
           week5_attendance?: number | null
+          week5_instructor?: string | null
           year?: number
         }
         Relationships: []

@@ -16,6 +16,11 @@ export interface CourseKPI {
   week3_attendance: number;
   week4_attendance: number;
   week5_attendance: number;
+  week1_instructor: string | null;
+  week2_instructor: string | null;
+  week3_instructor: string | null;
+  week4_instructor: string | null;
+  week5_instructor: string | null;
   monthly_expenses: number;
   attendance_rate: number;
   max_capacity: number;

@@ -366,34 +366,68 @@ export default function KPICourses() {
                               </Select>
                             )}
                           </TableCell>
-                          {[1, 2, 3, 4, 5].map((weekNum) => (
-                            <TableCell key={weekNum} className="text-center">
-                              {editingId === course.id ? (
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={
-                                    editingValues[
-                                      `week${weekNum}_attendance` as keyof CourseKPI
-                                    ] || 0
-                                  }
-                                  onChange={(e) =>
-                                    setEditingValues({
-                                      ...editingValues,
-                                      [`week${weekNum}_attendance`]: parseInt(
-                                        e.target.value
-                                      ) || 0,
-                                    })
-                                  }
-                                  className="w-[60px] text-center"
-                                />
-                              ) : (
-                                course[
-                                  `week${weekNum}_attendance` as keyof CourseKPI
-                                ] || 0
-                              )}
-                            </TableCell>
-                          ))}
+                          {[1, 2, 3, 4, 5].map((weekNum) => {
+                            const weekInstructorKey = `week${weekNum}_instructor` as keyof CourseKPI;
+                            const weekAttendanceKey = `week${weekNum}_attendance` as keyof CourseKPI;
+                            const weekInstructor = course[weekInstructorKey] as string | null;
+                            const effectiveInstructor = weekInstructor || course.instructor;
+                            const isReplacement = weekInstructor && weekInstructor !== course.instructor;
+                            
+                            return (
+                              <TableCell key={weekNum} className="text-center">
+                                <div className="flex flex-col gap-1">
+                                  {editingId === course.id ? (
+                                    <>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        value={
+                                          editingValues[weekAttendanceKey] || 0
+                                        }
+                                        onChange={(e) =>
+                                          setEditingValues({
+                                            ...editingValues,
+                                            [weekAttendanceKey]: parseInt(e.target.value) || 0,
+                                          })
+                                        }
+                                        className="w-[60px] text-center mx-auto"
+                                      />
+                                      <Select
+                                        value={(editingValues[weekInstructorKey] as string) || "default"}
+                                        onValueChange={(value) =>
+                                          setEditingValues({
+                                            ...editingValues,
+                                            [weekInstructorKey]: value === "default" ? null : value,
+                                          })
+                                        }
+                                      >
+                                        <SelectTrigger className="w-[100px] h-7 text-xs mx-auto">
+                                          <SelectValue placeholder="Défaut" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="default">Défaut</SelectItem>
+                                          {instructors.map((instructor) => (
+                                            <SelectItem key={instructor.id} value={instructor.name}>
+                                              {instructor.name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>{course[weekAttendanceKey] || 0}</span>
+                                      {isReplacement && (
+                                        <span className="text-xs text-warning font-medium">
+                                          {weekInstructor}
+                                        </span>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </TableCell>
+                            );
+                          })}
                           <TableCell>
                             {editingId === course.id ? (
                               <div className="w-[100px] text-muted-foreground">
