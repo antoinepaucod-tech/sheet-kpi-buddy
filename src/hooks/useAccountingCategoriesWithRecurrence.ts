@@ -66,15 +66,15 @@ export const useAccountingCategoriesWithRecurrence = () => {
         "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
       ];
 
-      // Get all recurring categories
+      // Get all recurring categories OR member-type categories (which are implicitly recurring)
       const { data: recurringCategories, error: fetchError } = await (supabase as any)
         .from("accounting_categories")
         .select("*")
-        .eq("is_recurring", true);
+        .or("is_recurring.eq.true,revenue_type.eq.membre");
 
       if (fetchError) throw fetchError;
       if (!recurringCategories || recurringCategories.length === 0) {
-        throw new Error("Aucune catégorie récurrente configurée");
+        throw new Error("Aucune catégorie récurrente ou de type membre configurée");
       }
 
       // Get active members (no exit_date or exit_date in the future)
