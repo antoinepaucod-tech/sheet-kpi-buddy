@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Save, X } from "lucide-react";
 import { useCourseKPIData, type CourseKPI } from "@/hooks/useCourseKPIData";
+import { useInstructors } from "@/hooks/useInstructors";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const MONTHS = [
@@ -65,6 +66,16 @@ export default function KPICourses() {
 
   const { courses, isLoading, createCourse, updateCourse, deleteCourse } =
     useCourseKPIData(selectedYear, selectedMonth);
+  
+  const { instructors } = useInstructors();
+
+  // Quick instructor change without entering edit mode
+  const handleQuickInstructorChange = async (courseId: string, newInstructor: string) => {
+    await updateCourse.mutateAsync({ 
+      id: courseId, 
+      updates: { instructor: newInstructor === "none" ? null : newInstructor } 
+    });
+  };
 
 
   const handleEdit = (course: CourseKPI) => {
@@ -315,17 +326,44 @@ export default function KPICourses() {
                           </TableCell>
                           <TableCell>
                             {editingId === course.id ? (
-                              <Input
-                                value={editingValues.instructor || ""}
-                                onChange={(e) =>
+                              <Select
+                                value={editingValues.instructor || "none"}
+                                onValueChange={(value) =>
                                   setEditingValues({
                                     ...editingValues,
-                                    instructor: e.target.value,
+                                    instructor: value === "none" ? null : value,
                                   })
                                 }
-                              />
+                              >
+                                <SelectTrigger className="w-[150px]">
+                                  <SelectValue placeholder="Sélectionner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Aucun</SelectItem>
+                                  {instructors.map((instructor) => (
+                                    <SelectItem key={instructor.id} value={instructor.name}>
+                                      {instructor.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             ) : (
-                              course.instructor || "-"
+                              <Select
+                                value={course.instructor || "none"}
+                                onValueChange={(value) => handleQuickInstructorChange(course.id, value)}
+                              >
+                                <SelectTrigger className="w-[150px] border-dashed hover:border-solid">
+                                  <SelectValue placeholder="Sélectionner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Aucun</SelectItem>
+                                  {instructors.map((instructor) => (
+                                    <SelectItem key={instructor.id} value={instructor.name}>
+                                      {instructor.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             )}
                           </TableCell>
                           {[1, 2, 3, 4, 5].map((weekNum) => (
@@ -434,16 +472,27 @@ export default function KPICourses() {
                             />
                           </TableCell>
                           <TableCell>
-                            <Input
-                              placeholder="Instructeur"
-                              value={newCourse.instructor || ""}
-                              onChange={(e) =>
+                            <Select
+                              value={newCourse.instructor || "none"}
+                              onValueChange={(value) =>
                                 setNewCourse({
                                   ...newCourse,
-                                  instructor: e.target.value,
+                                  instructor: value === "none" ? undefined : value,
                                 })
                               }
-                            />
+                            >
+                              <SelectTrigger className="w-[150px]">
+                                <SelectValue placeholder="Sélectionner" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Aucun</SelectItem>
+                                {instructors.map((instructor) => (
+                                  <SelectItem key={instructor.id} value={instructor.name}>
+                                    {instructor.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                           <TableCell colSpan={5} className="text-center text-muted-foreground">
                             Remplir après création
