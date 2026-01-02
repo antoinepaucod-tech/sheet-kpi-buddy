@@ -243,24 +243,42 @@ const CourseKPI = () => {
   };
 
   const calculateKPIs = () => {
-    const totalCourses = courses.length;
+    // Count total sessions (weeks with attendance > 0) instead of just course count
+    let totalSessions = 0;
+    courses.forEach(course => {
+      if ((course.week1_attendance || 0) > 0) totalSessions++;
+      if ((course.week2_attendance || 0) > 0) totalSessions++;
+      if ((course.week3_attendance || 0) > 0) totalSessions++;
+      if ((course.week4_attendance || 0) > 0) totalSessions++;
+      if ((course.week5_attendance || 0) > 0) totalSessions++;
+    });
+    
     const totalExpenses = courses.reduce((sum, c) => sum + (c.monthly_expenses || 0), 0);
     const avgAttendance = courses.length > 0 
       ? courses.reduce((sum, c) => sum + c.attendance_rate, 0) / courses.length 
       : 0;
     const totalCapacity = courses.reduce((sum, c) => sum + c.max_capacity, 0);
     
-    return { totalCourses, totalExpenses, avgAttendance, totalCapacity };
+    return { totalCourses: totalSessions, totalExpenses, avgAttendance, totalCapacity };
   };
 
   const calculatePreviousKPIs = () => {
-    const totalCourses = previousCourses.length;
+    // Count total sessions (weeks with attendance > 0) instead of just course count
+    let totalSessions = 0;
+    previousCourses.forEach(course => {
+      if ((course.week1_attendance || 0) > 0) totalSessions++;
+      if ((course.week2_attendance || 0) > 0) totalSessions++;
+      if ((course.week3_attendance || 0) > 0) totalSessions++;
+      if ((course.week4_attendance || 0) > 0) totalSessions++;
+      if ((course.week5_attendance || 0) > 0) totalSessions++;
+    });
+    
     const totalExpenses = previousCourses.reduce((sum, c) => sum + (c.monthly_expenses || 0), 0);
     const avgAttendance = previousCourses.length > 0 
       ? previousCourses.reduce((sum, c) => sum + c.attendance_rate, 0) / previousCourses.length 
       : 0;
     
-    return { totalCourses, totalExpenses, avgAttendance };
+    return { totalCourses: totalSessions, totalExpenses, avgAttendance };
   };
 
   const calculateInstructorStats = () => {
