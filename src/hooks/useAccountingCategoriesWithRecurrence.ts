@@ -77,11 +77,11 @@ export const useAccountingCategoriesWithRecurrence = () => {
         throw new Error("Aucune catégorie récurrente ou de type membre configurée");
       }
 
-      // Get active members (no exit_date or exit_date in the future)
+      // Get all members to check their status during transaction generation
+      // We filter by exit_date and subscription_end_date during the transaction loop
       const { data: members, error: membersError } = await supabase
         .from("customer_members")
-        .select("*")
-        .or(`exit_date.is.null,exit_date.gt.${new Date().toISOString()}`);
+        .select("*");
 
       if (membersError) throw membersError;
 
