@@ -51,7 +51,7 @@ interface CourseKPI {
   course_name: string;
   day_of_week: string;
   time_slot: string;
-  instructor: string;
+  instructor: string | null;
   year: number;
   month: number;
   month_name: string;
@@ -60,6 +60,11 @@ interface CourseKPI {
   week3_attendance: number;
   week4_attendance: number;
   week5_attendance: number;
+  week1_instructor: string | null;
+  week2_instructor: string | null;
+  week3_instructor: string | null;
+  week4_instructor: string | null;
+  week5_instructor: string | null;
   monthly_expenses: number;
   attendance_rate: number;
   max_capacity: number;
@@ -349,7 +354,7 @@ const CourseKPI = () => {
       course_name: course.course_name,
       day_of_week: course.day_of_week,
       time_slot: course.time_slot,
-      instructor: course.instructor,
+      instructor: course.instructor ?? "",
       max_capacity: course.max_capacity,
     });
     setIsDialogOpen(true);
@@ -360,21 +365,32 @@ const CourseKPI = () => {
     if (!course) return;
 
     const updates: any = { [week]: value };
-    
+
     const weeks = [
       updates.week1_attendance ?? course.week1_attendance,
       updates.week2_attendance ?? course.week2_attendance,
       updates.week3_attendance ?? course.week3_attendance,
       updates.week4_attendance ?? course.week4_attendance,
       updates.week5_attendance ?? course.week5_attendance,
-    ].filter(w => w > 0);
+    ].filter((w) => w > 0);
 
     const avgAttendance = weeks.length > 0 ? weeks.reduce((a, b) => a + b, 0) / weeks.length : 0;
     const rate = course.max_capacity > 0 ? (avgAttendance / course.max_capacity) * 100 : 0;
-    
+
     updates.attendance_rate = Math.round(rate * 100) / 100;
 
     updateMutation.mutate({ id: courseId, ...updates });
+  };
+
+  const handleWeekInstructorUpdate = (
+    courseId: string,
+    weekInstructorKey: `week${1 | 2 | 3 | 4 | 5}_instructor`,
+    value: string
+  ) => {
+    updateMutation.mutate({
+      id: courseId,
+      [weekInstructorKey]: value === "default" ? null : value,
+    } as any);
   };
 
   const handleExpenseUpdate = (courseId: string, value: number) => {
@@ -1057,52 +1073,54 @@ const CourseKPI = () => {
                                       <TableRow key={course.id}>
                                         <TableCell className="font-medium">{course.time_slot}</TableCell>
                                         <TableCell>{course.course_name}</TableCell>
-                                        <TableCell>{course.instructor}</TableCell>
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            min="0"
-                                            value={course.week1_attendance}
-                                            onChange={(e) => handleAttendanceUpdate(course.id, "week1_attendance", parseInt(e.target.value) || 0)}
-                                            className="w-14 text-center"
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            min="0"
-                                            value={course.week2_attendance}
-                                            onChange={(e) => handleAttendanceUpdate(course.id, "week2_attendance", parseInt(e.target.value) || 0)}
-                                            className="w-14 text-center"
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            min="0"
-                                            value={course.week3_attendance}
-                                            onChange={(e) => handleAttendanceUpdate(course.id, "week3_attendance", parseInt(e.target.value) || 0)}
-                                            className="w-14 text-center"
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            min="0"
-                                            value={course.week4_attendance}
-                                            onChange={(e) => handleAttendanceUpdate(course.id, "week4_attendance", parseInt(e.target.value) || 0)}
-                                            className="w-14 text-center"
-                                          />
-                                        </TableCell>
-                                        <TableCell>
-                                          <Input
-                                            type="number"
-                                            min="0"
-                                            value={course.week5_attendance}
-                                            onChange={(e) => handleAttendanceUpdate(course.id, "week5_attendance", parseInt(e.target.value) || 0)}
-                                            className="w-14 text-center"
-                                          />
-                                        </TableCell>
+                                        <TableCell>{course.instructor || "—"}</TableCell>
+                                        {([1, 2, 3, 4, 5] as const).map((weekNum) => {
+                                          const key = `week${weekNum}_instructor` as const;
+                                          const replacement = course[key];
+                                          const isReplacement = !!replacement && replacement !== course.instructor;
+
+                                          return (
+                                            <TableCell key={weekNum}>
+                                              <div className="flex flex-col gap-1">
+                                                <Input
+                                                  type="number"
+                                                  min="0"
+                                                  value={course[`week${weekNum}_attendance` as const]}
+                                                  onChange={(e) =>
+                                                    handleAttendanceUpdate(
+                                                      course.id,
+                                                      `week${weekNum}_attendance`,
+                                                      parseInt(e.target.value) || 0
+                                                    )
+                                                  }
+                                                  className="w-14 text-center"
+                                                />
+
+                                                <Select
+                                                  value={replacement || "default"}
+                                                  onValueChange={(value) =>
+                                                    handleWeekInstructorUpdate(course.id, key, value)
+                                                  }
+                                                >
+                                                  <SelectTrigger className={cn(
+                                                    "w-28 h-7 text-xs",
+                                                    isReplacement && "text-warning"
+                                                  )}>
+                                                    <SelectValue placeholder="Défaut" />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="default">Défaut</SelectItem>
+                                                    {instructors.map((instructor) => (
+                                                      <SelectItem key={instructor.id} value={instructor.name}>
+                                                        {instructor.name}
+                                                      </SelectItem>
+                                                    ))}
+                                                  </SelectContent>
+                                                </Select>
+                                              </div>
+                                            </TableCell>
+                                          );
+                                        })}
                                         <TableCell>
                                           <Input
                                             type="number"
