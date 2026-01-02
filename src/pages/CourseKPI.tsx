@@ -267,33 +267,53 @@ const CourseKPI = () => {
     const instructorStats: Record<string, {
       name: string;
       totalCost: number;
-      avgFillRate: number;
-      courseCount: number;
+      totalAttendance: number;
+      weeksTaught: number;
     }> = {};
 
     courses.forEach(course => {
-      const instructor = course.instructor || "Non assigné";
-      
-      if (!instructorStats[instructor]) {
-        instructorStats[instructor] = {
-          name: instructor,
-          totalCost: 0,
-          avgFillRate: 0,
-          courseCount: 0,
-        };
-      }
+      // Process each week individually to account for replacement instructors
+      const weeks = [
+        { instructor: course.week1_instructor || course.instructor, attendance: course.week1_attendance },
+        { instructor: course.week2_instructor || course.instructor, attendance: course.week2_attendance },
+        { instructor: course.week3_instructor || course.instructor, attendance: course.week3_attendance },
+        { instructor: course.week4_instructor || course.instructor, attendance: course.week4_attendance },
+        { instructor: course.week5_instructor || course.instructor, attendance: course.week5_attendance },
+      ];
 
-      instructorStats[instructor].totalCost += course.monthly_expenses || 0;
-      instructorStats[instructor].avgFillRate += course.attendance_rate;
-      instructorStats[instructor].courseCount += 1;
+      weeks.forEach(week => {
+        // Only count weeks where there was actual attendance (course was taught)
+        if (week.attendance && week.attendance > 0) {
+          const instructorName = week.instructor || "Non assigné";
+          
+          if (!instructorStats[instructorName]) {
+            instructorStats[instructorName] = {
+              name: instructorName,
+              totalCost: 0,
+              totalAttendance: 0,
+              weeksTaught: 0,
+            };
+          }
+
+          // Get instructor hourly rate
+          const instructor = instructors.find(i => i.name === instructorName);
+          const hourlyRate = instructor?.hourly_rate || 0;
+          
+          instructorStats[instructorName].totalCost += hourlyRate;
+          instructorStats[instructorName].totalAttendance += (week.attendance / course.max_capacity) * 100;
+          instructorStats[instructorName].weeksTaught += 1;
+        }
+      });
     });
 
-    Object.keys(instructorStats).forEach(key => {
-      const stat = instructorStats[key];
-      stat.avgFillRate = stat.courseCount > 0 ? stat.avgFillRate / stat.courseCount : 0;
-    });
-
-    return Object.values(instructorStats).sort((a, b) => b.totalCost - a.totalCost);
+    return Object.values(instructorStats)
+      .map(stat => ({
+        name: stat.name,
+        totalCost: stat.totalCost,
+        avgFillRate: stat.weeksTaught > 0 ? stat.totalAttendance / stat.weeksTaught : 0,
+        courseCount: stat.weeksTaught,
+      }))
+      .sort((a, b) => b.totalCost - a.totalCost);
   };
 
   // Chart data for attendance by course type
