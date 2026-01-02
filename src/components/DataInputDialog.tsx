@@ -256,16 +256,7 @@ export const DataInputDialog = ({ monthData, monthName, onSave }: DataInputDialo
                   />
                 </div>
                 <div>
-                  <Label htmlFor="organicCashCollected">Organic Cash</Label>
-                  <Input
-                    id="organicCashCollected"
-                    type="number"
-                    value={formData.organicCashCollected}
-                    onChange={(e) => updateField('organicCashCollected', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="inTrial">In Trial</Label>
+                  <Label htmlFor="inTrial">En Essai</Label>
                   <Input
                     id="inTrial"
                     type="number"
@@ -274,7 +265,7 @@ export const DataInputDialog = ({ monthData, monthName, onSave }: DataInputDialo
                   />
                 </div>
                 <div>
-                  <Label htmlFor="trialEnding">Trial Ending</Label>
+                  <Label htmlFor="trialEnding">Fin Essai</Label>
                   <Input
                     id="trialEnding"
                     type="number"
