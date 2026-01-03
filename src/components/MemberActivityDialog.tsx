@@ -139,7 +139,7 @@ export function MemberActivityDialog({
     setNewMembership(member.membership);
     setRenewalMemberType(member.member_type || "recurring");
     setRenewalCashCollected("0");
-    setCashCollectionDate(defaultStartDate); // Default to same as renewal start date
+    setCashCollectionDate(new Date()); // Default to today's date (independent from renewal start date)
     setRenewalDialogOpen(true);
   };
 
