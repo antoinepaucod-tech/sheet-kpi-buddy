@@ -168,6 +168,13 @@ export const useAccountingCategoriesWithRecurrence = () => {
 
             const clientMonthKey = `${year}-${month + 1}|${cat.name}|${member.name}`;
             const hasExistingThisMonthForClient = existingClientMonthKeys.has(clientMonthKey);
+
+            // Règle anti-doublon : si une entrée existe déjà pour ce client/catégorie/mois
+            // (même si le montant a été modifié manuellement), on n'en recrée pas une autre.
+            if (hasExistingThisMonthForClient) {
+              skipped++;
+              return;
+            }
             
             // Check if member has exited this month or before
             if (member.exit_date) {
