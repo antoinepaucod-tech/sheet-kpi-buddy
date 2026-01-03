@@ -58,6 +58,7 @@ export function MemberActivityDialog({
   const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
   const [renewalMemberType, setRenewalMemberType] = useState<string>(member.member_type || "recurring");
   const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
+  const [cashCollectionDate, setCashCollectionDate] = useState<Date | undefined>(undefined);
   const [membershipCategories, setMembershipCategories] = useState<MembershipCategory[]>([]);
 
   // Load membership categories for renewal dialog
@@ -138,6 +139,7 @@ export function MemberActivityDialog({
     setNewMembership(member.membership);
     setRenewalMemberType(member.member_type || "recurring");
     setRenewalCashCollected("0");
+    setCashCollectionDate(defaultStartDate); // Default to same as renewal start date
     setRenewalDialogOpen(true);
   };
 
@@ -200,10 +202,10 @@ export function MemberActivityDialog({
       const performedBy = user?.email?.split('@')[0] || 'unknown';
 
       // Create accounting transaction for renewal if cash collected > 0
-      if (cashCollectedValue > 0) {
-        const transactionMonth = renewalStartDate.getMonth() + 1;
-        const transactionYear = renewalStartDate.getFullYear();
-        const monthName = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(renewalStartDate);
+      if (cashCollectedValue > 0 && cashCollectionDate) {
+        const transactionMonth = cashCollectionDate.getMonth() + 1;
+        const transactionYear = cashCollectionDate.getFullYear();
+        const monthName = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(cashCollectionDate);
         
         // Map member type to product description
         let productDescription = "Revenu EFT Général";
@@ -219,7 +221,7 @@ export function MemberActivityDialog({
         await supabase
           .from('accounting_transactions')
           .insert({
-            transaction_date: format(renewalStartDate, "yyyy-MM-dd"),
+            transaction_date: format(cashCollectionDate, "yyyy-MM-dd"),
             transaction_type: "revenue",
             category: category,
             client_name: member.name,
@@ -776,7 +778,13 @@ export function MemberActivityDialog({
                   <Calendar
                     mode="single"
                     selected={renewalStartDate}
-                    onSelect={setRenewalStartDate}
+                    onSelect={(date) => {
+                      setRenewalStartDate(date);
+                      // Also update cash collection date if it hasn't been manually changed
+                      if (!cashCollectionDate || cashCollectionDate.getTime() === renewalStartDate?.getTime()) {
+                        setCashCollectionDate(date);
+                      }
+                    }}
                     initialFocus
                     className="pointer-events-auto"
                   />
@@ -834,8 +842,36 @@ export function MemberActivityDialog({
                 onChange={(e) => setRenewalCashCollected(e.target.value)}
                 placeholder="0"
               />
+            </div>
+
+            {/* Cash Collection Date */}
+            <div className="space-y-2">
+              <Label>Date d'encaissement</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !cashCollectionDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {cashCollectionDate ? format(cashCollectionDate, "dd MMMM yyyy", { locale: fr }) : "Sélectionner une date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={cashCollectionDate}
+                    onSelect={setCashCollectionDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
               <p className="text-xs text-muted-foreground">
-                Montant encaissé lors du renouvellement de l'abonnement
+                Date à laquelle le montant est encaissé (peut différer de la date de renouvellement)
               </p>
             </div>
 
