@@ -268,8 +268,7 @@ export const AccountingCategoryCard = ({
                           )
                         }
                         className={`h-8 text-sm font-bold ${
-                          transaction.amount_received &&
-                          transaction.amount_received < transaction.amount
+                          (transaction.amount_received ?? 0) < transaction.amount
                             ? "border-orange-500 text-orange-600"
                             : "text-emerald-600 dark:text-emerald-400"
                         }`}
