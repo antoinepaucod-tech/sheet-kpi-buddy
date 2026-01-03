@@ -185,9 +185,24 @@ export const useAccountingCategoriesWithRecurrence = () => {
               const subscriptionEndDate = new Date(member.subscription_end_date);
               const currentMonthStart = new Date(year, month, 1);
               
+              // Check if subscription_end_date is the last day of its month
+              const endYear = subscriptionEndDate.getFullYear();
+              const endMonth = subscriptionEndDate.getMonth();
+              const lastDayOfEndMonth = new Date(endYear, endMonth + 1, 0).getDate();
+              const isLastDayOfMonth = subscriptionEndDate.getDate() === lastDayOfEndMonth;
+              
               // If subscription ended before the current month starts, skip
               if (subscriptionEndDate < currentMonthStart) {
                 return; // Skip - subscription has ended
+              }
+              
+              // If subscription ends on the last day of the previous month, also skip
+              // (e.g., ends Dec 31 → don't show in January)
+              if (isLastDayOfMonth && endMonth === month - 1 && endYear === year) {
+                return; // Skip - subscription ended on last day of previous month
+              }
+              if (isLastDayOfMonth && month === 0 && endMonth === 11 && endYear === year - 1) {
+                return; // Skip - subscription ended on Dec 31 of previous year
               }
             }
             
@@ -294,8 +309,23 @@ export const useAccountingCategoriesWithRecurrence = () => {
               if (memberNow?.subscription_end_date) {
                 const subscriptionEndDate = new Date(memberNow.subscription_end_date);
                 const currentMonthStart = new Date(year, month, 1);
+                
+                // Check if subscription_end_date is the last day of its month
+                const endYear = subscriptionEndDate.getFullYear();
+                const endMonth = subscriptionEndDate.getMonth();
+                const lastDayOfEndMonth = new Date(endYear, endMonth + 1, 0).getDate();
+                const isLastDayOfMonth = subscriptionEndDate.getDate() === lastDayOfEndMonth;
+                
                 if (subscriptionEndDate < currentMonthStart) {
                   return; // Skip - subscription has ended
+                }
+                
+                // If subscription ends on the last day of the previous month, also skip
+                if (isLastDayOfMonth && endMonth === month - 1 && endYear === year) {
+                  return;
+                }
+                if (isLastDayOfMonth && month === 0 && endMonth === 11 && endYear === year - 1) {
+                  return;
                 }
               }
             }
