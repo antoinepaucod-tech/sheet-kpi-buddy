@@ -82,6 +82,7 @@ const ExpiringSubscriptions = () => {
   const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
   const [renewalMemberType, setRenewalMemberType] = useState<string>("recurring");
   const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
+  const [cashCollectionDate, setCashCollectionDate] = useState<Date | undefined>(undefined);
   
   // Activity dialog state
   const [activityMember, setActivityMember] = useState<CustomerMember | null>(null);
@@ -204,6 +205,7 @@ const ExpiringSubscriptions = () => {
     // Conserver le type de membre actuel ou "recurring" par défaut
     setRenewalMemberType(member.member_type || "recurring");
     setRenewalCashCollected("0");
+    setCashCollectionDate(defaultStartDate); // Default to same as renewal start date
     setRenewalDialogOpen(true);
   };
 
@@ -281,6 +283,39 @@ const ExpiringSubscriptions = () => {
     // Get current user email for audit trail
     const { data: { user } } = await supabase.auth.getUser();
     const performedBy = user?.email?.split('@')[0] || 'unknown';
+
+    // Create accounting transaction for renewal if cash collected > 0
+    if (cashCollectedValue > 0 && cashCollectionDate) {
+      const transactionMonth = cashCollectionDate.getMonth() + 1;
+      const transactionYear = cashCollectionDate.getFullYear();
+      const monthName = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(cashCollectionDate);
+      
+      // Map member type to product description
+      let productDescription = "Revenu EFT Général";
+      if (renewalMemberType === "pif" || renewalMemberType === "Membres PIF") {
+        productDescription = "Membre PIF";
+      } else if (renewalMemberType === "Membres PT") {
+        productDescription = "Revenu PT";
+      }
+      
+      await supabase
+        .from('accounting_transactions')
+        .insert({
+          transaction_date: format(cashCollectionDate, "yyyy-MM-dd"),
+          transaction_type: "revenue",
+          category: finalMembership,
+          client_name: selectedMember.name,
+          service_description: finalMembership,
+          product_description: productDescription,
+          amount: cashCollectedValue,
+          amount_received: cashCollectedValue,
+          payment_method: "Prélèvement Automatique",
+          notes: "Renouvellement depuis Échéances",
+          year: transactionYear,
+          month: transactionMonth,
+          month_name: monthName,
+        });
+    }
 
     // Record renewal in history
     const durationValue = parseFloat(renewalMonths);
@@ -549,7 +584,13 @@ const ExpiringSubscriptions = () => {
                   <Calendar
                     mode="single"
                     selected={renewalStartDate}
-                    onSelect={setRenewalStartDate}
+                    onSelect={(date) => {
+                      setRenewalStartDate(date);
+                      // Also update cash collection date if it hasn't been manually changed
+                      if (!cashCollectionDate || cashCollectionDate.getTime() === renewalStartDate?.getTime()) {
+                        setCashCollectionDate(date);
+                      }
+                    }}
                     initialFocus
                     className="p-3 pointer-events-auto"
                   />
@@ -612,8 +653,36 @@ const ExpiringSubscriptions = () => {
                 onChange={(e) => setRenewalCashCollected(e.target.value)}
                 placeholder="0.00"
               />
+            </div>
+
+            {/* Cash Collection Date */}
+            <div className="space-y-2">
+              <Label>Date d'encaissement</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !cashCollectionDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {cashCollectionDate ? format(cashCollectionDate, "dd MMMM yyyy", { locale: fr }) : "Sélectionner une date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={cashCollectionDate}
+                    onSelect={setCashCollectionDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
               <p className="text-xs text-muted-foreground">
-                Montant encaissé lors du renouvellement de l'abonnement
+                Date à laquelle le montant est encaissé (peut différer de la date de renouvellement)
               </p>
             </div>
 
