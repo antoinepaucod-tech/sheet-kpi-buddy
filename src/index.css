@@ -161,4 +161,17 @@ All colors MUST be HSL.
   [data-radix-popper-content-wrapper]:has([data-state="open"]) {
     visibility: visible;
   }
+
+  /* Sticky table headers */
+  .sticky-header thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: hsl(var(--background));
+    box-shadow: 0 1px 0 hsl(var(--border));
+  }
+
+  .dark .sticky-header thead th {
+    background: hsl(var(--background));
+  }
 }
