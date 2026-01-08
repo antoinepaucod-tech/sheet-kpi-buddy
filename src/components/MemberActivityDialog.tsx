@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ExternalLink, MessageSquare, CheckCircle2, Trash2, RefreshCw, Calendar as CalendarIcon, Pencil, Save, X, RotateCcw, Banknote } from "lucide-react";
 import { useMemberHistory } from "@/hooks/useMemberHistory";
 import { useMemberRenewalHistory } from "@/hooks/useMemberRenewalHistory";
@@ -32,6 +33,15 @@ interface MemberActivityDialogProps {
   onMemberUpdated?: () => void;
 }
 
+// Onboarding steps configuration
+const onboardingSteps = [
+  { key: 'onboarding_bsport' as const, label: 'Bsport' },
+  { key: 'onboarding_hubfit' as const, label: 'Hubfit' },
+  { key: 'onboarding_nutrition' as const, label: 'Nutrition' },
+  { key: 'questionnaire_coaching' as const, label: 'Questionnaire' },
+  { key: 'session_introduction' as const, label: 'Session Intro' },
+];
+
 export function MemberActivityDialog({ 
   member, 
   weeklyTrainings, 
@@ -47,6 +57,22 @@ export function MemberActivityDialog({
   const [isEditingEndDate, setIsEditingEndDate] = useState(false);
   const [editedEndDate, setEditedEndDate] = useState(member.subscription_end_date || "");
   const [isSavingEndDate, setIsSavingEndDate] = useState(false);
+  
+  // Name editing state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(member.name);
+  const [isSavingName, setIsSavingName] = useState(false);
+  
+  // Onboarding state
+  const [onboardingState, setOnboardingState] = useState({
+    onboarding_bsport: member.onboarding_bsport,
+    onboarding_hubfit: member.onboarding_hubfit,
+    onboarding_nutrition: member.onboarding_nutrition,
+    questionnaire_coaching: member.questionnaire_coaching,
+    session_introduction: member.session_introduction,
+  });
+  const [isSavingOnboarding, setIsSavingOnboarding] = useState<string | null>(null);
+  
   const { comments, history, isLoading: historyLoading, addComment, deleteComment } = useMemberHistory(member.id);
   const { renewalHistory, addRenewalRecord } = useMemberRenewalHistory(member.id);
   
@@ -60,6 +86,102 @@ export function MemberActivityDialog({
   const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
   const [cashCollectionDate, setCashCollectionDate] = useState<Date | undefined>(undefined);
   const [membershipCategories, setMembershipCategories] = useState<MembershipCategory[]>([]);
+
+  // Calculate onboarding progress
+  const onboardingProgress = useMemo(() => {
+    const completed = Object.values(onboardingState).filter(Boolean).length;
+    return Math.round((completed / 5) * 100);
+  }, [onboardingState]);
+
+  // Handle name save
+  const handleSaveName = async () => {
+    if (!editedName.trim()) {
+      toast.error("Le nom ne peut pas être vide");
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      // Update member name
+      const { error } = await supabase
+        .from('customer_members')
+        .update({ name: editedName.trim() })
+        .eq('id', member.id);
+
+      if (error) throw error;
+
+      // Update related accounting transactions
+      await supabase
+        .from('accounting_transactions')
+        .update({ client_name: editedName.trim() })
+        .eq('client_name', member.name);
+
+      toast.success("Nom mis à jour");
+      setIsEditingName(false);
+      
+      if (onMemberUpdated) {
+        onMemberUpdated();
+      }
+    } catch (error) {
+      console.error('Error updating name:', error);
+      toast.error("Erreur lors de la mise à jour");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  // Handle onboarding change
+  const handleOnboardingChange = async (key: keyof typeof onboardingState, value: boolean) => {
+    setIsSavingOnboarding(key);
+    
+    try {
+      // Update local state immediately for responsiveness
+      setOnboardingState(prev => ({ ...prev, [key]: value }));
+
+      // Update database
+      const { error } = await supabase
+        .from('customer_members')
+        .update({ [key]: value })
+        .eq('id', member.id);
+
+      if (error) throw error;
+
+      // Log to history
+      if (value) {
+        await supabase
+          .from('member_onboarding_history')
+          .delete()
+          .eq('member_id', member.id)
+          .eq('action_type', key);
+
+        await supabase
+          .from('member_onboarding_history')
+          .insert([{
+            member_id: member.id,
+            action_type: key,
+            previous_value: !value,
+            new_value: value
+          }]);
+      } else {
+        await supabase
+          .from('member_onboarding_history')
+          .delete()
+          .eq('member_id', member.id)
+          .eq('action_type', key);
+      }
+
+      if (onMemberUpdated) {
+        onMemberUpdated();
+      }
+    } catch (error) {
+      console.error('Error updating onboarding:', error);
+      // Revert local state on error
+      setOnboardingState(prev => ({ ...prev, [key]: !value }));
+      toast.error("Erreur lors de la mise à jour");
+    } finally {
+      setIsSavingOnboarding(null);
+    }
+  };
 
   // Load membership categories for renewal dialog
   useEffect(() => {
@@ -389,6 +511,54 @@ export function MemberActivityDialog({
             <h3 className="font-semibold mb-3">Informations Générales</h3>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
               <div>
+                <p className="text-muted-foreground flex items-center gap-2">
+                  Nom
+                  {!isEditingName && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => {
+                        setEditedName(member.name);
+                        setIsEditingName(true);
+                      }}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
+                </p>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="h-8 w-[140px]"
+                      placeholder="Nom du membre"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={handleSaveName}
+                      disabled={isSavingName}
+                    >
+                      <Save className="h-3 w-3 text-success" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setIsEditingName(false)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="font-medium">{member.name}</p>
+                )}
+              </div>
+              <div>
                 <p className="text-muted-foreground">Abonnement</p>
                 <p className="font-medium">{member.membership}</p>
               </div>
@@ -472,6 +642,50 @@ export function MemberActivityDialog({
                 <p className="text-muted-foreground">Vendu par</p>
                 <p className="font-medium">{member.sold_by || '-'}</p>
               </div>
+            </div>
+          </Card>
+
+          {/* Onboarding Steps Section */}
+          <Card className="p-4 bg-muted/30">
+            <h3 className="font-semibold mb-3">Étapes d'Onboarding</h3>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {onboardingSteps.map((step) => (
+                <label
+                  key={step.key}
+                  className="flex items-center gap-2 cursor-pointer group"
+                >
+                  <Checkbox
+                    checked={onboardingState[step.key]}
+                    onCheckedChange={(checked) => handleOnboardingChange(step.key, checked as boolean)}
+                    disabled={isSavingOnboarding === step.key}
+                    className="data-[state=checked]:bg-success data-[state=checked]:border-success"
+                  />
+                  <span className={cn(
+                    "text-sm transition-colors",
+                    onboardingState[step.key] ? "text-success font-medium" : "text-muted-foreground group-hover:text-foreground"
+                  )}>
+                    {step.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-300",
+                    onboardingProgress === 100 ? "bg-success" :
+                    onboardingProgress >= 60 ? "bg-emerald-500" :
+                    onboardingProgress >= 40 ? "bg-yellow-500" :
+                    onboardingProgress >= 20 ? "bg-orange-500" : "bg-destructive"
+                  )}
+                  style={{ width: `${onboardingProgress}%` }}
+                />
+              </div>
+              <span className="text-sm font-medium">{onboardingProgress}%</span>
+              {onboardingProgress === 100 && (
+                <CheckCircle2 className="h-4 w-4 text-success" />
+              )}
             </div>
           </Card>
 
