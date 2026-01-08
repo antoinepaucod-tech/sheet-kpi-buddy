@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AccountingFilters } from "@/components/AccountingFilters";
 import { AccountingCategoryCard } from "@/components/AccountingCategoryCard";
+import { AccountingSummaryCard } from "@/components/AccountingSummaryCard";
 import {
   DndContext,
   closestCenter,
@@ -1053,6 +1054,15 @@ const Accounting = () => {
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Summary Card - Always visible */}
+        <AccountingSummaryCard
+          totalRevenue={summary.totalRevenue}
+          totalRevenueReceived={summary.totalRevenueReceived}
+          totalExpenses={summary.totalExpenses}
+          profit={summary.profit}
+          unpaidCount={unpaidTransactions.length}
+        />
 
         <Tabs defaultValue="revenues" className="w-full">
           <TabsList>

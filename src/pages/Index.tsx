@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMonthlyKPIData } from "@/hooks/useMonthlyKPIData";
 import { useTranslations } from "@/hooks/useTranslations";
 import { MetricCard } from "@/components/MetricCard";
+import { MetricCardWithTooltip, KPI_TOOLTIPS } from "@/components/MetricCardWithTooltip";
 import { InteractiveChart } from "@/components/InteractiveChart";
 import { KPISummaryCard } from "@/components/KPISummaryCard";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -640,29 +641,33 @@ const Index = () => {
                   icon={Activity}
                   variant="default"
                 />
-                <MetricCard
+                <MetricCardWithTooltip
                   title={t('metric.cac')}
                   value={formatCurrency(currentMonth?.cac || 0)}
                   icon={DollarSign}
                   variant={(currentMonth?.cac || 0) < 100 ? "success" : "warning"}
+                  tooltip={KPI_TOOLTIPS.cac}
                 />
-                <MetricCard
+                <MetricCardWithTooltip
                   title={t('metric.cpl')}
                   value={formatCurrency(currentMonth?.cpl || 0)}
                   icon={DollarSign}
                   variant="default"
+                  tooltip={KPI_TOOLTIPS.cpl}
                 />
-                <MetricCard
+                <MetricCardWithTooltip
                   title={t('metric.cpr')}
                   value={formatCurrency(currentMonth?.cpr || 0)}
                   icon={DollarSign}
                   variant="default"
+                  tooltip={KPI_TOOLTIPS.cpr}
                 />
-                <MetricCard
+                <MetricCardWithTooltip
                   title={t('metric.roAds')}
                   value={formatPercentage(currentMonth?.ro_ads || 0)}
                   icon={TrendingUp}
                   variant={(currentMonth?.ro_ads || 0) > 200 ? "success" : (currentMonth?.ro_ads || 0) > 100 ? "warning" : "destructive"}
+                  tooltip={KPI_TOOLTIPS.roAds}
                 />
                 <MetricCard
                   title={t('metric.conversionRate')}
@@ -717,29 +722,33 @@ const Index = () => {
               defaultOpen={false}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <MetricCard
+                <MetricCardWithTooltip
                   title="LTV Général"
                   value={formatCurrency(currentMonth?.general_ltv || 0)}
                   icon={DollarSign}
                   variant="default"
+                  tooltip={KPI_TOOLTIPS.ltv}
                 />
-                <MetricCard
+                <MetricCardWithTooltip
                   title="ACRM Général"
                   value={formatCurrency(currentMonth?.general_acrm || 0)}
                   icon={DollarSign}
                   variant="default"
+                  tooltip={KPI_TOOLTIPS.acrm}
                 />
-                <MetricCard
+                <MetricCardWithTooltip
                   title="LTV PT"
                   value={formatCurrency(currentMonth?.pt_ltv || 0)}
                   icon={DollarSign}
                   variant="default"
+                  tooltip={KPI_TOOLTIPS.ltv}
                 />
-                <MetricCard
+                <MetricCardWithTooltip
                   title="ACRM PT"
                   value={formatCurrency(currentMonth?.pt_acrm || 0)}
                   icon={DollarSign}
                   variant="default"
+                  tooltip={KPI_TOOLTIPS.acrm}
                 />
               </div>
             </CollapsibleSection>

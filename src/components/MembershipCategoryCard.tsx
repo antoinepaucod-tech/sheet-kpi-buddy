@@ -33,6 +33,7 @@ import { ChevronDown, ChevronUp, CalendarIcon, Trash2, X } from "lucide-react";
 import { Member } from "@/hooks/useCustomerMembers";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { OnboardingProgressBar } from "@/components/OnboardingProgressBar";
 
 interface MembershipCategoryCardProps {
   category: string;
@@ -172,16 +173,11 @@ export const MembershipCategoryCard = ({
                   <TableRow>
                     <TableHead className="w-[60px] text-center">N°</TableHead>
                     <TableHead className="min-w-[150px]">Nom / Prénom</TableHead>
+                    <TableHead className="min-w-[120px]">Onboarding</TableHead>
                     <TableHead className="min-w-[150px]">Type</TableHead>
-                    <TableHead className="min-w-[150px]">Cash Collectée</TableHead>
-                    <TableHead className="min-w-[180px]">Date Signature Contrat</TableHead>
-                    <TableHead className="min-w-[180px]">Date de Sortie</TableHead>
-                    <TableHead className="min-w-[180px]">Date de Fin d'Abonnement</TableHead>
-                    <TableHead className="text-center">Onboarding Bsport</TableHead>
-                    <TableHead className="text-center">Onboarding Hubfit</TableHead>
-                    <TableHead className="text-center">Onboarding Nutrition</TableHead>
-                    <TableHead className="text-center">Questionnaire Coaching</TableHead>
-                    <TableHead className="text-center">Session Introduction Club</TableHead>
+                    <TableHead className="min-w-[120px]">Cash</TableHead>
+                    <TableHead className="min-w-[140px]">Date Contrat</TableHead>
+                    <TableHead className="min-w-[140px]">Fin Abo.</TableHead>
                     <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -202,6 +198,18 @@ export const MembershipCategoryCard = ({
                             {member.name}
                           </span>
                         </TableCell>
+                        {/* Onboarding Progress Bar */}
+                        <TableCell>
+                          <OnboardingProgressBar
+                            steps={[
+                              { label: "Bsport", completed: member.onboarding_bsport },
+                              { label: "Hubfit", completed: member.onboarding_hubfit },
+                              { label: "Nutrition", completed: member.onboarding_nutrition },
+                              { label: "Questionnaire", completed: member.questionnaire_coaching },
+                              { label: "Session Intro", completed: member.session_introduction },
+                            ]}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Select
                             value={member.member_type || ""}
@@ -209,15 +217,15 @@ export const MembershipCategoryCard = ({
                               onUpdateMember(member.id, "member_type", value)
                             }
                           >
-                            <SelectTrigger className="min-w-[150px]">
-                              <SelectValue placeholder="Sélectionner" />
+                            <SelectTrigger className="min-w-[140px]">
+                              <SelectValue placeholder="Type" />
                             </SelectTrigger>
                             <SelectContent className="bg-background border shadow-lg z-50">
                               <SelectItem value="Membres Généraux Récurrents">
-                                Membres Généraux Récurrents
+                                Récurrents
                               </SelectItem>
-                              <SelectItem value="Membres PIF">Membres PIF</SelectItem>
-                              <SelectItem value="Membres PT">Membres PT</SelectItem>
+                              <SelectItem value="Membres PIF">PIF</SelectItem>
+                              <SelectItem value="Membres PT">PT</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -233,202 +241,91 @@ export const MembershipCategoryCard = ({
                                 parseFloat(e.target.value) || 0
                               )
                             }
-                            className="w-[120px]"
+                            className="w-[100px]"
                           />
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
-                                    !member.contract_signed_date && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {member.contract_signed_date
-                                    ? format(new Date(member.contract_signed_date), "dd/MM/yyyy")
-                                    : "Sélectionner"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={
-                                    member.contract_signed_date
-                                      ? new Date(member.contract_signed_date)
-                                      : undefined
-                                  }
-                                  onSelect={(date) =>
-                                    onUpdateMember(
-                                      member.id,
-                                      "contract_signed_date",
-                                      date?.toISOString().split("T")[0] || null
-                                    )
-                                  }
-                                  initialFocus
-                                  className="pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            {member.contract_signed_date && (
+                          <Popover>
+                            <PopoverTrigger asChild>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() =>
-                                  onUpdateMember(member.id, "contract_signed_date", null)
+                                className={cn(
+                                  "w-[120px] justify-start text-left font-normal text-xs",
+                                  !member.contract_signed_date && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-1 h-3 w-3" />
+                                {member.contract_signed_date
+                                  ? format(new Date(member.contract_signed_date), "dd/MM/yy")
+                                  : "Date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={
+                                  member.contract_signed_date
+                                    ? new Date(member.contract_signed_date)
+                                    : undefined
                                 }
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
-                                    !member.exit_date && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {member.exit_date
-                                    ? format(new Date(member.exit_date), "dd/MM/yyyy")
-                                    : "Sélectionner"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={member.exit_date ? new Date(member.exit_date) : undefined}
-                                  onSelect={(date) =>
-                                    onUpdateMember(
-                                      member.id,
-                                      "exit_date",
-                                      date?.toISOString().split("T")[0] || null
-                                    )
-                                  }
-                                  initialFocus
-                                  className="pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            {member.exit_date && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => onUpdateMember(member.id, "exit_date", null)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-[180px] justify-start text-left font-normal",
-                                    !member.subscription_end_date && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {member.subscription_end_date
-                                    ? format(new Date(member.subscription_end_date), "dd/MM/yyyy")
-                                    : "Sélectionner"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={
-                                    member.subscription_end_date
-                                      ? new Date(member.subscription_end_date)
-                                      : undefined
-                                  }
-                                  onSelect={(date) =>
-                                    onUpdateMember(
-                                      member.id,
-                                      "subscription_end_date",
-                                      date?.toISOString().split("T")[0] || null
-                                    )
-                                  }
-                                  initialFocus
-                                  className="pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            {member.subscription_end_date && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() =>
-                                  onUpdateMember(member.id, "subscription_end_date", null)
+                                onSelect={(date) =>
+                                  onUpdateMember(
+                                    member.id,
+                                    "contract_signed_date",
+                                    date?.toISOString().split("T")[0] || null
+                                  )
                                 }
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </TableCell>
+                        <TableCell>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "w-[120px] justify-start text-left font-normal text-xs",
+                                  !member.subscription_end_date && "text-muted-foreground"
+                                )}
                               >
-                                <X className="h-4 w-4" />
+                                <CalendarIcon className="mr-1 h-3 w-3" />
+                                {member.subscription_end_date
+                                  ? format(new Date(member.subscription_end_date), "dd/MM/yy")
+                                  : "Date"}
                               </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={member.onboarding_bsport}
-                            onCheckedChange={(checked) =>
-                              onUpdateMember(member.id, "onboarding_bsport", checked)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={member.onboarding_hubfit}
-                            onCheckedChange={(checked) =>
-                              onUpdateMember(member.id, "onboarding_hubfit", checked)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={member.onboarding_nutrition}
-                            onCheckedChange={(checked) =>
-                              onUpdateMember(member.id, "onboarding_nutrition", checked)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={member.questionnaire_coaching}
-                            onCheckedChange={(checked) =>
-                              onUpdateMember(member.id, "questionnaire_coaching", checked)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={member.session_introduction}
-                            onCheckedChange={(checked) =>
-                              onUpdateMember(member.id, "session_introduction", checked)
-                            }
-                          />
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={
+                                  member.subscription_end_date
+                                    ? new Date(member.subscription_end_date)
+                                    : undefined
+                                }
+                                onSelect={(date) =>
+                                  onUpdateMember(
+                                    member.id,
+                                    "subscription_end_date",
+                                    date?.toISOString().split("T")[0] || null
+                                  )
+                                }
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
                         </TableCell>
                         <TableCell className="text-center">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => onDeleteMember(member.id)}
-                            className="hover:bg-destructive/10 hover:text-destructive"
+                            className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
