@@ -55,7 +55,7 @@ export const useAnnualKPIData = (selectedYear?: number) => {
   const [annualData, setAnnualData] = useState<AnnualKPIData | null>(null);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentYear, setCurrentYear] = useState(selectedYear || new Date().getFullYear());
+  const year = selectedYear || new Date().getFullYear();
 
   const loadAnnualData = async (year: number) => {
     try {
@@ -212,10 +212,10 @@ export const useAnnualKPIData = (selectedYear?: number) => {
   };
 
   useEffect(() => {
-    loadAnnualData(currentYear);
+    loadAnnualData(year);
 
     const channel = supabase
-      .channel('monthly_kpis_changes')
+      .channel(`monthly_kpis_changes_${year}`)
       .on(
         'postgres_changes',
         {
@@ -224,7 +224,7 @@ export const useAnnualKPIData = (selectedYear?: number) => {
           table: 'monthly_kpis',
         },
         () => {
-          loadAnnualData(currentYear);
+          loadAnnualData(year);
         }
       )
       .subscribe();
@@ -232,12 +232,12 @@ export const useAnnualKPIData = (selectedYear?: number) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentYear]);
+  }, [year]);
 
   return {
     annualData,
     monthlyData,
     isLoading,
-    refreshData: () => loadAnnualData(currentYear),
+    refreshData: () => loadAnnualData(year),
   };
 };
