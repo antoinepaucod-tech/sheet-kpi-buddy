@@ -9,6 +9,11 @@ import { Card } from "@/components/ui/card";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 import { AddMemberDialog, type MemberFormData } from "@/components/AddMemberDialog";
 import { MembershipCategoryCard } from "@/components/MembershipCategoryCard";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
+import { ExportButton } from "@/components/ExportButton";
+import { OnboardingFilter, getOnboardingStatus, type OnboardingStatus } from "@/components/OnboardingFilter";
+import { PageSkeleton } from "@/components/TableSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -53,6 +58,9 @@ const CustomerJourney = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [memberStatus, setMemberStatus] = useState<"active" | "exited" | "all">("active");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [onboardingFilter, setOnboardingFilter] = useState<OnboardingStatus>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
   const [engagementViewMode, setEngagementViewMode] = useState<"week" | "year">("week");
 
   const {
@@ -334,9 +342,18 @@ const CustomerJourney = () => {
     }
   };
 
-  const deleteMember = async (id: string) => {
-    // Get member name before deleting
+  const handleDeleteClick = (id: string) => {
     const member = members.find(m => m.id === id);
+    if (member) {
+      setMemberToDelete({ id, name: member.name });
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!memberToDelete) return;
+    
+    const member = members.find(m => m.id === memberToDelete.id);
     if (member) {
       // Delete associated accounting transactions
       await supabase
@@ -346,7 +363,10 @@ const CustomerJourney = () => {
     }
     
     // Delete member from database
-    await deleteMemberFromDb(id);
+    await deleteMemberFromDb(memberToDelete.id);
+    setDeleteDialogOpen(false);
+    setMemberToDelete(null);
+    toast.success(`${memberToDelete.name} supprimé avec succès`);
   };
 
   const updateMember = async (id: string, field: string, value: any) => {
@@ -767,16 +787,29 @@ const CustomerJourney = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
-        <p className="text-muted-foreground">Chargement des données...</p>
-      </div>
-    );
+    return <PageSkeleton />;
   }
+
+  // Prepare export data
+  const exportData = filteredMembers.map(m => ({
+    nom: m.name,
+    type: m.member_type || "",
+    abonnement: m.membership,
+    cash_collecte: m.cash_collected || 0,
+    date_contrat: m.contract_signed_date || "",
+    fin_abonnement: m.subscription_end_date || "",
+    onboarding_bsport: m.onboarding_bsport,
+    onboarding_hubfit: m.onboarding_hubfit,
+    onboarding_nutrition: m.onboarding_nutrition,
+    questionnaire: m.questionnaire_coaching,
+    session_intro: m.session_introduction,
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       <div className="container mx-auto p-6 space-y-6">
+        <Breadcrumbs />
+        
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
@@ -787,10 +820,19 @@ const CustomerJourney = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <ExportButton data={exportData} filename="parcours-client" />
             <LanguageToggle />
             <ThemeToggle />
           </div>
         </div>
+
+        {/* Confirm Delete Dialog */}
+        <ConfirmDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={confirmDelete}
+          itemName={memberToDelete?.name}
+        />
 
         {/* Summary Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1153,7 +1195,7 @@ const CustomerJourney = () => {
                     style={style}
                     onMemberClick={setSelectedMemberId}
                     onUpdateMember={updateMember}
-                    onDeleteMember={deleteMember}
+                    onDeleteMember={handleDeleteClick}
                     membershipTypes={membershipTypes}
                     getMembershipStyle={getMembershipStyle}
                     getMemberEngagement={getMemberEngagement}

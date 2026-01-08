@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { AccountingFilters } from "@/components/AccountingFilters";
 import { AccountingCategoryCard } from "@/components/AccountingCategoryCard";
 import { AccountingSummaryCard } from "@/components/AccountingSummaryCard";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ExportButton } from "@/components/ExportButton";
+import { PageSkeleton } from "@/components/TableSkeleton";
 import {
   DndContext,
   closestCenter,
@@ -997,17 +1000,31 @@ const Accounting = () => {
   const unpaidTransactions = useMemo(() => {
     return transactions.filter((t) => t.transaction_type === "revenue" && getPaymentStatus(t) !== "paid");
   }, [transactions]);
+  // Prepare export data
+  const exportData = transactions.map(t => ({
+    date: t.transaction_date,
+    type: t.transaction_type === "revenue" ? "Revenu" : "Dépense",
+    categorie: t.category,
+    client: t.client_name || "",
+    montant_du: t.amount,
+    montant_recu: t.amount_received || 0,
+    methode_paiement: t.payment_method || "",
+    notes: t.notes || "",
+  }));
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Chargement...</div>;
+    return <PageSkeleton />;
   }
 
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-[1600px] mx-auto space-y-6">
+        <Breadcrumbs />
+        
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold">Comptabilité</h1>
           <div className="flex gap-2">
+            <ExportButton data={exportData} filename="comptabilite" />
             <LanguageToggle />
             <ThemeToggle />
           </div>

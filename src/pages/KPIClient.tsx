@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { KPIChart } from "@/components/KPIChart";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { 
   ArrowLeft,
   Users,
