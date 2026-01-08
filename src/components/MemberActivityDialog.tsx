@@ -130,7 +130,7 @@ export function MemberActivityDialog({
     }
   };
 
-  // Handle onboarding change
+  // Handle onboarding change - don't call onMemberUpdated to avoid dialog closing
   const handleOnboardingChange = async (key: keyof typeof onboardingState, value: boolean) => {
     setIsSavingOnboarding(key);
     
@@ -170,9 +170,8 @@ export function MemberActivityDialog({
           .eq('action_type', key);
       }
 
-      if (onMemberUpdated) {
-        onMemberUpdated();
-      }
+      // Don't call onMemberUpdated here - it causes the dialog to close
+      // The parent will refresh when dialog is closed
     } catch (error) {
       console.error('Error updating onboarding:', error);
       // Revert local state on error
