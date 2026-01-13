@@ -259,85 +259,105 @@ const CustomerJourney = () => {
 
   const addMember = async (memberData: MemberFormData) => {
     if (memberData.name.trim()) {
-      const newMember = {
-        name: memberData.name,
-        membership: memberData.membership,
-        member_type: memberData.memberType,
-        cash_collected: memberData.cashCollected || 0,
-        contract_signed_date: memberData.contractDate ? format(memberData.contractDate, "yyyy-MM-dd") : null,
-        subscription_end_date: memberData.subscriptionEndDate ? format(memberData.subscriptionEndDate, "yyyy-MM-dd") : null,
-      };
+      const contractDate = memberData.contractDate ? format(memberData.contractDate, "yyyy-MM-dd") : null;
+      const subscriptionEndDate = memberData.subscriptionEndDate ? format(memberData.subscriptionEndDate, "yyyy-MM-dd") : null;
       
-      // Add member to database
-      await addMemberToDb(newMember.name, newMember.membership);
+      // Get current user's email for sold_by
+      const { data: { user } } = await supabase.auth.getUser();
+      const soldBy = user?.email?.split('@')[0] || 'User';
       
-      // Wait a bit for the member to be created
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Generate subscription group ID for duo subscriptions
+      const subscriptionGroupId = memberData.isDuoSubscription ? crypto.randomUUID() : null;
+      const personsCount = memberData.isDuoSubscription ? 2 : 1;
       
-      // Get the created member
-      const { data: createdMemberData } = await supabase
-        .from('customer_members')
-        .select('*')
-        .eq('name', newMember.name)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (createdMemberData) {
-        // Get current user's email for sold_by
-        const { data: { user } } = await supabase.auth.getUser();
-        const soldBy = user?.email?.split('@')[0] || 'User';
-        
-        // Update with additional fields
-        await updateMemberInDb(createdMemberData.id, {
-          member_type: newMember.member_type,
-          cash_collected: newMember.cash_collected,
-          contract_signed_date: newMember.contract_signed_date,
-          subscription_end_date: newMember.subscription_end_date,
-          exit_date: newMember.subscription_end_date, // Sync with subscription_end_date
-          sold_by: soldBy,
-        });
-        
-        // Create accounting transaction if cash collected
-        if (newMember.cash_collected > 0) {
-          const transactionDate = memberData.contractDate || new Date();
-          const currentMonth = transactionDate.getMonth() + 1;
-          const currentYear = transactionDate.getFullYear();
-          
-          // Use membership directly as category (1:1 synchronization)
-          const category = newMember.membership;
-          
-          // Map member type to product description
-          let productDescription = "Revenu EFT Général";
-          if (newMember.member_type === "Membres PT") {
-            productDescription = "Revenu PT";
-          } else if (newMember.member_type === "Membres PIF") {
-            productDescription = "Membre PIF";
-          }
-          
-          // Create accounting transaction with complete information
-          await supabase
-            .from('accounting_transactions')
-            .insert({
-              transaction_date: format(transactionDate, "yyyy-MM-dd"),
-              transaction_type: "revenue",
-              category: category,
-              client_name: newMember.name,
-              service_description: memberData.serviceDescription || newMember.membership,
-              product_description: productDescription,
-              amount: newMember.cash_collected,
-              amount_received: newMember.cash_collected,
-              payment_method: memberData.paymentMethod,
-              invoice_number: memberData.invoiceNumber || null,
-              notes: "Ajouté depuis Parcours Client",
-              year: currentYear,
-              month: currentMonth,
-              month_name: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(transactionDate),
-            });
-        }
+      // Map member type to product description
+      let productDescription = "Revenu EFT Général";
+      if (memberData.memberType === "Membres PT") {
+        productDescription = "Revenu PT";
+      } else if (memberData.memberType === "Membres PIF") {
+        productDescription = "Membre PIF";
       }
       
-      // Force page refresh to show new member immediately
+      // Create primary member
+      const { data: primaryMember, error: primaryError } = await supabase
+        .from('customer_members')
+        .insert({
+          name: memberData.name,
+          membership: memberData.membership,
+          member_type: memberData.memberType,
+          cash_collected: memberData.cashCollected || 0,
+          contract_signed_date: contractDate,
+          subscription_end_date: subscriptionEndDate,
+          exit_date: subscriptionEndDate,
+          sold_by: soldBy,
+          persons_count: personsCount,
+          subscription_group_id: subscriptionGroupId,
+          is_primary_subscriber: true,
+        })
+        .select()
+        .single();
+      
+      if (primaryError) {
+        toast.error("Erreur lors de la création du membre principal");
+        console.error(primaryError);
+        return;
+      }
+      
+      // Create accounting transaction only for primary member (cash collected)
+      if (memberData.cashCollected > 0) {
+        const transactionDate = memberData.contractDate || new Date();
+        const currentMonth = transactionDate.getMonth() + 1;
+        const currentYear = transactionDate.getFullYear();
+        
+        await supabase
+          .from('accounting_transactions')
+          .insert({
+            transaction_date: format(transactionDate, "yyyy-MM-dd"),
+            transaction_type: "revenue",
+            category: memberData.membership,
+            client_name: memberData.name,
+            service_description: memberData.serviceDescription || memberData.membership,
+            product_description: productDescription,
+            amount: memberData.cashCollected,
+            amount_received: memberData.cashCollected,
+            payment_method: memberData.paymentMethod,
+            invoice_number: memberData.invoiceNumber || null,
+            notes: memberData.isDuoSubscription ? "Abonnement Duo - Membre Principal" : "Ajouté depuis Parcours Client",
+            year: currentYear,
+            month: currentMonth,
+            month_name: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(transactionDate),
+          });
+      }
+      
+      // Create secondary member for duo subscriptions
+      if (memberData.isDuoSubscription && memberData.secondPersonName?.trim()) {
+        const { error: secondaryError } = await supabase
+          .from('customer_members')
+          .insert({
+            name: memberData.secondPersonName.trim(),
+            membership: memberData.membership,
+            member_type: memberData.memberType,
+            cash_collected: 0, // Secondary member has NO cash collected
+            contract_signed_date: contractDate,
+            subscription_end_date: subscriptionEndDate,
+            exit_date: subscriptionEndDate,
+            sold_by: soldBy,
+            persons_count: 1, // Individual person count
+            subscription_group_id: subscriptionGroupId,
+            is_primary_subscriber: false,
+          });
+        
+        if (secondaryError) {
+          toast.error("Erreur lors de la création du membre secondaire");
+          console.error(secondaryError);
+        } else {
+          toast.success(`Abonnement duo créé pour ${memberData.name} et ${memberData.secondPersonName}`);
+        }
+      } else {
+        toast.success(`${memberData.name} ajouté avec succès`);
+      }
+      
+      // Force page refresh to show new members immediately
       window.location.reload();
     }
   };
