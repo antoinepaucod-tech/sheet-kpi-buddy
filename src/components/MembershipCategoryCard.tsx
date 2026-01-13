@@ -299,124 +299,156 @@ export const MembershipCategoryCard = ({
                           />
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={member.member_type || ""}
-                            onValueChange={(value) =>
-                              onUpdateMember(member.id, "member_type", value)
-                            }
-                          >
-                            <SelectTrigger className="min-w-[140px]">
-                              <SelectValue placeholder="Type" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-background border shadow-lg z-50">
-                              <SelectItem value="Membres Généraux Récurrents">
-                                Récurrents
-                              </SelectItem>
-                              <SelectItem value="Membres PIF">PIF</SelectItem>
-                              <SelectItem value="Membres PT">PT</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          {isSecondary ? (
+                            <span className="text-sm text-muted-foreground px-2">
+                              {linkedMember?.member_type === "Membres Généraux Récurrents" ? "Récurrents" :
+                               linkedMember?.member_type === "Membres PIF" ? "PIF" :
+                               linkedMember?.member_type === "Membres PT" ? "PT" : "—"}
+                            </span>
+                          ) : (
+                            <Select
+                              value={member.member_type || ""}
+                              onValueChange={(value) =>
+                                onUpdateMember(member.id, "member_type", value)
+                              }
+                            >
+                              <SelectTrigger className="min-w-[140px]">
+                                <SelectValue placeholder="Type" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border shadow-lg z-50">
+                                <SelectItem value="Membres Généraux Récurrents">
+                                  Récurrents
+                                </SelectItem>
+                                <SelectItem value="Membres PIF">PIF</SelectItem>
+                                <SelectItem value="Membres PT">PT</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={member.cash_collected || 0}
-                            onChange={(e) =>
-                              onUpdateMember(
-                                member.id,
-                                "cash_collected",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className="w-[100px]"
-                          />
+                          {isSecondary ? (
+                            <span className="text-sm text-muted-foreground px-2">—</span>
+                          ) : (
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={member.cash_collected || 0}
+                              onChange={(e) =>
+                                onUpdateMember(
+                                  member.id,
+                                  "cash_collected",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              className="w-[100px]"
+                            />
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className={cn(
-                                  "w-[120px] justify-start text-left font-normal text-xs",
-                                  !member.contract_signed_date && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-1 h-3 w-3" />
-                                {member.contract_signed_date
-                                  ? format(new Date(member.contract_signed_date), "dd/MM/yy")
-                                  : "Date"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={
-                                  member.contract_signed_date
-                                    ? new Date(member.contract_signed_date)
-                                    : undefined
-                                }
-                                onSelect={(date) =>
-                                  onUpdateMember(
-                                    member.id,
-                                    "contract_signed_date",
-                                    date?.toISOString().split("T")[0] || null
-                                  )
-                                }
-                                initialFocus
-                                className="pointer-events-auto"
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          {isSecondary ? (
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                              <CalendarIcon className="h-3 w-3" />
+                              {linkedMember?.contract_signed_date
+                                ? format(new Date(linkedMember.contract_signed_date), "dd/MM/yy")
+                                : "—"}
+                            </span>
+                          ) : (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={cn(
+                                    "w-[120px] justify-start text-left font-normal text-xs",
+                                    !member.contract_signed_date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-1 h-3 w-3" />
+                                  {member.contract_signed_date
+                                    ? format(new Date(member.contract_signed_date), "dd/MM/yy")
+                                    : "Date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={
+                                    member.contract_signed_date
+                                      ? new Date(member.contract_signed_date)
+                                      : undefined
+                                  }
+                                  onSelect={(date) =>
+                                    onUpdateMember(
+                                      member.id,
+                                      "contract_signed_date",
+                                      date?.toISOString().split("T")[0] || null
+                                    )
+                                  }
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className={cn(
-                                  "w-[120px] justify-start text-left font-normal text-xs",
-                                  !member.subscription_end_date && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-1 h-3 w-3" />
-                                {member.subscription_end_date
-                                  ? format(new Date(member.subscription_end_date), "dd/MM/yy")
-                                  : "Date"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={
-                                  member.subscription_end_date
-                                    ? new Date(member.subscription_end_date)
-                                    : undefined
-                                }
-                                onSelect={(date) =>
-                                  onUpdateMember(
-                                    member.id,
-                                    "subscription_end_date",
-                                    date?.toISOString().split("T")[0] || null
-                                  )
-                                }
-                                initialFocus
-                                className="pointer-events-auto"
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          {isSecondary ? (
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                              <CalendarIcon className="h-3 w-3" />
+                              {linkedMember?.subscription_end_date
+                                ? format(new Date(linkedMember.subscription_end_date), "dd/MM/yy")
+                                : "—"}
+                            </span>
+                          ) : (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={cn(
+                                    "w-[120px] justify-start text-left font-normal text-xs",
+                                    !member.subscription_end_date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-1 h-3 w-3" />
+                                  {member.subscription_end_date
+                                    ? format(new Date(member.subscription_end_date), "dd/MM/yy")
+                                    : "Date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 bg-background border shadow-lg z-50" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={
+                                    member.subscription_end_date
+                                      ? new Date(member.subscription_end_date)
+                                      : undefined
+                                  }
+                                  onSelect={(date) =>
+                                    onUpdateMember(
+                                      member.id,
+                                      "subscription_end_date",
+                                      date?.toISOString().split("T")[0] || null
+                                    )
+                                  }
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          )}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onDeleteMember(member.id)}
-                            className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {!isSecondary && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onDeleteMember(member.id)}
+                              className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
