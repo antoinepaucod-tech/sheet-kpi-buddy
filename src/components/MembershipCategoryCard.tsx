@@ -69,6 +69,37 @@ export const MembershipCategoryCard = ({
 }: MembershipCategoryCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Sort members to group duo partners together (primary first, then secondary)
+  const sortedMembers = useMemo(() => {
+    // First, separate duo and non-duo members
+    const duoGroups = new Map<string, Member[]>();
+    const nonDuoMembers: Member[] = [];
+    
+    members.forEach(member => {
+      if (member.subscription_group_id) {
+        const group = duoGroups.get(member.subscription_group_id) || [];
+        group.push(member);
+        duoGroups.set(member.subscription_group_id, group);
+      } else {
+        nonDuoMembers.push(member);
+      }
+    });
+    
+    // Sort each duo group: primary first, then secondary
+    const sortedDuoMembers: Member[] = [];
+    duoGroups.forEach(group => {
+      const sorted = group.sort((a, b) => {
+        if (a.is_primary_subscriber && !b.is_primary_subscriber) return -1;
+        if (!a.is_primary_subscriber && b.is_primary_subscriber) return 1;
+        return 0;
+      });
+      sortedDuoMembers.push(...sorted);
+    });
+    
+    // Combine: duo members first (grouped), then non-duo
+    return [...sortedDuoMembers, ...nonDuoMembers];
+  }, [members]);
+
   // Calculate engagement counts for the header
   const engagementCounts = useMemo(() => {
     if (!getMemberEngagement) return null;
@@ -189,26 +220,40 @@ export const MembershipCategoryCard = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {members.map((member, index) => {
+                {sortedMembers.map((member, index) => {
                     const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
                     const engagement = getMemberEngagement ? getMemberEngagement(member) : 'none';
                     const isDuoMember = !!member.subscription_group_id;
                     const isPrimary = member.is_primary_subscriber;
+                    const isSecondary = isDuoMember && !isPrimary;
                     
                     // Find linked member for duo subscriptions
                     const linkedMember = isDuoMember 
-                      ? members.find(m => m.subscription_group_id === member.subscription_group_id && m.id !== member.id)
+                      ? sortedMembers.find(m => m.subscription_group_id === member.subscription_group_id && m.id !== member.id)
                       : null;
                     
                     return (
-                      <TableRow key={member.id} className={cn(getMemberEngagement && engagement !== 'none' && getEngagementStyle(engagement))}>
+                      <TableRow 
+                        key={member.id} 
+                        className={cn(
+                          getMemberEngagement && engagement !== 'none' && getEngagementStyle(engagement),
+                          isSecondary && "bg-muted/30"
+                        )}
+                      >
                         <TableCell className="text-center font-medium text-muted-foreground">
-                          {index + 1}
+                          {isSecondary ? (
+                            <span className="text-xs text-muted-foreground">↳</span>
+                          ) : (
+                            index + 1
+                          )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className={cn("flex items-center gap-2", isSecondary && "pl-4")}>
                             <span
-                              className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
+                              className={cn(
+                                "cursor-pointer hover:text-primary hover:underline transition-colors",
+                                isPrimary ? "font-medium" : "text-muted-foreground"
+                              )}
                               onClick={() => onMemberClick(member.id)}
                             >
                               {member.name}
@@ -218,8 +263,11 @@ export const MembershipCategoryCard = ({
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Badge 
-                                      variant={isPrimary ? "default" : "secondary"} 
-                                      className="gap-1 text-xs py-0 px-1.5 cursor-help"
+                                      variant={isPrimary ? "default" : "outline"} 
+                                      className={cn(
+                                        "gap-1 text-xs py-0 px-1.5 cursor-help",
+                                        isSecondary && "border-dashed"
+                                      )}
                                     >
                                       <Users className="h-3 w-3" />
                                       {isPrimary ? "Duo" : "Lié"}
