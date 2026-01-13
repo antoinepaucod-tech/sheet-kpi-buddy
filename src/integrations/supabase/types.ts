@@ -275,6 +275,7 @@ export type Database = {
           onboarding_bsport: boolean
           onboarding_hubfit: boolean
           onboarding_nutrition: boolean
+          persons_count: number
           questionnaire_coaching: boolean
           session_introduction: boolean
           sold_by: string | null
@@ -293,6 +294,7 @@ export type Database = {
           onboarding_bsport?: boolean
           onboarding_hubfit?: boolean
           onboarding_nutrition?: boolean
+          persons_count?: number
           questionnaire_coaching?: boolean
           session_introduction?: boolean
           sold_by?: string | null
@@ -311,6 +313,7 @@ export type Database = {
           onboarding_bsport?: boolean
           onboarding_hubfit?: boolean
           onboarding_nutrition?: boolean
+          persons_count?: number
           questionnaire_coaching?: boolean
           session_introduction?: boolean
           sold_by?: string | null
@@ -439,6 +442,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "member_onboarding_history_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "customer_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_persons: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          first_name: string
+          id: string
+          is_primary: boolean
+          last_name: string
+          member_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          is_primary?: boolean
+          last_name: string
+          member_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_primary?: boolean
+          last_name?: string
+          member_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_persons_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "customer_members"
