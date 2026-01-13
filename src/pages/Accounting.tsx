@@ -511,9 +511,11 @@ const Accounting = () => {
   
   useEffect(() => {
     const loadMembers = async () => {
+      // Only load primary subscribers for accounting - partners should not appear here
       const { data } = await supabase
         .from('customer_members')
-        .select('id, name, exit_date, membership, member_type, contract_signed_date, subscription_end_date, cash_collected, onboarding_bsport, onboarding_hubfit, onboarding_nutrition, questionnaire_coaching, session_introduction, sold_by');
+        .select('id, name, exit_date, membership, member_type, contract_signed_date, subscription_end_date, cash_collected, onboarding_bsport, onboarding_hubfit, onboarding_nutrition, questionnaire_coaching, session_introduction, sold_by')
+        .eq('is_primary_subscriber', true);
       if (data) setCustomerMembers(data);
     };
     loadMembers();
