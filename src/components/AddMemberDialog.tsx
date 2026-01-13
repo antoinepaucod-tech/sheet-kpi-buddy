@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,11 +22,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Plus } from "lucide-react";
+import { CalendarIcon, Plus, Users } from "lucide-react";
 import { format, addMonths, addWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAccountingCategories } from "@/hooks/useAccountingCategories";
+import { Badge } from "@/components/ui/badge";
 
 const PAYMENT_METHODS = [
   "Prélèvement Automatique",
@@ -51,6 +52,9 @@ export interface MemberFormData {
   paymentMethod: string;
   invoiceNumber?: string;
   serviceDescription?: string;
+  // Duo fields
+  isDuoSubscription: boolean;
+  secondPersonName?: string;
 }
 
 export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
@@ -67,11 +71,32 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
     paymentMethod: "Prélèvement Automatique",
     invoiceNumber: "",
     serviceDescription: "",
+    isDuoSubscription: false,
+    secondPersonName: "",
   });
+
+  // Detect if selected membership is a duo type
+  const isDuoMembership = useMemo(() => {
+    if (!formData.membership) return false;
+    const membershipLower = formData.membership.toLowerCase();
+    return membershipLower.includes('duo') || membershipLower.includes('couple');
+  }, [formData.membership]);
+
+  // Auto-enable duo mode when a duo membership is selected
+  const effectiveIsDuo = isDuoMembership || formData.isDuoSubscription;
 
   const handleSubmit = () => {
     if (formData.name.trim() && formData.membership && formData.memberType && formData.cashCollected >= 0) {
-      onAdd(formData);
+      // For duo subscriptions, validate second person name
+      if (effectiveIsDuo && !formData.secondPersonName?.trim()) {
+        return; // Don't submit without second person name
+      }
+      
+      onAdd({
+        ...formData,
+        isDuoSubscription: effectiveIsDuo,
+      });
+      
       // Reset form
       setFormData({
         name: "",
@@ -84,10 +109,18 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
         paymentMethod: "Prélèvement Automatique",
         invoiceNumber: "",
         serviceDescription: "",
+        isDuoSubscription: false,
+        secondPersonName: "",
       });
       setOpen(false);
     }
   };
+
+  const isFormValid = formData.name.trim() && 
+    formData.membership && 
+    formData.memberType && 
+    formData.contractDate &&
+    (!effectiveIsDuo || formData.secondPersonName?.trim());
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -99,20 +132,50 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ajouter un nouveau membre</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Ajouter un nouveau membre
+            {effectiveIsDuo && (
+              <Badge variant="secondary" className="gap-1">
+                <Users className="h-3 w-3" />
+                Duo
+              </Badge>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Nom */}
+          {/* Personne 1 */}
           <div className="space-y-2">
-            <Label htmlFor="name">Nom / Prénom *</Label>
+            <Label htmlFor="name">
+              {effectiveIsDuo ? "Nom / Prénom - Personne 1 (Principal) *" : "Nom / Prénom *"}
+            </Label>
             <Input
               id="name"
-              placeholder="Nom du membre"
+              placeholder="Nom du membre principal"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
+
+          {/* Personne 2 - Only for Duo */}
+          {effectiveIsDuo && (
+            <div className="space-y-2 p-4 bg-muted/50 rounded-lg border border-dashed">
+              <Label htmlFor="secondPersonName" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Nom / Prénom - Personne 2 *
+              </Label>
+              <Input
+                id="secondPersonName"
+                placeholder="Nom de la deuxième personne"
+                value={formData.secondPersonName}
+                onChange={(e) => setFormData({ ...formData, secondPersonName: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Cette personne aura son propre suivi (onboarding, entraînements) mais partage le même abonnement.
+                Le revenu sera uniquement comptabilisé sur le membre principal.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             {/* Membership */}
@@ -129,7 +192,15 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
                 <SelectContent className="max-h-[300px]">
                   {revenueCategories.map((category) => (
                     <SelectItem key={category.id} value={category.name}>
-                      {category.name}
+                      <span className="flex items-center gap-2">
+                        {category.name}
+                        {(category.name.toLowerCase().includes('duo') || 
+                          category.name.toLowerCase().includes('couple')) && (
+                          <Badge variant="outline" className="text-xs py-0 px-1">
+                            <Users className="h-3 w-3" />
+                          </Badge>
+                        )}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -160,7 +231,12 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
           <div className="grid grid-cols-2 gap-4">
             {/* Cash Collectée */}
             <div className="space-y-2">
-              <Label htmlFor="cash">Cash Collectée (CHF) *</Label>
+              <Label htmlFor="cash">
+                Cash Collectée (CHF) * 
+                {effectiveIsDuo && (
+                  <span className="text-muted-foreground font-normal ml-1">(total pour les 2)</span>
+                )}
+              </Label>
               <Input
                 id="cash"
                 type="number"
@@ -312,9 +388,9 @@ export const AddMemberDialog = ({ onAdd }: AddMemberDialogProps) => {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!formData.name.trim() || !formData.membership || !formData.memberType || !formData.contractDate}
+            disabled={!isFormValid}
           >
-            Ajouter
+            {effectiveIsDuo ? "Ajouter les 2 membres" : "Ajouter"}
           </Button>
         </div>
       </DialogContent>

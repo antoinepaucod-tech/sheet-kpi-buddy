@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -29,11 +30,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronDown, ChevronUp, CalendarIcon, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, CalendarIcon, Trash2, Users, Link2 } from "lucide-react";
 import { Member } from "@/hooks/useCustomerMembers";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { OnboardingProgressBar } from "@/components/OnboardingProgressBar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MembershipCategoryCardProps {
   category: string;
@@ -182,21 +189,54 @@ export const MembershipCategoryCard = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {members.map((member, index) => {
+                {members.map((member, index) => {
                     const isExited = member.exit_date && parseISO(member.exit_date) < new Date();
                     const engagement = getMemberEngagement ? getMemberEngagement(member) : 'none';
+                    const isDuoMember = !!member.subscription_group_id;
+                    const isPrimary = member.is_primary_subscriber;
+                    
+                    // Find linked member for duo subscriptions
+                    const linkedMember = isDuoMember 
+                      ? members.find(m => m.subscription_group_id === member.subscription_group_id && m.id !== member.id)
+                      : null;
+                    
                     return (
                       <TableRow key={member.id} className={cn(getMemberEngagement && engagement !== 'none' && getEngagementStyle(engagement))}>
                         <TableCell className="text-center font-medium text-muted-foreground">
                           {index + 1}
                         </TableCell>
                         <TableCell>
-                          <span
-                            className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
-                            onClick={() => onMemberClick(member.id)}
-                          >
-                            {member.name}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="font-medium cursor-pointer hover:text-primary hover:underline transition-colors"
+                              onClick={() => onMemberClick(member.id)}
+                            >
+                              {member.name}
+                            </span>
+                            {isDuoMember && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge 
+                                      variant={isPrimary ? "default" : "secondary"} 
+                                      className="gap-1 text-xs py-0 px-1.5 cursor-help"
+                                    >
+                                      <Users className="h-3 w-3" />
+                                      {isPrimary ? "Duo" : "Lié"}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>
+                                      {isPrimary 
+                                        ? `Membre principal duo${linkedMember ? ` (avec ${linkedMember.name})` : ''}`
+                                        : `Membre secondaire${linkedMember ? ` (lié à ${linkedMember.name})` : ''} - Pas de revenu comptabilisé`
+                                      }
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
                         </TableCell>
                         {/* Onboarding Progress Bar */}
                         <TableCell>

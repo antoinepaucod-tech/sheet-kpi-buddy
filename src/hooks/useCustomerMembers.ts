@@ -17,6 +17,10 @@ export interface Member {
   questionnaire_coaching: boolean;
   session_introduction: boolean;
   sold_by?: string | null;
+  // Duo subscription fields
+  persons_count: number;
+  subscription_group_id?: string | null;
+  is_primary_subscriber: boolean;
 }
 
 export interface WeeklyTraining {

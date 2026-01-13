@@ -269,6 +269,7 @@ export type Database = {
           created_at: string
           exit_date: string | null
           id: string
+          is_primary_subscriber: boolean
           member_type: string | null
           membership: string
           name: string
@@ -280,6 +281,7 @@ export type Database = {
           session_introduction: boolean
           sold_by: string | null
           subscription_end_date: string | null
+          subscription_group_id: string | null
           updated_at: string
         }
         Insert: {
@@ -288,6 +290,7 @@ export type Database = {
           created_at?: string
           exit_date?: string | null
           id?: string
+          is_primary_subscriber?: boolean
           member_type?: string | null
           membership: string
           name: string
@@ -299,6 +302,7 @@ export type Database = {
           session_introduction?: boolean
           sold_by?: string | null
           subscription_end_date?: string | null
+          subscription_group_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -307,6 +311,7 @@ export type Database = {
           created_at?: string
           exit_date?: string | null
           id?: string
+          is_primary_subscriber?: boolean
           member_type?: string | null
           membership?: string
           name?: string
@@ -318,6 +323,7 @@ export type Database = {
           session_introduction?: boolean
           sold_by?: string | null
           subscription_end_date?: string | null
+          subscription_group_id?: string | null
           updated_at?: string
         }
         Relationships: []
