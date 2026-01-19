@@ -73,10 +73,11 @@ serve(async (req) => {
     // PIF/Annual memberships - appear each month but with 0 amount after first payment
     const pifKeywords = ['PIF', '6 WEEKS', 'CHALLENGE', 'X1', 'ANNUEL', 'PAIEMENT ANNUEL'];
 
-    // Get all members
+    // Get all members (ONLY primary subscribers - partners must not generate accounting lines)
     const { data: members, error: membersError } = await supabase
       .from('customer_members')
-      .select('*');
+      .select('*')
+      .eq('is_primary_subscriber', true);
 
     if (membersError) {
       console.error('Error fetching members:', membersError);
