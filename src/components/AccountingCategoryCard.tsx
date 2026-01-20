@@ -8,13 +8,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Trash2, Activity, Users } from "lucide-react";
 import { AccountingTransaction } from "@/hooks/useAccountingTransactions";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 import type { Member as CustomerMember, WeeklyTraining } from "@/hooks/useCustomerMembers";
+import { isCoachMembershipStatic } from "@/hooks/useCoachMembership";
 
 interface AccountingCategoryCardProps {
   category: string;
@@ -100,6 +101,9 @@ export const AccountingCategoryCard = ({
     setActivityMember(fullMember as CustomerMember);
   };
 
+  // Check if this category is a coach category
+  const isCoachCategory = isCoachMembershipStatic(category);
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card className="overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
@@ -107,7 +111,9 @@ export const AccountingCategoryCard = ({
         <CollapsibleTrigger asChild>
           <div
             className={`p-4 cursor-pointer transition-colors ${
-              type === "revenue"
+              isCoachCategory
+                ? "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-500/5 dark:hover:bg-amber-500/10"
+                : type === "revenue"
                 ? "bg-emerald-500/10 hover:bg-emerald-500/15 dark:bg-emerald-500/5 dark:hover:bg-emerald-500/10"
                 : "bg-rose-500/10 hover:bg-rose-500/15 dark:bg-rose-500/5 dark:hover:bg-rose-500/10"
             }`}
@@ -121,13 +127,29 @@ export const AccountingCategoryCard = ({
                     <ChevronDown className="h-4 w-4" />
                   )}
                 </Button>
-                <div>
-                  <h3 className="font-semibold text-base text-foreground">
-                    {category}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {transactions.length} transaction{transactions.length > 1 ? "s" : ""}
-                  </p>
+                <div className="flex items-center gap-2">
+                  {isCoachCategory ? (
+                    <Activity className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  ) : type === "revenue" ? (
+                    <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  ) : null}
+                  <div>
+                    <h3 className={`font-semibold text-base ${
+                      isCoachCategory 
+                        ? "text-amber-700 dark:text-amber-400" 
+                        : "text-foreground"
+                    }`}>
+                      {category}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {transactions.length} transaction{transactions.length > 1 ? "s" : ""}
+                      {isCoachCategory && (
+                        <Badge variant="outline" className="ml-2 text-xs border-amber-500/50 text-amber-600 dark:text-amber-400">
+                          Coach
+                        </Badge>
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -138,7 +160,11 @@ export const AccountingCategoryCard = ({
                   </Badge>
                 )}
                 <div className="text-right">
-                  <div className="font-bold text-lg text-foreground">
+                  <div className={`font-bold text-lg ${
+                    isCoachCategory 
+                      ? "text-amber-700 dark:text-amber-400" 
+                      : "text-foreground"
+                  }`}>
                     {totalReceived.toFixed(2)} CHF
                   </div>
                   <div className="text-xs text-muted-foreground">
