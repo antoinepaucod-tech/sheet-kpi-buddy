@@ -63,6 +63,7 @@ const CustomerJourney = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
   const [engagementViewMode, setEngagementViewMode] = useState<"week" | "year">("week");
+  const [showAllAtRisk, setShowAllAtRisk] = useState(false);
 
   const {
     members,
@@ -995,7 +996,7 @@ const CustomerJourney = () => {
               Ces membres n'ont pas d'entraînement enregistré depuis 2 semaines :
             </p>
             <div className="flex flex-wrap gap-2">
-              {summaryStats.atRiskMembers.slice(0, 10).map(member => (
+              {(showAllAtRisk ? summaryStats.atRiskMembers : summaryStats.atRiskMembers.slice(0, 10)).map(member => (
                 <Button
                   key={member.id}
                   variant="outline"
@@ -1007,9 +1008,17 @@ const CustomerJourney = () => {
                 </Button>
               ))}
               {summaryStats.atRiskCount > 10 && (
-                <span className="text-sm text-muted-foreground self-center">
-                  +{summaryStats.atRiskCount - 10} autres
-                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-red-500 transition-colors"
+                  onClick={() => setShowAllAtRisk(!showAllAtRisk)}
+                >
+                  {showAllAtRisk 
+                    ? "Réduire" 
+                    : `+${summaryStats.atRiskCount - 10} autres`
+                  }
+                </Button>
               )}
             </div>
           </Card>
