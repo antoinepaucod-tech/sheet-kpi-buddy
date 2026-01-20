@@ -77,6 +77,22 @@ const CustomerJourney = () => {
   // Dynamic membership types from accounting categories
   const membershipTypes = revenueCategories.map(cat => cat.name);
 
+  // Coach membership types - these are handled separately from club members
+  const coachMembershipTypes = useMemo(() => [
+    "Virtual Coach",
+    "TheCoach pass mensuel",
+    "TheCoach pass annuel",
+    "TheCoach pass 6 mois"
+  ], []);
+
+  // Check if a membership is a coach type
+  const isCoachMembership = (membership: string): boolean => {
+    return coachMembershipTypes.some(type => 
+      membership.toLowerCase().includes(type.toLowerCase()) ||
+      type.toLowerCase().includes(membership.toLowerCase())
+    );
+  };
+
   // Memberships that require training tracking - now from database
   const trackingRequiredMemberships = useMemo(() => {
     return revenueCategories
@@ -659,12 +675,18 @@ const CustomerJourney = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     // A member is active if they have no exit_date OR if their exit_date is in the future
-    const activeMembers = members.filter(m => {
+    const allActiveMembers = members.filter(m => {
       if (!m.exit_date) return true;
       const exitDate = parseISO(m.exit_date);
       return exitDate >= today;
     });
+    
+    // Separate active members from coaches
+    const activeMembers = allActiveMembers.filter(m => !isCoachMembership(m.membership));
+    const activeCoaches = allActiveMembers.filter(m => isCoachMembership(m.membership));
+    
     const totalCashCollected = activeMembers.reduce((sum, m) => sum + (m.cash_collected || 0), 0);
+    const coachCashCollected = activeCoaches.reduce((sum, m) => sum + (m.cash_collected || 0), 0);
     
     const onboardingComplete = activeMembers.filter(m => 
       m.onboarding_bsport && m.onboarding_hubfit && m.onboarding_nutrition && 
@@ -675,7 +697,7 @@ const CustomerJourney = () => {
       ? Math.round((onboardingComplete / activeMembers.length) * 100) 
       : 0;
 
-    // Members at risk (no training in last 2 weeks for tracking required memberships)
+    // Members at risk (no training in last 2 weeks for tracking required memberships) - only for club members
     const atRiskMembers = activeMembers.filter(member => {
       if (!requiresTrainingTracking(member.membership)) return false;
       if (!member.contract_signed_date) return false;
@@ -692,7 +714,9 @@ const CustomerJourney = () => {
 
     return {
       totalActive: activeMembers.length,
+      totalCoaches: activeCoaches.length,
       totalCash: totalCashCollected,
+      coachCash: coachCashCollected,
       onboardingRate,
       onboardingComplete,
       atRiskCount: atRiskMembers.length,
@@ -1176,7 +1200,7 @@ const CustomerJourney = () => {
           </div>
 
           {selectedView === "index" ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Engagement Legend */}
               <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                 <span className="font-medium">Niveau d'engagement :</span>
@@ -1197,33 +1221,99 @@ const CustomerJourney = () => {
                   <span>À risque (0 séance)</span>
                 </div>
               </div>
-              {Object.entries(
-                filteredMembers.reduce((acc, member) => {
-                  const category = member.membership || "Sans abonnement";
-                  if (!acc[category]) acc[category] = [];
-                  acc[category].push(member);
-                  return acc;
-                }, {} as Record<string, Member[]>)
-              ).map(([category, members], categoryIndex) => {
-                const totalCash = members.reduce((sum, m) => sum + (m.cash_collected || 0), 0);
-                const style = getMembershipStyle(category);
+
+              {/* MEMBRES Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Membres
+                  </h2>
+                  <span className="text-sm text-muted-foreground">
+                    ({filteredMembers.filter(m => !isCoachMembership(m.membership)).length} membres)
+                  </span>
+                </div>
                 
-                return (
-                  <MembershipCategoryCard
-                    key={category}
-                    category={category}
-                    members={members}
-                    totalCash={totalCash}
-                    style={style}
-                    onMemberClick={setSelectedMemberId}
-                    onUpdateMember={updateMember}
-                    onDeleteMember={handleDeleteClick}
-                    membershipTypes={membershipTypes}
-                    getMembershipStyle={getMembershipStyle}
-                    getMemberEngagement={getMemberEngagement}
-                  />
-                );
-              })}
+                {Object.entries(
+                  filteredMembers
+                    .filter(member => !isCoachMembership(member.membership))
+                    .reduce((acc, member) => {
+                      const category = member.membership || "Sans abonnement";
+                      if (!acc[category]) acc[category] = [];
+                      acc[category].push(member);
+                      return acc;
+                    }, {} as Record<string, Member[]>)
+                ).map(([category, members], categoryIndex) => {
+                  const totalCash = members.reduce((sum, m) => sum + (m.cash_collected || 0), 0);
+                  const style = getMembershipStyle(category);
+                  
+                  return (
+                    <MembershipCategoryCard
+                      key={category}
+                      category={category}
+                      members={members}
+                      totalCash={totalCash}
+                      style={style}
+                      onMemberClick={setSelectedMemberId}
+                      onUpdateMember={updateMember}
+                      onDeleteMember={handleDeleteClick}
+                      membershipTypes={membershipTypes}
+                      getMembershipStyle={getMembershipStyle}
+                      getMemberEngagement={getMemberEngagement}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* COACHS Section */}
+              {filteredMembers.some(m => isCoachMembership(m.membership)) && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 pt-4 border-t">
+                    <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-amber-500" />
+                      Coachs
+                    </h2>
+                    <span className="text-sm text-muted-foreground">
+                      ({filteredMembers.filter(m => isCoachMembership(m.membership)).length} coachs)
+                    </span>
+                  </div>
+                  
+                  {Object.entries(
+                    filteredMembers
+                      .filter(member => isCoachMembership(member.membership))
+                      .reduce((acc, member) => {
+                        const category = member.membership || "Sans abonnement";
+                        if (!acc[category]) acc[category] = [];
+                        acc[category].push(member);
+                        return acc;
+                      }, {} as Record<string, Member[]>)
+                  ).map(([category, members], categoryIndex) => {
+                    const totalCash = members.reduce((sum, m) => sum + (m.cash_collected || 0), 0);
+                    // Custom style for coach categories
+                    const coachStyle = { 
+                      bg: "bg-amber-500/10", 
+                      text: "text-amber-700 dark:text-amber-400", 
+                      border: "border-amber-500/30" 
+                    };
+                    
+                    return (
+                      <MembershipCategoryCard
+                        key={category}
+                        category={category}
+                        members={members}
+                        totalCash={totalCash}
+                        style={coachStyle}
+                        onMemberClick={setSelectedMemberId}
+                        onUpdateMember={updateMember}
+                        onDeleteMember={handleDeleteClick}
+                        membershipTypes={membershipTypes}
+                        getMembershipStyle={() => coachStyle}
+                        getMemberEngagement={getMemberEngagement}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-md border overflow-x-auto">
