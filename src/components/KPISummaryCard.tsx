@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus, DollarSign, Users, Target, Percent } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, DollarSign, Users, Target, Percent, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SummaryItem {
@@ -55,17 +55,32 @@ export const KPISummaryCard = ({ items, title = "Résumé du Mois" }: KPISummary
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {items.map((item, index) => (
-            <div key={index} className="space-y-1">
-              <p className="text-xs text-muted-foreground truncate">{item.label}</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold">
-                  {item.value}{item.suffix}
-                </span>
-                <TrendIndicator current={item.currentValue} previous={item.previousValue} />
+          {items.map((item, index) => {
+            const isCoachItem = item.label === "Coachs";
+            const isMemberItem = item.label === "Membres";
+            
+            return (
+              <div key={index} className="space-y-1">
+                <p className={cn(
+                  "text-xs truncate flex items-center gap-1",
+                  isCoachItem ? "text-amber-600 dark:text-amber-400 font-medium" : "text-muted-foreground"
+                )}>
+                  {isCoachItem && <Activity className="h-3 w-3" />}
+                  {isMemberItem && <Users className="h-3 w-3" />}
+                  {item.label}
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className={cn(
+                    "text-lg font-bold",
+                    isCoachItem && "text-amber-600 dark:text-amber-400"
+                  )}>
+                    {item.value}{item.suffix}
+                  </span>
+                  <TrendIndicator current={item.currentValue} previous={item.previousValue} />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
