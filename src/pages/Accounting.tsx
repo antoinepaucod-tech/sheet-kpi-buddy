@@ -60,10 +60,12 @@ import { useAccountingTransactions, type AccountingTransaction } from "@/hooks/u
 import { useRecurringTransactions, type RecurringTransaction } from "@/hooks/useRecurringTransactions";
 import { useAccountingCategoriesWithRecurrence } from "@/hooks/useAccountingCategoriesWithRecurrence";
 import { useCashCollectedValidation } from "@/hooks/useCashCollectedValidation";
+import { useCoachMembership } from "@/hooks/useCoachMembership";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Dumbbell, Users as UsersIcon } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -401,6 +403,7 @@ const Accounting = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<AccountingTransaction | null>(null);
+  const { isCoachCategory } = useCoachMembership();
   
   // Filter states for revenue
   const [revenueSearchText, setRevenueSearchText] = useState("");
@@ -946,11 +949,21 @@ const Accounting = () => {
   const summary = useMemo(() => {
     const revenues = transactions.filter((t) => t.transaction_type === "revenue");
     const expenses = transactions.filter((t) => t.transaction_type === "expense");
+    
+    // Split revenues between members and coaches
+    const memberRevenues = revenues.filter(t => !isCoachCategory(t.category));
+    const coachRevenues = revenues.filter(t => isCoachCategory(t.category));
 
     const totalRevenue = revenues.reduce((sum, t) => sum + t.amount, 0);
     const totalRevenueReceived = revenues.reduce((sum, t) => sum + (t.amount_received || 0), 0);
     const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
     const profit = totalRevenueReceived - totalExpenses;
+    
+    // Member/Coach breakdown
+    const memberRevenue = memberRevenues.reduce((sum, t) => sum + t.amount, 0);
+    const memberReceived = memberRevenues.reduce((sum, t) => sum + (t.amount_received || 0), 0);
+    const coachRevenue = coachRevenues.reduce((sum, t) => sum + t.amount, 0);
+    const coachReceived = coachRevenues.reduce((sum, t) => sum + (t.amount_received || 0), 0);
 
     return {
       totalRevenue,
@@ -959,8 +972,14 @@ const Accounting = () => {
       profit,
       revenueCount: revenues.length,
       expenseCount: expenses.length,
+      memberRevenue,
+      memberReceived,
+      memberCount: memberRevenues.length,
+      coachRevenue,
+      coachReceived,
+      coachCount: coachRevenues.length,
     };
-  }, [transactions]);
+  }, [transactions, isCoachCategory]);
 
   const revenuesByCategory = useMemo(() => {
     const grouped: Record<string, { amount: number; received: number; count: number }> = {};

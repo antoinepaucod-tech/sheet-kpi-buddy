@@ -14,7 +14,8 @@ import {
   ArrowRight,
   BarChart3,
   Sparkles,
-  Loader2
+  Loader2,
+  Dumbbell
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -23,10 +24,12 @@ import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import { useCourseKPIData } from "@/hooks/useCourseKPIData";
 import { useAccountingTransactions } from "@/hooks/useAccountingTransactions";
 import { useTranslations } from "@/hooks/useTranslations";
+import { useCoachMembership } from "@/hooks/useCoachMembership";
 import { useMemo, useState, useEffect } from "react";
 import { KPIChart } from "@/components/KPIChart";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -40,6 +43,7 @@ const Dashboard = () => {
   const { members } = useCustomerMembers();
   const { courses } = useCourseKPIData(currentYear, new Date().getMonth() + 1);
   const { transactions } = useAccountingTransactions(currentYear, new Date().getMonth());
+  const { isCoachCategory } = useCoachMembership();
 
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
@@ -49,23 +53,29 @@ const Dashboard = () => {
   // Active members are based on KPI data (from accounting transactions), not customer_members table
   const activeMembers = currentMonthData?.total_active_members || 0;
   
-  const monthlyRevenue = useMemo(() => {
-    return transactions
-      .filter(t => t.transaction_type === 'revenue')
-      .reduce((sum, t) => sum + (t.amount_received || 0), 0);
-  }, [transactions]);
+  // Separate revenue for members vs coaches
+  const { monthlyRevenue, coachRevenue, memberRevenue, coachCount, memberCount, unpaidCount, unpaidMemberCount, unpaidCoachCount } = useMemo(() => {
+    const revenueTransactions = transactions.filter(t => t.transaction_type === 'revenue');
+    
+    const coachTxs = revenueTransactions.filter(t => isCoachCategory(t.category));
+    const memberTxs = revenueTransactions.filter(t => !isCoachCategory(t.category));
+    
+    return {
+      monthlyRevenue: revenueTransactions.reduce((sum, t) => sum + (t.amount_received || 0), 0),
+      coachRevenue: coachTxs.reduce((sum, t) => sum + (t.amount_received || 0), 0),
+      memberRevenue: memberTxs.reduce((sum, t) => sum + (t.amount_received || 0), 0),
+      coachCount: coachTxs.length,
+      memberCount: memberTxs.length,
+      unpaidCount: revenueTransactions.filter(t => (t.amount_received || 0) < t.amount).length,
+      unpaidMemberCount: memberTxs.filter(t => (t.amount_received || 0) < t.amount).length,
+      unpaidCoachCount: coachTxs.filter(t => (t.amount_received || 0) < t.amount).length,
+    };
+  }, [transactions, isCoachCategory]);
 
   const monthlyExpenses = useMemo(() => {
     return transactions
       .filter(t => t.transaction_type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
-
-  const unpaidCount = useMemo(() => {
-    return transactions.filter(t => 
-      t.transaction_type === 'revenue' && 
-      (t.amount_received || 0) < t.amount
-    ).length;
   }, [transactions]);
 
   // Load AI analysis on mount
@@ -168,73 +178,171 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Main KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-l-4 border-l-emerald-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Revenus du Mois
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(monthlyRevenue)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Cash collecté
-              </p>
+        {/* Main KPIs - Membres */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Membres</h2>
+            <Badge variant="secondary" className="text-xs">{memberCount} transactions</Badge>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-primary">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Revenus Membres
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-primary">
+                  {formatCurrency(memberRevenue)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cash collecté membres
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-primary/70">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Membres Actifs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-primary">
+                  {activeMembers}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Inscrits actuellement
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-muted-foreground">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Cours Actifs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">
+                  {courses.length}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ce mois-ci
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-destructive">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Receipt className="h-4 w-4" />
+                  Impayés Membres
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-destructive">
+                  {unpaidMemberCount}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Transactions à valider
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* KPIs - Coachs */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Dumbbell className="h-5 w-5 text-warning" />
+            <h2 className="text-lg font-semibold">Coachs</h2>
+            <Badge variant="outline" className="text-xs border-warning/50 text-warning">{coachCount} transactions</Badge>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-warning">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Revenus Coachs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-warning">
+                  {formatCurrency(coachRevenue)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cash collecté coachs
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-warning/70">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Dumbbell className="h-4 w-4" />
+                  Coachs Actifs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-warning">
+                  {coachCount}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Transactions coach ce mois
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-destructive/70">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Receipt className="h-4 w-4" />
+                  Impayés Coachs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-destructive">
+                  {unpaidCoachCount}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Transactions à valider
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Totaux globaux */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="bg-muted/30">
+            <CardContent className="pt-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Revenus Totaux</span>
+                <span className="text-xl font-bold">{formatCurrency(monthlyRevenue)}</span>
+              </div>
             </CardContent>
           </Card>
-
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Membres Actifs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {activeMembers}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Inscrits actuellement
-              </p>
+          <Card className="bg-muted/30">
+            <CardContent className="pt-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Dépenses</span>
+                <span className="text-xl font-bold text-destructive">{formatCurrency(monthlyExpenses)}</span>
+              </div>
             </CardContent>
           </Card>
-
-          <Card className="border-l-4 border-l-purple-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Cours Actifs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                {courses.length}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Ce mois-ci
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Receipt className="h-4 w-4" />
-                Impayés
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                {unpaidCount}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Transactions à valider
-              </p>
+          <Card className="bg-muted/30">
+            <CardContent className="pt-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Profit</span>
+                <span className={`text-xl font-bold ${(monthlyRevenue - monthlyExpenses) >= 0 ? "text-success" : "text-destructive"}`}>
+                  {formatCurrency(monthlyRevenue - monthlyExpenses)}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -253,9 +361,9 @@ const Dashboard = () => {
                 data={revenueChartData}
                 title=""
                 dataKeys={[
-                  { key: "revenue", name: "Revenus", color: "#10b981" },
-                  { key: "expenses", name: "Dépenses", color: "#f59e0b" },
-                  { key: "profit", name: "Profit", color: "#3b82f6" },
+                  { key: "revenue", name: "Revenus", color: "hsl(var(--primary))" },
+                  { key: "expenses", name: "Dépenses", color: "hsl(var(--destructive))" },
+                  { key: "profit", name: "Profit", color: "hsl(var(--success))" },
                 ]}
                 type="line"
                 showFilter={false}
@@ -270,14 +378,26 @@ const Dashboard = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Revenus</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="text-sm text-muted-foreground">Revenus Membres</span>
+                  <span className="font-semibold text-primary">
+                    {formatCurrency(memberRevenue)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Revenus Coachs</span>
+                  <span className="font-semibold text-warning">
+                    {formatCurrency(coachRevenue)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Revenus</span>
+                  <span className="font-semibold">
                     {formatCurrency(monthlyRevenue)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Dépenses</span>
-                  <span className="font-semibold text-amber-600 dark:text-amber-400">
+                  <span className="font-semibold text-destructive">
                     {formatCurrency(monthlyExpenses)}
                   </span>
                 </div>
@@ -286,8 +406,8 @@ const Dashboard = () => {
                   <span className="text-sm font-medium">Profit</span>
                   <span className={`font-bold text-lg ${
                     (monthlyRevenue - monthlyExpenses) >= 0 
-                      ? "text-emerald-600 dark:text-emerald-400" 
-                      : "text-rose-600 dark:text-rose-400"
+                      ? "text-success" 
+                      : "text-destructive"
                   }`}>
                     {formatCurrency(monthlyRevenue - monthlyExpenses)}
                   </span>

@@ -46,6 +46,7 @@ import { useAccountingCategories } from "@/hooks/useAccountingCategories";
 import { cn } from "@/lib/utils";
 import { useCustomerMembers } from "@/hooks/useCustomerMembers";
 import type { Member } from "@/hooks/useCustomerMembers";
+import { useCoachMembership } from "@/hooks/useCoachMembership";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const CustomerJourney = () => {
@@ -74,40 +75,11 @@ const CustomerJourney = () => {
     getWeeklyTraining,
   } = useCustomerMembers();
 
+  // Use shared hook for coach membership detection
+  const { isCoachMembership } = useCoachMembership();
+
   // Dynamic membership types from accounting categories
   const membershipTypes = revenueCategories.map(cat => cat.name);
-
-  // Coach membership types - these are handled separately from club members
-  // NOTE: the source data contains multiple spellings ("THE COACH..." vs "TheCoach...").
-  const coachMembershipTypes = useMemo(
-    () => [
-      "Virtual Coach",
-      "VIRTUAL COACH",
-      "TheCoach pass mensuel",
-      "THE COACH PASS MENSUEL",
-      "TheCoach pass annuel",
-      "THE COACH PASS ANNUEL",
-      "TheCoach pass 6 mois",
-      "THE COACH PASS 6 MOIS",
-      // Paid-in-full variants
-      "THE COACH PASS - PAIEMENT ANNUEL X1",
-      "THE COACH PASS 6 MOIS - PAIEMENT X1",
-    ],
-    []
-  );
-
-  const normalizeMembership = (value: string) =>
-    (value || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "");
-
-  // Check if a membership is a coach type (robust to spacing/case)
-  const isCoachMembership = (membership: string): boolean => {
-    const m = normalizeMembership(membership);
-    return coachMembershipTypes.some((type) => normalizeMembership(type) === m || m.includes(normalizeMembership(type)));
-  };
 
   // Memberships that require training tracking - now from database
   const trackingRequiredMemberships = useMemo(() => {
