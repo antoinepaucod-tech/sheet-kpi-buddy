@@ -43,22 +43,48 @@ const Dashboard = () => {
   const { members } = useCustomerMembers();
   const { courses } = useCourseKPIData(currentYear, new Date().getMonth() + 1);
   const { transactions } = useAccountingTransactions(currentYear, new Date().getMonth());
-  const { isCoachCategory } = useCoachMembership();
+  const { isCoachMembership } = useCoachMembership();
 
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
   // Calculate current month KPIs
   const currentMonthData = monthlyData[new Date().getMonth()];
-  // Active members are based on KPI data (from accounting transactions), not customer_members table
-  const activeMembers = currentMonthData?.total_active_members || 0;
   
-  // Separate revenue for members vs coaches
+  // Calculate REAL active members from customer_members (not transactions)
+  const { activeMembersCount, activeCoachesCount } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const activeMembers = members.filter(m => {
+      // Check if member is still active (no exit_date or exit_date in future)
+      if (m.exit_date) {
+        const exitDate = new Date(m.exit_date);
+        if (exitDate < today) return false;
+      }
+      // Also check subscription_end_date as fallback
+      if (!m.exit_date && m.subscription_end_date) {
+        const endDate = new Date(m.subscription_end_date);
+        if (endDate < today) return false;
+      }
+      return true;
+    });
+    
+    const clubMembers = activeMembers.filter(m => !isCoachMembership(m.membership));
+    const coaches = activeMembers.filter(m => isCoachMembership(m.membership));
+    
+    return {
+      activeMembersCount: clubMembers.length,
+      activeCoachesCount: coaches.length,
+    };
+  }, [members, isCoachMembership]);
+  
+  // Separate revenue for members vs coaches (from transactions)
   const { monthlyRevenue, coachRevenue, memberRevenue, coachCount, memberCount, unpaidCount, unpaidMemberCount, unpaidCoachCount } = useMemo(() => {
     const revenueTransactions = transactions.filter(t => t.transaction_type === 'revenue');
     
-    const coachTxs = revenueTransactions.filter(t => isCoachCategory(t.category));
-    const memberTxs = revenueTransactions.filter(t => !isCoachCategory(t.category));
+    const coachTxs = revenueTransactions.filter(t => isCoachMembership(t.category));
+    const memberTxs = revenueTransactions.filter(t => !isCoachMembership(t.category));
     
     return {
       monthlyRevenue: revenueTransactions.reduce((sum, t) => sum + (t.amount_received || 0), 0),
@@ -70,7 +96,7 @@ const Dashboard = () => {
       unpaidMemberCount: memberTxs.filter(t => (t.amount_received || 0) < t.amount).length,
       unpaidCoachCount: coachTxs.filter(t => (t.amount_received || 0) < t.amount).length,
     };
-  }, [transactions, isCoachCategory]);
+  }, [transactions, isCoachMembership]);
 
   const monthlyExpenses = useMemo(() => {
     return transactions
@@ -83,7 +109,7 @@ const Dashboard = () => {
     if (monthlyData.length > 0 && transactions.length > 0) {
       loadAiAnalysis();
     }
-  }, [monthlyData.length, activeMembers, monthlyRevenue, monthlyExpenses, courses.length]);
+  }, [monthlyData.length, activeMembersCount, monthlyRevenue, monthlyExpenses, courses.length]);
 
   const loadAiAnalysis = async () => {
     setIsLoadingAnalysis(true);
@@ -91,7 +117,7 @@ const Dashboard = () => {
       const { data, error } = await supabase.functions.invoke('analyze-business', {
         body: {
           monthlyData,
-          activeMembers,
+          activeMembers: activeMembersCount,
           monthlyRevenue,
           monthlyExpenses,
           courses: courses.length
@@ -212,7 +238,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-primary">
-                  {activeMembers}
+                  {activeMembersCount}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Inscrits actuellement
@@ -290,10 +316,10 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-warning">
-                  {coachCount}
+                  {activeCoachesCount}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Transactions coach ce mois
+                  Abonnés actuellement
                 </p>
               </CardContent>
             </Card>
