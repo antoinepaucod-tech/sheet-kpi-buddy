@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMonthlyKPIData } from "@/hooks/useMonthlyKPIData";
+import { useAccountingTransactions } from "@/hooks/useAccountingTransactions";
+import { useCoachMembership } from "@/hooks/useCoachMembership";
 import { useTranslations } from "@/hooks/useTranslations";
 import { MetricCard } from "@/components/MetricCard";
 import { MetricCardWithTooltip, KPI_TOOLTIPS } from "@/components/MetricCardWithTooltip";
@@ -35,6 +37,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslations();
+  const { isCoachCategory } = useCoachMembership();
   const { 
     monthlyData, 
     currentMonthIndex, 
@@ -46,8 +49,23 @@ const Index = () => {
     setCurrentYear 
   } = useMonthlyKPIData();
   
+  // Get accounting transactions for current month to calculate member/coach split
+  const { transactions } = useAccountingTransactions(currentYear, currentMonthIndex);
+  
   const currentMonth = getCurrentMonthData() || monthlyData[currentMonthIndex];
   const previousMonth = monthlyData[currentMonthIndex === 0 ? 11 : currentMonthIndex - 1];
+  
+  // Calculate member vs coach transaction counts
+  const { memberTransactionCount, coachTransactionCount } = useMemo(() => {
+    const revenueTransactions = transactions.filter(t => t.transaction_type === 'revenue');
+    const coachTxs = revenueTransactions.filter(t => isCoachCategory(t.category));
+    const memberTxs = revenueTransactions.filter(t => !isCoachCategory(t.category));
+    
+    return {
+      memberTransactionCount: memberTxs.length,
+      coachTransactionCount: coachTxs.length,
+    };
+  }, [transactions, isCoachCategory]);
 
   const saveMonthData = async (data: any) => {
     const total_revenue = data.general_eft_revenue + data.pt_revenue + data.retail_revenue + data.fast_cash_revenue;
@@ -113,7 +131,7 @@ const Index = () => {
     return `${value.toFixed(1)}%`;
   };
 
-  // Summary items with trends
+  // Summary items with trends - now includes separate member/coach counts
   const summaryItems = useMemo(() => [
     {
       label: "Revenus",
@@ -129,15 +147,15 @@ const Index = () => {
     },
     {
       label: "Membres",
-      value: (currentMonth?.recurring_general_members || 0) + (currentMonth?.pif_members || 0),
-      currentValue: (currentMonth?.recurring_general_members || 0) + (currentMonth?.pif_members || 0),
-      previousValue: (previousMonth?.recurring_general_members || 0) + (previousMonth?.pif_members || 0),
+      value: memberTransactionCount,
+      currentValue: memberTransactionCount,
+      previousValue: 0,
     },
     {
-      label: "Conversions",
-      value: currentMonth?.close || 0,
-      currentValue: currentMonth?.close || 0,
-      previousValue: previousMonth?.close || 0,
+      label: "Coachs",
+      value: coachTransactionCount,
+      currentValue: coachTransactionCount,
+      previousValue: 0,
     },
     {
       label: "Cash Collecté",
@@ -151,7 +169,7 @@ const Index = () => {
       currentValue: currentMonth?.ro_ads || 0,
       previousValue: previousMonth?.ro_ads || 0,
     },
-  ], [currentMonth, previousMonth, t]);
+  ], [currentMonth, previousMonth, memberTransactionCount, coachTransactionCount, t]);
 
   // Chart data
   const revenueChartData = useMemo(() => monthlyData.map(m => ({
