@@ -663,11 +663,23 @@ const CustomerJourney = () => {
   const summaryStats = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    // A member is active if they have no exit_date OR if their exit_date is in the future
+    // A member is active if:
+    // - They have no exit_date AND (no subscription_end_date OR subscription_end_date is in the future)
+    // - OR their exit_date is in the future
     const allActiveMembers = members.filter(m => {
-      if (!m.exit_date) return true;
-      const exitDate = parseISO(m.exit_date);
-      return exitDate >= today;
+      // If exit_date exists and is in the past, member is inactive
+      if (m.exit_date) {
+        const exitDate = parseISO(m.exit_date);
+        if (exitDate < today) return false;
+      }
+      
+      // If no exit_date but subscription_end_date exists and is in the past, member is inactive
+      if (!m.exit_date && m.subscription_end_date) {
+        const subEndDate = parseISO(m.subscription_end_date);
+        if (subEndDate < today) return false;
+      }
+      
+      return true;
     });
     
     // Separate active members from coaches
