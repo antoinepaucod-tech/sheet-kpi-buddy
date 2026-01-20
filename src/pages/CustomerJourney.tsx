@@ -639,10 +639,12 @@ const CustomerJourney = () => {
     return members.filter(member => {
       if (!member.contract_signed_date) return false;
 
-      // Filter out exited members (those with exit_date in the past)
-      if (member.exit_date) {
-        const exitDate = parseISO(member.exit_date);
-        if (exitDate < calendarWeekStart) {
+      // Filter out members whose subscription or exit date is before the selected week
+      // Use exit_date if available, otherwise use subscription_end_date
+      const endDateStr = member.exit_date || member.subscription_end_date;
+      if (endDateStr) {
+        const endDate = parseISO(endDateStr);
+        if (endDate < calendarWeekStart) {
           return false;
         }
       }
