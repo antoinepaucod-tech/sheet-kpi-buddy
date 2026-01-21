@@ -111,11 +111,14 @@ export const useAccountingCategoriesWithRecurrence = () => {
       const prevYear = prevDate.getFullYear();
       const prevMonth = prevDate.getMonth(); // 0-based
 
+      // IMPORTANT: Only fetch VALIDATED transactions from previous month
+      // Rule: If an expense is not validated in month B, it should NOT be repeated for month C
       const { data: prevTx, error: prevError } = await (supabase as any)
         .from("accounting_transactions")
-        .select("transaction_type, category, client_name, amount, created_at, year, month, service_description, product_description, payment_method, notes")
+        .select("transaction_type, category, client_name, amount, created_at, year, month, service_description, product_description, payment_method, notes, is_validated")
         .eq("year", prevYear)
-        .eq("month", prevMonth + 1);
+        .eq("month", prevMonth + 1)
+        .eq("is_validated", true); // Only include validated transactions
       if (prevError) throw prevError;
 
       // Map of last month's amount per (type|category|client)
