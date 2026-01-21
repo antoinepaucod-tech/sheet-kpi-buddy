@@ -113,7 +113,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
 
       const { data: prevTx, error: prevError } = await (supabase as any)
         .from("accounting_transactions")
-        .select("transaction_type, category, client_name, amount, created_at, year, month")
+        .select("transaction_type, category, client_name, amount, created_at, year, month, service_description, product_description, payment_method, notes")
         .eq("year", prevYear)
         .eq("month", prevMonth + 1);
       if (prevError) throw prevError;
