@@ -175,10 +175,22 @@ export default function KPIClient() {
   const memberStats = useMemo((): MemberStat[] => {
     if (!members || !weeklyTrainings) return [];
 
+    // Calculate the end date of the selected month for active member filtering
+    const monthEndDate = new Date(selectedYear, parseInt(selectedMonth), 0); // Last day of selected month
+    const filterDate = monthEndDate.toISOString().split('T')[0];
+
     return members
       .filter(member => {
         // Filter out members without training tracking
         if (!requiresTrainingTracking(member.membership)) return false;
+        
+        // IMPORTANT: Filter for active members only based on exit_date and subscription_end_date
+        // A member is excluded if their exit_date OR subscription_end_date is before the selected month
+        const isActive = (
+          (!member.exit_date || member.exit_date >= filterDate) &&
+          (!member.subscription_end_date || member.subscription_end_date >= filterDate)
+        );
+        if (!isActive) return false;
         
         // Filter by membership category
         if (membershipFilter !== "all") {
@@ -233,7 +245,7 @@ export default function KPIClient() {
         }
         return a.averagePerWeek - b.averagePerWeek;
       });
-  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks, selectedYear]);
+  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks, selectedYear, selectedMonth]);
 
   // Filter by search query
   const filteredMemberStats = useMemo(() => {
