@@ -23,6 +23,7 @@ import { Plus, Pencil, Trash2, Save, X } from "lucide-react";
 import { useCourseKPIData, type CourseKPI } from "@/hooks/useCourseKPIData";
 import { useInstructors } from "@/hooks/useInstructors";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useMonthWeeks } from "@/hooks/useMonthWeeks";
 
 const MONTHS = [
   "Janvier",
@@ -68,6 +69,9 @@ export default function KPICourses() {
     useCourseKPIData(selectedYear, selectedMonth);
   
   const { instructors } = useInstructors();
+  
+  // Get weeks for the selected month (4 or 5 weeks dynamically)
+  const { weeks: monthWeeks } = useMonthWeeks(selectedYear, selectedMonth);
 
   // Quick instructor change without entering edit mode
   const handleQuickInstructorChange = async (courseId: string, newInstructor: string) => {
@@ -131,25 +135,7 @@ export default function KPICourses() {
     return acc;
   }, {} as Record<string, CourseKPI[]>);
 
-  const getWeekDates = () => {
-    const dates: Date[] = [];
-    const year = selectedYear;
-    const month = selectedMonth - 1;
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-
-    let current = firstDay;
-    while (current <= lastDay) {
-      if (current.getDay() === 1) {
-        dates.push(new Date(current));
-      }
-      current = new Date(current.getTime() + 24 * 60 * 60 * 1000);
-    }
-
-    return dates.slice(0, 5);
-  };
-
-  const weekDates = getWeekDates();
+  // Remove the old getWeekDates function - we now use monthWeeks from useMonthWeeks hook
 
   const calculateTotalExpenses = () => {
     return courses.reduce((sum, course) => sum + (Number(course.monthly_expenses) || 0), 0);
@@ -272,15 +258,12 @@ export default function KPICourses() {
                         <TableHead>Horaire</TableHead>
                         <TableHead>Cours</TableHead>
                         <TableHead>Instructeur</TableHead>
-                        {weekDates.map((date, index) => (
-                          <TableHead key={index} className="text-center">
-                            S{index + 1}
+                        {monthWeeks.map((week) => (
+                          <TableHead key={week.weekNumber} className="text-center">
+                            S{week.weekNumber}
                             <br />
                             <span className="text-xs text-muted-foreground">
-                              {date.toLocaleDateString("fr-FR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                              })}
+                              {week.label}
                             </span>
                           </TableHead>
                         ))}
@@ -366,7 +349,8 @@ export default function KPICourses() {
                               </Select>
                             )}
                           </TableCell>
-                          {[1, 2, 3, 4, 5].map((weekNum) => {
+                          {monthWeeks.map((week) => {
+                            const weekNum = week.weekNumber;
                             const weekInstructorKey = `week${weekNum}_instructor` as keyof CourseKPI;
                             const weekAttendanceKey = `week${weekNum}_attendance` as keyof CourseKPI;
                             const weekInstructor = course[weekInstructorKey] as string | null;
@@ -528,7 +512,7 @@ export default function KPICourses() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          <TableCell colSpan={monthWeeks.length} className="text-center text-muted-foreground">
                             Remplir après création
                           </TableCell>
                           <TableCell>
