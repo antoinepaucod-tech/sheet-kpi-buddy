@@ -41,6 +41,7 @@ import { ScheduleCalendarView } from "@/components/ScheduleCalendarView";
 import { InteractiveChart } from "@/components/InteractiveChart";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useMonthWeeks } from "@/hooks/useMonthWeeks";
 
 const DAYS_OF_WEEK = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -149,6 +150,10 @@ const CourseKPI = () => {
     updateTemplate: updateScheduleTemplate, 
     deleteTemplate: deleteScheduleTemplate 
   } = useScheduleTemplates();
+  
+  // Get weeks for the selected month (4 or 5 weeks dynamically)
+  // Note: selectedMonth is 0-indexed here, but useMonthWeeks expects 1-indexed
+  const { weeks: monthWeeks } = useMonthWeeks(selectedYear, selectedMonth + 1);
 
   // Current month courses
   const { data: courses = [], isLoading } = useQuery({
@@ -1096,11 +1101,15 @@ const CourseKPI = () => {
                                       <TableHead>Horaire</TableHead>
                                       <TableHead>Cours</TableHead>
                                       <TableHead>Instructeur</TableHead>
-                                      <TableHead className="text-center">S1</TableHead>
-                                      <TableHead className="text-center">S2</TableHead>
-                                      <TableHead className="text-center">S3</TableHead>
-                                      <TableHead className="text-center">S4</TableHead>
-                                      <TableHead className="text-center">S5</TableHead>
+                                      {monthWeeks.map((week) => (
+                                        <TableHead key={week.weekNumber} className="text-center">
+                                          S{week.weekNumber}
+                                          <br />
+                                          <span className="text-xs text-muted-foreground">
+                                            {week.label}
+                                          </span>
+                                        </TableHead>
+                                      ))}
                                       <TableHead>Dépenses</TableHead>
                                       <TableHead>Fréq.</TableHead>
                                       <TableHead>Actions</TableHead>
@@ -1112,8 +1121,9 @@ const CourseKPI = () => {
                                         <TableCell className="font-medium">{course.time_slot}</TableCell>
                                         <TableCell>{course.course_name}</TableCell>
                                         <TableCell>{course.instructor || "—"}</TableCell>
-                                        {([1, 2, 3, 4, 5] as const).map((weekNum) => {
-                                          const key = `week${weekNum}_instructor` as const;
+                                        {monthWeeks.map((week) => {
+                                          const weekNum = week.weekNumber as 1 | 2 | 3 | 4 | 5;
+                                          const key = `week${weekNum}_instructor` as `week${1|2|3|4|5}_instructor`;
                                           const replacement = course[key];
                                           const isReplacement = !!replacement && replacement !== course.instructor;
 
