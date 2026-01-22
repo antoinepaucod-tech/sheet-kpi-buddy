@@ -184,6 +184,30 @@ export default function KPIClient() {
     return getWeeksInMonth(selectedYear, parseInt(selectedMonth));
   }, [selectedYear, selectedMonth]);
 
+  // Get only elapsed weeks (up to current week) for calculating averages
+  // This prevents underestimating engagement when viewing a month in progress
+  const elapsedWeeks = useMemo(() => {
+    const now = new Date();
+    const currentWeekNum = getWeek(now, { weekStartsOn: 1 });
+    const currentYear = getYear(now);
+    const currentMonth = getMonth(now) + 1;
+    
+    // If viewing a past month or past year, all weeks are elapsed
+    if (selectedYear < currentYear || 
+        (selectedYear === currentYear && parseInt(selectedMonth) < currentMonth)) {
+      return targetWeeks;
+    }
+    
+    // If viewing a future month, no weeks are elapsed yet
+    if (selectedYear > currentYear || 
+        (selectedYear === currentYear && parseInt(selectedMonth) > currentMonth)) {
+      return [];
+    }
+    
+    // Current month: filter weeks up to and including current week
+    return targetWeeks.filter(weekNum => weekNum <= currentWeekNum);
+  }, [selectedYear, selectedMonth, targetWeeks]);
+
   // Calculate member stats for the selected month using calendar weeks
   const memberStats = useMemo((): MemberStat[] => {
     if (!members || !weeklyTrainings) return [];
@@ -233,10 +257,10 @@ export default function KPIClient() {
         const totalTrainings = memberTrainings.reduce((sum, t) => sum + t.trainings_count, 0);
         const weeksWithData = memberTrainings.filter(t => t.trainings_count > 0).length;
         
-        // Calculate average per week based on weeks in the month
-        const averagePerWeek = targetWeeks.length > 0 
-          ? totalTrainings / targetWeeks.length 
-          : 0;
+        // Calculate average per week based on ELAPSED weeks only (not future weeks in the month)
+        // This gives accurate engagement stats when viewing a month in progress
+        const weeksForAverage = elapsedWeeks.length > 0 ? elapsedWeeks.length : 1;
+        const averagePerWeek = totalTrainings / weeksForAverage;
         
         const engagement = getEngagementLevel(averagePerWeek);
 
@@ -258,7 +282,7 @@ export default function KPIClient() {
         }
         return a.averagePerWeek - b.averagePerWeek;
       });
-  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks, selectedYear, selectedMonth]);
+  }, [members, weeklyTrainings, sortOrder, membershipFilter, trackingMemberships, targetWeeks, elapsedWeeks, selectedYear, selectedMonth]);
 
   // Filter by search query
   const filteredMemberStats = useMemo(() => {
