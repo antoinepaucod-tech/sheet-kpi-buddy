@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { startOfMonth, endOfMonth, getWeek } from "date-fns";
+import { startOfMonth, endOfMonth, getWeek, startOfWeek, getMonth, getYear } from "date-fns";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Membership categories for filtering
@@ -75,20 +75,33 @@ const engagementStyles: Record<EngagementLevel, { bg: string; text: string; labe
 };
 
 // Helper to get week numbers for a specific month
+// RULE: A week belongs to the month where it STARTS (Monday)
+// This ensures each week is counted in only ONE month, avoiding overlaps
 const getWeeksInMonth = (year: number, month: number): number[] => {
   const weeks: number[] = [];
-  const start = startOfMonth(new Date(year, month - 1));
-  const end = endOfMonth(new Date(year, month - 1));
   
-  let current = start;
-  while (current <= end) {
-    const weekNum = getWeek(current, { weekStartsOn: 1 });
-    if (!weeks.includes(weekNum)) {
+  // Iterate through all 53 possible ISO weeks
+  for (let weekNum = 1; weekNum <= 53; weekNum++) {
+    // Find the Monday of this week
+    // Start from Jan 4 which is always in week 1 by ISO definition
+    const jan4 = new Date(year, 0, 4);
+    const jan4Week = getWeek(jan4, { weekStartsOn: 1 });
+    
+    // Calculate the Monday of the target week
+    const daysToAdd = (weekNum - jan4Week) * 7;
+    const someDay = new Date(jan4.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+    const monday = startOfWeek(someDay, { weekStartsOn: 1 });
+    
+    // Check if the Monday falls in the target month AND year
+    const mondayMonth = getMonth(monday) + 1; // getMonth is 0-indexed
+    const mondayYear = getYear(monday);
+    
+    if (mondayMonth === month && mondayYear === year) {
       weeks.push(weekNum);
     }
-    current = new Date(current.getTime() + 7 * 24 * 60 * 60 * 1000);
   }
-  return weeks;
+  
+  return weeks.sort((a, b) => a - b);
 };
 
 const months = [
