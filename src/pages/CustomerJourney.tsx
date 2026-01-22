@@ -2,12 +2,13 @@ import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format, differenceInWeeks, startOfWeek, parseISO, addWeeks, startOfYear, subWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Users, Wallet, CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
+import { CalendarIcon, Users, CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { MemberActivityDialog } from "@/components/MemberActivityDialog";
 import { AddMemberDialog, type MemberFormData } from "@/components/AddMemberDialog";
+import { CashCollectedCard } from "@/components/CashCollectedCard";
 import { MembershipCategoryCard } from "@/components/MembershipCategoryCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
@@ -895,17 +896,12 @@ const CustomerJourney = () => {
             </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <Wallet className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cash Collecté Total</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{summaryStats.totalCash.toLocaleString()} CHF</p>
-              </div>
-            </div>
-          </Card>
+          <CashCollectedCard 
+            members={members}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            isCoachMembership={isCoachMembership}
+          />
 
           <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
             <div className="flex items-center gap-3">
