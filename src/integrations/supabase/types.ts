@@ -361,6 +361,33 @@ export type Database = {
         }
         Relationships: []
       }
+      excluded_recurring_expenses: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          month: number
+          service_description: string
+          year: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          month: number
+          service_description: string
+          year: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          month?: number
+          service_description?: string
+          year?: number
+        }
+        Relationships: []
+      }
       instructors: {
         Row: {
           created_at: string
