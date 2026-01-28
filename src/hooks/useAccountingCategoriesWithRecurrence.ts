@@ -375,6 +375,17 @@ export const useAccountingCategoriesWithRecurrence = () => {
           .map((tx: any) => `${tx.category}|${tx.service_description || ''}`)
       );
 
+      // Fetch excluded recurring expenses for this month
+      const { data: excludedExpenses } = await (supabase as any)
+        .from("excluded_recurring_expenses")
+        .select("category, service_description")
+        .eq("year", year)
+        .eq("month", month + 1);
+      
+      const excludedExpenseKeys = new Set(
+        (excludedExpenses || []).map((ex: any) => `${ex.category}|${ex.service_description || ''}`)
+      );
+
       expensesFromPrevMonth.forEach((prevExpense: any) => {
         const clientName = prevExpense.client_name || '';
         const amount = Number(prevExpense.amount) || 0;
@@ -383,6 +394,13 @@ export const useAccountingCategoriesWithRecurrence = () => {
 
         // Create unique key using category + service_description (more reliable for expenses)
         const expenseKey = `${category}|${serviceDesc}`;
+        
+        // Skip if this expense was explicitly excluded (deleted by user)
+        if (excludedExpenseKeys.has(expenseKey)) {
+          skipped++;
+          return;
+        }
+        
         if (processedExpenseKeys.has(expenseKey)) {
           return;
         }

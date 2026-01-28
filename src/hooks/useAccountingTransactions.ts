@@ -79,6 +79,34 @@ export const useAccountingTransactions = (year: number, month: number) => {
 
   const deleteTransaction = useMutation({
     mutationFn: async (id: string) => {
+      // First, get the transaction details to track exclusion for expenses
+      const { data: transaction, error: fetchError } = await supabase
+        .from("accounting_transactions")
+        .select("*")
+        .eq("id", id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // If it's an expense, add to excluded list so it won't be regenerated
+      if (transaction && transaction.transaction_type === "expense") {
+        const { error: excludeError } = await supabase
+          .from("excluded_recurring_expenses")
+          .upsert({
+            year: transaction.year,
+            month: transaction.month,
+            category: transaction.category,
+            service_description: transaction.service_description || "",
+          }, {
+            onConflict: "year,month,category,service_description",
+          });
+        
+        if (excludeError) {
+          console.error("Error adding exclusion:", excludeError);
+        }
+      }
+      
+      // Then delete the transaction
       const { error } = await supabase
         .from("accounting_transactions")
         .delete()
