@@ -73,12 +73,8 @@ export const useAccountingCategoriesWithRecurrence = () => {
         .or("is_recurring.eq.true,revenue_type.eq.membre");
 
       if (fetchError) throw fetchError;
-      if (!recurringCategories || recurringCategories.length === 0) {
-        throw new Error("Aucune catégorie récurrente ou de type membre configurée");
-      }
 
       // Get all members to check their status during transaction generation
-      // We filter by exit_date and subscription_end_date during the transaction loop
       const { data: members, error: membersError } = await supabase
         .from("customer_members")
         .select("*");
@@ -111,15 +107,28 @@ export const useAccountingCategoriesWithRecurrence = () => {
       const prevYear = prevDate.getFullYear();
       const prevMonth = prevDate.getMonth(); // 0-based
 
-      // IMPORTANT: Only fetch VALIDATED transactions from previous month
-      // Rule: If an expense is not validated in month B, it should NOT be repeated for month C
-      const { data: prevTx, error: prevError } = await (supabase as any)
+      // Fetch ALL expense transactions from previous month (validated or not)
+      // For revenues: only fetch validated transactions (business rule)
+      const { data: prevTxValidated, error: prevErrorValidated } = await (supabase as any)
         .from("accounting_transactions")
         .select("transaction_type, category, client_name, amount, created_at, year, month, service_description, product_description, payment_method, notes, is_validated")
         .eq("year", prevYear)
         .eq("month", prevMonth + 1)
-        .eq("is_validated", true); // Only include validated transactions
-      if (prevError) throw prevError;
+        .eq("transaction_type", "revenue")
+        .eq("is_validated", true);
+      if (prevErrorValidated) throw prevErrorValidated;
+
+      // For expenses: fetch ALL transactions from previous month (for auto-regeneration)
+      const { data: prevTxExpenses, error: prevErrorExpenses } = await (supabase as any)
+        .from("accounting_transactions")
+        .select("transaction_type, category, client_name, amount, created_at, year, month, service_description, product_description, payment_method, notes, is_validated")
+        .eq("year", prevYear)
+        .eq("month", prevMonth + 1)
+        .eq("transaction_type", "expense");
+      if (prevErrorExpenses) throw prevErrorExpenses;
+
+      // Combine all previous transactions
+      const prevTx = [...(prevTxValidated || []), ...(prevTxExpenses || [])];
 
       // Map of last month's amount per (type|category|client)
       const prevAmountMap = new Map<string, { amount: number; created_at: string }>();
@@ -136,7 +145,8 @@ export const useAccountingCategoriesWithRecurrence = () => {
       const transactionsToCreate: any[] = [];
       let skipped = 0;
 
-      recurringCategories.forEach((cat: any) => {
+      // Process recurring revenue categories (original logic)
+      (recurringCategories || []).forEach((cat: any) => {
         // Check if category should be included
         let includeCategory = false;
 
@@ -173,7 +183,6 @@ export const useAccountingCategoriesWithRecurrence = () => {
             const hasExistingThisMonthForClient = existingClientMonthKeys.has(clientMonthKey);
 
             // Règle anti-doublon : si une entrée existe déjà pour ce client/catégorie/mois
-            // (même si le montant a été modifié manuellement), on n'en recrée pas une autre.
             if (hasExistingThisMonthForClient) {
               skipped++;
               return;
@@ -184,7 +193,6 @@ export const useAccountingCategoriesWithRecurrence = () => {
               const exitDate = new Date(member.exit_date);
               const currentMonthStart = new Date(year, month, 1);
               
-              // If exit date is before the current month starts, skip
               if (exitDate < currentMonthStart) {
                 return; // Skip - member has exited
               }
@@ -195,24 +203,20 @@ export const useAccountingCategoriesWithRecurrence = () => {
               const subscriptionEndDate = new Date(member.subscription_end_date);
               const currentMonthStart = new Date(year, month, 1);
               
-              // Check if subscription_end_date is the last day of its month
               const endYear = subscriptionEndDate.getFullYear();
               const endMonth = subscriptionEndDate.getMonth();
               const lastDayOfEndMonth = new Date(endYear, endMonth + 1, 0).getDate();
               const isLastDayOfMonth = subscriptionEndDate.getDate() === lastDayOfEndMonth;
               
-              // If subscription ended before the current month starts, skip
               if (subscriptionEndDate < currentMonthStart) {
                 return; // Skip - subscription has ended
               }
               
-              // If subscription ends on the last day of the previous month, also skip
-              // (e.g., ends Dec 31 → don't show in January)
               if (isLastDayOfMonth && endMonth === month - 1 && endYear === year) {
-                return; // Skip - subscription ended on last day of previous month
+                return;
               }
               if (isLastDayOfMonth && month === 0 && endMonth === 11 && endYear === year - 1) {
-                return; // Skip - subscription ended on Dec 31 of previous year
+                return;
               }
             }
             
@@ -220,7 +224,6 @@ export const useAccountingCategoriesWithRecurrence = () => {
             let shouldGenerate = false;
             let amount = 0;
             
-            // Check if this is an annual/paid-in-full membership
             const isAnnualPaidInFull = [
               'OPEN GYM - PAIEMENT ANNUEL X1',
               'UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL',
@@ -228,14 +231,11 @@ export const useAccountingCategoriesWithRecurrence = () => {
               'OFFRE 6 MOIS - 499 CHF'
             ].includes(cat.name);
 
-            // Check if member's contract started this month (new member - first transaction)
             if (member.contract_signed_date) {
               const contractDate = new Date(member.contract_signed_date);
               const currentMonthStart = new Date(year, month, 1);
               const currentMonthEnd = new Date(year, month + 1, 0);
               
-              // If contract was signed this month AND no previous transaction exists,
-              // AND no existing transaction in this month (manual entry), generate with default amount
               if (
                 contractDate >= currentMonthStart &&
                 contractDate <= currentMonthEnd &&
@@ -247,15 +247,13 @@ export const useAccountingCategoriesWithRecurrence = () => {
               }
             }
             
-            // OR check if member had a transaction last month (continuing membership)
             if (!shouldGenerate && carriedAmount !== undefined) {
               shouldGenerate = true;
-              // For annual/paid-in-full memberships, recurring amount is 0
               amount = isAnnualPaidInFull ? 0 : carriedAmount;
             }
 
             if (!shouldGenerate) {
-              return; // Skip if no previous transaction and not a new member
+              return;
             }
 
             const dupKey = `${dateStr}|${cat.type}|${cat.name}|${member.name}|${amount}`;
@@ -276,7 +274,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
                 ? "Membre PIF"
                 : "Revenu EFT Général",
               amount,
-              amount_received: 0, // cash resets to 0 each recurrence
+              amount_received: 0,
               year: year,
               month: month + 1,
               month_name: MONTHS[month],
@@ -286,51 +284,43 @@ export const useAccountingCategoriesWithRecurrence = () => {
           });
         } else {
           // No matching members - find ALL previous transactions for this category and carry them over
-          // This handles expenses like Spotify which have client_name set
           const prevTransactionsForCategory = (prevTx || []).filter((tx: any) => 
             tx.transaction_type === cat.type && tx.category === cat.name
           );
           
           if (prevTransactionsForCategory.length === 0) {
-            return; // Skip if no previous transactions for this category
+            return;
           }
 
-          // Create a transaction for each previous transaction in this category
           prevTransactionsForCategory.forEach((prevTransaction: any) => {
             const clientName = prevTransaction.client_name || '';
             const amount = Number(prevTransaction.amount) || 0;
             
-            // IMPORTANT: For member revenue types, check if this client's current membership
-            // still matches this category. If not, skip (member changed membership type).
             if (cat.revenue_type === 'membre' && clientName) {
               const memberNow = members?.find((m: any) => m.name === clientName);
               if (memberNow && memberNow.membership !== cat.name) {
-                // Member's current membership is different from this category - skip
                 return;
               }
-              // Also check if member has exited or subscription ended
               if (memberNow?.exit_date) {
                 const exitDate = new Date(memberNow.exit_date);
                 const currentMonthStart = new Date(year, month, 1);
                 if (exitDate < currentMonthStart) {
-                  return; // Skip - member has exited
+                  return;
                 }
               }
               if (memberNow?.subscription_end_date) {
                 const subscriptionEndDate = new Date(memberNow.subscription_end_date);
                 const currentMonthStart = new Date(year, month, 1);
                 
-                // Check if subscription_end_date is the last day of its month
                 const endYear = subscriptionEndDate.getFullYear();
                 const endMonth = subscriptionEndDate.getMonth();
                 const lastDayOfEndMonth = new Date(endYear, endMonth + 1, 0).getDate();
                 const isLastDayOfMonth = subscriptionEndDate.getDate() === lastDayOfEndMonth;
                 
                 if (subscriptionEndDate < currentMonthStart) {
-                  return; // Skip - subscription has ended
+                  return;
                 }
                 
-                // If subscription ends on the last day of the previous month, also skip
                 if (isLastDayOfMonth && endMonth === month - 1 && endYear === year) {
                   return;
                 }
@@ -340,7 +330,6 @@ export const useAccountingCategoriesWithRecurrence = () => {
               }
             }
             
-            // Check if already exists this month
             const clientMonthKey = `${year}-${month + 1}|${cat.name}|${clientName}`;
             if (existingClientMonthKeys.has(clientMonthKey)) {
               skipped++;
@@ -361,7 +350,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
               service_description: prevTransaction.service_description || cat.name,
               product_description: prevTransaction.product_description || cat.name,
               amount,
-              amount_received: 0, // cash resets to 0 each recurrence
+              amount_received: 0,
               year: year,
               month: month + 1,
               month_name: MONTHS[month],
@@ -372,6 +361,71 @@ export const useAccountingCategoriesWithRecurrence = () => {
             });
           });
         }
+      });
+
+      // NEW: Auto-regenerate ALL expenses from previous month
+      // This ensures expenses are automatically carried over regardless of category configuration
+      const expensesFromPrevMonth = prevTxExpenses || [];
+      const processedExpenseKeys = new Set<string>();
+
+      expensesFromPrevMonth.forEach((prevExpense: any) => {
+        const clientName = prevExpense.client_name || '';
+        const amount = Number(prevExpense.amount) || 0;
+        const category = prevExpense.category;
+
+        // Create unique key to avoid duplicates within this run
+        const expenseKey = `${category}|${clientName}|${amount}`;
+        if (processedExpenseKeys.has(expenseKey)) {
+          return;
+        }
+        processedExpenseKeys.add(expenseKey);
+
+        // Check if already exists this month
+        const clientMonthKey = `${year}-${month + 1}|${category}|${clientName}`;
+        if (existingClientMonthKeys.has(clientMonthKey)) {
+          skipped++;
+          return;
+        }
+
+        const day = 1; // Use first day of month for expenses
+        const transactionDate = new Date(year, month, day);
+        const dateStr = transactionDate.toISOString().split('T')[0];
+
+        const dupKey = `${dateStr}|expense|${category}|${clientName}|${amount}`;
+        if (existingKeys.has(dupKey)) {
+          skipped++;
+          return;
+        }
+
+        // Check if we already added this expense in the recurring categories loop
+        const alreadyAdded = transactionsToCreate.some(
+          (tx: any) => 
+            tx.transaction_type === 'expense' && 
+            tx.category === category && 
+            tx.client_name === clientName
+        );
+
+        if (alreadyAdded) {
+          return;
+        }
+
+        transactionsToCreate.push({
+          transaction_date: dateStr,
+          transaction_type: 'expense',
+          category: category,
+          client_name: clientName || null,
+          service_description: prevExpense.service_description || category,
+          product_description: prevExpense.product_description || category,
+          amount,
+          amount_received: 0, // Cash resets to 0 each recurrence
+          year: year,
+          month: month + 1,
+          month_name: MONTHS[month],
+          is_auto_generated: true,
+          is_validated: false,
+          payment_method: prevExpense.payment_method || null,
+          notes: prevExpense.notes || null,
+        });
       });
 
       if (transactionsToCreate.length === 0) {
