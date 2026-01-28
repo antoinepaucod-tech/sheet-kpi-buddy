@@ -368,21 +368,28 @@ export const useAccountingCategoriesWithRecurrence = () => {
       const expensesFromPrevMonth = prevTxExpenses || [];
       const processedExpenseKeys = new Set<string>();
 
+      // Create a more flexible key lookup for existing transactions (using service_description as a unique identifier)
+      const existingExpenseServiceKeys = new Set(
+        (existingTx || [])
+          .filter((tx: any) => tx.transaction_type === 'expense')
+          .map((tx: any) => `${tx.category}|${tx.service_description || ''}`)
+      );
+
       expensesFromPrevMonth.forEach((prevExpense: any) => {
         const clientName = prevExpense.client_name || '';
         const amount = Number(prevExpense.amount) || 0;
         const category = prevExpense.category;
+        const serviceDesc = prevExpense.service_description || '';
 
-        // Create unique key to avoid duplicates within this run
-        const expenseKey = `${category}|${clientName}|${amount}`;
+        // Create unique key using category + service_description (more reliable for expenses)
+        const expenseKey = `${category}|${serviceDesc}`;
         if (processedExpenseKeys.has(expenseKey)) {
           return;
         }
         processedExpenseKeys.add(expenseKey);
 
-        // Check if already exists this month
-        const clientMonthKey = `${year}-${month + 1}|${category}|${clientName}`;
-        if (existingClientMonthKeys.has(clientMonthKey)) {
+        // Check if already exists this month using service_description as unique identifier
+        if (existingExpenseServiceKeys.has(expenseKey)) {
           skipped++;
           return;
         }
@@ -391,18 +398,12 @@ export const useAccountingCategoriesWithRecurrence = () => {
         const transactionDate = new Date(year, month, day);
         const dateStr = transactionDate.toISOString().split('T')[0];
 
-        const dupKey = `${dateStr}|expense|${category}|${clientName}|${amount}`;
-        if (existingKeys.has(dupKey)) {
-          skipped++;
-          return;
-        }
-
         // Check if we already added this expense in the recurring categories loop
         const alreadyAdded = transactionsToCreate.some(
           (tx: any) => 
             tx.transaction_type === 'expense' && 
             tx.category === category && 
-            tx.client_name === clientName
+            (tx.service_description || '') === serviceDesc
         );
 
         if (alreadyAdded) {
@@ -414,7 +415,7 @@ export const useAccountingCategoriesWithRecurrence = () => {
           transaction_type: 'expense',
           category: category,
           client_name: clientName || null,
-          service_description: prevExpense.service_description || category,
+          service_description: serviceDesc || category,
           product_description: prevExpense.product_description || category,
           amount,
           amount_received: 0, // Cash resets to 0 each recurrence
