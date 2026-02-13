@@ -82,7 +82,7 @@ export function MemberActivityDialog({
   const [changeMembership, setChangeMembership] = useState(false);
   const [newMembership, setNewMembership] = useState(member.membership);
   const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
-  const [renewalMemberType, setRenewalMemberType] = useState<string>(member.member_type || "recurring");
+  const [renewalMemberType, setRenewalMemberType] = useState<string>(member.member_type || "Membres Généraux Récurrents");
   const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
   const [cashCollectionDate, setCashCollectionDate] = useState<Date | undefined>(undefined);
   const [membershipCategories, setMembershipCategories] = useState<MembershipCategory[]>([]);
@@ -258,7 +258,7 @@ export function MemberActivityDialog({
     setRenewalMonths("12");
     setChangeMembership(false);
     setNewMembership(member.membership);
-    setRenewalMemberType(member.member_type || "recurring");
+    setRenewalMemberType(member.member_type || "Membres Généraux Récurrents");
     setRenewalCashCollected("0");
     setCashCollectionDate(new Date()); // Default to today's date (independent from renewal start date)
     setRenewalDialogOpen(true);
@@ -330,9 +330,9 @@ export function MemberActivityDialog({
         
         // Map member type to product description
         let productDescription = "Revenu EFT Général";
-        if (renewalMemberType === "Membres PT" || renewalMemberType === "pif") {
-          productDescription = renewalMemberType === "pif" ? "Membre PIF" : "Revenu PT";
-        } else if (renewalMemberType === "Membres PIF" || renewalMemberType === "pif") {
+        if (renewalMemberType === "Membres PT") {
+          productDescription = "Revenu PT";
+        } else if (renewalMemberType === "Membres PIF") {
           productDescription = "Membre PIF";
         }
         
@@ -1036,7 +1036,7 @@ export function MemberActivityDialog({
                   <SelectValue placeholder="Sélectionner un type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recurring">Récurrent</SelectItem>
+                  <SelectItem value="Membres Généraux Récurrents">Récurrent</SelectItem>
                   <SelectItem value="Membres PIF">PIF</SelectItem>
                   <SelectItem value="Membres PT">PT</SelectItem>
                 </SelectContent>

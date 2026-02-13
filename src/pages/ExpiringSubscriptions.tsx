@@ -80,7 +80,7 @@ const ExpiringSubscriptions = () => {
   const [changeMembership, setChangeMembership] = useState(false);
   const [newMembership, setNewMembership] = useState("");
   const [renewalStartDate, setRenewalStartDate] = useState<Date | undefined>(undefined);
-  const [renewalMemberType, setRenewalMemberType] = useState<string>("recurring");
+  const [renewalMemberType, setRenewalMemberType] = useState<string>("Membres Généraux Récurrents");
   const [renewalCashCollected, setRenewalCashCollected] = useState<string>("0");
   const [cashCollectionDate, setCashCollectionDate] = useState<Date | undefined>(undefined);
   
@@ -203,7 +203,7 @@ const ExpiringSubscriptions = () => {
       : new Date();
     setRenewalStartDate(defaultStartDate);
     // Conserver le type de membre actuel ou "recurring" par défaut
-    setRenewalMemberType(member.member_type || "recurring");
+    setRenewalMemberType(member.member_type || "Membres Généraux Récurrents");
     setRenewalCashCollected("0");
     setCashCollectionDate(new Date()); // Default to today's date (independent from renewal start date)
     setRenewalDialogOpen(true);
@@ -633,8 +633,8 @@ const ExpiringSubscriptions = () => {
                   <SelectValue placeholder="Sélectionner le type" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
-                  <SelectItem value="recurring">Récurrent (paiement mensuel)</SelectItem>
-                  <SelectItem value="pif">PIF (paiement intégral)</SelectItem>
+                  <SelectItem value="Membres Généraux Récurrents">Récurrent (paiement mensuel)</SelectItem>
+                  <SelectItem value="Membres PIF">PIF (paiement intégral)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
