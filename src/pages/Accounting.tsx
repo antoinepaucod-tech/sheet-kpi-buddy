@@ -59,7 +59,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAccountingTransactions, type AccountingTransaction } from "@/hooks/useAccountingTransactions";
 import { useRecurringTransactions, type RecurringTransaction } from "@/hooks/useRecurringTransactions";
 import { useAccountingCategoriesWithRecurrence } from "@/hooks/useAccountingCategoriesWithRecurrence";
-import { useCashCollectedValidation } from "@/hooks/useCashCollectedValidation";
+
 import { useCoachMembership } from "@/hooks/useCoachMembership";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -524,8 +524,7 @@ const Accounting = () => {
     loadMembers();
   }, []);
   
-  // Validate cash collected across pages
-  const { validation } = useCashCollectedValidation(selectedYear, selectedMonth);
+  // Cash collected validation removed - was comparing new member cash vs total member revenue (apples to oranges)
 
   const { 
     recurringTransactions, 
