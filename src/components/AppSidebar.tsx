@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut, Trophy, Settings } from "lucide-react";
+import { BarChart3, Users, TrendingUp, GraduationCap, Calendar, Receipt, LayoutDashboard, Bell, LogOut, Trophy, Settings, Package } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -28,6 +28,7 @@ const allMenuItems = [
   { title: "6 Weeks Challenge", url: "/6-weeks-challenge", icon: Trophy, roles: ["admin", "staff", "viewer", "coach"] },
   { title: "Comptabilité", url: "/accounting", icon: Receipt, roles: ["admin", "staff", "viewer"] },
   { title: "Échéances", url: "/expiring-subscriptions", icon: Bell, showAlert: true, roles: ["admin", "staff", "viewer"] },
+  { title: "Inventaire", url: "/inventory", icon: Package, roles: ["admin", "staff", "viewer"] },
 ];
 
 const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap, roles: ["admin", "staff", "viewer", "coach"] };

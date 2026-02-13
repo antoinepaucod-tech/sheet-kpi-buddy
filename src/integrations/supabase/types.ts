@@ -412,6 +412,92 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          expected_quantity: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          expected_quantity?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          expected_quantity?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_monthly_checks: {
+        Row: {
+          actual_quantity: number
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          id: string
+          item_id: string
+          month: number
+          month_name: string
+          notes: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          actual_quantity?: number
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          month: number
+          month_name: string
+          notes?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          actual_quantity?: number
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          month?: number
+          month_name?: string
+          notes?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_monthly_checks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_comments: {
         Row: {
           comment: string
