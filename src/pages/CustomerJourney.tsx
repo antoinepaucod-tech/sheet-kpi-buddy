@@ -56,14 +56,13 @@ const CustomerJourney = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedView, setSelectedView] = useState("index");
   const [selectedYear, setSelectedYear] = useState<number | "all">(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
+  const [selectedMonth, setSelectedMonth] = useState<number | "all">(new Date().getMonth());
   const [searchTerm, setSearchTerm] = useState("");
   const [memberStatus, setMemberStatus] = useState<"active" | "exited" | "all">("active");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [onboardingFilter, setOnboardingFilter] = useState<OnboardingStatus>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [engagementViewMode, setEngagementViewMode] = useState<"week" | "year">("week");
   const [showAllAtRisk, setShowAllAtRisk] = useState(false);
 
   const {
@@ -816,12 +815,75 @@ const CustomerJourney = () => {
     return 'at-risk';
   };
 
-  // Combined function that uses the selected mode
-  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
-    if (engagementViewMode === "year") {
-      return getYearlyEngagement(member);
+  // Monthly engagement: average over the selected month
+  const getMonthlyEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
+    if (!requiresTrainingTracking(member.membership)) return 'none';
+    if (!member.contract_signed_date) return 'none';
+    
+    if (selectedMonth === "all") return 'none';
+    
+    const contractDate = parseISO(member.contract_signed_date);
+    const selectedYear_num = selectedYear === "all" ? new Date().getFullYear() : selectedYear;
+    const selectedMonth_num = selectedMonth as number;
+    
+    // Check if member was active during this month
+    const monthStart = new Date(selectedYear_num, selectedMonth_num, 1);
+    const monthEnd = new Date(selectedYear_num, selectedMonth_num + 1, 0);
+    
+    // Member must have a contract before month end
+    if (contractDate > monthEnd) return 'none';
+    
+    // Member must not have exited before month start
+    const endDateStr = member.exit_date || member.subscription_end_date;
+    if (endDateStr) {
+      const endDate = parseISO(endDateStr);
+      if (endDate < monthStart) return 'none';
     }
-    return getWeeklyEngagement(member);
+    
+    // Calculate weeks in this month for this member
+    let totalTrainings = 0;
+    let weekCount = 0;
+    
+    // Iterate through all weeks since contract
+    const memberWeek = getMemberWeekNumber(member.contract_signed_date);
+    if (!memberWeek || memberWeek < 1) return 'none';
+    
+    // Find which weeks fall in the selected month
+    let currentDate = new Date(contractDate);
+    let weekNum = 1;
+    
+    while (currentDate <= monthEnd && weekNum <= memberWeek) {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      
+      // Check if this week overlaps with the selected month
+      if (weekStart <= monthEnd && weekEnd >= monthStart) {
+        totalTrainings += getWeeklyTraining(member.id, weekNum);
+        weekCount++;
+      }
+      
+      currentDate = new Date(weekStart);
+      currentDate.setDate(currentDate.getDate() + 7);
+      weekNum++;
+    }
+    
+    if (weekCount === 0) return 'at-risk';
+    
+    const avgPerWeek = totalTrainings / weekCount;
+    
+    if (avgPerWeek >= 3) return 'high';
+    if (avgPerWeek >= 2) return 'medium';
+    if (avgPerWeek >= 1) return 'low';
+    return 'at-risk';
+  };
+
+  // Combined function that uses the selected filters
+  const getMemberEngagement = (member: Member): 'high' | 'medium' | 'low' | 'at-risk' | 'none' => {
+    if (selectedMonth !== "all") {
+      return getMonthlyEngagement(member);
+    }
+    return getYearlyEngagement(member);
   };
 
   const getEngagementStyle = (engagement: 'high' | 'medium' | 'low' | 'at-risk') => {
@@ -1143,27 +1205,6 @@ const CustomerJourney = () => {
                 <>
                   <div className="h-8 w-px bg-border" />
                   
-                  {/* Engagement View Mode Toggle */}
-                  <div className="flex gap-1 items-center bg-muted/50 rounded-lg p-1">
-                    <Button
-                      variant={engagementViewMode === "week" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setEngagementViewMode("week")}
-                      className="h-8 gap-1.5"
-                    >
-                      <CalendarIcon className="h-4 w-4" />
-                      Semaine
-                    </Button>
-                    <Button
-                      variant={engagementViewMode === "year" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setEngagementViewMode("year")}
-                      className="h-8 gap-1.5"
-                    >
-                      <BarChart3 className="h-4 w-4" />
-                      Moyenne
-                    </Button>
-                  </div>
                   
                   <div className="flex-1" />
                   <AddMemberDialog onAdd={addMember} />
