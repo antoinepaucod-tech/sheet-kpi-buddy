@@ -13,6 +13,7 @@ const routeLabels: Record<string, string> = {
   "/expiring-subscriptions": "Échéances",
   "/tutorial": "Tutoriel",
   "/users": "Gestion Utilisateurs",
+  "/inventory": "Inventaire",
 };
 
 export const Breadcrumbs = () => {
