@@ -375,12 +375,11 @@ export const useAccountingCategoriesWithRecurrence = () => {
           .map((tx: any) => `${tx.category}|${tx.service_description || ''}`)
       );
 
-      // Fetch excluded recurring expenses for this month
+      // Fetch ALL excluded recurring expenses (not just this month)
+      // Once a user deletes an expense, it should never come back in future months
       const { data: excludedExpenses } = await (supabase as any)
         .from("excluded_recurring_expenses")
-        .select("category, service_description")
-        .eq("year", year)
-        .eq("month", month + 1);
+        .select("category, service_description");
       
       const excludedExpenseKeys = new Set(
         (excludedExpenses || []).map((ex: any) => `${ex.category}|${ex.service_description || ''}`)
