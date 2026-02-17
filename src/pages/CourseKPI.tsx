@@ -409,15 +409,26 @@ const CourseKPI = () => {
 
     const updates: any = { [week]: value };
 
-    const weeks = [
+    // Get all week attendance values (with the update applied)
+    const allWeekValues = [
       updates.week1_attendance ?? course.week1_attendance,
       updates.week2_attendance ?? course.week2_attendance,
       updates.week3_attendance ?? course.week3_attendance,
       updates.week4_attendance ?? course.week4_attendance,
       updates.week5_attendance ?? course.week5_attendance,
-    ].filter((w) => w > 0);
+    ];
 
-    const avgAttendance = weeks.length > 0 ? weeks.reduce((a, b) => a + b, 0) / weeks.length : 0;
+    // Only count weeks that have already occurred (Monday <= today)
+    const today = new Date();
+    const elapsedWeeks = monthWeeks.filter(w => w.mondayDate <= today);
+    const elapsedWeekCount = elapsedWeeks.length;
+
+    // Sum attendance only for elapsed weeks
+    const totalAttendance = elapsedWeeks.reduce((sum, w) => {
+      return sum + (allWeekValues[w.weekNumber - 1] || 0);
+    }, 0);
+
+    const avgAttendance = elapsedWeekCount > 0 ? totalAttendance / elapsedWeekCount : 0;
     const rate = course.max_capacity > 0 ? (avgAttendance / course.max_capacity) * 100 : 0;
 
     updates.attendance_rate = Math.round(rate * 100) / 100;
