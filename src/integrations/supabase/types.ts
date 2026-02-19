@@ -388,6 +388,27 @@ export type Database = {
         }
         Relationships: []
       }
+      excluded_recurring_revenues: {
+        Row: {
+          category: string
+          client_name: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          category: string
+          client_name?: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          category?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       instructors: {
         Row: {
           created_at: string
