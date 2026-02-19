@@ -102,7 +102,23 @@ export const useAccountingTransactions = (year: number, month: number) => {
           });
         
         if (excludeError) {
-          console.error("Error adding exclusion:", excludeError);
+          console.error("Error adding expense exclusion:", excludeError);
+        }
+      }
+
+      // If it's a revenue with a client_name (member), add to excluded revenues so it won't be regenerated
+      if (transaction && transaction.transaction_type === "revenue" && transaction.client_name) {
+        const { error: excludeRevenueError } = await (supabase as any)
+          .from("excluded_recurring_revenues")
+          .upsert({
+            category: transaction.category,
+            client_name: transaction.client_name,
+          }, {
+            onConflict: "category,client_name",
+          });
+        
+        if (excludeRevenueError) {
+          console.error("Error adding revenue exclusion:", excludeRevenueError);
         }
       }
       

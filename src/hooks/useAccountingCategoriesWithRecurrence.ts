@@ -187,6 +187,13 @@ export const useAccountingCategoriesWithRecurrence = () => {
               skipped++;
               return;
             }
+
+            // Skip if this revenue was explicitly excluded (deleted by user)
+            const revenueExcludeKey = `${cat.name}|${member.name}`;
+            if (excludedRevenueKeys.has(revenueExcludeKey)) {
+              skipped++;
+              return;
+            }
             
             // Check if member has exited this month or before
             if (member.exit_date) {
@@ -330,6 +337,15 @@ export const useAccountingCategoriesWithRecurrence = () => {
               }
             }
             
+            // Skip if this revenue was explicitly excluded (deleted by user)
+            if (cat.transaction_type === 'revenue' || cat.type === 'revenue') {
+              const revenueExcludeKey = `${cat.name}|${clientName}`;
+              if (excludedRevenueKeys.has(revenueExcludeKey)) {
+                skipped++;
+                return;
+              }
+            }
+
             const clientMonthKey = `${year}-${month + 1}|${cat.name}|${clientName}`;
             if (existingClientMonthKeys.has(clientMonthKey)) {
               skipped++;
@@ -383,6 +399,16 @@ export const useAccountingCategoriesWithRecurrence = () => {
       
       const excludedExpenseKeys = new Set(
         (excludedExpenses || []).map((ex: any) => `${ex.category}|${ex.service_description || ''}`)
+      );
+
+      // Fetch ALL excluded recurring revenues
+      // Once a user deletes a member revenue, it should never come back
+      const { data: excludedRevenues } = await (supabase as any)
+        .from("excluded_recurring_revenues")
+        .select("category, client_name");
+      
+      const excludedRevenueKeys = new Set(
+        (excludedRevenues || []).map((ex: any) => `${ex.category}|${ex.client_name || ''}`)
       );
 
       expensesFromPrevMonth.forEach((prevExpense: any) => {
