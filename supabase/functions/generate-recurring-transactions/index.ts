@@ -86,9 +86,29 @@ serve(async (req) => {
 
     console.log(`Found ${members?.length || 0} total members`);
 
+    // Get all excluded recurring revenues (permanently deleted by user)
+    const { data: excludedRevenues, error: excludedError } = await supabase
+      .from('excluded_recurring_revenues')
+      .select('category, client_name');
+
+    if (excludedError) {
+      console.error('Error fetching excluded revenues:', excludedError);
+    }
+
+    const excludedRevenueKeys = new Set(
+      (excludedRevenues || []).map((ex: any) => `${ex.category}|${ex.client_name || ''}`)
+    );
+
     const transactionsToCreate = [];
 
     for (const member of members as Member[]) {
+      // RULE 0: Skip if this member/membership was explicitly excluded by user (deleted from accounting)
+      const excludeKey = `${member.membership}|${member.name}`;
+      if (excludedRevenueKeys.has(excludeKey)) {
+        console.log(`Skipping ${member.name} - excluded by user (deleted from accounting)`);
+        continue;
+      }
+
       // RULE 1: Member must have a contract_signed_date
       if (!member.contract_signed_date) {
         console.log(`Skipping ${member.name} - no contract signed date`);
