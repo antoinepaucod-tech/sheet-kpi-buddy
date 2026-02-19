@@ -140,6 +140,24 @@ export const useAccountingCategoriesWithRecurrence = () => {
         }
       });
 
+      // Fetch ALL excluded recurring expenses (once deleted, never regenerated)
+      const { data: excludedExpenses } = await (supabase as any)
+        .from("excluded_recurring_expenses")
+        .select("category, service_description");
+      
+      const excludedExpenseKeys = new Set(
+        (excludedExpenses || []).map((ex: any) => `${ex.category}|${ex.service_description || ''}`)
+      );
+
+      // Fetch ALL excluded recurring revenues (once deleted, never regenerated)
+      const { data: excludedRevenues } = await (supabase as any)
+        .from("excluded_recurring_revenues")
+        .select("category, client_name");
+      
+      const excludedRevenueKeys = new Set(
+        (excludedRevenues || []).map((ex: any) => `${ex.category}|${ex.client_name || ''}`)
+      );
+
       // Generate transactions - include indefinite, exclude expired finite recurrences
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const transactionsToCreate: any[] = [];
@@ -391,25 +409,6 @@ export const useAccountingCategoriesWithRecurrence = () => {
           .map((tx: any) => `${tx.category}|${tx.service_description || ''}`)
       );
 
-      // Fetch ALL excluded recurring expenses (not just this month)
-      // Once a user deletes an expense, it should never come back in future months
-      const { data: excludedExpenses } = await (supabase as any)
-        .from("excluded_recurring_expenses")
-        .select("category, service_description");
-      
-      const excludedExpenseKeys = new Set(
-        (excludedExpenses || []).map((ex: any) => `${ex.category}|${ex.service_description || ''}`)
-      );
-
-      // Fetch ALL excluded recurring revenues
-      // Once a user deletes a member revenue, it should never come back
-      const { data: excludedRevenues } = await (supabase as any)
-        .from("excluded_recurring_revenues")
-        .select("category, client_name");
-      
-      const excludedRevenueKeys = new Set(
-        (excludedRevenues || []).map((ex: any) => `${ex.category}|${ex.client_name || ''}`)
-      );
 
       expensesFromPrevMonth.forEach((prevExpense: any) => {
         const clientName = prevExpense.client_name || '';
