@@ -403,6 +403,33 @@ const CourseKPI = () => {
     setIsDialogOpen(true);
   };
 
+  // Recalculate monthly_expenses based on instructor rates for weeks with attendance > 0
+  const recalculateExpenses = (course: CourseKPI, overrides: Record<string, any> = {}) => {
+    const COURSE_DURATION = 0.75; // 45 min sessions
+    const weekConfigs = [
+      { attendanceKey: 'week1_attendance', instructorKey: 'week1_instructor' },
+      { attendanceKey: 'week2_attendance', instructorKey: 'week2_instructor' },
+      { attendanceKey: 'week3_attendance', instructorKey: 'week3_instructor' },
+      { attendanceKey: 'week4_attendance', instructorKey: 'week4_instructor' },
+      { attendanceKey: 'week5_attendance', instructorKey: 'week5_instructor' },
+    ];
+
+    let totalExpenses = 0;
+    weekConfigs.forEach(({ attendanceKey, instructorKey }) => {
+      const attendance = overrides[attendanceKey] ?? (course as any)[attendanceKey] ?? 0;
+      const weekInstructor = overrides[instructorKey] ?? (course as any)[instructorKey] ?? course.instructor;
+      
+      if (attendance > 0 && weekInstructor) {
+        const inst = instructors.find(i => i.name === weekInstructor);
+        if (inst) {
+          totalExpenses += inst.hourly_rate * COURSE_DURATION;
+        }
+      }
+    });
+
+    return totalExpenses;
+  };
+
   const handleAttendanceUpdate = (courseId: string, week: string, value: number) => {
     const course = courses.find((c) => c.id === courseId);
     if (!course) return;
@@ -432,6 +459,9 @@ const CourseKPI = () => {
     const rate = course.max_capacity > 0 ? (avgAttendance / course.max_capacity) * 100 : 0;
 
     updates.attendance_rate = Math.round(rate * 100) / 100;
+    
+    // Recalculate expenses based on instructor rates
+    updates.monthly_expenses = recalculateExpenses(course, updates);
 
     updateMutation.mutate({ id: courseId, ...updates });
   };
@@ -441,9 +471,16 @@ const CourseKPI = () => {
     weekInstructorKey: `week${1 | 2 | 3 | 4 | 5}_instructor`,
     value: string
   ) => {
+    const course = courses.find((c) => c.id === courseId);
+    if (!course) return;
+
+    const overrides = { [weekInstructorKey]: value === "default" ? null : value };
+    const newExpenses = recalculateExpenses(course, overrides);
+
     updateMutation.mutate({
       id: courseId,
       [weekInstructorKey]: value === "default" ? null : value,
+      monthly_expenses: newExpenses,
     } as any);
   };
 
