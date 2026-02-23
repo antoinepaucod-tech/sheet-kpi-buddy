@@ -403,67 +403,9 @@ const CourseKPI = () => {
     setIsDialogOpen(true);
   };
 
-  // Recalculate monthly_expenses based on instructor rates for weeks with attendance > 0
-  const recalculateExpenses = (course: CourseKPI, overrides: Record<string, any> = {}) => {
-    const COURSE_DURATION = 0.75; // 45 min sessions
-    const weekConfigs = [
-      { attendanceKey: 'week1_attendance', instructorKey: 'week1_instructor' },
-      { attendanceKey: 'week2_attendance', instructorKey: 'week2_instructor' },
-      { attendanceKey: 'week3_attendance', instructorKey: 'week3_instructor' },
-      { attendanceKey: 'week4_attendance', instructorKey: 'week4_instructor' },
-      { attendanceKey: 'week5_attendance', instructorKey: 'week5_instructor' },
-    ];
-
-    let totalExpenses = 0;
-    weekConfigs.forEach(({ attendanceKey, instructorKey }) => {
-      const attendance = overrides[attendanceKey] ?? (course as any)[attendanceKey] ?? 0;
-      const weekInstructor = overrides[instructorKey] ?? (course as any)[instructorKey] ?? course.instructor;
-      
-      if (attendance > 0 && weekInstructor) {
-        const inst = instructors.find(i => i.name === weekInstructor);
-        if (inst) {
-          totalExpenses += inst.hourly_rate * COURSE_DURATION;
-        }
-      }
-    });
-
-    return totalExpenses;
-  };
-
   const handleAttendanceUpdate = (courseId: string, week: string, value: number) => {
-    const course = courses.find((c) => c.id === courseId);
-    if (!course) return;
-
-    const updates: any = { [week]: value };
-
-    // Get all week attendance values (with the update applied)
-    const allWeekValues = [
-      updates.week1_attendance ?? course.week1_attendance,
-      updates.week2_attendance ?? course.week2_attendance,
-      updates.week3_attendance ?? course.week3_attendance,
-      updates.week4_attendance ?? course.week4_attendance,
-      updates.week5_attendance ?? course.week5_attendance,
-    ];
-
-    // Only count weeks that have already occurred (Monday <= today)
-    const today = new Date();
-    const elapsedWeeks = monthWeeks.filter(w => w.mondayDate <= today);
-    const elapsedWeekCount = elapsedWeeks.length;
-
-    // Sum attendance only for elapsed weeks
-    const totalAttendance = elapsedWeeks.reduce((sum, w) => {
-      return sum + (allWeekValues[w.weekNumber - 1] || 0);
-    }, 0);
-
-    const avgAttendance = elapsedWeekCount > 0 ? totalAttendance / elapsedWeekCount : 0;
-    const rate = course.max_capacity > 0 ? (avgAttendance / course.max_capacity) * 100 : 0;
-
-    updates.attendance_rate = Math.round(rate * 100) / 100;
-    
-    // Recalculate expenses based on instructor rates
-    updates.monthly_expenses = recalculateExpenses(course, updates);
-
-    updateMutation.mutate({ id: courseId, ...updates });
+    // Just send the update - DB trigger handles expense & rate calculation
+    updateMutation.mutate({ id: courseId, [week]: value } as any);
   };
 
   const handleWeekInstructorUpdate = (
@@ -471,16 +413,9 @@ const CourseKPI = () => {
     weekInstructorKey: `week${1 | 2 | 3 | 4 | 5}_instructor`,
     value: string
   ) => {
-    const course = courses.find((c) => c.id === courseId);
-    if (!course) return;
-
-    const overrides = { [weekInstructorKey]: value === "default" ? null : value };
-    const newExpenses = recalculateExpenses(course, overrides);
-
     updateMutation.mutate({
       id: courseId,
       [weekInstructorKey]: value === "default" ? null : value,
-      monthly_expenses: newExpenses,
     } as any);
   };
 
