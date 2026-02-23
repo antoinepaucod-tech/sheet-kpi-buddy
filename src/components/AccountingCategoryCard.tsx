@@ -51,19 +51,22 @@ export const AccountingCategoryCard = ({
 
   const getMemberStatus = (clientName: string | null) => {
     if (!clientName) return null;
-    const member = customerMembers.find(
+    // Get ALL entries for this member (they may have multiple subscriptions)
+    const allEntries = customerMembers.filter(
       (m) => m.name.toLowerCase() === clientName.toLowerCase()
     );
-    if (!member) return null;
-    // Member is "departed" only if exit_date is in the past AND they don't have a current/future subscription
-    if (member.exit_date && new Date(member.exit_date) < new Date()) {
-      // If they have an active subscription_end_date in the future, they've been renewed — not departed
-      if (member.subscription_end_date && new Date(member.subscription_end_date) >= new Date()) {
-        return "active";
-      }
-      return "departed";
-    }
-    return "active";
+    if (allEntries.length === 0) return null;
+    const now = new Date();
+    // If ANY entry has a future subscription_end_date, the member is active
+    const hasActiveSubscription = allEntries.some(
+      (m) => m.subscription_end_date && new Date(m.subscription_end_date) >= now
+    );
+    if (hasActiveSubscription) return "active";
+    // If ANY entry has no exit_date, consider them active
+    const hasNoExitDate = allEntries.some((m) => !m.exit_date);
+    if (hasNoExitDate) return "active";
+    // All entries have exit_date in the past and no active subscription
+    return "departed";
   };
 
   const openActivityDialog = async (clientName: string | null) => {
