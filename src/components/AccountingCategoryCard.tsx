@@ -55,7 +55,12 @@ export const AccountingCategoryCard = ({
       (m) => m.name.toLowerCase() === clientName.toLowerCase()
     );
     if (!member) return null;
+    // Member is "departed" only if exit_date is in the past AND they don't have a current/future subscription
     if (member.exit_date && new Date(member.exit_date) < new Date()) {
+      // If they have an active subscription_end_date in the future, they've been renewed — not departed
+      if (member.subscription_end_date && new Date(member.subscription_end_date) >= new Date()) {
+        return "active";
+      }
       return "departed";
     }
     return "active";
