@@ -1,9 +1,10 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "../lib/utils";
 
-export function KPICard({ label, value, trend, vsLabel, icon: Icon, accent = false, className }) {
+export function KPICard({ label, value, trend, vsLabel, icon: Icon, accent = false, className, ...props }) {
   return (
     <div
+      {...props}
       className={cn(
         "bg-[#121214] border border-white/10 p-5 rounded-sm hover:border-white/20 transition-colors",
         accent && "border-rose-600/30 bg-rose-600/5",
