@@ -168,3 +168,45 @@ async def seed_default_types():
         "membership_types_created": membership_created,
         "member_types_created": member_type_created
     }
+
+
+
+# ── Data Reset ────────────────────────────────────────────────────────────────
+
+TRANSACTIONAL_COLLECTIONS = [
+    "customer_members", "member_renewals", "weekly_trainings",
+    "six_weeks_challenges", "challenge_participants",
+    "course_kpis", "instructors", "coaches",
+    "payment_schedules", "payments", "member_followups",
+    "annual_reviews", "monthly_kpis",
+    "accounting_transactions", "recurring_transactions",
+    "excluded_recurring_expenses",
+]
+
+KEEP_COLLECTIONS = [
+    "users", "club_settings", "accounting_categories",
+    "membership_types", "member_types", "kpi_columns",
+]
+
+
+@router.post("/reset-data")
+async def reset_transactional_data(body: dict):
+    """Reset all transactional data while keeping user account and configuration"""
+    confirm = body.get("confirm")
+    if confirm != "RESET":
+        raise HTTPException(
+            status_code=400,
+            detail="Confirmation requise. Envoyez {\"confirm\": \"RESET\"}"
+        )
+
+    deleted = {}
+    for collection_name in TRANSACTIONAL_COLLECTIONS:
+        result = await db[collection_name].delete_many({})
+        deleted[collection_name] = result.deleted_count
+
+    total = sum(deleted.values())
+    return {
+        "message": f"Réinitialisation terminée. {total} documents supprimés.",
+        "details": deleted,
+        "kept": KEEP_COLLECTIONS
+    }

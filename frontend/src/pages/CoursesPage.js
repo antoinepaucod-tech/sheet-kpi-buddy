@@ -151,6 +151,15 @@ export default function CoursesPage() {
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la copie"),
   });
 
+  // Generate salary expenses from courses
+  const generateSalaryMutation = useMutation({
+    mutationFn: () => axios.post(`${API}/courses/generate-salary-expenses/${selectedYear}/${selectedMonth}`),
+    onSuccess: (res) => {
+      toast.success(res.data.message);
+    },
+    onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la génération"),
+  });
+
   // Create coach replacement
   const replaceMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/coaches/replacements/`, data),
@@ -337,6 +346,23 @@ export default function CoursesPage() {
             <p className="text-white/50 text-xs uppercase">Mois</p>
             <p className="text-xl font-bold text-blue-400">{summary.month_name} {selectedYear}</p>
           </div>
+        </div>
+      )}
+
+      {/* Generate Salary Expenses */}
+      {courses.length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => generateSalaryMutation.mutate()}
+            disabled={generateSalaryMutation.isPending}
+            className="border-violet-500/30 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10"
+            data-testid="generate-salary-btn"
+          >
+            <DollarSign size={14} className="mr-1.5" />
+            {generateSalaryMutation.isPending ? "Génération..." : "Générer dépenses salaires coachs"}
+          </Button>
         </div>
       )}
 

@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Save, Loader2, RefreshCw } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, AlertTriangle, Trash2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "../components/ui/dialog";
 import { useTranslations } from "../hooks/useTranslations";
 import { useToast } from "../hooks/use-toast";
 import { Toaster } from "../components/ui/toaster";
@@ -82,6 +90,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -132,6 +143,28 @@ export default function SettingsPage() {
       toast({ title: "Erreur", variant: "destructive" });
     } finally {
       setRecalculating(false);
+    }
+  };
+
+  const handleResetData = async () => {
+    if (resetConfirm !== "RESET") return;
+    setResetting(true);
+    try {
+      const res = await axios.post(`${API}/settings/reset-data`, { confirm: "RESET" });
+      toast({
+        title: lang === "fr" ? "Données réinitialisées" : "Data reset",
+        description: res.data.message,
+      });
+      setResetModalOpen(false);
+      setResetConfirm("");
+    } catch (e) {
+      toast({
+        title: "Erreur",
+        description: e.response?.data?.detail || "Erreur serveur",
+        variant: "destructive",
+      });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -258,6 +291,101 @@ export default function SettingsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Reset Data */}
+      <div className="bg-[#121214] border border-red-500/20 rounded-sm p-6">
+        <p className="text-xs font-body text-red-400/60 uppercase tracking-wider mb-3">
+          {lang === "fr" ? "Zone dangereuse" : "Danger zone"}
+        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-white font-medium">
+              {lang === "fr" ? "Réinitialiser les données" : "Reset data"}
+            </p>
+            <p className="text-xs text-white/30 mt-0.5">
+              {lang === "fr"
+                ? "Supprime toutes les données transactionnelles (membres, paiements, KPIs, challenges, cours) tout en conservant votre compte et votre configuration"
+                : "Deletes all transactional data (members, payments, KPIs, challenges, courses) while keeping your account and configuration"}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setResetModalOpen(true)}
+            className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs flex-shrink-0"
+            data-testid="reset-data-btn"
+          >
+            <Trash2 size={12} className="mr-1.5" />
+            {lang === "fr" ? "Réinitialiser" : "Reset"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Reset Confirmation Modal */}
+      <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
+        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <AlertTriangle size={20} />
+              {lang === "fr" ? "Réinitialisation des données" : "Data reset"}
+            </DialogTitle>
+            <DialogDescription className="text-white/50">
+              {lang === "fr"
+                ? "Cette action est irréversible. Toutes les données suivantes seront supprimées :"
+                : "This action is irreversible. All following data will be deleted:"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+              <ul className="text-red-300 text-sm space-y-1">
+                <li>- Membres et historique de renouvellements</li>
+                <li>- Paiements et plannings de paiement</li>
+                <li>- KPIs mensuels</li>
+                <li>- Challenges et participants</li>
+                <li>- Cours et instructeurs</li>
+                <li>- Transactions et transactions récurrentes</li>
+                <li>- Bilans et suivis</li>
+                <li>- Coachs</li>
+              </ul>
+            </div>
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+              <p className="text-emerald-400 text-sm font-medium mb-1">Données conservées :</p>
+              <ul className="text-emerald-300 text-sm space-y-1">
+                <li>- Votre compte utilisateur</li>
+                <li>- Paramètres du club et objectifs KPI</li>
+                <li>- Catégories comptables</li>
+                <li>- Types d'abonnements et types de membres</li>
+                <li>- Colonnes KPI personnalisées</li>
+              </ul>
+            </div>
+            <div>
+              <label className="text-white/50 text-xs">
+                Tapez <span className="text-red-400 font-mono font-bold">RESET</span> pour confirmer
+              </label>
+              <Input
+                value={resetConfirm}
+                onChange={(e) => setResetConfirm(e.target.value)}
+                placeholder="RESET"
+                className="bg-[#121214] border-white/10 text-white mt-1 font-mono"
+                data-testid="reset-confirm-input"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setResetModalOpen(false); setResetConfirm(""); }}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleResetData}
+              disabled={resetConfirm !== "RESET" || resetting}
+              className="bg-red-600 hover:bg-red-700 disabled:opacity-30"
+              data-testid="confirm-reset-btn"
+            >
+              {resetting ? <Loader2 size={14} className="animate-spin mr-1" /> : <Trash2 size={14} className="mr-1" />}
+              {resetting ? "Suppression..." : "Supprimer toutes les données"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

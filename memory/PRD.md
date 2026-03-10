@@ -5,118 +5,120 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 
 ## Core Features
 
-### 1. Authentication & Multi-tenancy ✅
+### 1. Authentication & Multi-tenancy
 - JWT-based authentication (register/login)
 - Data isolation by club_id
 - Club name customization
 
-### 2. Monthly KPIs Dashboard ✅
+### 2. Monthly KPIs Dashboard
 - Main dashboard with revenue/expense tracking
 - Advanced metrics (churn, CAC, ROAS, profit margin)
-- Detailed KPI view with 30+ fields (funnel, members by type, expenses)
+- Detailed KPI view with 30+ fields
 - Multi-month comparison view (/compare)
 - PDF report generation
 
-### 3. Transaction Management ✅
+### 3. Transaction Management
 - CRUD for transactions
 - Category mapping to KPI columns
 - Auto-recalculation of monthly KPIs
 - Bulk import support
 
-### 4. Recurring Transactions ✅
+### 4. Recurring Transactions
 - Define recurring expenses/revenues
 - Monthly generation with day specification
-- Exclusion system
 
-### 5. Member Management ✅
+### 5. Member Management
 - Full CRUD for members
 - Contract signature date tracking
 - Subscription expiration dates
 - Member types (Généraux Récurrents, PIF, PT)
 - Expiring members filter (30 days)
 - Renewal workflow with history
-- **Billing Cycle Integration** ✅ (NEW - March 2025):
-  - Type: Jour fixe du mois (monthly_day) ou Intervalle jours (interval_days)
-  - Valeur: Jour 1-28 ou intervalle en jours (ex: 28)
-  - Création automatique du payment_schedule
-  - Modification du cycle lors du renouvellement
-- **Annual Review (Bilan Annuel)** ✅ (NEW - March 2025):
-  - Activable par membre (annual_review_enabled)
-  - Planification automatique 1 an après la signature
-  - Création d'un nouveau bilan lors du renouvellement
-  - Suivi: poids, nutrition, programme d'entraînement
+- Billing Cycle Integration (monthly_day, interval_days)
+- Review frequency: monthly, quarterly, semi-annually, annually
 
-### 6. Payment System ✅ (NEW - Dec 2024)
-- **Payment Schedules**: Define recurring payments per member
-  - Monthly day (ex: le 15 du mois)
-  - Interval days (ex: tous les 28 jours)
-  - Payment methods: prélèvement, carte, virement, espèces
-- **Payment Tracking**: 
-  - Status: En attente, Payé, En retard, Échoué, Annulé
-  - Late payment alerts with days overdue
-  - Mark as paid with date and reference
-- **Payment Generation**: Generate monthly payments from schedules
-- **Alerts**: Late payments dashboard with contact info
+### 6. Payment System
+- Payment Schedules: Define recurring payments per member
+- Payment Tracking with status
+- Late payment alerts
+- Payment Generation
 
-### 7. Onboarding & Follow-ups ✅ (NEW - Dec 2024)
-- **5-Step Onboarding Checklist**:
-  - Inscription bsport
-  - Inscription Hubfit
-  - Consultation nutrition
-  - Questionnaire coaching
-  - Session d'introduction
-- **Progress Tracking**: Visual progress per member (0-100%)
-- **Follow-up Scheduling**:
-  - Types: mensuel, onboarding, renouvellement, paiement
-  - Status: planifié, complété, manqué, reporté
-  - Auto-schedule next follow-up on completion
-- **Reminders**: Upcoming and missed follow-ups views
+### 7. Onboarding & Follow-ups
+- 5-Step Onboarding Checklist
+- Follow-up Scheduling (monthly, onboarding, renewal, payment)
 
-### 8. 6 Weeks Challenge ✅
-- Challenge CRUD with start/end dates
-- Participant management
-- Weekly check-ins (week1-week6)
+### 8. 6 Weeks Challenge (UPDATED March 2025)
+- **Challenge types**: Fixed dates (group) or Personal (individual start dates)
+- **Check-in goals**: Configurable weekly check-in target (1-7)
+- Participant management with personal dates
+- **Dual tracking**: Boolean week completion + Detailed weekly check-in counters
 - Progress tracking per participant
 
-### 9. Course KPIs ✅
+### 9. Bilans / Suivis (UPDATED March 2025)
+- **Multi-frequency**: Monthly, Quarterly, Semi-annual, Annual reviews
+- **Type-based filtering** and color-coded badges
+- Weight, nutrition, and training program tracking
+- Auto-schedule next review based on frequency
+- Complete review form with all metrics
+
+### 10. Course KPIs
 - Course definition by day/time slot
-- Instructor assignment
-- **5-Week Attendance Tracking** (S1-S5) - Updated for months with 5 weeks
-- Automatic attendance rate calculation
-- Monthly expenses per course
-- Summary statistics by month
+- Instructor/Coach assignment with hourly rates
+- 5-Week Attendance Tracking (S1-S5)
+- **Salary expense generation**: Auto-generate coach salary expenses from courses
 
-### 10. Client KPIs ✅
+### 11. Client KPIs
 - Weekly training tracking per member
-- Engagement levels (Excellent/Bon/Moyen/Faible)
-- Training summary with averages
-- Historical chart
+- Engagement levels
 
-### 11. Alerts Summary ✅ (NEW - Dec 2024)
-- Aggregated dashboard showing:
-  - Late payments count
-  - Missed follow-ups count
-  - Expiring subscriptions (30 days)
-  - Incomplete onboarding count
-  - Upcoming follow-ups count
+### 12. Coach Management
+- Coach CRUD with hourly rates
+- Replacement tracking
+- Integration with Course KPIs
+
+### 13. Data Reset (NEW March 2025)
+- Reset all transactional data (members, payments, KPIs, etc.)
+- Keep user account, settings, categories, types
+- Requires "RESET" confirmation
+
+### 14. Settings & Configuration
+- Club info, KPI targets
+- Subscription types management
+- Member types management
+- Custom KPI columns
+- Expense categories
 
 ## Technical Architecture
 
 ### Backend (FastAPI)
 ```
 /app/backend/
-├── server.py              # Main routes (~1400 lines)
+├── server.py              # Main routes (KPIs, transactions, courses, etc.)
 ├── core/
 │   ├── config.py          # Database & constants
 │   └── security.py        # JWT & password handling
 ├── models/
-│   ├── auth.py           # User models
-│   ├── kpi.py            # MonthlyKPI, ClubSettings
-│   ├── transactions.py   # Transaction, Category, Recurring
-│   ├── members.py        # CustomerMember, WeeklyTraining, MemberFollowUp
-│   ├── challenges.py     # SixWeeksChallenge, ChallengeParticipant
-│   ├── courses.py        # CourseKPI, Instructor
-│   └── payments.py       # PaymentSchedule, Payment (NEW)
+│   ├── auth.py
+│   ├── kpi.py
+│   ├── transactions.py
+│   ├── members.py         # + review_frequency
+│   ├── challenges.py      # + challenge_type, checkins_goal, personal dates
+│   ├── courses.py
+│   ├── payments.py
+│   ├── coaches.py
+│   ├── subscription_types.py
+│   ├── kpi_columns.py
+│   └── settings.py
+├── routers/
+│   ├── auth.py
+│   ├── members.py
+│   ├── payments.py
+│   ├── annual_reviews.py  # Multi-frequency reviews
+│   ├── followups.py
+│   ├── onboarding.py
+│   ├── settings.py        # + reset-data endpoint
+│   ├── coaches.py
+│   └── challenges.py      # NEW - extracted from server.py
 └── tests/
 ```
 
@@ -124,113 +126,99 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 ```
 /app/frontend/src/
 ├── pages/
-│   ├── Dashboard.jsx
-│   ├── ComparePage.jsx
-│   ├── MembersPage.js
-│   ├── PaymentsPage.js        (NEW)
-│   ├── OnboardingPage.js      (NEW)
-│   ├── ChallengePage.js
-│   ├── CoursesPage.js         (Updated with S5)
+│   ├── Dashboard.js
+│   ├── ComparePage.js
+│   ├── MembersPage.js        # + review_frequency selector
+│   ├── PaymentsPage.js
+│   ├── OnboardingPage.js
+│   ├── AnnualReviewsPage.js  # Renamed "Bilans / Suivis" + type filter
+│   ├── ChallengePage.js      # + challenge_type, checkins_goal, personal dates
+│   ├── CoursesPage.js        # + salary generation button
+│   ├── CoachesPage.js
 │   ├── ClientKPIPage.js
-│   ├── TransactionsPage.jsx
-│   ├── RecurringPage.jsx
-│   └── ...
+│   ├── TransactionsPage.js
+│   ├── RecurringPage.js
+│   ├── CategoriesPage.js
+│   ├── SettingsPage.js       # + data reset section
+│   ├── SettingsTypesPage.js
+│   └── AuthPage.js
+├── components/
+│   ├── Layout.js             # Updated sidebar labels
+│   └── ui/
 ├── contexts/
-└── components/ui/
+└── hooks/
 ```
 
-### Database (MongoDB)
-Collections:
-- `users`, `monthly_kpis`, `accounting_transactions`, `accounting_categories`
-- `recurring_transactions`, `excluded_recurring_expenses`
-- `customer_members`, `member_renewals`, `weekly_trainings`
-- `six_weeks_challenges`, `challenge_participants`
-- `course_kpis`, `instructors`
-- `payment_schedules` (NEW)
-- `payments` (NEW)
-- `member_followups` (NEW)
-- `club_settings`
+## Changelog
 
-## API Endpoints Summary
+### March 2025 - Session 4 (Current)
+- ✅ **Phase 3: 6 Weeks Challenge Enhancement**
+  - challenge_type: "fixed" (group dates) or "personal" (individual dates)
+  - checkins_goal: configurable 1-7 check-ins per week
+  - personal_start_date / personal_end_date per participant
+  - week1_checkins...week6_checkins integer counters (0-7)
+  - Detailed check-in modal with weekly counters
+  - Type badges in challenge list (Date fixe / Personnel)
+  - Extracted routes from server.py to routers/challenges.py
+  
+- ✅ **Phase 4: Reviews/Bilans Enhancement**
+  - Renamed "Bilans Annuels" to "Bilans / Suivis"
+  - review_type field: monthly, quarterly, semi-annually, annually
+  - review_frequency on member model
+  - Type filter dropdown in reviews page
+  - Color-coded type badges (Mensuel/Trimestriel/Semestriel/Annuel)
+  - Auto-schedule next review based on frequency after completion
+  - Updated sidebar navigation label
+  
+- ✅ **Phase 5: Data Reset**
+  - POST /api/settings/reset-data with {confirm: "RESET"}
+  - Deletes all transactional data while keeping config
+  - Settings page "Zone dangereuse" section with confirmation modal
+  
+- ✅ **Coach Salary Integration**
+  - POST /api/courses/generate-salary-expenses/{year}/{month}
+  - Calculates coach remuneration from course hours × hourly rate
+  - Auto-creates "SALAIRES COACHS" category
+  - Generates expense transactions per coach
+  - "Générer dépenses salaires coachs" button on Courses page
 
-### New Endpoints (Dec 2024)
-- Payment Schedules: GET/POST/PUT/DELETE `/api/payment-schedules`
-- Payments: GET/POST `/api/payments`, POST `/api/payments/{id}/mark-paid`
-- Payment Alerts: GET `/api/payments/late`, `/api/payments/upcoming`
-- Payment Generation: POST `/api/payments/generate/{year}/{month}`
-- Onboarding: GET `/api/onboarding/pending`, PUT `/api/members/{id}/onboarding`
-- Follow-ups: GET/POST `/api/followups`, POST `/api/followups/{id}/complete`
-- Follow-up Alerts: GET `/api/followups/upcoming`, `/api/followups/missed`
-- Alerts Summary: GET `/api/alerts/summary`
+### March 2025 - Session 3
+- ✅ Billing Cycle integration
+- ✅ Annual Reviews dashboard
+- ✅ Backend refactoring to modular routers
+- ✅ Settings/Types configuration
+- ✅ UX improvements (member form, onboarding)
 
-## Testing Status
-- Backend: 33/33 tests passing ✅
-- Frontend: 100% functional ✅
-- Test files: `/app/test_reports/iteration_10.json` (latest)
+### December 2024 - Session 2
+- ✅ Payment System
+- ✅ Onboarding 5-step checklist
+- ✅ Follow-up scheduling
+- ✅ Alerts summary
+
+### December 2024 - Session 1
+- ✅ Members, Challenges, Courses, Client KPIs
+- ✅ Backend modular structure
 
 ## Backlog
 
-### P0 - Immediate (Refactoring)
-- [x] Split server.py routes into separate router files (/routers/members.py, /routers/payments.py, etc.) ✅ DONE
-
 ### P1 - High Priority
-- [ ] Email notifications (Resend integration ready, needs API key)
-- [ ] Auto-send payment reminders
-- [ ] Data migration tool from Lovable app
+- [ ] Finaliser la refactorisation backend (migrer routes restantes de server.py)
+- [ ] Email notifications (Resend - en attente clé API)
 - [ ] Export member data to CSV
 
 ### P2 - Medium Priority
+- [ ] Graphiques d'évolution pour l'historique des bilans
+- [ ] Alertes WhatsApp via Twilio (en attente instructions utilisateur)
+- [ ] Interface de migration de données "Lovable"
 - [ ] Real-time updates with WebSockets
-- [ ] User/admin management interface
-- [ ] Advanced reporting (custom date ranges)
+- [ ] Automatisation des renouvellements d'abonnements
 
 ### P3 - Low Priority
 - [ ] Mobile app / PWA
 - [ ] Integration with booking systems (bsport, hubfit)
 - [ ] Multi-currency support
 
-## Changelog
-
-### March 2025 - Session 3
-- ✅ Added Billing Cycle integration in member creation/edit form
-  - billing_cycle_type: monthly_day or interval_days
-  - billing_cycle_value: day of month (1-28) or interval in days
-  - Auto-creation of payment_schedule when billing_enabled=true
-- ✅ Added billing cycle update option in renewal modal
-  - "Modifier le cycle de facturation" toggle
-  - Update amount, method, cycle type and value during renewal
-- ✅ Added Annual Review (Bilan Annuel) system
-  - annual_review_enabled toggle in member form
-  - Auto-schedule review 1 year from contract date
-  - New review created on each renewal
-  - Tracks weight, nutrition, program adjustments
-- ✅ Created Annual Reviews dashboard page (/annual-reviews)
-  - Stats cards: upcoming, total, scheduled, completed, this week, late
-  - Complete review form with all fields (weight, nutrition, program, goals)
-  - View completed reviews detail
-- ✅ Backend refactoring: extracted routes to modular routers
-  - /routers/auth.py - Authentication routes
-  - /routers/members.py - Member CRUD, renewal, onboarding
-  - /routers/payments.py - Payment schedules and payments
-  - /routers/annual_reviews.py - Annual review management
-  - /routers/followups.py - Follow-up scheduling
-  - /routers/onboarding.py - Onboarding and alerts
-  - /routers/settings.py - Membership types, member types config
-  - server.py reduced from ~1900 to ~1050 lines
-- ✅ Created Settings/Types configuration page (/settings/types)
-  - Membership types (Mensuel, Trimestriel, Annuel, 6 Weeks Challenge, etc.)
-  - Member types (Généraux Récurrents, PIF, PT)
-  - Dynamic loading in member form from database
-
-### December 2024 - Session 2
-- ✅ Added Payment System with schedules (28-day intervals & monthly)
-- ✅ Added Onboarding 5-step checklist with progress tracking
-- ✅ Added Follow-up scheduling system with 4 types
-- ✅ Added Alerts summary endpoint
-- ✅ Updated Courses page with S5 column for 5-week months
-- ✅ Added Resend email integration (ready for API key)
-
-### December 2024 - Session 1
-- ✅ Implemented 4 major features: Members, Challenges, Courses, Client KPIs
-- ✅ Refactored backend: split monolith into modular structure
-- ✅ Added QueryClientProvider to App.js
+## Testing Status
+- Backend: 18/18 tests passing (Phase 3 & 4) ✅
+- Frontend: 100% functional ✅
+- Test files: /app/test_reports/iteration_11.json (latest)

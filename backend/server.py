@@ -647,6 +647,91 @@ async def delete_instructor(instructor_id: str):
     return {"message": "Instructeur supprimé"}
 
 
+@api_router.post("/courses/generate-salary-expenses/{year}/{month}")
+async def generate_salary_expenses(year: int, month: int):
+    """Calculate coach salaries from courses and generate expense transactions"""
+    courses = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+    if not courses:
+        raise HTTPException(status_code=404, detail="Aucun cours trouvé pour ce mois")
+
+    # Get all instructors and coaches for hourly rates
+    instructors = {i["name"]: i for i in await db.instructors.find({}, {"_id": 0}).to_list(100)}
+    coaches_docs = {c["name"]: c for c in await db.coaches.find({}, {"_id": 0}).to_list(100)}
+
+    salary_by_coach = {}
+    for course in courses:
+        # Count active weeks (weeks with attendance > 0)
+        weeks_taught = sum(1 for w in range(1, 6) if course.get(f"week{w}_attendance", 0) > 0)
+
+        # Main instructor
+        main_instr = course.get("instructor", "")
+        if main_instr and weeks_taught > 0:
+            rate = 0
+            if main_instr in coaches_docs:
+                rate = coaches_docs[main_instr].get("hourly_rate", 0)
+            elif main_instr in instructors:
+                rate = instructors[main_instr].get("hourly_rate", 0)
+
+            # Check weekly overrides
+            for w in range(1, 6):
+                if course.get(f"week{w}_attendance", 0) == 0:
+                    continue
+                override = course.get(f"week{w}_instructor")
+                instr_name = override if override else main_instr
+                r = rate
+                if override:
+                    if override in coaches_docs:
+                        r = coaches_docs[override].get("hourly_rate", 0)
+                    elif override in instructors:
+                        r = instructors[override].get("hourly_rate", 0)
+                if instr_name not in salary_by_coach:
+                    salary_by_coach[instr_name] = {"hours": 0, "total": 0, "rate": r}
+                salary_by_coach[instr_name]["hours"] += 1
+                salary_by_coach[instr_name]["total"] += r
+
+    if not salary_by_coach:
+        return {"message": "Aucune rémunération à générer", "transactions": []}
+
+    # Ensure "SALAIRES COACHS" category exists
+    salary_cat = await db.accounting_categories.find_one({"kpi_column": "salaires_coachs"})
+    if not salary_cat:
+        salary_cat = AccountingCategory(
+            name="SALAIRES COACHS", kpi_column="salaires_coachs",
+            type="expense", color="#8B5CF6"
+        ).model_dump()
+        await db.accounting_categories.insert_one(salary_cat)
+
+    month_str = f"{year}-{month:02d}"
+    # Remove existing auto-generated salary expenses for this month
+    await db.accounting_transactions.delete_many({
+        "category": "SALAIRES COACHS",
+        "date": {"$regex": f"^{month_str}"},
+        "description": {"$regex": "^\\[Auto\\]"}
+    })
+
+    transactions = []
+    for coach_name, info in salary_by_coach.items():
+        tx = AccountingTransaction(
+            date=f"{month_str}-28",
+            description=f"[Auto] Salaire {coach_name} - {info['hours']}h à {info['rate']} CHF/h",
+            amount=round(info["total"], 2),
+            type="expense",
+            category="SALAIRES COACHS"
+        )
+        doc = tx.model_dump()
+        await db.accounting_transactions.insert_one(doc)
+        doc.pop("_id", None)
+        transactions.append(doc)
+
+    total = sum(t["amount"] for t in transactions)
+    return {
+        "message": f"{len(transactions)} transactions de salaires générées pour {MONTHS_FR[month-1]} {year}",
+        "total": total,
+        "by_coach": salary_by_coach,
+        "transactions": transactions
+    }
+
+
 # ── Email Notification Routes ────────────────────────────────────────────────
 
 @api_router.post("/notifications/send-reminder")
