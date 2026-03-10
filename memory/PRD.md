@@ -171,7 +171,7 @@ Collections:
 ## Backlog
 
 ### P0 - Immediate (Refactoring)
-- [ ] Split server.py routes into separate router files (/routers/members.py, /routers/payments.py, etc.)
+- [x] Split server.py routes into separate router files (/routers/members.py, /routers/payments.py, etc.) ✅ DONE
 
 ### P1 - High Priority
 - [ ] Email notifications (Resend integration ready, needs API key)
@@ -204,6 +204,18 @@ Collections:
   - Auto-schedule review 1 year from contract date
   - New review created on each renewal
   - Tracks weight, nutrition, program adjustments
+- ✅ Created Annual Reviews dashboard page (/annual-reviews)
+  - Stats cards: upcoming, total, scheduled, completed, this week, late
+  - Complete review form with all fields (weight, nutrition, program, goals)
+  - View completed reviews detail
+- ✅ Backend refactoring: extracted routes to modular routers
+  - /routers/auth.py - Authentication routes
+  - /routers/members.py - Member CRUD, renewal, onboarding
+  - /routers/payments.py - Payment schedules and payments
+  - /routers/annual_reviews.py - Annual review management
+  - /routers/followups.py - Follow-up scheduling
+  - /routers/onboarding.py - Onboarding and alerts
+  - server.py reduced from ~1900 to ~1050 lines
 
 ### December 2024 - Session 2
 - ✅ Added Payment System with schedules (28-day intervals & monthly)
