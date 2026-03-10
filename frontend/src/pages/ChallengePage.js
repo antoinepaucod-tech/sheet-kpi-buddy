@@ -1,0 +1,544 @@
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Trophy,
+  Plus,
+  Users,
+  Calendar,
+  Check,
+  X,
+  Trash2,
+  Edit,
+  ChevronRight,
+  Target,
+  Flame,
+  Award,
+} from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Badge } from "../components/ui/badge";
+import { Switch } from "../components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { Progress } from "../components/ui/progress";
+import { toast } from "sonner";
+import { useTranslations } from "../hooks/useTranslations";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const WEEKS = [1, 2, 3, 4, 5, 6];
+
+export default function ChallengePage() {
+  const { lang } = useTranslations();
+  const queryClient = useQueryClient();
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [addParticipantOpen, setAddParticipantOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    start_date: "",
+    end_date: "",
+    is_active: true,
+  });
+  const [participantData, setParticipantData] = useState({
+    member_id: "",
+    member_name: "",
+  });
+
+  // Fetch challenges
+  const { data: challenges = [], isLoading } = useQuery({
+    queryKey: ["challenges"],
+    queryFn: () => axios.get(`${API}/challenges`).then((r) => r.data),
+  });
+
+  // Fetch challenge detail
+  const { data: challengeDetail } = useQuery({
+    queryKey: ["challenges", selectedChallenge],
+    queryFn: () =>
+      selectedChallenge
+        ? axios.get(`${API}/challenges/${selectedChallenge}`).then((r) => r.data)
+        : null,
+    enabled: !!selectedChallenge,
+  });
+
+  // Fetch members for participant selection
+  const { data: members = [] } = useQuery({
+    queryKey: ["members"],
+    queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
+  });
+
+  // Create/Update challenge
+  const saveMutation = useMutation({
+    mutationFn: (data) =>
+      formData.id
+        ? axios.put(`${API}/challenges/${formData.id}`, data)
+        : axios.post(`${API}/challenges`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["challenges"]);
+      setModalOpen(false);
+      toast.success(formData.id ? "Challenge mis à jour" : "Challenge créé");
+    },
+    onError: () => toast.error("Erreur"),
+  });
+
+  // Delete challenge
+  const deleteMutation = useMutation({
+    mutationFn: (id) => axios.delete(`${API}/challenges/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["challenges"]);
+      setSelectedChallenge(null);
+      toast.success("Challenge supprimé");
+    },
+  });
+
+  // Add participant
+  const addParticipantMutation = useMutation({
+    mutationFn: (data) =>
+      axios.post(`${API}/challenges/${selectedChallenge}/participants`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["challenges", selectedChallenge]);
+      setAddParticipantOpen(false);
+      toast.success("Participant ajouté");
+    },
+    onError: (err) => toast.error(err.response?.data?.detail || "Erreur"),
+  });
+
+  // Update participant check-ins
+  const updateCheckinMutation = useMutation({
+    mutationFn: ({ participantId, data }) =>
+      axios.put(`${API}/challenges/${selectedChallenge}/participants/${participantId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["challenges", selectedChallenge]);
+    },
+  });
+
+  // Remove participant
+  const removeParticipantMutation = useMutation({
+    mutationFn: (participantId) =>
+      axios.delete(`${API}/challenges/${selectedChallenge}/participants/${participantId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["challenges", selectedChallenge]);
+      toast.success("Participant retiré");
+    },
+  });
+
+  const openAddModal = () => {
+    setFormData({
+      name: "",
+      start_date: format(new Date(), "yyyy-MM-dd"),
+      end_date: format(new Date(Date.now() + 42 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+      is_active: true,
+    });
+    setModalOpen(true);
+  };
+
+  const openEditModal = (challenge) => {
+    setFormData({
+      id: challenge.id,
+      name: challenge.name,
+      start_date: challenge.start_date,
+      end_date: challenge.end_date || "",
+      is_active: challenge.is_active,
+    });
+    setModalOpen(true);
+  };
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    if (!challengeDetail?.participants) return null;
+    
+    const participants = challengeDetail.participants;
+    const totalParticipants = participants.length;
+    
+    const weeklyStats = WEEKS.map((w) => ({
+      week: w,
+      completed: participants.filter((p) => p[`week${w}`]).length,
+      percentage: totalParticipants > 0
+        ? Math.round((participants.filter((p) => p[`week${w}`]).length / totalParticipants) * 100)
+        : 0,
+    }));
+    
+    const completionByParticipant = participants.map((p) => ({
+      ...p,
+      completedWeeks: WEEKS.filter((w) => p[`week${w}`]).length,
+      completionRate: Math.round((WEEKS.filter((w) => p[`week${w}`]).length / 6) * 100),
+    }));
+    
+    const avgCompletion = totalParticipants > 0
+      ? Math.round(completionByParticipant.reduce((sum, p) => sum + p.completionRate, 0) / totalParticipants)
+      : 0;
+    
+    return {
+      totalParticipants,
+      weeklyStats,
+      completionByParticipant,
+      avgCompletion,
+      fullyCompleted: completionByParticipant.filter((p) => p.completedWeeks === 6).length,
+    };
+  }, [challengeDetail]);
+
+  const toggleWeekCheckin = (participant, week) => {
+    const currentValue = participant[`week${week}`];
+    updateCheckinMutation.mutate({
+      participantId: participant.id,
+      data: { [`week${week}`]: !currentValue },
+    });
+  };
+
+  return (
+    <div className="space-y-6" data-testid="challenge-page">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+            <Trophy className="text-amber-500" />
+            {lang === "fr" ? "Challenge 6 Semaines" : "6 Weeks Challenge"}
+          </h1>
+          <p className="text-white/50 text-sm mt-1">
+            {lang === "fr" ? "Suivi des participants et progression" : "Track participants and progress"}
+          </p>
+        </div>
+        <Button onClick={openAddModal} className="bg-amber-600 hover:bg-amber-700" data-testid="add-challenge-btn">
+          <Plus size={16} className="mr-2" />
+          {lang === "fr" ? "Nouveau Challenge" : "New Challenge"}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Challenge List */}
+        <div className="space-y-3">
+          <h2 className="text-white/70 text-sm font-medium uppercase tracking-wide">Challenges</h2>
+          {isLoading ? (
+            <p className="text-white/50">Chargement...</p>
+          ) : challenges.length === 0 ? (
+            <div className="bg-[#1C1C1E] rounded-lg p-6 border border-white/10 text-center">
+              <Trophy size={32} className="mx-auto text-white/20 mb-2" />
+              <p className="text-white/50">Aucun challenge</p>
+            </div>
+          ) : (
+            challenges.map((challenge) => (
+              <div
+                key={challenge.id}
+                onClick={() => setSelectedChallenge(challenge.id)}
+                className={`bg-[#1C1C1E] rounded-lg p-4 border cursor-pointer transition-all ${
+                  selectedChallenge === challenge.id
+                    ? "border-amber-500 bg-amber-500/5"
+                    : "border-white/10 hover:border-white/20"
+                }`}
+                data-testid={`challenge-${challenge.id}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${challenge.is_active ? "bg-amber-500/20" : "bg-white/10"}`}>
+                      <Trophy size={18} className={challenge.is_active ? "text-amber-500" : "text-white/40"} />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">{challenge.name}</p>
+                      <p className="text-white/40 text-xs flex items-center gap-1">
+                        <Calendar size={10} />
+                        {challenge.start_date ? format(parseISO(challenge.start_date), "dd MMM", { locale: fr }) : "-"}
+                        {challenge.end_date && ` → ${format(parseISO(challenge.end_date), "dd MMM", { locale: fr })}`}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-white/30" />
+                </div>
+                {challenge.is_active && (
+                  <Badge className="mt-2 bg-amber-500/20 text-amber-400 border-0">Actif</Badge>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Challenge Detail */}
+        <div className="lg:col-span-2">
+          {!selectedChallenge ? (
+            <div className="bg-[#1C1C1E] rounded-lg p-12 border border-white/10 text-center">
+              <Target size={48} className="mx-auto text-white/10 mb-4" />
+              <p className="text-white/50">Sélectionnez un challenge pour voir les détails</p>
+            </div>
+          ) : !challengeDetail ? (
+            <div className="bg-[#1C1C1E] rounded-lg p-12 border border-white/10 text-center">
+              <p className="text-white/50">Chargement...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Challenge Header */}
+              <div className="bg-[#1C1C1E] rounded-lg p-6 border border-white/10">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">{challengeDetail.name}</h2>
+                    <p className="text-white/50 text-sm mt-1">
+                      {challengeDetail.start_date && format(parseISO(challengeDetail.start_date), "dd MMMM yyyy", { locale: fr })}
+                      {challengeDetail.end_date && ` - ${format(parseISO(challengeDetail.end_date), "dd MMMM yyyy", { locale: fr })}`}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openEditModal(challengeDetail)}
+                      className="text-white/50 hover:text-white"
+                    >
+                      <Edit size={16} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteMutation.mutate(challengeDetail.id)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                {stats && (
+                  <div className="grid grid-cols-4 gap-4 mt-6">
+                    <div className="bg-[#121214] rounded-lg p-3">
+                      <p className="text-white/40 text-xs uppercase">Participants</p>
+                      <p className="text-2xl font-bold text-white">{stats.totalParticipants}</p>
+                    </div>
+                    <div className="bg-[#121214] rounded-lg p-3">
+                      <p className="text-white/40 text-xs uppercase">Complétion moy.</p>
+                      <p className="text-2xl font-bold text-amber-400">{stats.avgCompletion}%</p>
+                    </div>
+                    <div className="bg-[#121214] rounded-lg p-3">
+                      <p className="text-white/40 text-xs uppercase">100% complété</p>
+                      <p className="text-2xl font-bold text-emerald-400">{stats.fullyCompleted}</p>
+                    </div>
+                    <div className="bg-[#121214] rounded-lg p-3">
+                      <p className="text-white/40 text-xs uppercase">Statut</p>
+                      <Badge className={challengeDetail.is_active ? "bg-emerald-500/20 text-emerald-400" : "bg-white/10 text-white/50"}>
+                        {challengeDetail.is_active ? "Actif" : "Terminé"}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Weekly Progress */}
+              {stats && (
+                <div className="bg-[#1C1C1E] rounded-lg p-6 border border-white/10">
+                  <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+                    <Flame className="text-orange-400" size={18} />
+                    Progression par semaine
+                  </h3>
+                  <div className="grid grid-cols-6 gap-3">
+                    {stats.weeklyStats.map((week) => (
+                      <div key={week.week} className="text-center">
+                        <div className="bg-[#121214] rounded-lg p-3">
+                          <p className="text-white/40 text-xs mb-1">S{week.week}</p>
+                          <p className="text-lg font-bold text-white">{week.completed}</p>
+                          <p className="text-xs text-amber-400">{week.percentage}%</p>
+                        </div>
+                        <Progress value={week.percentage} className="mt-2 h-1 bg-white/10" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Participants */}
+              <div className="bg-[#1C1C1E] rounded-lg p-6 border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <Users size={18} className="text-white/50" />
+                    Participants
+                  </h3>
+                  <Button
+                    size="sm"
+                    onClick={() => setAddParticipantOpen(true)}
+                    className="bg-amber-600 hover:bg-amber-700"
+                    data-testid="add-participant-btn"
+                  >
+                    <Plus size={14} className="mr-1" />
+                    Ajouter
+                  </Button>
+                </div>
+
+                {challengeDetail.participants?.length === 0 ? (
+                  <p className="text-white/50 text-center py-8">Aucun participant</p>
+                ) : (
+                  <div className="space-y-2">
+                    {stats?.completionByParticipant.map((participant) => (
+                      <div
+                        key={participant.id}
+                        className="flex items-center gap-4 bg-[#121214] rounded-lg p-3"
+                        data-testid={`participant-${participant.id}`}
+                      >
+                        <div className="flex-1">
+                          <p className="text-white font-medium">{participant.member_name}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Progress value={participant.completionRate} className="w-24 h-1.5 bg-white/10" />
+                            <span className="text-xs text-white/50">{participant.completionRate}%</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {WEEKS.map((week) => (
+                            <button
+                              key={week}
+                              onClick={() => toggleWeekCheckin(participant, week)}
+                              className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
+                                participant[`week${week}`]
+                                  ? "bg-emerald-500/20 text-emerald-400"
+                                  : "bg-white/5 text-white/20 hover:bg-white/10"
+                              }`}
+                              data-testid={`check-w${week}-${participant.id}`}
+                            >
+                              {participant[`week${week}`] ? <Check size={14} /> : <span className="text-xs">{week}</span>}
+                            </button>
+                          ))}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeParticipantMutation.mutate(participant.id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                        {participant.completedWeeks === 6 && (
+                          <Award className="text-amber-400" size={20} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Add/Edit Challenge Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>
+              {formData.id ? "Modifier le challenge" : "Nouveau challenge"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-white/50 text-xs uppercase">Nom du challenge *</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Challenge Hiver 2024"
+                className="bg-[#121214] border-white/10 text-white mt-1"
+                data-testid="challenge-name-input"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-white/50 text-xs uppercase">Date de début</label>
+                <Input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  className="bg-[#121214] border-white/10 text-white mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-white/50 text-xs uppercase">Date de fin</label>
+                <Input
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  className="bg-[#121214] border-white/10 text-white mt-1"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={formData.is_active}
+                onCheckedChange={(v) => setFormData({ ...formData, is_active: v })}
+              />
+              <span className="text-white/70">Challenge actif</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setModalOpen(false)}>Annuler</Button>
+            <Button
+              onClick={() => saveMutation.mutate(formData)}
+              disabled={!formData.name || saveMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700"
+              data-testid="save-challenge-btn"
+            >
+              {saveMutation.isPending ? "..." : formData.id ? "Mettre à jour" : "Créer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Participant Modal */}
+      <Dialog open={addParticipantOpen} onOpenChange={setAddParticipantOpen}>
+        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Ajouter un participant</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-white/50 text-xs uppercase">Sélectionner un membre</label>
+              <Select
+                value={participantData.member_id}
+                onValueChange={(v) => {
+                  const member = members.find((m) => m.id === v);
+                  setParticipantData({
+                    member_id: v,
+                    member_name: member?.name || "",
+                  });
+                }}
+              >
+                <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1" data-testid="select-member">
+                  <SelectValue placeholder="Choisir un membre..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  {members.map((member) => (
+                    <SelectItem key={member.id} value={member.id} className="text-white">
+                      {member.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAddParticipantOpen(false)}>Annuler</Button>
+            <Button
+              onClick={() =>
+                addParticipantMutation.mutate({
+                  challenge_id: selectedChallenge,
+                  ...participantData,
+                })
+              }
+              disabled={!participantData.member_id || addParticipantMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700"
+              data-testid="confirm-add-participant-btn"
+            >
+              {addParticipantMutation.isPending ? "..." : "Ajouter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

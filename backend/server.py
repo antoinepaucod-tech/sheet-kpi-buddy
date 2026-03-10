@@ -313,8 +313,136 @@ class RecurringTransactionCreate(BaseModel):
     is_active: bool = True
 
 
+# ── Models: Customer Members & Subscriptions ─────────────────────────────────
+
+class CustomerMember(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    membership: str  # Type d'abonnement
+    member_type: Optional[str] = None  # "Membres Généraux Récurrents", "Membres PIF", "Membres PT"
+    contract_signed_date: Optional[str] = None  # Date de signature
+    subscription_end_date: Optional[str] = None  # Date d'expiration
+    exit_date: Optional[str] = None  # Date de sortie
+    cash_collected: float = 0
+    # Onboarding flags
+    onboarding_bsport: bool = False
+    onboarding_hubfit: bool = False
+    onboarding_nutrition: bool = False
+    questionnaire_coaching: bool = False
+    session_introduction: bool = False
+    notes: Optional[str] = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class CustomerMemberCreate(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    membership: str
+    member_type: Optional[str] = None
+    contract_signed_date: Optional[str] = None
+    subscription_end_date: Optional[str] = None
+    cash_collected: float = 0
+    notes: Optional[str] = ""
+
+
+class MemberRenewalHistory(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    previous_end_date: Optional[str] = None
+    new_end_date: str
+    renewal_duration: str  # "12 mois", "6 semaines", etc.
+    performed_by: Optional[str] = None
+    notes: Optional[str] = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+# ── Models: Weekly Trainings & Engagement ────────────────────────────────────
+
+class WeeklyTraining(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    calendar_year: int
+    calendar_week: int  # ISO week number (1-53)
+    trainings_count: int = 0
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class WeeklyTrainingUpdate(BaseModel):
+    member_id: str
+    calendar_year: int
+    calendar_week: int
+    trainings_count: int
+
+
+# ── Models: 6 Weeks Challenge ────────────────────────────────────────────────
+
+class ChallengeCheckin(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    week_number: int  # 1-6
+    checked: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+# ── Models: Course KPIs ──────────────────────────────────────────────────────
+
+class Instructor(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    email: Optional[str] = None
+    hourly_rate: float = 0
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class CourseKPI(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    year: int
+    month: int
+    month_name: str
+    day_of_week: str  # "Lundi", "Mardi", etc.
+    time_slot: str  # "09:00", "18:30", etc.
+    course_name: str
+    instructor: Optional[str] = None
+    max_capacity: int = 10
+    # Weekly attendance
+    week1_attendance: int = 0
+    week2_attendance: int = 0
+    week3_attendance: int = 0
+    week4_attendance: int = 0
+    week5_attendance: int = 0
+    # Weekly instructor overrides
+    week1_instructor: Optional[str] = None
+    week2_instructor: Optional[str] = None
+    week3_instructor: Optional[str] = None
+    week4_instructor: Optional[str] = None
+    week5_instructor: Optional[str] = None
+    # Calculated
+    attendance_rate: float = 0
+    monthly_expenses: float = 0
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class CourseKPICreate(BaseModel):
+    year: int
+    month: int
+    day_of_week: str
+    time_slot: str
+    course_name: str
+    instructor: Optional[str] = None
+    max_capacity: int = 10
+
+
 MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
              "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+
+DAYS_FR = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -1088,6 +1216,13 @@ async def seed_data():
     await db.accounting_transactions.drop()
     await db.accounting_categories.drop()
     await db.excluded_recurring_expenses.drop()
+    await db.customer_members.drop()
+    await db.member_renewals.drop()
+    await db.weekly_trainings.drop()
+    await db.six_weeks_challenges.drop()
+    await db.challenge_participants.drop()
+    await db.course_kpis.drop()
+    await db.instructors.drop()
 
     categories = [
         {"name": "LOYER", "kpi_column": "loyer", "type": "expense", "color": "#3B82F6"},
@@ -1170,12 +1305,619 @@ async def seed_data():
         tx = AccountingTransaction(**tx_data)
         await db.accounting_transactions.insert_one(tx.model_dump())
 
+    # ── Seed: Customer Members (Expiring Subscriptions) ──────────────────────
+    members_raw = [
+        {"name": "Marie Dupont", "email": "marie@example.com", "phone": "+41 79 123 4567", "membership": "Annuel", "member_type": "Membres Généraux Récurrents", "contract_signed_date": "2024-01-15", "subscription_end_date": "2025-01-15", "cash_collected": 1200},
+        {"name": "Jean Martin", "email": "jean@example.com", "phone": "+41 79 234 5678", "membership": "Annuel", "member_type": "Membres PIF", "contract_signed_date": "2024-03-01", "subscription_end_date": "2025-03-01", "cash_collected": 1200},
+        {"name": "Sophie Bernard", "email": "sophie@example.com", "phone": "+41 79 345 6789", "membership": "6 Mois", "member_type": "Membres Généraux Récurrents", "contract_signed_date": "2024-09-01", "subscription_end_date": "2025-03-01", "cash_collected": 650},
+        {"name": "Pierre Leroy", "email": "pierre@example.com", "phone": "+41 79 456 7890", "membership": "Annuel PT", "member_type": "Membres PT", "contract_signed_date": "2024-06-15", "subscription_end_date": "2025-06-15", "cash_collected": 2400},
+        {"name": "Emma Richard", "email": "emma@example.com", "phone": "+41 79 567 8901", "membership": "Mensuel", "member_type": "Membres Généraux Récurrents", "contract_signed_date": "2024-12-01", "subscription_end_date": "2025-01-01", "cash_collected": 120},
+        {"name": "Lucas Moreau", "email": "lucas@example.com", "phone": "+41 79 678 9012", "membership": "6 Semaines", "member_type": "Membres PIF", "contract_signed_date": "2024-11-15", "subscription_end_date": "2024-12-27", "cash_collected": 180},
+        {"name": "Chloé Simon", "email": "chloe@example.com", "phone": "+41 79 789 0123", "membership": "Annuel", "member_type": "Membres Généraux Récurrents", "contract_signed_date": "2024-02-01", "subscription_end_date": "2025-02-01", "cash_collected": 1200},
+        {"name": "Thomas Laurent", "email": "thomas@example.com", "phone": "+41 79 890 1234", "membership": "Annuel PT", "member_type": "Membres PT", "contract_signed_date": "2024-04-15", "subscription_end_date": "2025-04-15", "cash_collected": 2400},
+        {"name": "Camille Roux", "email": "camille@example.com", "phone": "+41 79 901 2345", "membership": "3 Mois", "member_type": "Membres Généraux Récurrents", "contract_signed_date": "2024-10-01", "subscription_end_date": "2025-01-01", "cash_collected": 350},
+        {"name": "Hugo Petit", "email": "hugo@example.com", "phone": "+41 79 012 3456", "membership": "Annuel", "member_type": "Membres PIF", "contract_signed_date": "2024-08-01", "subscription_end_date": "2025-08-01", "cash_collected": 1200},
+    ]
+    member_ids = []
+    for m in members_raw:
+        member = CustomerMember(**m)
+        doc = member.model_dump()
+        member_ids.append(doc["id"])
+        await db.customer_members.insert_one(doc)
+
+    # ── Seed: Weekly Trainings (for KPI Clients) ─────────────────────────────
+    import random
+    for member_id in member_ids[:6]:  # First 6 members
+        for week in range(1, 53):  # All weeks of 2024
+            training = WeeklyTraining(
+                member_id=member_id,
+                calendar_year=2024,
+                calendar_week=week,
+                trainings_count=random.randint(1, 5)
+            )
+            await db.weekly_trainings.insert_one(training.model_dump())
+
+    # ── Seed: 6 Weeks Challenge ──────────────────────────────────────────────
+    challenge = SixWeeksChallenge(
+        name="Challenge Hiver 2024",
+        start_date="2024-11-15",
+        end_date="2024-12-27",
+        is_active=True
+    )
+    challenge_doc = challenge.model_dump()
+    await db.six_weeks_challenges.insert_one(challenge_doc)
+
+    # Add participants
+    for i, member_id in enumerate(member_ids[:5]):
+        participant = ChallengeParticipant(
+            challenge_id=challenge_doc["id"],
+            member_id=member_id,
+            member_name=members_raw[i]["name"],
+            week1=True,
+            week2=True,
+            week3=i < 4,  # 4 participants completed week 3
+            week4=i < 3,  # 3 participants completed week 4
+            week5=i < 2,  # 2 participants completed week 5
+            week6=i < 1   # 1 participant completed week 6
+        )
+        await db.challenge_participants.insert_one(participant.model_dump())
+
+    # ── Seed: Instructors ────────────────────────────────────────────────────
+    instructors_raw = [
+        {"name": "Coach Marc", "email": "marc@club.ch", "hourly_rate": 50, "is_active": True},
+        {"name": "Coach Julie", "email": "julie@club.ch", "hourly_rate": 55, "is_active": True},
+        {"name": "Coach Alex", "email": "alex@club.ch", "hourly_rate": 45, "is_active": True},
+        {"name": "Coach Sarah", "email": "sarah@club.ch", "hourly_rate": 50, "is_active": False},
+    ]
+    for instr in instructors_raw:
+        instructor = Instructor(**instr)
+        await db.instructors.insert_one(instructor.model_dump())
+
+    # ── Seed: Course KPIs ────────────────────────────────────────────────────
+    courses_raw = [
+        {"year": 2024, "month": 12, "day_of_week": "Lundi", "time_slot": "07:00", "course_name": "CrossFit Morning", "instructor": "Coach Marc", "max_capacity": 12, "week1_attendance": 10, "week2_attendance": 11, "week3_attendance": 9, "week4_attendance": 12},
+        {"year": 2024, "month": 12, "day_of_week": "Lundi", "time_slot": "18:30", "course_name": "CrossFit Soir", "instructor": "Coach Julie", "max_capacity": 15, "week1_attendance": 14, "week2_attendance": 15, "week3_attendance": 13, "week4_attendance": 14},
+        {"year": 2024, "month": 12, "day_of_week": "Mardi", "time_slot": "12:00", "course_name": "HIIT Express", "instructor": "Coach Alex", "max_capacity": 10, "week1_attendance": 8, "week2_attendance": 9, "week3_attendance": 7, "week4_attendance": 10},
+        {"year": 2024, "month": 12, "day_of_week": "Mercredi", "time_slot": "07:00", "course_name": "CrossFit Morning", "instructor": "Coach Marc", "max_capacity": 12, "week1_attendance": 11, "week2_attendance": 10, "week3_attendance": 12, "week4_attendance": 11},
+        {"year": 2024, "month": 12, "day_of_week": "Mercredi", "time_slot": "19:00", "course_name": "Mobility", "instructor": "Coach Julie", "max_capacity": 8, "week1_attendance": 6, "week2_attendance": 7, "week3_attendance": 8, "week4_attendance": 6},
+        {"year": 2024, "month": 12, "day_of_week": "Jeudi", "time_slot": "18:30", "course_name": "CrossFit Soir", "instructor": "Coach Alex", "max_capacity": 15, "week1_attendance": 12, "week2_attendance": 14, "week3_attendance": 11, "week4_attendance": 13},
+        {"year": 2024, "month": 12, "day_of_week": "Vendredi", "time_slot": "07:00", "course_name": "CrossFit Morning", "instructor": "Coach Marc", "max_capacity": 12, "week1_attendance": 9, "week2_attendance": 10, "week3_attendance": 8, "week4_attendance": 11},
+        {"year": 2024, "month": 12, "day_of_week": "Samedi", "time_slot": "09:00", "course_name": "Open Gym", "instructor": "Coach Julie", "max_capacity": 20, "week1_attendance": 15, "week2_attendance": 18, "week3_attendance": 16, "week4_attendance": 17},
+    ]
+    for c in courses_raw:
+        # Calculate attendance rate
+        attendance_fields = ["week1_attendance", "week2_attendance", "week3_attendance", "week4_attendance"]
+        total = sum(c.get(f, 0) for f in attendance_fields)
+        weeks = sum(1 for f in attendance_fields if c.get(f, 0) > 0)
+        rate = round((total / (weeks * c["max_capacity"])) * 100, 1) if weeks > 0 else 0
+        
+        course = CourseKPI(**c, month_name=MONTHS_FR[c["month"] - 1], attendance_rate=rate, monthly_expenses=c.get("max_capacity", 10) * 25)
+        await db.course_kpis.insert_one(course.model_dump())
+
     return {
         "message": "Données de démonstration chargées",
         "months": len(months_raw) + len(months_2023),
         "transactions": len(transactions_raw),
-        "categories": len(categories)
+        "categories": len(categories),
+        "members": len(members_raw),
+        "instructors": len(instructors_raw),
+        "courses": len(courses_raw),
+        "challenges": 1
     }
+
+
+# ── Routes: Customer Members (Expiring Subscriptions) ────────────────────────
+
+@api_router.get("/members")
+async def get_members(
+    expiring_soon: Optional[bool] = None,
+    member_type: Optional[str] = None
+):
+    """Get all members, optionally filtered by expiring status or type"""
+    query = {}
+    if member_type:
+        query["member_type"] = member_type
+    
+    docs = await db.customer_members.find(query, {"_id": 0}).sort("name", 1).to_list(1000)
+    
+    # Filter expiring soon (within 30 days)
+    if expiring_soon:
+        today = datetime.now(timezone.utc).date()
+        thirty_days = today + timedelta(days=30)
+        docs = [
+            d for d in docs
+            if d.get("subscription_end_date") and
+            today <= datetime.fromisoformat(d["subscription_end_date"]).date() <= thirty_days
+        ]
+    
+    return docs
+
+
+@api_router.get("/members/expiring")
+async def get_expiring_members(days: int = 30):
+    """Get members with subscriptions expiring within N days"""
+    today = datetime.now(timezone.utc).date()
+    end_date = today + timedelta(days=days)
+    
+    docs = await db.customer_members.find({}, {"_id": 0}).to_list(1000)
+    
+    expiring = []
+    for d in docs:
+        if d.get("subscription_end_date") and not d.get("exit_date"):
+            sub_end = datetime.fromisoformat(d["subscription_end_date"]).date()
+            if today <= sub_end <= end_date:
+                d["days_remaining"] = (sub_end - today).days
+                expiring.append(d)
+    
+    # Sort by days remaining
+    expiring.sort(key=lambda x: x.get("days_remaining", 999))
+    return expiring
+
+
+@api_router.get("/members/{member_id}")
+async def get_member(member_id: str):
+    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    return doc
+
+
+@api_router.post("/members")
+async def create_member(data: CustomerMemberCreate):
+    member = CustomerMember(**data.model_dump())
+    doc = member.model_dump()
+    await db.customer_members.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/members/{member_id}")
+async def update_member(member_id: str, data: CustomerMemberCreate):
+    existing = await db.customer_members.find_one({"id": member_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    
+    update = {**data.model_dump(), "updated_at": datetime.now(timezone.utc).isoformat()}
+    await db.customer_members.update_one({"id": member_id}, {"$set": update})
+    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    return doc
+
+
+@api_router.delete("/members/{member_id}")
+async def delete_member(member_id: str):
+    result = await db.customer_members.delete_one({"id": member_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    # Also delete related data
+    await db.weekly_trainings.delete_many({"member_id": member_id})
+    await db.challenge_checkins.delete_many({"member_id": member_id})
+    await db.member_renewals.delete_many({"member_id": member_id})
+    return {"message": "Membre et données associées supprimés"}
+
+
+@api_router.post("/members/{member_id}/renew")
+async def renew_membership(member_id: str, body: dict):
+    """Renew a member's subscription"""
+    member = await db.customer_members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    
+    new_end_date = body.get("new_end_date")
+    renewal_duration = body.get("renewal_duration", "12 mois")
+    notes = body.get("notes", "")
+    
+    if not new_end_date:
+        raise HTTPException(status_code=400, detail="new_end_date requis")
+    
+    # Record renewal history
+    renewal = MemberRenewalHistory(
+        member_id=member_id,
+        previous_end_date=member.get("subscription_end_date"),
+        new_end_date=new_end_date,
+        renewal_duration=renewal_duration,
+        notes=notes
+    )
+    await db.member_renewals.insert_one(renewal.model_dump())
+    
+    # Update member
+    await db.customer_members.update_one(
+        {"id": member_id},
+        {"$set": {
+            "subscription_end_date": new_end_date,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    return {"member": doc, "message": "Abonnement renouvelé"}
+
+
+@api_router.get("/members/{member_id}/renewals")
+async def get_member_renewals(member_id: str):
+    """Get renewal history for a member"""
+    docs = await db.member_renewals.find({"member_id": member_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return docs
+
+
+# ── Routes: Weekly Trainings (Client KPIs - Engagement) ──────────────────────
+
+@api_router.get("/trainings")
+async def get_trainings(
+    member_id: Optional[str] = None,
+    year: Optional[int] = None,
+    week: Optional[int] = None
+):
+    """Get weekly trainings, optionally filtered"""
+    query = {}
+    if member_id:
+        query["member_id"] = member_id
+    if year:
+        query["calendar_year"] = year
+    if week:
+        query["calendar_week"] = week
+    
+    docs = await db.weekly_trainings.find(query, {"_id": 0}).to_list(5000)
+    return docs
+
+
+@api_router.post("/trainings")
+async def upsert_training(data: WeeklyTrainingUpdate):
+    """Create or update weekly training record"""
+    existing = await db.weekly_trainings.find_one({
+        "member_id": data.member_id,
+        "calendar_year": data.calendar_year,
+        "calendar_week": data.calendar_week
+    })
+    
+    if existing:
+        await db.weekly_trainings.update_one(
+            {"id": existing["id"]},
+            {"$set": {
+                "trainings_count": data.trainings_count,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        doc = await db.weekly_trainings.find_one({"id": existing["id"]}, {"_id": 0})
+    else:
+        training = WeeklyTraining(**data.model_dump())
+        doc = training.model_dump()
+        await db.weekly_trainings.insert_one(doc)
+        doc.pop('_id', None)
+    
+    return doc
+
+
+@api_router.get("/trainings/summary/{member_id}")
+async def get_member_training_summary(member_id: str, year: Optional[int] = None):
+    """Get training summary for a member"""
+    query = {"member_id": member_id}
+    if year:
+        query["calendar_year"] = year
+    
+    docs = await db.weekly_trainings.find(query, {"_id": 0}).to_list(100)
+    
+    total_trainings = sum(d.get("trainings_count", 0) for d in docs)
+    weeks_with_data = len(docs)
+    avg_per_week = round(total_trainings / weeks_with_data, 1) if weeks_with_data > 0 else 0
+    
+    # Determine engagement level
+    if avg_per_week >= 4:
+        engagement = "Excellent"
+    elif avg_per_week >= 3:
+        engagement = "Bon"
+    elif avg_per_week >= 2:
+        engagement = "Moyen"
+    else:
+        engagement = "Faible"
+    
+    return {
+        "member_id": member_id,
+        "total_trainings": total_trainings,
+        "weeks_tracked": weeks_with_data,
+        "avg_per_week": avg_per_week,
+        "engagement_level": engagement,
+        "details": docs
+    }
+
+
+# ── Routes: 6 Weeks Challenge ────────────────────────────────────────────────
+
+class SixWeeksChallenge(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    start_date: str
+    end_date: Optional[str] = None
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class SixWeeksChallengeCreate(BaseModel):
+    name: str
+    start_date: str
+    end_date: Optional[str] = None
+    is_active: bool = True
+
+
+class ChallengeParticipant(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    challenge_id: str
+    member_id: str
+    member_name: str
+    week1: bool = False
+    week2: bool = False
+    week3: bool = False
+    week4: bool = False
+    week5: bool = False
+    week6: bool = False
+    notes: Optional[str] = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class ChallengeParticipantCreate(BaseModel):
+    challenge_id: str
+    member_id: str
+    member_name: str
+
+
+@api_router.get("/challenges")
+async def get_challenges(active_only: Optional[bool] = None):
+    """Get all 6-weeks challenges"""
+    query = {}
+    if active_only:
+        query["is_active"] = True
+    docs = await db.six_weeks_challenges.find(query, {"_id": 0}).sort("start_date", -1).to_list(100)
+    return docs
+
+
+@api_router.get("/challenges/{challenge_id}")
+async def get_challenge(challenge_id: str):
+    doc = await db.six_weeks_challenges.find_one({"id": challenge_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Challenge introuvable")
+    
+    # Get participants
+    participants = await db.challenge_participants.find({"challenge_id": challenge_id}, {"_id": 0}).to_list(200)
+    doc["participants"] = participants
+    doc["participant_count"] = len(participants)
+    
+    return doc
+
+
+@api_router.post("/challenges")
+async def create_challenge(data: SixWeeksChallengeCreate):
+    challenge = SixWeeksChallenge(**data.model_dump())
+    doc = challenge.model_dump()
+    await db.six_weeks_challenges.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/challenges/{challenge_id}")
+async def update_challenge(challenge_id: str, data: SixWeeksChallengeCreate):
+    existing = await db.six_weeks_challenges.find_one({"id": challenge_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Challenge introuvable")
+    
+    await db.six_weeks_challenges.update_one({"id": challenge_id}, {"$set": data.model_dump()})
+    doc = await db.six_weeks_challenges.find_one({"id": challenge_id}, {"_id": 0})
+    return doc
+
+
+@api_router.delete("/challenges/{challenge_id}")
+async def delete_challenge(challenge_id: str):
+    result = await db.six_weeks_challenges.delete_one({"id": challenge_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Challenge introuvable")
+    # Delete participants
+    await db.challenge_participants.delete_many({"challenge_id": challenge_id})
+    return {"message": "Challenge et participants supprimés"}
+
+
+@api_router.post("/challenges/{challenge_id}/participants")
+async def add_challenge_participant(challenge_id: str, data: ChallengeParticipantCreate):
+    # Check challenge exists
+    challenge = await db.six_weeks_challenges.find_one({"id": challenge_id})
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge introuvable")
+    
+    # Check not already participant
+    existing = await db.challenge_participants.find_one({
+        "challenge_id": challenge_id,
+        "member_id": data.member_id
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Ce membre participe déjà au challenge")
+    
+    participant = ChallengeParticipant(**data.model_dump())
+    doc = participant.model_dump()
+    await db.challenge_participants.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/challenges/{challenge_id}/participants/{participant_id}")
+async def update_participant_checkins(challenge_id: str, participant_id: str, body: dict):
+    """Update weekly check-ins for a participant"""
+    existing = await db.challenge_participants.find_one({"id": participant_id, "challenge_id": challenge_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Participant introuvable")
+    
+    update = {
+        "week1": body.get("week1", existing.get("week1", False)),
+        "week2": body.get("week2", existing.get("week2", False)),
+        "week3": body.get("week3", existing.get("week3", False)),
+        "week4": body.get("week4", existing.get("week4", False)),
+        "week5": body.get("week5", existing.get("week5", False)),
+        "week6": body.get("week6", existing.get("week6", False)),
+        "notes": body.get("notes", existing.get("notes", "")),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.challenge_participants.update_one({"id": participant_id}, {"$set": update})
+    doc = await db.challenge_participants.find_one({"id": participant_id}, {"_id": 0})
+    return doc
+
+
+@api_router.delete("/challenges/{challenge_id}/participants/{participant_id}")
+async def remove_participant(challenge_id: str, participant_id: str):
+    result = await db.challenge_participants.delete_one({"id": participant_id, "challenge_id": challenge_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Participant introuvable")
+    return {"message": "Participant retiré du challenge"}
+
+
+# ── Routes: Course KPIs ──────────────────────────────────────────────────────
+
+@api_router.get("/courses")
+async def get_courses(year: Optional[int] = None, month: Optional[int] = None):
+    """Get course KPIs, optionally filtered by year/month"""
+    query = {}
+    if year:
+        query["year"] = year
+    if month:
+        query["month"] = month
+    
+    docs = await db.course_kpis.find(query, {"_id": 0}).sort([("day_of_week", 1), ("time_slot", 1)]).to_list(500)
+    return docs
+
+
+@api_router.get("/courses/{course_id}")
+async def get_course(course_id: str):
+    doc = await db.course_kpis.find_one({"id": course_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Cours introuvable")
+    return doc
+
+
+@api_router.post("/courses")
+async def create_course(data: CourseKPICreate):
+    # Set month name
+    month_name = MONTHS_FR[data.month - 1] if 1 <= data.month <= 12 else ""
+    
+    course = CourseKPI(**data.model_dump(), month_name=month_name)
+    doc = course.model_dump()
+    await db.course_kpis.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/courses/{course_id}")
+async def update_course(course_id: str, body: dict):
+    """Update course KPI including weekly attendance"""
+    existing = await db.course_kpis.find_one({"id": course_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Cours introuvable")
+    
+    # Calculate attendance rate
+    attendance_fields = ["week1_attendance", "week2_attendance", "week3_attendance", "week4_attendance", "week5_attendance"]
+    total_attendance = sum(body.get(f, existing.get(f, 0)) for f in attendance_fields)
+    max_capacity = body.get("max_capacity", existing.get("max_capacity", 10))
+    weeks_with_data = sum(1 for f in attendance_fields if body.get(f, existing.get(f, 0)) > 0)
+    
+    if weeks_with_data > 0 and max_capacity > 0:
+        attendance_rate = round((total_attendance / (weeks_with_data * max_capacity)) * 100, 1)
+    else:
+        attendance_rate = 0
+    
+    body["attendance_rate"] = attendance_rate
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.course_kpis.update_one({"id": course_id}, {"$set": body})
+    doc = await db.course_kpis.find_one({"id": course_id}, {"_id": 0})
+    return doc
+
+
+@api_router.delete("/courses/{course_id}")
+async def delete_course(course_id: str):
+    result = await db.course_kpis.delete_one({"id": course_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Cours introuvable")
+    return {"message": "Cours supprimé"}
+
+
+@api_router.get("/courses/summary/{year}/{month}")
+async def get_courses_summary(year: int, month: int):
+    """Get summary statistics for courses in a month"""
+    docs = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+    
+    if not docs:
+        return {
+            "year": year,
+            "month": month,
+            "month_name": MONTHS_FR[month - 1] if 1 <= month <= 12 else "",
+            "total_courses": 0,
+            "avg_attendance_rate": 0,
+            "total_expenses": 0,
+            "by_day": {}
+        }
+    
+    total_attendance = sum(d.get("attendance_rate", 0) for d in docs)
+    avg_attendance = round(total_attendance / len(docs), 1) if docs else 0
+    total_expenses = sum(d.get("monthly_expenses", 0) for d in docs)
+    
+    # Group by day
+    by_day = {}
+    for d in docs:
+        day = d.get("day_of_week", "Autre")
+        if day not in by_day:
+            by_day[day] = {"count": 0, "courses": []}
+        by_day[day]["count"] += 1
+        by_day[day]["courses"].append(d.get("course_name", ""))
+    
+    return {
+        "year": year,
+        "month": month,
+        "month_name": MONTHS_FR[month - 1] if 1 <= month <= 12 else "",
+        "total_courses": len(docs),
+        "avg_attendance_rate": avg_attendance,
+        "total_expenses": total_expenses,
+        "by_day": by_day
+    }
+
+
+# ── Routes: Instructors ──────────────────────────────────────────────────────
+
+@api_router.get("/instructors")
+async def get_instructors(active_only: Optional[bool] = None):
+    query = {}
+    if active_only:
+        query["is_active"] = True
+    docs = await db.instructors.find(query, {"_id": 0}).sort("name", 1).to_list(100)
+    return docs
+
+
+@api_router.post("/instructors")
+async def create_instructor(body: dict):
+    instructor = Instructor(
+        name=body.get("name", ""),
+        email=body.get("email"),
+        hourly_rate=body.get("hourly_rate", 0),
+        is_active=body.get("is_active", True)
+    )
+    doc = instructor.model_dump()
+    await db.instructors.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/instructors/{instructor_id}")
+async def update_instructor(instructor_id: str, body: dict):
+    existing = await db.instructors.find_one({"id": instructor_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Instructeur introuvable")
+    
+    await db.instructors.update_one({"id": instructor_id}, {"$set": body})
+    doc = await db.instructors.find_one({"id": instructor_id}, {"_id": 0})
+    return doc
+
+
+@api_router.delete("/instructors/{instructor_id}")
+async def delete_instructor(instructor_id: str):
+    result = await db.instructors.delete_one({"id": instructor_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Instructeur introuvable")
+    return {"message": "Instructeur supprimé"}
 
 
 # ── App Setup ────────────────────────────────────────────────────────────────

@@ -12,6 +12,10 @@ import {
   LogOut,
   User,
   BarChart3,
+  Users,
+  Trophy,
+  CalendarDays,
+  UserCheck,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -33,6 +37,10 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const navItems = [
     { path: "/", icon: LayoutDashboard, label: t("dashboard") },
     { path: "/compare", icon: BarChart3, label: lang === "fr" ? "Analyse Multi-Mois" : "Multi-Month" },
+    { path: "/members", icon: Users, label: lang === "fr" ? "Membres" : "Members" },
+    { path: "/challenge", icon: Trophy, label: lang === "fr" ? "Challenge 6 Sem." : "6 Weeks Challenge" },
+    { path: "/courses", icon: CalendarDays, label: lang === "fr" ? "KPIs Cours" : "Course KPIs" },
+    { path: "/clients", icon: UserCheck, label: lang === "fr" ? "KPIs Clients" : "Client KPIs" },
     { path: "/transactions", icon: ArrowLeftRight, label: t("transactions") },
     { path: "/recurring", icon: RefreshCw, label: t("recurringTransactions") },
     { path: "/categories", icon: Tag, label: t("categories") },

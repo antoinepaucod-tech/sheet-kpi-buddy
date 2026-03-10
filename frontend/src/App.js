@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
@@ -10,6 +11,10 @@ import SettingsPage from "./pages/SettingsPage";
 import RecurringPage from "./pages/RecurringPage";
 import ComparePage from "./pages/ComparePage";
 import AuthPage from "./pages/AuthPage";
+import MembersPage from "./pages/MembersPage";
+import ChallengePage from "./pages/ChallengePage";
+import CoursesPage from "./pages/CoursesPage";
+import ClientKPIPage from "./pages/ClientKPIPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -98,6 +103,10 @@ function AppInner() {
                   <Route path="/transactions" element={<TransactionsPage selectedMonth={selectedMonth} />} />
                   <Route path="/recurring" element={<RecurringPage />} />
                   <Route path="/compare" element={<ComparePage />} />
+                  <Route path="/members" element={<MembersPage />} />
+                  <Route path="/challenge" element={<ChallengePage />} />
+                  <Route path="/courses" element={<CoursesPage />} />
+                  <Route path="/clients" element={<ClientKPIPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                 </Routes>
@@ -110,17 +119,29 @@ function AppInner() {
   );
 }
 
+// Create QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
 function App() {
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
 
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        <AppInner />
-      </LanguageProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <LanguageProvider>
+          <AppInner />
+        </LanguageProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
