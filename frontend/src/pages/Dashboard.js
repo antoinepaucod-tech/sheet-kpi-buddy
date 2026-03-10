@@ -5,8 +5,10 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { KPICard } from "../components/KPICard";
+import { EditKPIModal } from "../components/EditKPIModal";
 import {
-  TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw,
+  TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw, Pencil,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useTranslations } from "../hooks/useTranslations";
@@ -14,7 +16,7 @@ import { useMonthlyKPIData } from "../hooks/useMonthlyKPIData";
 import { useSettings } from "../hooks/useSettings";
 import { Toaster } from "../components/ui/toaster";
 import { useToast } from "../hooks/use-toast";
-import { formatCHF, formatPct, formatMonthLabel, formatNum, getTrend } from "../utils/format";
+import { formatCHF, formatPct, formatMonthLabel, formatNum, getTrend, formatMonthFull } from "../utils/format";
 import axios from "axios";
 import { useState } from "react";
 
@@ -60,12 +62,13 @@ const ChartCard = ({ title, children }) => (
   </div>
 );
 
-export default function Dashboard({ selectedMonth }) {
+export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   const { t, lang } = useTranslations();
   const { kpis, loading, refetch, getKpiByMonth, getPreviousKpi } = useMonthlyKPIData();
   const { settings } = useSettings();
   const { toast } = useToast();
   const [seeding, setSeeding] = useState(false);
+  const [editKpiOpen, setEditKpiOpen] = useState(false);
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -78,8 +81,47 @@ export default function Dashboard({ selectedMonth }) {
     }
   };
 
+  // Month navigation
+  const navigateMonth = (direction) => {
+    if (!kpis.length || !selectedMonth) return;
+    const idx = kpis.findIndex((k) => k.month === selectedMonth);
+    const newIdx = idx + direction;
+    if (newIdx >= 0 && newIdx < kpis.length) {
+      setSelectedMonth(kpis[newIdx].month);
+    }
+  };
+  const canGoBack = kpis.findIndex((k) => k.month === selectedMonth) > 0;
+  const canGoForward = kpis.findIndex((k) => k.month === selectedMonth) < kpis.length - 1;
+
+  // Annual summary
+  const annualData = useMemo(() => {
+    const year = selectedMonth?.split("-")[0];
+    const yearKpis = kpis.filter((k) => k.month.startsWith(year || "2024"));
+    if (!yearKpis.length) return null;
+    return {
+      totalRevenue: yearKpis.reduce((s, k) => s + k.total_revenue, 0),
+      totalExpenses: yearKpis.reduce((s, k) => s + k.total_expenses, 0),
+      totalProfit: yearKpis.reduce((s, k) => s + k.net_profit, 0),
+      totalNewMembers: yearKpis.reduce((s, k) => s + k.new_members, 0),
+      avgChurn: yearKpis.reduce((s, k) => s + k.churn_rate, 0) / yearKpis.length,
+      avgRoas: yearKpis.reduce((s, k) => s + k.roas, 0) / yearKpis.length,
+      bestMonth: yearKpis.reduce((best, k) => k.total_revenue > best.total_revenue ? k : best),
+      worstMonth: yearKpis.reduce((worst, k) => k.total_revenue < worst.total_revenue ? k : worst),
+      months: yearKpis.length,
+    };
+  }, [kpis, selectedMonth]);
+
+  const currentYear = selectedMonth?.split("-")[0] || "2024";
   const current = getKpiByMonth(selectedMonth);
   const previous = getPreviousKpi(selectedMonth);
+
+  /* Chart click → select month */
+  const handleChartClick = (data) => {
+    if (data?.activeLabel && setSelectedMonth) {
+      const found = kpis.find((k) => formatMonthLabel(k.month, lang) === data.activeLabel);
+      if (found) setSelectedMonth(found.month);
+    }
+  };
 
   const chartData = useMemo(
     () =>
@@ -147,27 +189,57 @@ export default function Dashboard({ selectedMonth }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
-            {t("dashboard")}
+            {settings?.club_name || t("dashboard")}
           </h1>
           {selectedLabel && (
             <p className="text-white/40 text-sm font-body mt-1">{selectedLabel}</p>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSeed}
-          disabled={seeding}
-          className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
-          data-testid="reseed-btn"
-        >
-          {seeding ? (
-            <Loader2 size={12} className="animate-spin mr-1.5" />
-          ) : (
-            <RotateCcw size={12} className="mr-1.5" />
-          )}
-          {t("seedData")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Month navigation */}
+          <button
+            onClick={() => navigateMonth(-1)}
+            disabled={!canGoBack}
+            className="p-1.5 text-white/30 hover:text-white disabled:opacity-20 transition-colors"
+            data-testid="prev-month-btn"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={() => navigateMonth(1)}
+            disabled={!canGoForward}
+            className="p-1.5 text-white/30 hover:text-white disabled:opacity-20 transition-colors"
+            data-testid="next-month-btn"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setEditKpiOpen(true)}
+            className="text-white/30 hover:text-white hover:bg-white/5 text-xs"
+            data-testid="edit-kpi-btn"
+            title={lang === "fr" ? "Modifier les KPIs" : "Edit KPIs"}
+          >
+            <Pencil size={12} className="mr-1.5" />
+            {lang === "fr" ? "Modifier" : "Edit"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSeed}
+            disabled={seeding}
+            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
+            data-testid="reseed-btn"
+          >
+            {seeding ? (
+              <Loader2 size={12} className="animate-spin mr-1.5" />
+            ) : (
+              <RotateCcw size={12} className="mr-1.5" />
+            )}
+            {t("seedData")}
+          </Button>
+        </div>
       </div>
 
       {/* KPI Grid */}
@@ -320,14 +392,14 @@ export default function Dashboard({ selectedMonth }) {
       {/* Tabs */}
       <Tabs defaultValue="revenue" className="space-y-4">
         <TabsList className="bg-[#1C1C1E] border border-white/10 rounded-sm p-1">
-          {["revenue", "funnel", "members", "metrics"].map((tab) => (
+          {["revenue", "funnel", "members", "metrics", "annual"].map((tab) => (
             <TabsTrigger
               key={tab}
               value={tab}
               data-testid={`tab-${tab}`}
               className="rounded-sm text-white/50 data-[state=active]:bg-rose-600 data-[state=active]:text-white font-body text-sm uppercase tracking-wider"
             >
-              {t(tab)}
+              {tab === "annual" ? (lang === "fr" ? "Annuel" : "Annual") : t(tab)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -337,7 +409,7 @@ export default function Dashboard({ selectedMonth }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("revenueEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={chartData}>
+                <AreaChart data={chartData} onClick={handleChartClick} style={{ cursor: "pointer" }}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={CHART_COLORS.revenue} stopOpacity={0.15} />
@@ -552,7 +624,100 @@ export default function Dashboard({ selectedMonth }) {
             ))}
           </div>
         </TabsContent>
+
+        {/* Annual Summary Tab */}
+        <TabsContent value="annual" className="space-y-4" data-testid="tab-annual-content">
+          {annualData && (
+            <>
+              <div className="flex items-baseline gap-2">
+                <h2 className="font-heading text-2xl font-extrabold text-white uppercase">
+                  {lang === "fr" ? `Bilan ${currentYear}` : `${currentYear} Summary`}
+                </h2>
+                <span className="text-white/30 text-sm font-mono">{annualData.months} {lang === "fr" ? "mois" : "months"}</span>
+              </div>
+
+              {/* Annual KPI cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: lang === "fr" ? "CA Annuel" : "Annual Revenue", value: formatCHF(annualData.totalRevenue), color: "text-rose-500" },
+                  { label: lang === "fr" ? "Bénéfice Annuel" : "Annual Profit", value: formatCHF(annualData.totalProfit), color: annualData.totalProfit >= 0 ? "text-green-400" : "text-red-400" },
+                  { label: lang === "fr" ? "Dépenses Annuelles" : "Annual Expenses", value: formatCHF(annualData.totalExpenses), color: "text-blue-400" },
+                  { label: lang === "fr" ? "Nouveaux Membres" : "New Members", value: formatNum(annualData.totalNewMembers), color: "text-emerald-400" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="bg-[#121214] border border-white/10 p-5 rounded-sm">
+                    <p className="text-xs text-white/40 uppercase tracking-wider">{label}</p>
+                    <p className={`text-2xl font-heading font-extrabold mt-2 ${color}`}>{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Best / Worst / Avg */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-[#121214] border border-green-500/20 p-5 rounded-sm">
+                  <p className="text-xs text-green-400/60 uppercase tracking-wider mb-2">
+                    {lang === "fr" ? "Meilleur mois" : "Best month"}
+                  </p>
+                  <p className="font-heading text-xl font-extrabold text-white uppercase">
+                    {formatMonthFull(annualData.bestMonth.month, lang)}
+                  </p>
+                  <p className="text-green-400 font-mono text-sm mt-1">
+                    {formatCHF(annualData.bestMonth.total_revenue)}
+                  </p>
+                </div>
+                <div className="bg-[#121214] border border-orange-500/20 p-5 rounded-sm">
+                  <p className="text-xs text-orange-400/60 uppercase tracking-wider mb-2">
+                    {lang === "fr" ? "Mois le plus faible" : "Worst month"}
+                  </p>
+                  <p className="font-heading text-xl font-extrabold text-white uppercase">
+                    {formatMonthFull(annualData.worstMonth.month, lang)}
+                  </p>
+                  <p className="text-orange-400 font-mono text-sm mt-1">
+                    {formatCHF(annualData.worstMonth.total_revenue)}
+                  </p>
+                </div>
+                <div className="bg-[#121214] border border-white/10 p-5 rounded-sm">
+                  <p className="text-xs text-white/40 uppercase tracking-wider mb-2">
+                    {lang === "fr" ? "Moyennes annuelles" : "Annual averages"}
+                  </p>
+                  <div className="space-y-1 text-sm font-mono">
+                    <p className="text-white/70">ROAS: <span className="text-yellow-400 font-bold">{annualData.avgRoas.toFixed(1)}x</span></p>
+                    <p className="text-white/70">Churn: <span className="text-orange-400 font-bold">{annualData.avgChurn.toFixed(1)}%</span></p>
+                    <p className="text-white/70">
+                      {lang === "fr" ? "Marge" : "Margin"}: <span className="text-green-400 font-bold">
+                        {((annualData.totalProfit / annualData.totalRevenue) * 100).toFixed(1)}%
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Annual revenue chart */}
+              <ChartCard title={lang === "fr" ? `Revenus vs Dépenses ${currentYear}` : `Revenue vs Expenses ${currentYear}`}>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={chartData.filter((d) => d.month.startsWith(currentYear))} barSize={18}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }} />
+                    <Bar dataKey="revenue" name={lang === "fr" ? "Revenus" : "Revenue"} fill={CHART_COLORS.revenue} opacity={0.8} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="expenses" name={lang === "fr" ? "Dépenses" : "Expenses"} fill={CHART_COLORS.expenses} opacity={0.6} radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </>
+          )}
+        </TabsContent>
+
       </Tabs>
+
+      {/* Edit KPI Modal */}
+      <EditKPIModal
+        open={editKpiOpen}
+        onClose={() => setEditKpiOpen(false)}
+        kpi={current}
+        onSaved={refetch}
+      />
     </div>
   );
 }

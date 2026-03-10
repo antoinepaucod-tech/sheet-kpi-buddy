@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp, Loader2, RotateCcw } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, Loader2, RotateCcw, Download, Search } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import {
@@ -40,6 +40,7 @@ export default function TransactionsPage({ selectedMonth }) {
   const { toast } = useToast();
   const [filterMonth, setFilterMonth] = useState(selectedMonth || "");
   const [filterType, setFilterType] = useState("all");
+  const [searchText, setSearchText] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [showExcluded, setShowExcluded] = useState(false);
@@ -56,6 +57,8 @@ export default function TransactionsPage({ selectedMonth }) {
 
   const filtered = transactions.filter((tx) => {
     if (filterType && filterType !== "all" && tx.type !== filterType) return false;
+    if (searchText && !tx.description.toLowerCase().includes(searchText.toLowerCase()) &&
+        !tx.category.toLowerCase().includes(searchText.toLowerCase())) return false;
     return true;
   });
 
@@ -64,6 +67,26 @@ export default function TransactionsPage({ selectedMonth }) {
     await deleteTransaction(deleteId);
     setDeleteId(null);
     toast({ title: lang === "fr" ? "Transaction supprimée" : "Transaction deleted", description: lang === "fr" ? "Ajoutée aux exclusions" : "Added to exclusions" });
+  };
+
+  const exportCSV = () => {
+    const headers = ["Date", "Description", "Catégorie", "Type", "Sous-type", "Montant (CHF)"];
+    const rows = filtered.map((tx) => [
+      tx.date,
+      `"${tx.description}"`,
+      tx.category,
+      tx.type,
+      tx.sub_type || "",
+      tx.amount.toFixed(2),
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(";")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions_${filterMonth || "all"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const getCategoryColor = (catName) => {
@@ -79,14 +102,25 @@ export default function TransactionsPage({ selectedMonth }) {
         <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
           {t("transactions")}
         </h1>
-        <Button
-          onClick={() => setShowModal(true)}
-          className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider text-xs"
-          data-testid="add-transaction-btn"
-        >
-          <Plus size={14} className="mr-1.5" />
-          {t("addTransaction")}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={exportCSV}
+            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
+            data-testid="export-csv-btn"
+          >
+            <Download size={12} className="mr-1.5" />
+            {lang === "fr" ? "Exporter CSV" : "Export CSV"}
+          </Button>
+          <Button
+            onClick={() => setShowModal(true)}
+            className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider text-xs"
+            data-testid="add-transaction-btn"
+          >
+            <Plus size={14} className="mr-1.5" />
+            {t("addTransaction")}
+          </Button>
+        </div>
       </div>
 
       {/* Revenue split */}
@@ -114,6 +148,17 @@ export default function TransactionsPage({ selectedMonth }) {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <input
+            type="text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder={lang === "fr" ? "Rechercher..." : "Search..."}
+            className="w-full bg-[#1C1C1E] border border-white/10 text-white text-sm rounded-sm pl-8 pr-3 py-2 focus:outline-none focus:border-white/20 placeholder:text-white/20"
+            data-testid="tx-search-input"
+          />
+        </div>
         <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger
             className="w-40 bg-[#1C1C1E] border-white/10 text-white text-sm h-9"

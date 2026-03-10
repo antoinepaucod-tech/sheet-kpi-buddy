@@ -50,7 +50,7 @@ function AppInner() {
         availableMonths={availableMonths}
       >
         <Routes>
-          <Route path="/" element={<Dashboard selectedMonth={selectedMonth} />} />
+          <Route path="/" element={<Dashboard selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />} />
           <Route path="/transactions" element={<TransactionsPage selectedMonth={selectedMonth} />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
