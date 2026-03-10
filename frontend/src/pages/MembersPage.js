@@ -590,7 +590,28 @@ export default function MembersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-white/50 text-xs uppercase">Abonnement</label>
-                <Select value={formData.membership} onValueChange={(v) => setFormData({ ...formData, membership: v })}>
+                <Select 
+                  value={formData.membership} 
+                  onValueChange={(v) => {
+                    // Find the membership type to get default billing settings
+                    const selectedType = membershipTypes.find(t => t.name === v);
+                    const newData = { ...formData, membership: v };
+                    
+                    if (selectedType) {
+                      // Pre-fill billing settings from membership type defaults
+                      newData.billing_amount = selectedType.price || formData.billing_amount;
+                      newData.billing_enabled = selectedType.is_recurring;
+                      if (selectedType.default_billing_cycle_type) {
+                        newData.billing_cycle_type = selectedType.default_billing_cycle_type;
+                      }
+                      if (selectedType.default_billing_cycle_value) {
+                        newData.billing_cycle_value = selectedType.default_billing_cycle_value;
+                      }
+                    }
+                    
+                    setFormData(newData);
+                  }}
+                >
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>

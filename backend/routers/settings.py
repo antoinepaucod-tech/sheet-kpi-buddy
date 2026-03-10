@@ -128,15 +128,15 @@ async def delete_member_type(type_id: str):
 async def seed_default_types():
     """Seed default membership and member types if not exist"""
     
-    # Default membership types
+    # Default membership types with billing cycle defaults
     default_memberships = [
-        {"name": "Mensuel", "duration_months": 1, "price": 150, "is_recurring": True, "display_order": 1, "color": "#3b82f6"},
-        {"name": "Trimestriel", "duration_months": 3, "price": 400, "is_recurring": True, "display_order": 2, "color": "#8b5cf6"},
-        {"name": "Semestriel", "duration_months": 6, "price": 750, "is_recurring": True, "display_order": 3, "color": "#06b6d4"},
-        {"name": "Annuel", "duration_months": 12, "price": 1200, "is_recurring": True, "display_order": 4, "color": "#10b981"},
-        {"name": "6 Weeks Challenge", "duration_months": 0, "duration_days": 42, "price": 299, "is_recurring": False, "display_order": 5, "color": "#f59e0b"},
-        {"name": "3 Mois", "duration_months": 3, "price": 450, "is_recurring": True, "display_order": 6, "color": "#ec4899"},
-        {"name": "6 Semaines", "duration_months": 0, "duration_days": 42, "price": 250, "is_recurring": False, "display_order": 7, "color": "#f97316"},
+        {"name": "Mensuel", "duration_months": 1, "price": 150, "is_recurring": True, "display_order": 1, "color": "#3b82f6", "default_billing_cycle_type": "interval_days", "default_billing_cycle_value": 28},
+        {"name": "Trimestriel", "duration_months": 3, "price": 400, "is_recurring": True, "display_order": 2, "color": "#8b5cf6", "default_billing_cycle_type": "monthly_day", "default_billing_cycle_value": 1},
+        {"name": "Semestriel", "duration_months": 6, "price": 750, "is_recurring": True, "display_order": 3, "color": "#06b6d4", "default_billing_cycle_type": "monthly_day", "default_billing_cycle_value": 1},
+        {"name": "Annuel", "duration_months": 12, "price": 1200, "is_recurring": True, "display_order": 4, "color": "#10b981", "default_billing_cycle_type": "monthly_day", "default_billing_cycle_value": 1},
+        {"name": "6 Weeks Challenge", "duration_months": 0, "duration_days": 42, "price": 299, "is_recurring": False, "display_order": 5, "color": "#f59e0b", "default_billing_cycle_type": "interval_days", "default_billing_cycle_value": 42},
+        {"name": "3 Mois", "duration_months": 3, "price": 450, "is_recurring": True, "display_order": 6, "color": "#ec4899", "default_billing_cycle_type": "monthly_day", "default_billing_cycle_value": 1},
+        {"name": "6 Semaines", "duration_months": 0, "duration_days": 42, "price": 250, "is_recurring": False, "display_order": 7, "color": "#f97316", "default_billing_cycle_type": "interval_days", "default_billing_cycle_value": 42},
     ]
     
     # Default member types

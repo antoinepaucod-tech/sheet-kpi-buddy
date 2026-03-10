@@ -14,6 +14,9 @@ class MembershipType(BaseModel):
     price: float = 0  # Prix par défaut
     description: Optional[str] = None
     is_recurring: bool = True  # Abonnement récurrent ou one-time
+    # Default billing cycle settings (pre-filled when selecting this membership)
+    default_billing_cycle_type: str = "monthly_day"  # "monthly_day" or "interval_days"
+    default_billing_cycle_value: int = 1  # Day of month (1-28) or interval in days (28)
     is_active: bool = True
     display_order: int = 0  # Ordre d'affichage
     color: Optional[str] = None  # Couleur pour l'UI (ex: "#10b981")
@@ -28,6 +31,8 @@ class MembershipTypeCreate(BaseModel):
     price: float = 0
     description: Optional[str] = None
     is_recurring: bool = True
+    default_billing_cycle_type: str = "monthly_day"
+    default_billing_cycle_value: int = 1
     is_active: bool = True
     display_order: int = 0
     color: Optional[str] = None

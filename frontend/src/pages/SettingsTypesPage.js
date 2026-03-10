@@ -38,6 +38,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "../components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
 
@@ -63,6 +70,8 @@ export default function SettingsTypesPage() {
     price: 0,
     description: "",
     is_recurring: true,
+    default_billing_cycle_type: "monthly_day",
+    default_billing_cycle_value: 1,
     is_active: true,
     display_order: 0,
     color: "#3b82f6",
@@ -173,6 +182,8 @@ export default function SettingsTypesPage() {
       price: 0,
       description: "",
       is_recurring: true,
+      default_billing_cycle_type: "monthly_day",
+      default_billing_cycle_value: 1,
       is_active: true,
       display_order: membershipTypes.length,
       color: "#3b82f6",
@@ -200,6 +211,8 @@ export default function SettingsTypesPage() {
       price: item.price,
       description: item.description || "",
       is_recurring: item.is_recurring,
+      default_billing_cycle_type: item.default_billing_cycle_type || "monthly_day",
+      default_billing_cycle_value: item.default_billing_cycle_value || 1,
       is_active: item.is_active,
       display_order: item.display_order,
       color: item.color || "#3b82f6",
@@ -319,6 +332,7 @@ export default function SettingsTypesPage() {
                   <TableHead className="text-white/50">Nom</TableHead>
                   <TableHead className="text-white/50">Durée</TableHead>
                   <TableHead className="text-white/50">Prix</TableHead>
+                  <TableHead className="text-white/50">Cycle facturation</TableHead>
                   <TableHead className="text-white/50">Récurrent</TableHead>
                   <TableHead className="text-white/50">Statut</TableHead>
                   <TableHead className="text-white/50 text-right">Actions</TableHead>
@@ -333,7 +347,7 @@ export default function SettingsTypesPage() {
                   </TableRow>
                 ) : membershipTypes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-white/50 py-8">
+                    <TableCell colSpan={8} className="text-center text-white/50 py-8">
                       Aucun type d'abonnement. Cliquez sur "Charger les types par défaut" pour commencer.
                     </TableCell>
                   </TableRow>
@@ -349,6 +363,13 @@ export default function SettingsTypesPage() {
                       <TableCell className="text-white font-medium">{item.name}</TableCell>
                       <TableCell className="text-white/70">{formatDuration(item)}</TableCell>
                       <TableCell className="text-white/70">{item.price} CHF</TableCell>
+                      <TableCell className="text-white/50 text-sm">
+                        {item.is_recurring ? (
+                          item.default_billing_cycle_type === "monthly_day" 
+                            ? `Jour ${item.default_billing_cycle_value || 1}` 
+                            : `${item.default_billing_cycle_value || 28}j`
+                        ) : "-"}
+                      </TableCell>
                       <TableCell>
                         {item.is_recurring ? (
                           <Badge className="bg-blue-500/20 text-blue-400 border-0">Récurrent</Badge>
@@ -578,6 +599,50 @@ export default function SettingsTypesPage() {
                 data-testid="membership-recurring-switch"
               />
             </div>
+            
+            {/* Default billing cycle settings */}
+            {membershipForm.is_recurring && (
+              <div className="border border-white/10 rounded-lg p-4 space-y-3 bg-[#121214]">
+                <label className="text-white/50 text-xs uppercase block">Cycle de facturation par défaut</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-white/40 text-xs">Type de cycle</label>
+                    <Select 
+                      value={membershipForm.default_billing_cycle_type} 
+                      onValueChange={(v) => setMembershipForm({ ...membershipForm, default_billing_cycle_type: v })}
+                    >
+                      <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1C1C1E] border-white/10">
+                        <SelectItem value="monthly_day" className="text-white">Jour fixe du mois</SelectItem>
+                        <SelectItem value="interval_days" className="text-white">Tous les X jours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-white/40 text-xs">
+                      {membershipForm.default_billing_cycle_type === "monthly_day" ? "Jour (1-28)" : "Intervalle (jours)"}
+                    </label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={membershipForm.default_billing_cycle_type === "monthly_day" ? 28 : 365}
+                      value={membershipForm.default_billing_cycle_value}
+                      onChange={(e) => setMembershipForm({ ...membershipForm, default_billing_cycle_value: parseInt(e.target.value) || 1 })}
+                      className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-9"
+                      data-testid="membership-billing-value"
+                    />
+                  </div>
+                </div>
+                <p className="text-white/30 text-xs">
+                  {membershipForm.default_billing_cycle_type === "monthly_day"
+                    ? `Paiement le ${membershipForm.default_billing_cycle_value} de chaque mois`
+                    : `Paiement tous les ${membershipForm.default_billing_cycle_value} jours`}
+                </p>
+              </div>
+            )}
+            
             <div className="flex items-center justify-between">
               <label className="text-white/70 text-sm">Actif</label>
               <Switch
