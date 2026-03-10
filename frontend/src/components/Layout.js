@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
+  RefreshCw,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import {
@@ -27,6 +28,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const navItems = [
     { path: "/", icon: LayoutDashboard, label: t("dashboard") },
     { path: "/transactions", icon: ArrowLeftRight, label: t("transactions") },
+    { path: "/recurring", icon: RefreshCw, label: t("recurringTransactions") },
     { path: "/categories", icon: Tag, label: t("categories") },
     { path: "/settings", icon: Settings, label: t("settings") },
   ];

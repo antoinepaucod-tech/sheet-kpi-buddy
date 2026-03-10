@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import TransactionsPage from "./pages/TransactionsPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import SettingsPage from "./pages/SettingsPage";
+import RecurringPage from "./pages/RecurringPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -52,6 +53,7 @@ function AppInner() {
         <Routes>
           <Route path="/" element={<Dashboard selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />} />
           <Route path="/transactions" element={<TransactionsPage selectedMonth={selectedMonth} />} />
+          <Route path="/recurring" element={<RecurringPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>

@@ -111,6 +111,33 @@ class ExcludedRecurringExpense(BaseModel):
     excluded_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
+class RecurringTransaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    type: str  # "revenue" | "expense"
+    category: str
+    description: str
+    amount: float
+    sub_type: Optional[str] = None
+    recurrence_day: int = 1  # Day of month (1-28)
+    is_active: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class RecurringTransactionCreate(BaseModel):
+    type: str
+    category: str
+    description: str
+    amount: float
+    sub_type: Optional[str] = None
+    recurrence_day: int = 1
+    is_active: bool = True
+
+
+MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+             "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def compute_metrics(kpi: dict) -> dict:
@@ -235,6 +262,104 @@ async def remove_from_exclusions(excluded_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Exclusion introuvable")
     return {"message": "Exclusion supprimée"}
+
+
+# ── Routes: Recurring Transactions ────────────────────────────────────────────
+
+@api_router.get("/recurring-transactions")
+async def get_recurring_transactions():
+    docs = await db.recurring_transactions.find({}, {"_id": 0}).to_list(1000)
+    return docs
+
+
+@api_router.post("/recurring-transactions")
+async def create_recurring_transaction(data: RecurringTransactionCreate):
+    rec = RecurringTransaction(**data.model_dump())
+    doc = rec.model_dump()
+    await db.recurring_transactions.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/recurring-transactions/{rec_id}")
+async def update_recurring_transaction(rec_id: str, data: RecurringTransactionCreate):
+    existing = await db.recurring_transactions.find_one({"id": rec_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Transaction récurrente introuvable")
+    update = {**data.model_dump(), "updated_at": datetime.now(timezone.utc).isoformat()}
+    await db.recurring_transactions.update_one({"id": rec_id}, {"$set": update})
+    doc = await db.recurring_transactions.find_one({"id": rec_id}, {"_id": 0})
+    return doc
+
+
+@api_router.delete("/recurring-transactions/{rec_id}")
+async def delete_recurring_transaction(rec_id: str):
+    result = await db.recurring_transactions.delete_one({"id": rec_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Transaction récurrente introuvable")
+    return {"message": "Transaction récurrente supprimée"}
+
+
+@api_router.post("/recurring-transactions/generate/{year}/{month}")
+async def generate_monthly_transactions(year: int, month: int):
+    """Generate transactions for a specific month from active recurring templates"""
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
+    
+    # Fetch active recurring transactions
+    recurring = await db.recurring_transactions.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    if not recurring:
+        raise HTTPException(status_code=404, detail="Aucune transaction récurrente active")
+    
+    # Get excluded transactions to skip
+    excluded = await db.excluded_recurring_expenses.find({}, {"_id": 0}).to_list(1000)
+    excluded_keys = {(e["category"], e["description"]) for e in excluded}
+    
+    # Month string format (YYYY-MM)
+    month_str = f"{year}-{month:02d}"
+    month_name = MONTHS_FR[month - 1]
+    
+    # Days in month
+    if month == 12:
+        days_in_month = 31
+    else:
+        from calendar import monthrange
+        days_in_month = monthrange(year, month)[1]
+    
+    created = []
+    skipped = []
+    
+    for rec in recurring:
+        # Check if excluded
+        if (rec["category"], rec["description"]) in excluded_keys:
+            skipped.append(rec["description"])
+            continue
+        
+        # Ensure day doesn't exceed month's days
+        day = min(rec.get("recurrence_day", 1), days_in_month)
+        tx_date = f"{month_str}-{day:02d}"
+        
+        tx = AccountingTransaction(
+            date=tx_date,
+            description=rec["description"],
+            amount=rec["amount"],
+            type=rec["type"],
+            category=rec["category"],
+            sub_type=rec.get("sub_type")
+        )
+        doc = tx.model_dump()
+        await db.accounting_transactions.insert_one(doc)
+        doc.pop('_id', None)
+        created.append(doc)
+    
+    return {
+        "month": month_str,
+        "month_name": month_name,
+        "created": len(created),
+        "skipped": len(skipped),
+        "skipped_descriptions": skipped,
+        "transactions": created
+    }
 
 
 @api_router.patch("/monthly-kpis/{month}/note")
