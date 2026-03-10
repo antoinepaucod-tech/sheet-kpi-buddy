@@ -32,8 +32,9 @@ class CustomerMember(BaseModel):
     onboarding_completed_date: Optional[str] = None
     # Annual review
     annual_review_enabled: bool = False
-    annual_review_date: Optional[str] = None  # Date du prochain bilan annuel
+    annual_review_date: Optional[str] = None  # Date du prochain bilan
     last_annual_review_date: Optional[str] = None
+    review_frequency: str = "annually"  # "monthly", "quarterly", "semi-annually", "annually"
     # Monthly follow-up
     last_followup_date: Optional[str] = None
     next_followup_date: Optional[str] = None
@@ -61,6 +62,7 @@ class CustomerMemberCreate(BaseModel):
     billing_payment_method: str = "prelevement"
     # Annual review
     annual_review_enabled: bool = False
+    review_frequency: str = "annually"
     # Onboarding
     onboarding_bsport: bool = False
     onboarding_hubfit: bool = False
@@ -125,10 +127,11 @@ class MemberFollowUpCreate(BaseModel):
 
 
 class AnnualReview(BaseModel):
-    """Annual review/bilan for members - weight, nutrition, program adjustments"""
+    """Review/bilan for members - weight, nutrition, program adjustments"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     member_id: str
     review_date: str
+    review_type: str = "annually"  # "monthly", "quarterly", "semi-annually", "annually"
     # Weight tracking
     weight_start: Optional[float] = None  # Poids au début (kg)
     weight_current: Optional[float] = None  # Poids actuel (kg)
@@ -164,6 +167,7 @@ class AnnualReview(BaseModel):
 class AnnualReviewCreate(BaseModel):
     member_id: str
     review_date: str
+    review_type: str = "annually"
     weight_start: Optional[float] = None
     weight_current: Optional[float] = None
     weight_goal: Optional[float] = None

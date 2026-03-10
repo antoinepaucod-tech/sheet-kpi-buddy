@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Palette, Plus, Trash2, Loader2 } from "lucide-react";
+import { Palette, Plus, Trash2, Loader2, Settings } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -31,22 +31,56 @@ const CATEGORY_COLORS = [
   "#06B6D4", "#84CC16",
 ];
 
-const KPI_COLUMNS = [
-  "loyer", "salaires", "utilities", "marketing_spend", "ad_spend",
-  "revenue_members", "revenue_coaching", "other_expenses",
+// Default KPI columns + ability to add custom ones
+const DEFAULT_KPI_COLUMNS = [
+  { value: "loyer", label: "Loyer", type: "expense" },
+  { value: "salaires", label: "Salaires", type: "expense" },
+  { value: "salaires_coachs", label: "Salaires Coachs", type: "expense" },
+  { value: "utilities", label: "Charges (eau, électricité)", type: "expense" },
+  { value: "marketing_spend", label: "Marketing", type: "expense" },
+  { value: "ad_spend", label: "Publicité", type: "expense" },
+  { value: "assurance", label: "Assurance", type: "expense" },
+  { value: "equipement", label: "Équipement", type: "expense" },
+  { value: "entretien", label: "Entretien", type: "expense" },
+  { value: "abonnements", label: "Abonnements (logiciels)", type: "expense" },
+  { value: "other_expenses", label: "Autres dépenses", type: "expense" },
+  { value: "revenue_members", label: "Revenus Membres", type: "revenue" },
+  { value: "revenue_coaching", label: "Revenus Coaching", type: "revenue" },
+  { value: "revenue_challenges", label: "Revenus Challenges", type: "revenue" },
+  { value: "revenue_products", label: "Ventes Produits", type: "revenue" },
+  { value: "other_revenue", label: "Autres revenus", type: "revenue" },
 ];
 
 const EMPTY_FORM = { name: "", kpi_column: "other_expenses", type: "expense", color: "#3B82F6" };
+const EMPTY_KPI_FORM = { value: "", label: "", type: "expense" };
 
 export default function CategoriesPage() {
   const { t } = useTranslations();
   const { toast } = useToast();
   const { categories, refetch } = useAccountingTransactions(null);
   const [showModal, setShowModal] = useState(false);
+  const [showKpiModal, setShowKpiModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [kpiForm, setKpiForm] = useState(EMPTY_KPI_FORM);
   const [saving, setSaving] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [customKpiColumns, setCustomKpiColumns] = useState([]);
+
+  // Load custom KPI columns from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("custom_kpi_columns");
+    if (saved) {
+      try {
+        setCustomKpiColumns(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  // All KPI columns (default + custom)
+  const allKpiColumns = [...DEFAULT_KPI_COLUMNS, ...customKpiColumns];
+  const expenseKpiColumns = allKpiColumns.filter(c => c.type === "expense");
+  const revenueKpiColumns = allKpiColumns.filter(c => c.type === "revenue");
 
   const handleSave = async () => {
     if (!form.name || !form.kpi_column || !form.type) return;
@@ -88,6 +122,29 @@ export default function CategoriesPage() {
     }
   };
 
+  const handleAddKpiColumn = () => {
+    if (!kpiForm.value || !kpiForm.label) return;
+    const newColumn = {
+      value: kpiForm.value.toLowerCase().replace(/\s+/g, "_"),
+      label: kpiForm.label,
+      type: kpiForm.type,
+      custom: true,
+    };
+    const updated = [...customKpiColumns, newColumn];
+    setCustomKpiColumns(updated);
+    localStorage.setItem("custom_kpi_columns", JSON.stringify(updated));
+    setKpiForm(EMPTY_KPI_FORM);
+    setShowKpiModal(false);
+    toast({ title: "Colonne KPI ajoutée", description: `"${kpiForm.label}" disponible pour les catégories` });
+  };
+
+  const handleDeleteKpiColumn = (value) => {
+    const updated = customKpiColumns.filter(c => c.value !== value);
+    setCustomKpiColumns(updated);
+    localStorage.setItem("custom_kpi_columns", JSON.stringify(updated));
+    toast({ title: "Colonne KPI supprimée" });
+  };
+
   const expenseCategories = categories.filter((c) => c.type === "expense");
   const revenueCategories = categories.filter((c) => c.type === "revenue");
 
@@ -100,10 +157,19 @@ export default function CategoriesPage() {
             {t("categories")}
           </h1>
           <p className="text-white/40 text-sm font-body mt-1">
-            {categories.length} catégorie{categories.length !== 1 ? "s" : ""}
+            {categories.length} catégorie{categories.length !== 1 ? "s" : ""} · {allKpiColumns.length} colonnes KPI
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowKpiModal(true)}
+            className="border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-xs"
+            data-testid="add-kpi-column-btn"
+          >
+            <Plus size={12} className="mr-1.5" />
+            Colonne KPI
+          </Button>
           <Button
             variant="outline"
             onClick={handleRecalculate}
@@ -120,7 +186,7 @@ export default function CategoriesPage() {
             data-testid="add-category-btn"
           >
             <Plus size={14} className="mr-1.5" />
-            Ajouter
+            Catégorie
           </Button>
         </div>
       </div>
@@ -247,10 +313,16 @@ export default function CategoriesPage() {
                   <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white" data-testid="cat-kpi-select">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
-                    {KPI_COLUMNS.map((col) => (
-                      <SelectItem key={col} value={col} className="text-white focus:bg-white/10 font-mono text-xs">
-                        {col}
+                  <SelectContent className="bg-[#1C1C1E] border-white/10 max-h-60">
+                    <div className="px-2 py-1 text-white/40 text-xs uppercase">
+                      {form.type === "expense" ? "Dépenses" : "Revenus"}
+                    </div>
+                    {(form.type === "expense" ? expenseKpiColumns : revenueKpiColumns).map((col) => (
+                      <SelectItem key={col.value} value={col.value} className="text-white focus:bg-white/10">
+                        <span className="flex items-center gap-2">
+                          {col.label}
+                          {col.custom && <Badge variant="secondary" className="text-[10px] bg-white/10 text-white/50">custom</Badge>}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -323,6 +395,95 @@ export default function CategoriesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add KPI Column Modal */}
+      <Dialog open={showKpiModal} onOpenChange={(v) => !v && setShowKpiModal(false)}>
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl font-extrabold uppercase">
+              Nouvelle Colonne KPI
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-white/50 text-sm">
+              Créez une nouvelle colonne KPI pour regrouper vos catégories de dépenses ou revenus.
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-white/60 text-xs uppercase tracking-wider">Nom affiché *</Label>
+              <Input
+                value={kpiForm.label}
+                onChange={(e) => setKpiForm({ ...kpiForm, label: e.target.value })}
+                placeholder="Ex: Frais bancaires"
+                className="bg-[#1C1C1E] border-white/10 text-white placeholder:text-white/20"
+                data-testid="kpi-label-input"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-white/60 text-xs uppercase tracking-wider">Code technique *</Label>
+              <Input
+                value={kpiForm.value}
+                onChange={(e) => setKpiForm({ ...kpiForm, value: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
+                placeholder="Ex: frais_bancaires"
+                className="bg-[#1C1C1E] border-white/10 text-white placeholder:text-white/20 font-mono"
+                data-testid="kpi-value-input"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-white/60 text-xs uppercase tracking-wider">Type *</Label>
+              <Select value={kpiForm.type} onValueChange={(v) => setKpiForm({ ...kpiForm, type: v })}>
+                <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
+                  <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* List of custom columns */}
+            {customKpiColumns.length > 0 && (
+              <div className="border-t border-white/10 pt-4">
+                <Label className="text-white/60 text-xs uppercase tracking-wider mb-2 block">Colonnes personnalisées</Label>
+                <div className="space-y-2">
+                  {customKpiColumns.map((col) => (
+                    <div key={col.value} className="flex items-center justify-between bg-[#1C1C1E] rounded px-3 py-2">
+                      <div>
+                        <span className="text-white text-sm">{col.label}</span>
+                        <span className="text-white/40 text-xs ml-2 font-mono">{col.value}</span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteKpiColumn(col.value)}
+                        className="text-white/30 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowKpiModal(false)}
+              className="border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={handleAddKpiColumn}
+              disabled={!kpiForm.value || !kpiForm.label}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wider"
+              data-testid="kpi-save-btn"
+            >
+              Ajouter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

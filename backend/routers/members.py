@@ -2,6 +2,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+from dateutil.relativedelta import relativedelta
 
 from core.config import db
 from models.members import (
@@ -12,6 +13,23 @@ from models.members import (
 from models.payments import PaymentSchedule
 
 router = APIRouter(prefix="/members", tags=["members"])
+
+FREQUENCY_DELTA = {
+    "monthly": relativedelta(months=1),
+    "quarterly": relativedelta(months=3),
+    "semi-annually": relativedelta(months=6),
+    "annually": relativedelta(years=1),
+}
+
+
+def calc_review_date(contract_date_str, frequency):
+    """Calculate first review date from contract date and frequency"""
+    try:
+        contract_date = datetime.fromisoformat(contract_date_str)
+        delta = FREQUENCY_DELTA.get(frequency, relativedelta(years=1))
+        return (contract_date + delta).strftime("%Y-%m-%d")
+    except Exception:
+        return None
 
 
 @router.get("")
@@ -64,14 +82,12 @@ async def get_member(member_id: str):
 async def create_member(data: CustomerMemberCreate):
     member_data = data.model_dump()
     
-    # Calculate annual review date if enabled (1 year from contract date)
+    # Calculate review date based on frequency
     if data.annual_review_enabled and data.contract_signed_date:
-        try:
-            contract_date = datetime.fromisoformat(data.contract_signed_date)
-            annual_date = contract_date.replace(year=contract_date.year + 1)
-            member_data["annual_review_date"] = annual_date.strftime("%Y-%m-%d")
-        except:
-            pass
+        freq = getattr(data, 'review_frequency', 'annually')
+        review_date = calc_review_date(data.contract_signed_date, freq)
+        if review_date:
+            member_data["annual_review_date"] = review_date
     
     member = CustomerMember(**member_data)
     doc = member.model_dump()
@@ -91,11 +107,13 @@ async def create_member(data: CustomerMemberCreate):
         )
         await db.payment_schedules.insert_one(schedule.model_dump())
     
-    # Create annual review if enabled
+    # Create review if enabled
     if data.annual_review_enabled and doc.get("annual_review_date"):
+        freq = getattr(data, 'review_frequency', 'annually')
         annual_review = AnnualReview(
             member_id=doc["id"],
             review_date=doc["annual_review_date"],
+            review_type=freq,
             status="scheduled"
         )
         await db.annual_reviews.insert_one(annual_review.model_dump())
@@ -111,14 +129,12 @@ async def update_member(member_id: str, data: CustomerMemberCreate):
     
     update_data = data.model_dump()
     
-    # Update annual review date if enabled and changed
+    # Update review date if enabled and changed
     if data.annual_review_enabled and data.contract_signed_date:
-        try:
-            contract_date = datetime.fromisoformat(data.contract_signed_date)
-            annual_date = contract_date.replace(year=contract_date.year + 1)
-            update_data["annual_review_date"] = annual_date.strftime("%Y-%m-%d")
-        except:
-            pass
+        freq = getattr(data, 'review_frequency', 'annually')
+        review_date = calc_review_date(data.contract_signed_date, freq)
+        if review_date:
+            update_data["annual_review_date"] = review_date
     
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.customer_members.update_one({"id": member_id}, {"$set": update_data})
@@ -199,18 +215,22 @@ async def renew_membership(member_id: str, body: dict):
     if "billing_payment_method" in body:
         member_update["billing_payment_method"] = body["billing_payment_method"]
     
-    # Update annual review date if enabled (1 year from renewal)
+    # Schedule next review based on frequency
     if member.get("annual_review_enabled"):
+        freq = member.get("review_frequency", "annually")
+        delta = FREQUENCY_DELTA.get(freq, relativedelta(years=1))
         try:
             end_date = datetime.fromisoformat(new_end_date)
-            member_update["annual_review_date"] = end_date.strftime("%Y-%m-%d")
+            review_date = (end_date + delta).strftime("%Y-%m-%d")
+            member_update["annual_review_date"] = review_date
             annual_review = AnnualReview(
                 member_id=member_id,
-                review_date=member_update["annual_review_date"],
+                review_date=review_date,
+                review_type=freq,
                 status="scheduled"
             )
             await db.annual_reviews.insert_one(annual_review.model_dump())
-        except:
+        except Exception:
             pass
     
     await db.customer_members.update_one({"id": member_id}, {"$set": member_update})

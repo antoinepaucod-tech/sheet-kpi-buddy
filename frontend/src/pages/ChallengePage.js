@@ -42,6 +42,12 @@ import { useTranslations } from "../hooks/useTranslations";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const WEEKS = [1, 2, 3, 4, 5, 6];
+const CHECKINS_PER_WEEK = 3; // Objectif : 3 check-ins par semaine
+
+const CHALLENGE_TYPES = [
+  { value: "fixed", label: "Challenge à date fixe", description: "Ex: Challenge Hiver 2024 - dates communes pour tous" },
+  { value: "personal", label: "Challenge personnel", description: "Dates personnalisées par participant" },
+];
 
 export default function ChallengePage() {
   const { lang } = useTranslations();
@@ -49,15 +55,21 @@ export default function ChallengePage() {
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [addParticipantOpen, setAddParticipantOpen] = useState(false);
+  const [checkinModalOpen, setCheckinModalOpen] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     start_date: "",
     end_date: "",
     is_active: true,
+    challenge_type: "fixed",
+    checkins_goal: CHECKINS_PER_WEEK,
   });
   const [participantData, setParticipantData] = useState({
     member_id: "",
     member_name: "",
+    personal_start_date: "",
+    personal_end_date: "",
   });
 
   // Fetch challenges
@@ -143,6 +155,8 @@ export default function ChallengePage() {
       start_date: format(new Date(), "yyyy-MM-dd"),
       end_date: format(new Date(Date.now() + 42 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
       is_active: true,
+      challenge_type: "fixed",
+      checkins_goal: CHECKINS_PER_WEEK,
     });
     setModalOpen(true);
   };
@@ -154,8 +168,29 @@ export default function ChallengePage() {
       start_date: challenge.start_date,
       end_date: challenge.end_date || "",
       is_active: challenge.is_active,
+      challenge_type: challenge.challenge_type || "fixed",
+      checkins_goal: challenge.checkins_goal || CHECKINS_PER_WEEK,
     });
     setModalOpen(true);
+  };
+
+  const openCheckinModal = (participant) => {
+    setSelectedParticipant(participant);
+    setCheckinModalOpen(true);
+  };
+
+  // Calculate weekly check-ins from participant data
+  const getWeeklyCheckins = (participant, week) => {
+    const key = `week${week}_checkins`;
+    return participant[key] || 0;
+  };
+
+  const updateWeeklyCheckins = (participant, week, count) => {
+    const key = `week${week}_checkins`;
+    updateCheckinMutation.mutate({
+      participantId: participant.id,
+      data: { [key]: count }
+    });
   };
 
   // Calculate stats
@@ -251,16 +286,26 @@ export default function ChallengePage() {
                       <p className="text-white font-medium">{challenge.name}</p>
                       <p className="text-white/40 text-xs flex items-center gap-1">
                         <Calendar size={10} />
-                        {challenge.start_date ? format(parseISO(challenge.start_date), "dd MMM", { locale: fr }) : "-"}
-                        {challenge.end_date && ` → ${format(parseISO(challenge.end_date), "dd MMM", { locale: fr })}`}
+                        {challenge.challenge_type === "personal" 
+                          ? "Dates personnalisées"
+                          : <>
+                              {challenge.start_date ? format(parseISO(challenge.start_date), "dd MMM", { locale: fr }) : "-"}
+                              {challenge.end_date && ` → ${format(parseISO(challenge.end_date), "dd MMM", { locale: fr })}`}
+                            </>
+                        }
                       </p>
                     </div>
                   </div>
                   <ChevronRight size={16} className="text-white/30" />
                 </div>
-                {challenge.is_active && (
-                  <Badge className="mt-2 bg-amber-500/20 text-amber-400 border-0">Actif</Badge>
-                )}
+                <div className="flex gap-2 mt-2">
+                  {challenge.is_active && (
+                    <Badge className="bg-amber-500/20 text-amber-400 border-0">Actif</Badge>
+                  )}
+                  <Badge className={`border-0 ${challenge.challenge_type === "personal" ? "bg-blue-500/20 text-blue-400" : "bg-white/10 text-white/50"}`}>
+                    {challenge.challenge_type === "personal" ? "Personnel" : "Date fixe"}
+                  </Badge>
+                </div>
               </div>
             ))
           )}
@@ -284,10 +329,24 @@ export default function ChallengePage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-white">{challengeDetail.name}</h2>
-                    <p className="text-white/50 text-sm mt-1">
-                      {challengeDetail.start_date && format(parseISO(challengeDetail.start_date), "dd MMMM yyyy", { locale: fr })}
-                      {challengeDetail.end_date && ` - ${format(parseISO(challengeDetail.end_date), "dd MMMM yyyy", { locale: fr })}`}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {challengeDetail.challenge_type === "personal" ? (
+                        <span className="text-white/50 text-sm">Dates personnalisées par participant</span>
+                      ) : (
+                        <span className="text-white/50 text-sm">
+                          {challengeDetail.start_date && format(parseISO(challengeDetail.start_date), "dd MMMM yyyy", { locale: fr })}
+                          {challengeDetail.end_date && ` - ${format(parseISO(challengeDetail.end_date), "dd MMMM yyyy", { locale: fr })}`}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className={`border-0 ${challengeDetail.challenge_type === "personal" ? "bg-blue-500/20 text-blue-400" : "bg-white/10 text-white/50"}`}>
+                        {challengeDetail.challenge_type === "personal" ? "Personnel" : "Date fixe"}
+                      </Badge>
+                      <Badge className="bg-amber-500/10 text-amber-400 border-0">
+                        Objectif : {challengeDetail.checkins_goal || 3}x / semaine
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -384,8 +443,14 @@ export default function ChallengePage() {
                         className="flex items-center gap-4 bg-[#121214] rounded-lg p-3"
                         data-testid={`participant-${participant.id}`}
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <p className="text-white font-medium">{participant.member_name}</p>
+                          {challengeDetail?.challenge_type === "personal" && participant.personal_start_date && (
+                            <p className="text-white/30 text-xs mt-0.5">
+                              {format(parseISO(participant.personal_start_date), "dd MMM", { locale: fr })}
+                              {participant.personal_end_date && ` → ${format(parseISO(participant.personal_end_date), "dd MMM", { locale: fr })}`}
+                            </p>
+                          )}
                           <div className="flex items-center gap-1 mt-1">
                             <Progress value={participant.completionRate} className="w-24 h-1.5 bg-white/10" />
                             <span className="text-xs text-white/50">{participant.completionRate}%</span>
@@ -407,6 +472,16 @@ export default function ChallengePage() {
                             </button>
                           ))}
                         </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openCheckinModal(participant)}
+                          className="text-amber-400 hover:text-amber-300"
+                          title="Check-ins détaillés"
+                          data-testid={`detail-checkin-${participant.id}`}
+                        >
+                          <Target size={14} />
+                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -447,26 +522,80 @@ export default function ChallengePage() {
                 data-testid="challenge-name-input"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-white/50 text-xs uppercase">Date de début</label>
-                <Input
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-white/50 text-xs uppercase">Date de fin</label>
-                <Input
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
-                />
-              </div>
+            
+            {/* Challenge Type */}
+            <div>
+              <label className="text-white/50 text-xs uppercase">Type de challenge</label>
+              <Select 
+                value={formData.challenge_type} 
+                onValueChange={(v) => setFormData({ ...formData, challenge_type: v })}
+              >
+                <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  {CHALLENGE_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value} className="text-white">
+                      <div>
+                        <p className="font-medium">{type.label}</p>
+                        <p className="text-xs text-white/50">{type.description}</p>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {formData.challenge_type === "fixed" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-white/50 text-xs uppercase">Date de début</label>
+                  <Input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className="bg-[#121214] border-white/10 text-white mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-white/50 text-xs uppercase">Date de fin</label>
+                  <Input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    className="bg-[#121214] border-white/10 text-white mt-1"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {formData.challenge_type === "personal" && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                <p className="text-amber-400 text-sm">
+                  Les dates seront définies individuellement pour chaque participant lors de l'inscription.
+                </p>
+              </div>
+            )}
+
+            {/* Check-ins goal */}
+            <div>
+              <label className="text-white/50 text-xs uppercase">Objectif check-ins par semaine</label>
+              <div className="flex items-center gap-4 mt-1">
+                <Input
+                  type="number"
+                  min={1}
+                  max={7}
+                  value={formData.checkins_goal}
+                  onChange={(e) => setFormData({ ...formData, checkins_goal: parseInt(e.target.value) || 3 })}
+                  className="bg-[#121214] border-white/10 text-white w-20"
+                />
+                <span className="text-white/50 text-sm">séances / semaine</span>
+              </div>
+              <p className="text-white/30 text-xs mt-1">
+                Les participants doivent venir {formData.checkins_goal || 3}x par semaine pendant 6 semaines
+              </p>
+            </div>
+
             <div className="flex items-center gap-3">
               <Switch
                 checked={formData.is_active}
@@ -503,6 +632,7 @@ export default function ChallengePage() {
                 onValueChange={(v) => {
                   const member = members.find((m) => m.id === v);
                   setParticipantData({
+                    ...participantData,
                     member_id: v,
                     member_name: member?.name || "",
                   });
@@ -520,6 +650,30 @@ export default function ChallengePage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Personal dates for personal challenges */}
+            {challengeDetail?.challenge_type === "personal" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-white/50 text-xs uppercase">Début personnel</label>
+                  <Input
+                    type="date"
+                    value={participantData.personal_start_date}
+                    onChange={(e) => setParticipantData({ ...participantData, personal_start_date: e.target.value })}
+                    className="bg-[#121214] border-white/10 text-white mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-white/50 text-xs uppercase">Fin personnel</label>
+                  <Input
+                    type="date"
+                    value={participantData.personal_end_date}
+                    onChange={(e) => setParticipantData({ ...participantData, personal_end_date: e.target.value })}
+                    className="bg-[#121214] border-white/10 text-white mt-1"
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setAddParticipantOpen(false)}>Annuler</Button>
@@ -536,6 +690,75 @@ export default function ChallengePage() {
             >
               {addParticipantMutation.isPending ? "..." : "Ajouter"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Weekly Check-ins Modal */}
+      <Dialog open={checkinModalOpen} onOpenChange={setCheckinModalOpen}>
+        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="text-amber-400" size={20} />
+              Check-ins hebdomadaires - {selectedParticipant?.member_name}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedParticipant && (
+            <div className="space-y-4 py-4">
+              <p className="text-white/50 text-sm">
+                Objectif : {challengeDetail?.checkins_goal || 3} check-ins par semaine
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                {WEEKS.map((week) => {
+                  const checkins = getWeeklyCheckins(selectedParticipant, week);
+                  const goal = challengeDetail?.checkins_goal || 3;
+                  const isComplete = checkins >= goal;
+                  return (
+                    <div 
+                      key={week} 
+                      className={`bg-[#121214] rounded-lg p-4 border ${
+                        isComplete ? "border-emerald-500/30" : "border-white/10"
+                      }`}
+                    >
+                      <p className="text-white/40 text-xs uppercase mb-2">Semaine {week}</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.max(0, checkins - 1))}
+                          className="w-8 h-8 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+                        >
+                          -
+                        </button>
+                        <span className={`text-2xl font-bold flex-1 text-center ${isComplete ? "text-emerald-400" : "text-white"}`}>
+                          {checkins}
+                        </span>
+                        <button
+                          onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.min(7, checkins + 1))}
+                          className="w-8 h-8 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <p className="text-center text-xs mt-1">
+                        {isComplete ? (
+                          <span className="text-emerald-400">✓ Objectif atteint</span>
+                        ) : (
+                          <span className="text-white/30">{checkins}/{goal}</span>
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mt-4">
+                <p className="text-amber-400 text-sm">
+                  Total : {WEEKS.reduce((sum, w) => sum + getWeeklyCheckins(selectedParticipant, w), 0)} check-ins 
+                  / {(challengeDetail?.checkins_goal || 3) * 6} objectif
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCheckinModalOpen(false)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

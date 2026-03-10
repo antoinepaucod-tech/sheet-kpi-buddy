@@ -51,11 +51,34 @@ import { useTranslations } from "../hooks/useTranslations";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const REVIEW_TYPES = [
+  { value: "all", label: "Tous les types" },
+  { value: "monthly", label: "Mensuel" },
+  { value: "quarterly", label: "Trimestriel" },
+  { value: "semi-annually", label: "Semestriel" },
+  { value: "annually", label: "Annuel" },
+];
+
+const TYPE_COLORS = {
+  monthly: "bg-cyan-500/20 text-cyan-400",
+  quarterly: "bg-blue-500/20 text-blue-400",
+  "semi-annually": "bg-violet-500/20 text-violet-400",
+  annually: "bg-purple-500/20 text-purple-400",
+};
+
+const TYPE_LABELS = {
+  monthly: "Mensuel",
+  quarterly: "Trimestriel",
+  "semi-annually": "Semestriel",
+  annually: "Annuel",
+};
+
 export default function AnnualReviewsPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterType, setFilterType] = useState("all");
   const [filterPeriod, setFilterPeriod] = useState("upcoming");
   const [selectedReview, setSelectedReview] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -129,6 +152,10 @@ export default function AnnualReviewsPage() {
       result = result.filter((r) => r.status === filterStatus);
     }
 
+    if (filterType !== "all") {
+      result = result.filter((r) => (r.review_type || "annually") === filterType);
+    }
+
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(
@@ -139,7 +166,7 @@ export default function AnnualReviewsPage() {
     }
 
     return result;
-  }, [allReviews, upcomingReviews, filterPeriod, filterStatus, search]);
+  }, [allReviews, upcomingReviews, filterPeriod, filterStatus, filterType, search]);
 
   // Stats
   const stats = useMemo(() => {
@@ -254,12 +281,12 @@ export default function AnnualReviewsPage() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
             <ClipboardCheck className="text-purple-500" />
-            {lang === "fr" ? "Bilans Annuels" : "Annual Reviews"}
+            {lang === "fr" ? "Bilans / Suivis" : "Reviews"}
           </h1>
           <p className="text-white/50 text-sm mt-1">
             {lang === "fr"
-              ? "Suivi poids, nutrition et programme d'entraînement"
-              : "Weight, nutrition and training program tracking"}
+              ? "Suivi poids, nutrition et programme - mensuel, trimestriel, semestriel, annuel"
+              : "Weight, nutrition and training tracking - monthly, quarterly, semi-annual, annual"}
           </p>
         </div>
       </div>
@@ -344,6 +371,16 @@ export default function AnnualReviewsPage() {
             <SelectItem value="completed" className="text-white">Complétés</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[180px] bg-[#1C1C1E] border-white/10 text-white" data-testid="type-filter">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1C1C1E] border-white/10">
+            {REVIEW_TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
@@ -352,6 +389,7 @@ export default function AnnualReviewsPage() {
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
               <TableHead className="text-white/50">Membre</TableHead>
+              <TableHead className="text-white/50">Type</TableHead>
               <TableHead className="text-white/50">Date du bilan</TableHead>
               <TableHead className="text-white/50">Statut</TableHead>
               <TableHead className="text-white/50">Évolution poids</TableHead>
@@ -361,13 +399,13 @@ export default function AnnualReviewsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-white/50 py-8">
+                <TableCell colSpan={6} className="text-center text-white/50 py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredReviews.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-white/50 py-8">
+                <TableCell colSpan={6} className="text-center text-white/50 py-8">
                   Aucun bilan trouvé
                 </TableCell>
               </TableRow>
@@ -388,6 +426,11 @@ export default function AnnualReviewsPage() {
                         <p className="text-white/40 text-xs">{review.member_email}</p>
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={`border-0 ${TYPE_COLORS[review.review_type] || TYPE_COLORS.annually}`}>
+                      {TYPE_LABELS[review.review_type] || "Annuel"}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-white/70">
                     {format(parseISO(review.review_date), "dd MMMM yyyy", { locale: fr })}
@@ -441,7 +484,7 @@ export default function AnnualReviewsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ClipboardCheck className="text-purple-400" size={20} />
-              Compléter le bilan annuel
+              Compléter le bilan
             </DialogTitle>
           </DialogHeader>
           {selectedReview && (

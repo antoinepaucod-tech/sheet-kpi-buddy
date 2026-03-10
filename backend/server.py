@@ -43,7 +43,7 @@ from models.payments import (
 )
 
 # Router imports
-from routers import auth, members, payments, annual_reviews, followups, onboarding, settings, coaches
+from routers import auth, members, payments, annual_reviews, followups, onboarding, settings, coaches, challenges
 
 # App setup
 app = FastAPI(title="Sheet KPI Buddy API", version="2.1.0")
@@ -61,6 +61,7 @@ api_router.include_router(followups.router)
 api_router.include_router(onboarding.router)
 api_router.include_router(settings.router)
 api_router.include_router(coaches.router)
+api_router.include_router(challenges.router)
 
 
 # ── KPI Routes ───────────────────────────────────────────────────────────────
@@ -443,102 +444,6 @@ async def get_member_training_summary(member_id: str, year: Optional[int] = None
         "engagement_level": engagement,
         "details": docs
     }
-
-
-# ── Challenge Routes ─────────────────────────────────────────────────────────
-
-@api_router.get("/challenges")
-async def get_challenges(active_only: Optional[bool] = None):
-    query = {"is_active": True} if active_only else {}
-    return await db.six_weeks_challenges.find(query, {"_id": 0}).sort("start_date", -1).to_list(100)
-
-
-@api_router.get("/challenges/{challenge_id}")
-async def get_challenge(challenge_id: str):
-    doc = await db.six_weeks_challenges.find_one({"id": challenge_id}, {"_id": 0})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Challenge introuvable")
-    
-    participants = await db.challenge_participants.find({"challenge_id": challenge_id}, {"_id": 0}).to_list(200)
-    doc["participants"] = participants
-    doc["participant_count"] = len(participants)
-    return doc
-
-
-@api_router.post("/challenges")
-async def create_challenge(data: SixWeeksChallengeCreate):
-    challenge = SixWeeksChallenge(**data.model_dump())
-    doc = challenge.model_dump()
-    await db.six_weeks_challenges.insert_one(doc)
-    doc.pop('_id', None)
-    return doc
-
-
-@api_router.put("/challenges/{challenge_id}")
-async def update_challenge(challenge_id: str, data: SixWeeksChallengeCreate):
-    existing = await db.six_weeks_challenges.find_one({"id": challenge_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Challenge introuvable")
-    
-    await db.six_weeks_challenges.update_one({"id": challenge_id}, {"$set": data.model_dump()})
-    return await db.six_weeks_challenges.find_one({"id": challenge_id}, {"_id": 0})
-
-
-@api_router.delete("/challenges/{challenge_id}")
-async def delete_challenge(challenge_id: str):
-    result = await db.six_weeks_challenges.delete_one({"id": challenge_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Challenge introuvable")
-    await db.challenge_participants.delete_many({"challenge_id": challenge_id})
-    return {"message": "Challenge et participants supprimés"}
-
-
-@api_router.post("/challenges/{challenge_id}/participants")
-async def add_challenge_participant(challenge_id: str, data: ChallengeParticipantCreate):
-    challenge = await db.six_weeks_challenges.find_one({"id": challenge_id})
-    if not challenge:
-        raise HTTPException(status_code=404, detail="Challenge introuvable")
-    
-    existing = await db.challenge_participants.find_one({
-        "challenge_id": challenge_id, "member_id": data.member_id
-    })
-    if existing:
-        raise HTTPException(status_code=400, detail="Ce membre participe déjà au challenge")
-    
-    participant = ChallengeParticipant(**data.model_dump())
-    doc = participant.model_dump()
-    await db.challenge_participants.insert_one(doc)
-    doc.pop('_id', None)
-    return doc
-
-
-@api_router.put("/challenges/{challenge_id}/participants/{participant_id}")
-async def update_participant_checkins(challenge_id: str, participant_id: str, body: dict):
-    existing = await db.challenge_participants.find_one({"id": participant_id, "challenge_id": challenge_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Participant introuvable")
-    
-    update = {
-        "week1": body.get("week1", existing.get("week1", False)),
-        "week2": body.get("week2", existing.get("week2", False)),
-        "week3": body.get("week3", existing.get("week3", False)),
-        "week4": body.get("week4", existing.get("week4", False)),
-        "week5": body.get("week5", existing.get("week5", False)),
-        "week6": body.get("week6", existing.get("week6", False)),
-        "notes": body.get("notes", existing.get("notes", "")),
-        "updated_at": datetime.now(timezone.utc).isoformat()
-    }
-    
-    await db.challenge_participants.update_one({"id": participant_id}, {"$set": update})
-    return await db.challenge_participants.find_one({"id": participant_id}, {"_id": 0})
-
-
-@api_router.delete("/challenges/{challenge_id}/participants/{participant_id}")
-async def remove_participant(challenge_id: str, participant_id: str):
-    result = await db.challenge_participants.delete_one({"id": participant_id, "challenge_id": challenge_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Participant introuvable")
-    return {"message": "Participant retiré du challenge"}
 
 
 # ── Course Routes ────────────────────────────────────────────────────────────

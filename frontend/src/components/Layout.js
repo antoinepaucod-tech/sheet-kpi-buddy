@@ -45,7 +45,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
     { path: "/members", icon: Users, label: lang === "fr" ? "Membres" : "Members" },
     { path: "/payments", icon: CreditCard, label: lang === "fr" ? "Paiements" : "Payments" },
     { path: "/onboarding", icon: ClipboardCheck, label: lang === "fr" ? "Onboarding" : "Onboarding" },
-    { path: "/annual-reviews", icon: ClipboardList, label: lang === "fr" ? "Bilans Annuels" : "Annual Reviews" },
+    { path: "/annual-reviews", icon: ClipboardList, label: lang === "fr" ? "Bilans / Suivis" : "Reviews" },
     { path: "/challenge", icon: Trophy, label: lang === "fr" ? "Challenge 6 Sem." : "6 Weeks Challenge" },
     { path: "/courses", icon: CalendarDays, label: lang === "fr" ? "KPIs Cours" : "Course KPIs" },
     { path: "/coaches", icon: UserCog, label: lang === "fr" ? "Coachs" : "Coaches" },

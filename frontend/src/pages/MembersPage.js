@@ -250,7 +250,7 @@ export default function MembersPage() {
       billing_cycle_value: 1,
       billing_payment_method: "prelevement",
       review_enabled: false,
-      review_frequency: "annual",
+      review_frequency: "annually",
       annual_review_enabled: false,
     });
     setModalOpen(true);
@@ -274,7 +274,7 @@ export default function MembersPage() {
       billing_cycle_value: member.billing_cycle_value || 1,
       billing_payment_method: member.billing_payment_method || "prelevement",
       review_enabled: member.annual_review_enabled || member.review_enabled || false,
-      review_frequency: member.review_frequency || "annual",
+      review_frequency: member.review_frequency || "annually",
       annual_review_enabled: member.annual_review_enabled || false,
     });
     setModalOpen(true);
@@ -787,8 +787,8 @@ export default function MembersPage() {
                   <div>
                     <label className="text-white/40 text-xs">Fréquence du bilan</label>
                     <Select 
-                      value={formData.review_frequency || "annual"} 
-                      onValueChange={(v) => setFormData({ ...formData, review_frequency: v, annual_review_enabled: v === "annual" })}
+                      value={formData.review_frequency || "annually"} 
+                      onValueChange={(v) => setFormData({ ...formData, review_frequency: v, annual_review_enabled: true })}
                     >
                       <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
                         <SelectValue />
@@ -796,16 +796,16 @@ export default function MembersPage() {
                       <SelectContent className="bg-[#1C1C1E] border-white/10">
                         <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
                         <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
-                        <SelectItem value="biannual" className="text-white">Semestriel</SelectItem>
-                        <SelectItem value="annual" className="text-white">Annuel</SelectItem>
+                        <SelectItem value="semi-annually" className="text-white">Semestriel</SelectItem>
+                        <SelectItem value="annually" className="text-white">Annuel</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <p className="text-white/30 text-xs">
                     {formData.review_frequency === "monthly" && "Un bilan sera planifié chaque mois"}
                     {formData.review_frequency === "quarterly" && "Un bilan sera planifié tous les 3 mois"}
-                    {formData.review_frequency === "biannual" && "Un bilan sera planifié tous les 6 mois"}
-                    {(!formData.review_frequency || formData.review_frequency === "annual") && "Un bilan sera planifié 1 an après la date de signature"}
+                    {formData.review_frequency === "semi-annually" && "Un bilan sera planifié tous les 6 mois"}
+                    {(!formData.review_frequency || formData.review_frequency === "annually") && "Un bilan sera planifié 1 an après la date de signature"}
                   </p>
                 </div>
               )}
