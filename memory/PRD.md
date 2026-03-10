@@ -35,6 +35,16 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 - Member types (Généraux Récurrents, PIF, PT)
 - Expiring members filter (30 days)
 - Renewal workflow with history
+- **Billing Cycle Integration** ✅ (NEW - March 2025):
+  - Type: Jour fixe du mois (monthly_day) ou Intervalle jours (interval_days)
+  - Valeur: Jour 1-28 ou intervalle en jours (ex: 28)
+  - Création automatique du payment_schedule
+  - Modification du cycle lors du renouvellement
+- **Annual Review (Bilan Annuel)** ✅ (NEW - March 2025):
+  - Activable par membre (annual_review_enabled)
+  - Planification automatique 1 an après la signature
+  - Création d'un nouveau bilan lors du renouvellement
+  - Suivi: poids, nutrition, programme d'entraînement
 
 ### 6. Payment System ✅ (NEW - Dec 2024)
 - **Payment Schedules**: Define recurring payments per member
@@ -154,15 +164,19 @@ Collections:
 - Alerts Summary: GET `/api/alerts/summary`
 
 ## Testing Status
-- Backend: 22/22 tests passing ✅
+- Backend: 33/33 tests passing ✅
 - Frontend: 100% functional ✅
-- Test files: `/app/test_reports/iteration_9.json`
+- Test files: `/app/test_reports/iteration_10.json` (latest)
 
 ## Backlog
+
+### P0 - Immediate (Refactoring)
+- [ ] Split server.py routes into separate router files (/routers/members.py, /routers/payments.py, etc.)
 
 ### P1 - High Priority
 - [ ] Email notifications (Resend integration ready, needs API key)
 - [ ] Auto-send payment reminders
+- [ ] Data migration tool from Lovable app
 - [ ] Export member data to CSV
 
 ### P2 - Medium Priority
@@ -176,6 +190,20 @@ Collections:
 - [ ] Multi-currency support
 
 ## Changelog
+
+### March 2025 - Session 3
+- ✅ Added Billing Cycle integration in member creation/edit form
+  - billing_cycle_type: monthly_day or interval_days
+  - billing_cycle_value: day of month (1-28) or interval in days
+  - Auto-creation of payment_schedule when billing_enabled=true
+- ✅ Added billing cycle update option in renewal modal
+  - "Modifier le cycle de facturation" toggle
+  - Update amount, method, cycle type and value during renewal
+- ✅ Added Annual Review (Bilan Annuel) system
+  - annual_review_enabled toggle in member form
+  - Auto-schedule review 1 year from contract date
+  - New review created on each renewal
+  - Tracks weight, nutrition, program adjustments
 
 ### December 2024 - Session 2
 - ✅ Added Payment System with schedules (28-day intervals & monthly)
