@@ -43,6 +43,7 @@ class MonthlyKPI(BaseModel):
     salaires: float = 0
     utilities: float = 0
     other_expenses: float = 0
+    note: Optional[str] = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -63,6 +64,7 @@ class MonthlyKPICreate(BaseModel):
     salaires: float = 0
     utilities: float = 0
     other_expenses: float = 0
+    note: Optional[str] = ""
 
 
 class AccountingCategory(BaseModel):
@@ -235,6 +237,36 @@ async def remove_from_exclusions(excluded_id: str):
     return {"message": "Exclusion supprimée"}
 
 
+@api_router.patch("/monthly-kpis/{month}/note")
+async def update_note(month: str, body: dict):
+    note = body.get("note", "")
+    await db.monthly_kpis.update_one(
+        {"month": month},
+        {"$set": {"note": note, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    return compute_metrics(doc) if doc else {"error": "Mois introuvable"}
+
+
+@api_router.post("/transactions/bulk")
+async def bulk_import_transactions(transactions: List[TransactionCreate]):
+    imported = []
+    skipped = []
+    for data in transactions:
+        excluded = await db.excluded_recurring_expenses.find_one({
+            "category": data.category, "description": data.description
+        })
+        if excluded:
+            skipped.append(data.description)
+            continue
+        tx = AccountingTransaction(**data.model_dump())
+        doc = tx.model_dump()
+        await db.accounting_transactions.insert_one(doc)
+        doc.pop('_id', None)
+        imported.append(doc)
+    return {"imported": len(imported), "skipped": len(skipped), "transactions": imported}
+
+
 # ── Routes: Settings ─────────────────────────────────────────────────────────
 
 class ClubSettings(BaseModel):
@@ -397,6 +429,27 @@ async def seed_data():
         kpi = MonthlyKPI(**m, total_revenue=total_revenue, total_expenses=total_expenses, net_profit=total_revenue - total_expenses)
         await db.monthly_kpis.insert_one(kpi.model_dump())
 
+    # Seed 2023 data for N-1 comparison (12 months, ~15% lower than 2024)
+    months_2023 = [
+        {"month": "2023-01", "revenue_members": 35000, "revenue_coaching": 6800, "new_members": 12, "lost_members": 6, "total_members": 118, "marketing_spend": 2500, "ad_spend": 1100, "loyer": 7500, "salaires": 18000, "utilities": 2000, "other_expenses": 1500},
+        {"month": "2023-02", "revenue_members": 36500, "revenue_coaching": 7500, "new_members": 16, "lost_members": 8, "total_members": 126, "marketing_spend": 2800, "ad_spend": 1300, "loyer": 7500, "salaires": 18000, "utilities": 1900, "other_expenses": 1400},
+        {"month": "2023-03", "revenue_members": 38000, "revenue_coaching": 8500, "new_members": 20, "lost_members": 7, "total_members": 139, "marketing_spend": 3200, "ad_spend": 1700, "loyer": 7500, "salaires": 19000, "utilities": 2100, "other_expenses": 1800},
+        {"month": "2023-04", "revenue_members": 39500, "revenue_coaching": 9000, "new_members": 19, "lost_members": 10, "total_members": 148, "marketing_spend": 3000, "ad_spend": 1600, "loyer": 7500, "salaires": 19000, "utilities": 1800, "other_expenses": 1600},
+        {"month": "2023-05", "revenue_members": 41000, "revenue_coaching": 10500, "new_members": 24, "lost_members": 12, "total_members": 160, "marketing_spend": 3700, "ad_spend": 2000, "loyer": 7500, "salaires": 20000, "utilities": 1700, "other_expenses": 1900},
+        {"month": "2023-06", "revenue_members": 40500, "revenue_coaching": 11000, "new_members": 22, "lost_members": 15, "total_members": 167, "marketing_spend": 3400, "ad_spend": 1800, "loyer": 7500, "salaires": 20000, "utilities": 2200, "other_expenses": 1700},
+        {"month": "2023-07", "revenue_members": 37000, "revenue_coaching": 7800, "new_members": 10, "lost_members": 19, "total_members": 158, "marketing_spend": 2200, "ad_spend": 1100, "loyer": 7500, "salaires": 20000, "utilities": 2500, "other_expenses": 1200},
+        {"month": "2023-08", "revenue_members": 36000, "revenue_coaching": 7200, "new_members": 8, "lost_members": 17, "total_members": 149, "marketing_spend": 1900, "ad_spend": 900, "loyer": 7500, "salaires": 20000, "utilities": 2600, "other_expenses": 1100},
+        {"month": "2023-09", "revenue_members": 42000, "revenue_coaching": 12000, "new_members": 30, "lost_members": 9, "total_members": 170, "marketing_spend": 4500, "ad_spend": 2500, "loyer": 7500, "salaires": 21000, "utilities": 2000, "other_expenses": 2200},
+        {"month": "2023-10", "revenue_members": 44000, "revenue_coaching": 13500, "new_members": 34, "lost_members": 8, "total_members": 196, "marketing_spend": 5000, "ad_spend": 2800, "loyer": 7500, "salaires": 22000, "utilities": 1900, "other_expenses": 2400},
+        {"month": "2023-11", "revenue_members": 45500, "revenue_coaching": 14000, "new_members": 30, "lost_members": 10, "total_members": 216, "marketing_spend": 4800, "ad_spend": 2600, "loyer": 7500, "salaires": 22000, "utilities": 2100, "other_expenses": 2200},
+        {"month": "2023-12", "revenue_members": 47000, "revenue_coaching": 15000, "new_members": 28, "lost_members": 13, "total_members": 231, "marketing_spend": 4500, "ad_spend": 2400, "loyer": 7500, "salaires": 23000, "utilities": 2400, "other_expenses": 2600},
+    ]
+    for m in months_2023:
+        total_revenue = m["revenue_members"] + m["revenue_coaching"]
+        total_expenses = m["loyer"] + m["salaires"] + m["utilities"] + m["marketing_spend"] + m["ad_spend"] + m["other_expenses"]
+        kpi = MonthlyKPI(**m, total_revenue=total_revenue, total_expenses=total_expenses, net_profit=total_revenue - total_expenses)
+        await db.monthly_kpis.insert_one(kpi.model_dump())
+
     transactions_raw = [
         {"date": "2024-12-01", "description": "Loyer décembre", "amount": 8000, "type": "expense", "category": "LOYER", "sub_type": None},
         {"date": "2024-12-05", "description": "Cotisations membres S1", "amount": 13500, "type": "revenue", "category": "COTISATIONS", "sub_type": "members"},
@@ -425,7 +478,7 @@ async def seed_data():
 
     return {
         "message": "Données de démonstration chargées",
-        "months": len(months_raw),
+        "months": len(months_raw) + len(months_2023),
         "transactions": len(transactions_raw),
         "categories": len(categories)
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp, Loader2, RotateCcw, Download, Search } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, Loader2, RotateCcw, Download, Search, Upload } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import {
@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { AddTransactionModal } from "../components/AddTransactionModal";
+import { ImportCSVModal } from "../components/ImportCSVModal";
 import { useAccountingTransactions } from "../hooks/useAccountingTransactions";
 import { useTranslations } from "../hooks/useTranslations";
 import { useCoachMembership } from "../hooks/useCoachMembership";
@@ -42,6 +43,7 @@ export default function TransactionsPage({ selectedMonth }) {
   const [filterType, setFilterType] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [showExcluded, setShowExcluded] = useState(false);
 
@@ -50,7 +52,7 @@ export default function TransactionsPage({ selectedMonth }) {
     if (selectedMonth) setFilterMonth(selectedMonth);
   }, [selectedMonth]);
 
-  const { transactions, categories, excluded, loading, addTransaction, deleteTransaction, removeFromExclusions } =
+  const { transactions, categories, excluded, loading, refetch, addTransaction, deleteTransaction, removeFromExclusions } =
     useAccountingTransactions(filterMonth || null);
 
   const { memberRevenue, coachRevenue } = useCoachMembership(transactions);
@@ -103,6 +105,15 @@ export default function TransactionsPage({ selectedMonth }) {
           {t("transactions")}
         </h1>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowImport(true)}
+            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
+            data-testid="import-csv-btn"
+          >
+            <Upload size={12} className="mr-1.5" />
+            {lang === "fr" ? "Importer CSV" : "Import CSV"}
+          </Button>
           <Button
             variant="outline"
             onClick={exportCSV}
@@ -353,6 +364,14 @@ export default function TransactionsPage({ selectedMonth }) {
         open={showModal}
         onClose={() => setShowModal(false)}
         onSave={addTransaction}
+        categories={categories}
+      />
+
+      {/* Import CSV Modal */}
+      <ImportCSVModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onImported={refetch}
         categories={categories}
       />
     </div>

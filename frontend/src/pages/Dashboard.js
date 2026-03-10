@@ -69,6 +69,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   const { toast } = useToast();
   const [seeding, setSeeding] = useState(false);
   const [editKpiOpen, setEditKpiOpen] = useState(false);
+  const [showN1, setShowN1] = useState(false);
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -123,6 +124,11 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
     }
   };
 
+  // N-1 comparison data
+  const n1Year = String(parseInt(currentYear) - 1);
+  const n1Kpis = useMemo(() => kpis.filter((k) => k.month.startsWith(n1Year)), [kpis, n1Year]);
+
+  // Combined chart data: current year + N-1 for comparison
   const chartData = useMemo(
     () =>
       kpis.map((k) => ({
@@ -148,6 +154,23 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
       })),
     [kpis, lang]
   );
+
+  // Current year data for all non-revenue charts
+  const currentYearData = useMemo(
+    () => chartData.filter((d) => d.month.startsWith(currentYear)),
+    [chartData, currentYear]
+  );
+  const chartDataWithN1 = useMemo(() => {
+    if (!showN1 || !n1Kpis.length) return chartData.filter((d) => d.month.startsWith(currentYear));
+    return chartData
+      .filter((d) => d.month.startsWith(currentYear))
+      .map((d, idx) => ({
+        ...d,
+        revenue_n1: n1Kpis[idx]?.total_revenue,
+        expenses_n1: n1Kpis[idx]?.total_expenses,
+        members_n1: n1Kpis[idx]?.total_members,
+      }));
+  }, [chartData, n1Kpis, showN1, currentYear]);
 
   const selectedLabel = current
     ? formatMonthLabel(current.month, lang)
@@ -406,10 +429,34 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
         {/* Revenue Tab */}
         <TabsContent value="revenue" className="space-y-4" data-testid="tab-revenue-content">
+          {/* N-1 Toggle */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-white/30 font-mono">
+              {showN1 && n1Kpis.length > 0 ? `↗ comparaison ${n1Year}` : ""}
+            </p>
+            {n1Kpis.length > 0 && (
+              <button
+                onClick={() => setShowN1(!showN1)}
+                className={`text-xs font-mono px-3 py-1 rounded-sm border transition-colors ${showN1 ? "border-rose-500/50 text-rose-400 bg-rose-500/10" : "border-white/10 text-white/30 hover:text-white/60"}`}
+                data-testid="n1-toggle-btn"
+              >
+                {showN1 ? "✓ " : ""} N-1 ({n1Year})
+              </button>
+            )}
+          </div>
+
+          {/* Monthly note */}
+          {current?.note && (
+            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-sm px-4 py-2.5 flex items-start gap-2">
+              <span className="text-yellow-400/60 text-xs mt-0.5">📝</span>
+              <p className="text-yellow-300/80 text-sm font-body">{current.note}</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("revenueEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={chartData} onClick={handleChartClick} style={{ cursor: "pointer" }}>
+                <AreaChart data={chartDataWithN1} onClick={handleChartClick} style={{ cursor: "pointer" }}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={CHART_COLORS.revenue} stopOpacity={0.15} />
@@ -428,13 +475,15 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                   {selectedLabel && <ReferenceLine x={selectedLabel} stroke={CHART_COLORS.revenue} strokeDasharray="4 4" strokeWidth={1.5} />}
                   <Area type="monotone" dataKey="revenue" name={t("totalRevenue")} stroke={CHART_COLORS.revenue} fill="url(#revGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                   <Area type="monotone" dataKey="expenses" name={t("expenses")} stroke={CHART_COLORS.expenses} fill="url(#expGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                  {showN1 && <Line type="monotone" dataKey="revenue_n1" name={`CA ${n1Year}`} stroke={CHART_COLORS.revenue} strokeWidth={1.5} strokeDasharray="5 3" dot={false} opacity={0.5} />}
+                  {showN1 && <Line type="monotone" dataKey="expenses_n1" name={`Dép. ${n1Year}`} stroke={CHART_COLORS.expenses} strokeWidth={1.5} strokeDasharray="5 3" dot={false} opacity={0.5} />}
                 </AreaChart>
               </ResponsiveContainer>
             </ChartCard>
 
             <ChartCard title={t("memberVsCoaching")}>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartData} barSize={14}>
+                <BarChart data={currentYearData} barSize={14}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
@@ -449,7 +498,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
             <ChartCard title={t("expensesBreakdown")}>
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartData} barSize={12}>
+                <BarChart data={currentYearData} barSize={12}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
@@ -466,7 +515,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
             <ChartCard title={t("profitEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={chartData}>
+                <AreaChart data={currentYearData}>
                   <defs>
                     <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={CHART_COLORS.profit} stopOpacity={0.2} />
@@ -505,7 +554,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
             <ChartCard title={t("cacEvolution")}>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={chartData}>
+                <LineChart data={currentYearData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -518,7 +567,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
             <ChartCard title={t("acquisitionFunnel")}>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={chartData} barSize={12}>
+                <BarChart data={currentYearData} barSize={12}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -538,7 +587,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("membersEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={chartData}>
+                <AreaChart data={currentYearData}>
                   <defs>
                     <linearGradient id="membGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={CHART_COLORS.members} stopOpacity={0.2} />
@@ -557,7 +606,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
             <ChartCard title={t("churnEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
-                <ComposedChart data={chartData}>
+                <ComposedChart data={currentYearData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="left" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -578,7 +627,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("roasEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
-                <ComposedChart data={chartData}>
+                <ComposedChart data={currentYearData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="left" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
@@ -594,7 +643,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
             <ChartCard title={t("profitMargin")}>
               <ResponsiveContainer width="100%" height={240}>
-                <ComposedChart data={chartData}>
+                <ComposedChart data={currentYearData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="left" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />

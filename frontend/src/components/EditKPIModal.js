@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Pencil, X, Loader2, Save } from "lucide-react";
+import { Pencil, X, Loader2, Save, FileText } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Separator } from "./ui/separator";
 import { useTranslations } from "../hooks/useTranslations";
 import { formatMonthFull } from "../utils/format";
 import axios from "axios";
@@ -23,6 +24,7 @@ const MANUAL_FIELDS = [
 export function EditKPIModal({ open, onClose, kpi, onSaved }) {
   const { t, lang } = useTranslations();
   const [form, setForm] = useState({});
+  const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,6 +35,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
         f[field.key] = kpi[field.key] ?? 0;
       });
       setForm(f);
+      setNote(kpi.note || "");
     }
   };
 
@@ -45,13 +48,13 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
     setSaving(true);
     setError("");
     try {
+      // Save manual KPI fields
       const payload = { month: kpi.month };
       MANUAL_FIELDS.forEach((field) => {
         payload[field.key] = field.type === "int"
           ? parseInt(form[field.key]) || 0
           : parseFloat(form[field.key]) || 0;
       });
-      // Preserve existing financial fields
       payload.revenue_members = kpi.revenue_members;
       payload.revenue_coaching = kpi.revenue_coaching;
       payload.total_revenue = kpi.total_revenue;
@@ -61,6 +64,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
       payload.salaires = kpi.salaires;
       payload.utilities = kpi.utilities;
       payload.other_expenses = kpi.other_expenses;
+      payload.note = note;
 
       await axios.post(`${API}/monthly-kpis`, payload);
       await onSaved();
@@ -96,6 +100,24 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
               />
             </div>
           ))}
+
+          <Separator className="bg-white/5" />
+
+          <div className="space-y-1.5">
+            <Label className="text-white/60 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <FileText size={11} />
+              {lang === "fr" ? "Note du mois" : "Monthly note"}
+            </Label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={lang === "fr" ? "Commentaires, événements du mois..." : "Comments, monthly events..."}
+              rows={3}
+              className="w-full bg-[#1C1C1E] border border-white/10 text-white text-sm rounded-sm px-3 py-2 resize-none focus:outline-none focus:border-white/20 placeholder:text-white/20 font-body"
+              data-testid="edit-kpi-note"
+            />
+          </div>
+
           {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
         </div>
 
@@ -121,3 +143,4 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
     </Dialog>
   );
 }
+
