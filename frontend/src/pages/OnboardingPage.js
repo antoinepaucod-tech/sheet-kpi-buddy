@@ -83,10 +83,13 @@ export default function OnboardingPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("onboarding");
   const [search, setSearch] = useState("");
+  const [showCompleted, setShowCompleted] = useState(false);
   const [followupModalOpen, setFollowupModalOpen] = useState(false);
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [selectedFollowup, setSelectedFollowup] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
+  // Track which member is being edited to prevent reordering
+  const [editingMemberId, setEditingMemberId] = useState(null);
   
   const [followupForm, setFollowupForm] = useState({
     member_id: "",
@@ -95,11 +98,31 @@ export default function OnboardingPage() {
     notes: "",
   });
 
-  // Fetch data
+  // Fetch data - Get ALL members for onboarding view
   const { data: pendingOnboarding = [], isLoading: loadingOnboarding } = useQuery({
     queryKey: ["onboarding", "pending"],
     queryFn: () => axios.get(`${API}/onboarding/pending`).then((r) => r.data),
   });
+
+  // Fetch ALL members to show completed onboarding too
+  const { data: allMembers = [] } = useQuery({
+    queryKey: ["members", "all"],
+    queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
+  });
+
+  // Combine pending + completed members for onboarding view
+  const allMembersWithOnboarding = useMemo(() => {
+    const completedMembers = allMembers.filter(m => 
+      m.onboarding_completed === true && !pendingOnboarding.find(p => p.id === m.id)
+    ).map(m => ({
+      ...m,
+      onboarding_progress: 5,
+      onboarding_total: 5,
+      onboarding_percentage: 100
+    }));
+    
+    return [...pendingOnboarding, ...completedMembers];
+  }, [allMembers, pendingOnboarding]);
 
   const { data: upcomingFollowups = [] } = useQuery({
     queryKey: ["followups", "upcoming"],
@@ -162,31 +185,60 @@ export default function OnboardingPage() {
     },
   });
 
-  // Filter onboarding
+  // Filter onboarding - preserve order during editing
   const filteredOnboarding = useMemo(() => {
-    if (!search) return pendingOnboarding;
-    const s = search.toLowerCase();
-    return pendingOnboarding.filter((m) =>
-      m.name?.toLowerCase().includes(s) ||
-      m.email?.toLowerCase().includes(s)
-    );
-  }, [pendingOnboarding, search]);
+    let result = showCompleted ? allMembersWithOnboarding : pendingOnboarding;
+    
+    if (search) {
+      const s = search.toLowerCase();
+      result = result.filter((m) =>
+        m.name?.toLowerCase().includes(s) ||
+        m.email?.toLowerCase().includes(s)
+      );
+    }
+    
+    // Sort by name to keep stable order, but if editing, put the edited member first
+    const sorted = [...result].sort((a, b) => {
+      // Keep currently editing member at same position
+      if (editingMemberId) {
+        if (a.id === editingMemberId) return -1;
+        if (b.id === editingMemberId) return 1;
+      }
+      // Then sort by progress (incomplete first), then by name
+      const aProgress = a.onboarding_percentage || 0;
+      const bProgress = b.onboarding_percentage || 0;
+      if (aProgress !== bProgress) return aProgress - bProgress;
+      return (a.name || "").localeCompare(b.name || "");
+    });
+    
+    return sorted;
+  }, [pendingOnboarding, allMembersWithOnboarding, showCompleted, search, editingMemberId]);
 
   // Stats
+  const completedOnboarding = allMembers.filter(m => m.onboarding_completed === true).length;
   const stats = useMemo(() => ({
     pendingOnboarding: pendingOnboarding.length,
+    completedOnboarding: completedOnboarding,
     upcomingFollowups: upcomingFollowups.length,
     missedFollowups: missedFollowups.length,
     completedThisMonth: allFollowups.filter((f) => 
       f.status === "completed" && 
       f.completed_date?.startsWith(format(new Date(), "yyyy-MM"))
     ).length,
-  }), [pendingOnboarding, upcomingFollowups, missedFollowups, allFollowups]);
+  }), [pendingOnboarding, completedOnboarding, upcomingFollowups, missedFollowups, allFollowups]);
 
   const toggleOnboardingStep = (memberId, stepKey, currentValue) => {
+    // Set editing member to prevent reordering
+    setEditingMemberId(memberId);
+    
     updateOnboardingMutation.mutate({
       memberId,
       data: { [stepKey]: !currentValue }
+    }, {
+      onSettled: () => {
+        // Clear editing state after a delay to allow animation
+        setTimeout(() => setEditingMemberId(null), 1500);
+      }
     });
   };
 
@@ -286,14 +338,29 @@ export default function OnboardingPage() {
 
         {/* Onboarding Tab */}
         <TabsContent value="onboarding" className="space-y-4">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un membre..."
-              className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
-            />
+          <div className="flex items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher un membre..."
+                className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
+              />
+            </div>
+            <div className="flex items-center gap-3 bg-[#1C1C1E] rounded-lg px-4 py-2 border border-white/10">
+              <label className="text-white/70 text-sm">Afficher les complétés</label>
+              <Switch
+                checked={showCompleted}
+                onCheckedChange={setShowCompleted}
+                data-testid="show-completed-toggle"
+              />
+              {showCompleted && (
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-0">
+                  +{stats.completedOnboarding}
+                </Badge>
+              )}
+            </div>
           </div>
 
           <div className="grid gap-4">
@@ -302,82 +369,119 @@ export default function OnboardingPage() {
             ) : filteredOnboarding.length === 0 ? (
               <div className="bg-[#1C1C1E] rounded-lg p-8 border border-emerald-500/30 text-center">
                 <CheckCircle2 size={48} className="mx-auto text-emerald-400 mb-4" />
-                <p className="text-emerald-400 font-medium">Tous les onboardings sont complétés !</p>
+                <p className="text-emerald-400 font-medium">
+                  {showCompleted ? "Aucun membre trouvé" : "Tous les onboardings sont complétés !"}
+                </p>
+                {!showCompleted && stats.completedOnboarding > 0 && (
+                  <Button 
+                    variant="link" 
+                    className="text-indigo-400 mt-2"
+                    onClick={() => setShowCompleted(true)}
+                  >
+                    Voir les {stats.completedOnboarding} membres complétés
+                  </Button>
+                )}
               </div>
             ) : (
-              filteredOnboarding.map((member) => (
-                <div
-                  key={member.id}
-                  className="bg-[#1C1C1E] rounded-lg p-6 border border-white/10"
-                  data-testid={`onboarding-${member.id}`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                        <User className="text-indigo-400" size={24} />
-                      </div>
-                      <div>
-                        <p className="text-white font-medium text-lg">{member.name}</p>
-                        <div className="flex items-center gap-4 text-white/50 text-sm">
-                          {member.email && (
-                            <span className="flex items-center gap-1">
-                              <Mail size={12} /> {member.email}
-                            </span>
-                          )}
-                          {member.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone size={12} /> {member.phone}
-                            </span>
+              filteredOnboarding.map((member) => {
+                const isCompleted = member.onboarding_percentage === 100;
+                const isEditing = editingMemberId === member.id;
+                
+                return (
+                  <div
+                    key={member.id}
+                    className={`bg-[#1C1C1E] rounded-lg p-6 border transition-all duration-300 ${
+                      isCompleted 
+                        ? "border-emerald-500/30 bg-emerald-500/5" 
+                        : isEditing 
+                          ? "border-indigo-500/50 ring-2 ring-indigo-500/20" 
+                          : "border-white/10"
+                    }`}
+                    data-testid={`onboarding-${member.id}`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          isCompleted ? "bg-emerald-500/20" : "bg-indigo-500/20"
+                        }`}>
+                          {isCompleted ? (
+                            <CheckCircle2 className="text-emerald-400" size={24} />
+                          ) : (
+                            <User className="text-indigo-400" size={24} />
                           )}
                         </div>
-                        <p className="text-white/40 text-xs mt-1">
-                          Inscrit le {member.contract_signed_date ? format(parseISO(member.contract_signed_date), "dd MMM yyyy", { locale: fr }) : "-"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white/50 text-xs uppercase mb-1">Progression</p>
-                      <div className="flex items-center gap-2">
-                        <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-white/10" />
-                        <span className={`font-bold ${member.onboarding_percentage === 100 ? 'text-emerald-400' : 'text-indigo-400'}`}>
-                          {member.onboarding_percentage}%
-                        </span>
-                      </div>
-                      <p className="text-white/30 text-xs">{member.onboarding_progress}/5 étapes</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-3">
-                    {ONBOARDING_STEPS.map((step) => {
-                      const isCompleted = member[step.key];
-                      return (
-                        <div
-                          key={step.key}
-                          onClick={() => toggleOnboardingStep(member.id, step.key, isCompleted)}
-                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                            isCompleted
-                              ? "bg-emerald-500/10 border-emerald-500/30"
-                              : "bg-white/5 border-white/10 hover:border-indigo-500/50"
-                          }`}
-                          data-testid={`step-${step.key}-${member.id}`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xl">{step.icon}</span>
-                            {isCompleted ? (
-                              <CheckCircle2 size={16} className="text-emerald-400" />
-                            ) : (
-                              <Circle size={16} className="text-white/30" />
+                        <div>
+                          <p className="text-white font-medium text-lg flex items-center gap-2">
+                            {member.name}
+                            {isCompleted && (
+                              <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
+                                Complété
+                              </Badge>
+                            )}
+                          </p>
+                          <div className="flex items-center gap-4 text-white/50 text-sm">
+                            {member.email && (
+                              <span className="flex items-center gap-1">
+                                <Mail size={12} /> {member.email}
+                              </span>
+                            )}
+                            {member.phone && (
+                              <span className="flex items-center gap-1">
+                                <Phone size={12} /> {member.phone}
+                              </span>
                             )}
                           </div>
-                          <p className={`text-xs ${isCompleted ? "text-emerald-400" : "text-white/70"}`}>
-                            {step.label}
+                          <p className="text-white/40 text-xs mt-1">
+                            Inscrit le {member.contract_signed_date ? format(parseISO(member.contract_signed_date), "dd MMM yyyy", { locale: fr }) : "-"}
                           </p>
                         </div>
-                      );
-                    })}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white/50 text-xs uppercase mb-1">Progression</p>
+                        <div className="flex items-center gap-2">
+                          <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-white/10" />
+                          <span className={`font-bold ${isCompleted ? 'text-emerald-400' : 'text-indigo-400'}`}>
+                            {member.onboarding_percentage}%
+                          </span>
+                        </div>
+                        <p className="text-white/30 text-xs">{member.onboarding_progress}/5 étapes</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-3">
+                      {ONBOARDING_STEPS.map((step) => {
+                        const isStepCompleted = member[step.key];
+                        return (
+                          <div
+                            key={step.key}
+                            onClick={() => !isCompleted && toggleOnboardingStep(member.id, step.key, isStepCompleted)}
+                            className={`p-3 rounded-lg border transition-all ${
+                              isStepCompleted
+                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                : isCompleted 
+                                  ? "bg-white/5 border-white/10 opacity-50"
+                                  : "bg-white/5 border-white/10 hover:border-indigo-500/50 cursor-pointer"
+                            }`}
+                            data-testid={`step-${step.key}-${member.id}`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xl">{step.icon}</span>
+                              {isStepCompleted ? (
+                                <CheckCircle2 size={16} className="text-emerald-400" />
+                              ) : (
+                                <Circle size={16} className="text-white/30" />
+                              )}
+                            </div>
+                            <p className={`text-xs ${isStepCompleted ? "text-emerald-400" : "text-white/70"}`}>
+                              {step.label}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </TabsContent>

@@ -249,6 +249,8 @@ export default function MembersPage() {
       billing_cycle_type: "monthly_day",
       billing_cycle_value: 1,
       billing_payment_method: "prelevement",
+      review_enabled: false,
+      review_frequency: "annual",
       annual_review_enabled: false,
     });
     setModalOpen(true);
@@ -271,6 +273,8 @@ export default function MembersPage() {
       billing_cycle_type: member.billing_cycle_type || "monthly_day",
       billing_cycle_value: member.billing_cycle_value || 1,
       billing_payment_method: member.billing_payment_method || "prelevement",
+      review_enabled: member.annual_review_enabled || member.review_enabled || false,
+      review_frequency: member.review_frequency || "annual",
       annual_review_enabled: member.annual_review_enabled || false,
     });
     setModalOpen(true);
@@ -667,7 +671,7 @@ export default function MembersPage() {
               />
             </div>
 
-            {/* Billing Section */}
+            {/* Billing Section - Read-only when membership type is selected */}
             <div className="border-t border-white/10 pt-4 mt-4">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-white/70 text-sm flex items-center gap-2">
@@ -677,11 +681,22 @@ export default function MembersPage() {
                 <Switch
                   checked={formData.billing_enabled}
                   onCheckedChange={(v) => setFormData({ ...formData, billing_enabled: v })}
+                  disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                 />
               </div>
               
               {formData.billing_enabled && (
                 <div className="space-y-3 bg-[#121214] rounded-lg p-3">
+                  {/* Info banner when values come from membership type */}
+                  {membershipTypes.find(t => t.name === formData.membership) && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2 mb-2">
+                      <p className="text-blue-400 text-xs">
+                        Valeurs définies par le type d'abonnement "{formData.membership}" 
+                        <br/>
+                        <span className="text-blue-400/70">Modifiables dans Config. Types</span>
+                      </p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-white/40 text-xs">Montant (CHF)</label>
@@ -689,13 +704,17 @@ export default function MembersPage() {
                         type="number"
                         value={formData.billing_amount}
                         onChange={(e) => setFormData({ ...formData, billing_amount: parseFloat(e.target.value) || 0 })}
-                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         data-testid="billing-amount-input"
+                        disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
                     </div>
                     <div>
                       <label className="text-white/40 text-xs">Méthode</label>
-                      <Select value={formData.billing_payment_method} onValueChange={(v) => setFormData({ ...formData, billing_payment_method: v })}>
+                      <Select 
+                        value={formData.billing_payment_method} 
+                        onValueChange={(v) => setFormData({ ...formData, billing_payment_method: v })}
+                      >
                         <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
                           <SelectValue />
                         </SelectTrigger>
@@ -710,8 +729,12 @@ export default function MembersPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-white/40 text-xs">Cycle de facturation</label>
-                      <Select value={formData.billing_cycle_type} onValueChange={(v) => setFormData({ ...formData, billing_cycle_type: v })}>
-                        <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                      <Select 
+                        value={formData.billing_cycle_type} 
+                        onValueChange={(v) => setFormData({ ...formData, billing_cycle_type: v })}
+                        disabled={!!membershipTypes.find(t => t.name === formData.membership)}
+                      >
+                        <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1C1C1E] border-white/10">
@@ -731,8 +754,9 @@ export default function MembersPage() {
                         max={formData.billing_cycle_type === "monthly_day" ? 28 : 365}
                         value={formData.billing_cycle_value}
                         onChange={(e) => setFormData({ ...formData, billing_cycle_value: parseInt(e.target.value) || 1 })}
-                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         data-testid="billing-cycle-value-input"
+                        disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
                     </div>
                   </div>
@@ -745,23 +769,45 @@ export default function MembersPage() {
               )}
             </div>
 
-            {/* Annual Review Section */}
+            {/* Review Section - Choose frequency */}
             <div className="border-t border-white/10 pt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <label className="text-white/70 text-sm flex items-center gap-2">
                   <ClipboardCheck size={14} className="text-purple-400" />
-                  Bilan annuel (poids, nutrition, programme)
+                  Suivi / Bilan (poids, nutrition, programme)
                 </label>
                 <Switch
-                  checked={formData.annual_review_enabled}
-                  onCheckedChange={(v) => setFormData({ ...formData, annual_review_enabled: v })}
-                  data-testid="annual-review-switch"
+                  checked={formData.review_enabled}
+                  onCheckedChange={(v) => setFormData({ ...formData, review_enabled: v, annual_review_enabled: v })}
+                  data-testid="review-switch"
                 />
               </div>
-              {formData.annual_review_enabled && (
-                <p className="text-white/30 text-xs mt-2">
-                  Un bilan sera planifié automatiquement 1 an après la date de signature
-                </p>
+              {formData.review_enabled && (
+                <div className="space-y-3 bg-[#121214] rounded-lg p-3">
+                  <div>
+                    <label className="text-white/40 text-xs">Fréquence du bilan</label>
+                    <Select 
+                      value={formData.review_frequency || "annual"} 
+                      onValueChange={(v) => setFormData({ ...formData, review_frequency: v, annual_review_enabled: v === "annual" })}
+                    >
+                      <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1C1C1E] border-white/10">
+                        <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
+                        <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
+                        <SelectItem value="biannual" className="text-white">Semestriel</SelectItem>
+                        <SelectItem value="annual" className="text-white">Annuel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-white/30 text-xs">
+                    {formData.review_frequency === "monthly" && "Un bilan sera planifié chaque mois"}
+                    {formData.review_frequency === "quarterly" && "Un bilan sera planifié tous les 3 mois"}
+                    {formData.review_frequency === "biannual" && "Un bilan sera planifié tous les 6 mois"}
+                    {(!formData.review_frequency || formData.review_frequency === "annual") && "Un bilan sera planifié 1 an après la date de signature"}
+                  </p>
+                </div>
               )}
             </div>
           </div>
