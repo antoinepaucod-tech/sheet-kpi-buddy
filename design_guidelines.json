@@ -1,0 +1,171 @@
+{
+  "project_name": "Sheet KPI Buddy",
+  "identity": {
+    "persona": "E1: The Anti-AI Designer",
+    "tone": "Elite Athleticism x Swiss Financial Precision",
+    "core_principles": [
+      "Fusion: Sports Adrenaline + Fintech Clarity",
+      "Density: High data density (Financials) vs. Big Bold Impact (KPIs)",
+      "Contrast: Deep Obsidian backgrounds vs. Electric Signal colors",
+      "Asymmetry: Tension in layout, never boring center-alignment"
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Barlow Condensed, sans-serif",
+      "body": "IBM Plex Sans, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "usage_rules": {
+      "headings": {
+        "weight": "800",
+        "tracking": "-0.02em",
+        "transform": "uppercase",
+        "notes": "Use for Page Titles, KPI Values, and Section Headers. DO NOT use Inter."
+      },
+      "body": {
+        "weight": "400",
+        "tracking": "normal",
+        "notes": "Use for all labels, descriptions, and table data."
+      },
+      "data_tables": {
+        "font": "mono",
+        "size": "text-sm",
+        "notes": "All financial numbers in tables must be monospaced for alignment."
+      }
+    }
+  },
+  "colors": {
+    "palette": {
+      "mode": "dark_preferred",
+      "background": {
+        "default": "#09090B",
+        "paper": "#121214",
+        "subtle": "#1C1C1E"
+      },
+      "text": {
+        "primary": "#FFFFFF",
+        "secondary": "#A1A1AA",
+        "muted": "#52525B"
+      },
+      "brand": {
+        "primary": "#E11D48",
+        "secondary": "#FFFFFF",
+        "accent": "#FACC15"
+      },
+      "functional": {
+        "success": "#22C55E",
+        "warning": "#F59E0B",
+        "error": "#EF4444",
+        "info": "#3B82F6"
+      },
+      "charts": {
+        "revenue": "#E11D48",
+        "expenses": "#3B82F6",
+        "profit": "#22C55E",
+        "churn": "#F97316"
+      }
+    },
+    "rules": [
+      "NO GRADIENTS on text or buttons. Flat, bold colors only.",
+      "Backgrounds should be matte dark (#09090B), not pitch black.",
+      "Use 1px borders (white/10) to define areas instead of shadows."
+    ]
+  },
+  "spacing_and_layout": {
+    "scale_multiplier": "2x",
+    "container_padding": "p-6 md:p-10",
+    "grid_system": {
+      "dashboard_mode": "Bento Grid Mode B (High Density)",
+      "gap": "gap-4 md:gap-6",
+      "columns": "grid-cols-1 md:grid-cols-4 lg:grid-cols-12"
+    },
+    "component_spacing": {
+      "cards": "p-6",
+      "sections": "my-12"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "Flat, 1px border, no shadow",
+      "border_color": "border-white/10",
+      "background": "bg-card/50 backdrop-blur-sm",
+      "radius": "rounded-none"
+    },
+    "buttons": {
+      "primary": {
+        "style": "Sharp edges or minimal radius (2px)",
+        "class": "bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-wider"
+      },
+      "secondary": {
+        "style": "Outline",
+        "class": "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground"
+      }
+    },
+    "charts": {
+      "library": "Recharts",
+      "style": "Minimalist. Remove grid lines where possible. Tooltips must be dark with high contrast.",
+      "animation": "active dot only on hover"
+    },
+    "tables": {
+      "style": "Compact. Row hover effects enabled. Header uppercase and muted.",
+      "class": "w-full caption-bottom text-sm"
+    }
+  },
+  "visual_enhancers": {
+    "textures": [
+      "Subtle noise overlay on the main background to reduce digital sterility.",
+      "Use 'Scanline' effect on specific data panels (optional)."
+    ],
+    "micro_interactions": [
+      "Button click scale down (0.98)",
+      "Card hover border glow (transition-colors)",
+      "Tab switch sliding underline"
+    ],
+    "icons": {
+      "library": "Lucide React",
+      "style": "Stroke width 1.5px",
+      "size": "w-5 h-5 for UI, w-8 h-8 for KPI icons"
+    }
+  },
+  "images": {
+    "hero_backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1761971976282-b2bb051a5474?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTF8MHwxfHNlYXJjaHw0fHxtb2Rlcm4lMjBneW0lMjBpbnRlcmlvciUyMGJsdXJyeSUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzczMTI0NTQ3fDA&ixlib=rb-4.1.0&q=85",
+        "category": "dashboard_texture",
+        "description": "Abstract gym interior for subtle texture overlay"
+      }
+    ],
+    "placeholders": [
+       {
+         "url": "https://images.unsplash.com/photo-1700784795176-7ff886439d79?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjd8MHwxfHNlYXJjaHw0fHxhdGhsZXRlJTIwdHJhaW5pbmclMjBzaWxob3VldHRlfGVufDB8fHx8MTc3MzEyNDU0OHww&ixlib=rb-4.1.0&q=85",
+         "category": "empty_state",
+         "description": "Silhouette athlete for empty states or loading"
+       }
+    ]
+  },
+  "universal_guidelines": {
+    "do_not": [
+      "DO NOT use gradients for text.",
+      "DO NOT use rounded-xl or rounded-2xl. Keep it sharp or slightly rounded (rounded-md/sm).",
+      "DO NOT center align text in KPI cards. Left align always.",
+      "DO NOT use 'Inter' for headings."
+    ],
+    "must_do": [
+      "MUST use 'Barlow Condensed' for all headings.",
+      "MUST use 'fr-CH' formatting for all currency (10'000.00 CHF).",
+      "MUST include data-testid on all interactive elements.",
+      "MUST implement the Language Switcher (FR/EN) in the top nav."
+    ]
+  },
+  "instructions_to_main_agent": [
+    "1. Setup Fonts: Import 'Barlow Condensed' and 'IBM Plex Sans' from Google Fonts in index.css.",
+    "2. Configure Tailwind: Update tailwind.config.js to use these fonts and the custom color palette.",
+    "3. Build Layout: Create a persistent Sidebar layout with a Topbar for the Language Switcher.",
+    "4. Dashboard: Implement the 4-tab system (Revenue, Funnel, Members, Metrics) using Shadcn Tabs.",
+    "5. Components: Customize Shadcn Card, Table, and Button to match the 'Sharp/Dark' aesthetic.",
+    "6. Charts: Use Recharts with the defined color palette. Ensure tooltips are styled.",
+    "7. Transactions: Build the CRUD table with filtering and category management.",
+    "8. Localization: Create a simple context or hook for managing FR/EN strings."
+  ]
+}
