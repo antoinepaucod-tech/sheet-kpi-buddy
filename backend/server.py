@@ -235,6 +235,119 @@ async def remove_from_exclusions(excluded_id: str):
     return {"message": "Exclusion supprimée"}
 
 
+# ── Routes: Settings ─────────────────────────────────────────────────────────
+
+class ClubSettings(BaseModel):
+    club_name: str = "Mon Club"
+    targets: dict = Field(default_factory=lambda: {
+        "churn_rate": 3.0,
+        "cac": 150.0,
+        "roas": 20.0,
+        "new_members": 30,
+        "profit_margin": 30.0,
+        "revenue_growth": 5.0,
+    })
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+@api_router.get("/settings")
+async def get_settings():
+    doc = await db.club_settings.find_one({"id": "default"}, {"_id": 0})
+    if not doc:
+        default = ClubSettings()
+        await db.club_settings.insert_one({"id": "default", **default.model_dump()})
+        return {"id": "default", **default.model_dump()}
+    return doc
+
+
+@api_router.put("/settings")
+async def update_settings(data: ClubSettings):
+    data.updated_at = datetime.now(timezone.utc).isoformat()
+    payload = {"id": "default", **data.model_dump()}
+    await db.club_settings.replace_one({"id": "default"}, payload, upsert=True)
+    return payload
+
+
+# ── Routes: Recalculate KPIs from Transactions ───────────────────────────────
+
+@api_router.post("/monthly-kpis/{month}/recalculate")
+async def recalculate_month(month: str):
+    # Get categories for mapping
+    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+    cat_map = {c["name"]: c["kpi_column"] for c in cats}
+
+    # Get transactions for the month
+    txs = await db.accounting_transactions.find(
+        {"date": {"$regex": f"^{month}"}}, {"_id": 0}
+    ).to_list(1000)
+
+    if not txs:
+        raise HTTPException(status_code=404, detail="Aucune transaction pour ce mois")
+
+    # Get existing KPI to merge (keep manual fields like new_members, lost_members)
+    existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
+
+    # Aggregate by kpi_column - only update fields that have transactions
+    totals = {}
+    for tx in txs:
+        col = cat_map.get(tx["category"])
+        if col:
+            totals[col] = totals.get(col, 0) + tx["amount"]
+
+    # Merge: only override fields where we have transaction data
+    merged = dict(existing)
+    for col, val in totals.items():
+        if val > 0:
+            merged[col] = val
+
+    revenue_members = merged.get("revenue_members", 0)
+    revenue_coaching = merged.get("revenue_coaching", 0)
+    total_revenue = revenue_members + revenue_coaching
+
+    loyer = merged.get("loyer", 0)
+    salaires = merged.get("salaires", 0)
+    utilities = merged.get("utilities", 0)
+    marketing_spend = merged.get("marketing_spend", 0)
+    ad_spend = merged.get("ad_spend", 0)
+    other_expenses = merged.get("other_expenses", 0)
+    total_expenses = loyer + salaires + utilities + marketing_spend + ad_spend + other_expenses
+    net_profit = total_revenue - total_expenses
+
+    update = {
+        **{k: merged[k] for k in totals if totals[k] > 0},
+        "total_revenue": total_revenue,
+        "total_expenses": total_expenses,
+        "net_profit": net_profit,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.monthly_kpis.update_one({"month": month}, {"$set": update}, upsert=False)
+    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    return compute_metrics(doc) if doc else {"error": "Mois introuvable dans KPIs"}
+
+
+@api_router.post("/monthly-kpis/recalculate-all")
+async def recalculate_all():
+    months = await db.monthly_kpis.find({}, {"_id": 0, "month": 1}).to_list(1000)
+    results = []
+    for m in months:
+        try:
+            res = await recalculate_month(m["month"])
+            results.append({"month": m["month"], "status": "ok"})
+        except Exception as e:
+            results.append({"month": m["month"], "status": "skipped", "reason": str(e)})
+    return {"recalculated": len([r for r in results if r["status"] == "ok"]), "details": results}
+
+
+# ── Routes: Categories (delete) ───────────────────────────────────────────────
+
+@api_router.delete("/categories/{category_id}")
+async def delete_category(category_id: str):
+    result = await db.accounting_categories.delete_one({"id": category_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Catégorie introuvable")
+    return {"message": "Catégorie supprimée"}
+
+
 # ── Seed / Init ───────────────────────────────────────────────────────────────
 
 @api_router.get("/init")

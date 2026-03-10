@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -31,15 +31,23 @@ import { AddTransactionModal } from "../components/AddTransactionModal";
 import { useAccountingTransactions } from "../hooks/useAccountingTransactions";
 import { useTranslations } from "../hooks/useTranslations";
 import { useCoachMembership } from "../hooks/useCoachMembership";
-import { formatCHF, formatMonthLabel } from "../utils/format";
+import { useToast } from "../hooks/use-toast";
+import { Toaster } from "../components/ui/toaster";
+import { formatCHF } from "../utils/format";
 
 export default function TransactionsPage({ selectedMonth }) {
   const { t, lang } = useTranslations();
+  const { toast } = useToast();
   const [filterMonth, setFilterMonth] = useState(selectedMonth || "");
   const [filterType, setFilterType] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [showExcluded, setShowExcluded] = useState(false);
+
+  // Sync filter with global month selector
+  useEffect(() => {
+    if (selectedMonth) setFilterMonth(selectedMonth);
+  }, [selectedMonth]);
 
   const { transactions, categories, excluded, loading, addTransaction, deleteTransaction, removeFromExclusions } =
     useAccountingTransactions(filterMonth || null);
@@ -55,6 +63,7 @@ export default function TransactionsPage({ selectedMonth }) {
     if (!deleteId) return;
     await deleteTransaction(deleteId);
     setDeleteId(null);
+    toast({ title: lang === "fr" ? "Transaction supprimée" : "Transaction deleted", description: lang === "fr" ? "Ajoutée aux exclusions" : "Added to exclusions" });
   };
 
   const getCategoryColor = (catName) => {
@@ -64,6 +73,7 @@ export default function TransactionsPage({ selectedMonth }) {
 
   return (
     <div className="space-y-6" data-testid="transactions-page">
+      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">

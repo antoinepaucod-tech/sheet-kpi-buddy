@@ -11,6 +11,9 @@ import {
 import { Button } from "../components/ui/button";
 import { useTranslations } from "../hooks/useTranslations";
 import { useMonthlyKPIData } from "../hooks/useMonthlyKPIData";
+import { useSettings } from "../hooks/useSettings";
+import { Toaster } from "../components/ui/toaster";
+import { useToast } from "../hooks/use-toast";
 import { formatCHF, formatPct, formatMonthLabel, formatNum, getTrend } from "../utils/format";
 import axios from "axios";
 import { useState } from "react";
@@ -60,6 +63,8 @@ const ChartCard = ({ title, children }) => (
 export default function Dashboard({ selectedMonth }) {
   const { t, lang } = useTranslations();
   const { kpis, loading, refetch, getKpiByMonth, getPreviousKpi } = useMonthlyKPIData();
+  const { settings } = useSettings();
+  const { toast } = useToast();
   const [seeding, setSeeding] = useState(false);
 
   const handleSeed = async () => {
@@ -67,6 +72,7 @@ export default function Dashboard({ selectedMonth }) {
     try {
       await axios.post(`${API}/seed`);
       await refetch();
+      toast({ title: lang === "fr" ? "Données rechargées" : "Data reloaded" });
     } finally {
       setSeeding(false);
     }
@@ -136,6 +142,7 @@ export default function Dashboard({ selectedMonth }) {
 
   return (
     <div className="space-y-6" data-testid="dashboard-content">
+      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -223,6 +230,92 @@ export default function Dashboard({ selectedMonth }) {
           data-testid="kpi-roas"
         />
       </div>
+
+      {/* KPI vs Targets */}
+      {settings?.targets && current && (
+        <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
+          <p className="text-xs font-body text-white/40 uppercase tracking-wider mb-4">
+            {lang === "fr" ? "Objectifs du mois" : "Monthly targets"}
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+            {[
+              {
+                label: t("churnRate"),
+                actual: current.churn_rate,
+                target: settings.targets.churn_rate,
+                format: (v) => `${v?.toFixed(1)}%`,
+                lower_is_better: true,
+                color: "bg-orange-500",
+              },
+              {
+                label: t("cac"),
+                actual: current.cac,
+                target: settings.targets.cac,
+                format: formatCHF,
+                lower_is_better: true,
+                color: "bg-purple-500",
+              },
+              {
+                label: t("roas"),
+                actual: current.roas,
+                target: settings.targets.roas,
+                format: (v) => `${v?.toFixed(1)}x`,
+                lower_is_better: false,
+                color: "bg-yellow-400",
+              },
+              {
+                label: t("newMembers"),
+                actual: current.new_members,
+                target: settings.targets.new_members,
+                format: (v) => `${v}`,
+                lower_is_better: false,
+                color: "bg-green-500",
+              },
+              {
+                label: t("profitMargin"),
+                actual: current.profit_margin,
+                target: settings.targets.profit_margin,
+                format: (v) => `${v?.toFixed(1)}%`,
+                lower_is_better: false,
+                color: "bg-green-500",
+              },
+              {
+                label: t("totalRevenue"),
+                actual: current.total_revenue,
+                target: current.total_revenue * (1 + (settings.targets.revenue_growth || 5) / 100),
+                format: formatCHF,
+                lower_is_better: false,
+                color: "bg-rose-500",
+              },
+            ].map(({ label, actual, target, format, lower_is_better, color }) => {
+              const pct = target > 0 ? Math.min((actual / target) * 100, 100) : 0;
+              const good = lower_is_better ? actual <= target : actual >= target;
+              return (
+                <div key={label} className="space-y-1.5">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-white/50 uppercase tracking-wider">{label}</span>
+                    <span className={`text-xs font-mono font-bold ${good ? "text-green-400" : "text-orange-400"}`}>
+                      {format(actual)}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full transition-all duration-500 rounded-full"
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: good ? "#22C55E" : "#F97316",
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-white/20 font-mono">
+                    {lang === "fr" ? "Obj." : "Target"}: {format(target)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="revenue" className="space-y-4">

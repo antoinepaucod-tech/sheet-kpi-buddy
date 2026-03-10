@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   ArrowLeftRight,
+  Tag,
+  Settings,
   ChevronLeft,
   ChevronRight,
   Globe,
@@ -25,6 +27,8 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const navItems = [
     { path: "/", icon: LayoutDashboard, label: t("dashboard") },
     { path: "/transactions", icon: ArrowLeftRight, label: t("transactions") },
+    { path: "/categories", icon: Tag, label: t("categories") },
+    { path: "/settings", icon: Settings, label: t("settings") },
   ];
 
   return (
@@ -56,7 +60,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
             <Link
               key={path}
               to={path}
-              data-testid={`nav-${path === "/" ? "dashboard" : "transactions"}`}
+              data-testid={`nav-${path === "/" ? "dashboard" : path.replace("/", "")}`}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors",
                 location.pathname === path
