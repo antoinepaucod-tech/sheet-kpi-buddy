@@ -11,6 +11,9 @@ import {
   Edit,
   User,
   DollarSign,
+  Copy,
+  RefreshCw,
+  UserCog,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -55,14 +58,15 @@ const TIME_SLOTS = [
 export default function CoursesPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
-  const currentYear = 2024; // Use 2024 for demo data
-  const currentMonth = 12;
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
   
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedDay, setSelectedDay] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [replaceModalOpen, setReplaceModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [formData, setFormData] = useState({
     year: currentYear,
@@ -70,8 +74,14 @@ export default function CoursesPage() {
     day_of_week: "Lundi",
     time_slot: "07:00",
     course_name: "",
-    instructor: "",
+    coach_id: "",
+    instructor_name: "",
     max_capacity: 12,
+  });
+  const [replaceData, setReplaceData] = useState({
+    replacement_coach_id: "",
+    date: "",
+    reason: "",
   });
 
   // Fetch courses
@@ -81,7 +91,13 @@ export default function CoursesPage() {
       axios.get(`${API}/courses?year=${selectedYear}&month=${selectedMonth}`).then((r) => r.data),
   });
 
-  // Fetch instructors
+  // Fetch coaches
+  const { data: coaches = [] } = useQuery({
+    queryKey: ["coaches", "active"],
+    queryFn: () => axios.get(`${API}/coaches?active_only=true`).then((r) => r.data),
+  });
+
+  // Fetch instructors (legacy)
   const { data: instructors = [] } = useQuery({
     queryKey: ["instructors"],
     queryFn: () => axios.get(`${API}/instructors?active_only=true`).then((r) => r.data),
@@ -125,6 +141,27 @@ export default function CoursesPage() {
     },
   });
 
+  // Copy planning from previous month
+  const copyPlanningMutation = useMutation({
+    mutationFn: () => axios.post(`${API}/courses/copy-planning/${selectedYear}/${selectedMonth}`),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries(["courses"]);
+      toast.success(res.data.message);
+    },
+    onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la copie"),
+  });
+
+  // Create coach replacement
+  const replaceMutation = useMutation({
+    mutationFn: (data) => axios.post(`${API}/coaches/replacements/`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["courses"]);
+      setReplaceModalOpen(false);
+      toast.success("Remplacement enregistré");
+    },
+    onError: () => toast.error("Erreur"),
+  });
+
   // Filter courses
   const filteredCourses = useMemo(() => {
     if (selectedDay === "all") return courses;
@@ -147,7 +184,8 @@ export default function CoursesPage() {
       day_of_week: "Lundi",
       time_slot: "07:00",
       course_name: "",
-      instructor: instructors[0]?.name || "",
+      coach_id: coaches[0]?.id || "",
+      instructor_name: coaches[0]?.name || instructors[0]?.name || "",
       max_capacity: 12,
     });
     setModalOpen(true);
@@ -156,6 +194,22 @@ export default function CoursesPage() {
   const openEditModal = (course) => {
     setSelectedCourse(course);
     setEditModalOpen(true);
+  };
+
+  const openReplaceModal = (course) => {
+    setSelectedCourse(course);
+    setReplaceData({
+      replacement_coach_id: "",
+      date: new Date().toISOString().split('T')[0],
+      reason: "",
+    });
+    setReplaceModalOpen(true);
+  };
+
+  // Get coach name by id
+  const getCoachName = (coachId) => {
+    const coach = coaches.find(c => c.id === coachId);
+    return coach?.name || "";
   };
 
   const handleAttendanceChange = (course, week, value) => {
@@ -184,11 +238,38 @@ export default function CoursesPage() {
             {lang === "fr" ? "Fréquentation et statistiques par cours" : "Attendance and statistics per course"}
           </p>
         </div>
-        <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700" data-testid="add-course-btn">
-          <Plus size={16} className="mr-2" />
-          {lang === "fr" ? "Ajouter un cours" : "Add course"}
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            onClick={() => copyPlanningMutation.mutate()}
+            disabled={copyPlanningMutation.isPending || courses.length > 0}
+            variant="outline"
+            className="border-white/20 text-white hover:bg-white/10"
+            data-testid="copy-planning-btn"
+          >
+            <Copy size={16} className="mr-2" />
+            {copyPlanningMutation.isPending ? "..." : "Copier mois précédent"}
+          </Button>
+          <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700" data-testid="add-course-btn">
+            <Plus size={16} className="mr-2" />
+            {lang === "fr" ? "Ajouter un cours" : "Add course"}
+          </Button>
+        </div>
       </div>
+
+      {/* Info banner if no courses */}
+      {courses.length === 0 && !isLoading && (
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+          <p className="text-blue-400 text-sm">
+            Aucun cours pour {MONTHS_FR[selectedMonth - 1]} {selectedYear}. 
+            <button 
+              onClick={() => copyPlanningMutation.mutate()}
+              className="underline ml-1 hover:text-blue-300"
+            >
+              Copier le planning du mois précédent
+            </button>
+          </p>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
@@ -344,6 +425,15 @@ export default function CoursesPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        onClick={() => openReplaceModal(course)}
+                        className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                        title="Remplacer le coach"
+                      >
+                        <UserCog size={14} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => openEditModal(course)}
                         className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
                       >
@@ -430,14 +520,29 @@ export default function CoursesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Instructeur</label>
-                <Select value={formData.instructor} onValueChange={(v) => setFormData({ ...formData, instructor: v })}>
+                <label className="text-white/50 text-xs uppercase">Coach *</label>
+                <Select 
+                  value={formData.coach_id} 
+                  onValueChange={(v) => {
+                    const coach = coaches.find(c => c.id === v);
+                    setFormData({ 
+                      ...formData, 
+                      coach_id: v,
+                      instructor_name: coach?.name || ""
+                    });
+                  }}
+                >
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
-                    <SelectValue placeholder="Sélectionner..." />
+                    <SelectValue placeholder="Sélectionner un coach..." />
                   </SelectTrigger>
                   <SelectContent className="bg-[#1C1C1E] border-white/10">
-                    {instructors.map((i) => (
-                      <SelectItem key={i.id} value={i.name} className="text-white">{i.name}</SelectItem>
+                    {coaches.map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="text-white">
+                        {c.name} ({c.hourly_rate} CHF/h)
+                      </SelectItem>
+                    ))}
+                    {coaches.length === 0 && instructors.map((i) => (
+                      <SelectItem key={i.id} value={i.id} className="text-white">{i.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -545,6 +650,93 @@ export default function CoursesPage() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditModalOpen(false)}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Replace Coach Modal */}
+      <Dialog open={replaceModalOpen} onOpenChange={setReplaceModalOpen}>
+        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCog className="text-orange-400" size={20} />
+              Remplacer le coach
+            </DialogTitle>
+          </DialogHeader>
+          {selectedCourse && (
+            <div className="space-y-4 py-4">
+              <div className="bg-[#121214] rounded-lg p-3">
+                <p className="text-white font-medium">{selectedCourse.course_name}</p>
+                <p className="text-white/50 text-sm">
+                  {selectedCourse.day_of_week} à {selectedCourse.time_slot}
+                </p>
+                <p className="text-white/40 text-sm mt-1">
+                  Coach actuel : {selectedCourse.instructor || selectedCourse.instructor_name || getCoachName(selectedCourse.coach_id) || "-"}
+                </p>
+              </div>
+              <div>
+                <label className="text-white/50 text-xs uppercase">Coach de remplacement *</label>
+                <Select 
+                  value={replaceData.replacement_coach_id} 
+                  onValueChange={(v) => setReplaceData({ ...replaceData, replacement_coach_id: v })}
+                >
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                    {coaches.filter(c => c.id !== selectedCourse.coach_id).map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="text-white">
+                        {c.name} ({c.hourly_rate} CHF/h)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-white/50 text-xs uppercase">Date du remplacement *</label>
+                <Input
+                  type="date"
+                  value={replaceData.date}
+                  onChange={(e) => setReplaceData({ ...replaceData, date: e.target.value })}
+                  className="bg-[#121214] border-white/10 text-white mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-white/50 text-xs uppercase">Raison</label>
+                <Select 
+                  value={replaceData.reason} 
+                  onValueChange={(v) => setReplaceData({ ...replaceData, reason: v })}
+                >
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                    <SelectItem value="maladie" className="text-white">Maladie</SelectItem>
+                    <SelectItem value="absence" className="text-white">Absence</SelectItem>
+                    <SelectItem value="conge" className="text-white">Congé</SelectItem>
+                    <SelectItem value="autre" className="text-white">Autre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReplaceModalOpen(false)}>Annuler</Button>
+            <Button
+              onClick={() => {
+                replaceMutation.mutate({
+                  course_id: selectedCourse?.id,
+                  original_coach_id: selectedCourse?.coach_id || "",
+                  replacement_coach_id: replaceData.replacement_coach_id,
+                  date: replaceData.date,
+                  reason: replaceData.reason,
+                });
+              }}
+              disabled={!replaceData.replacement_coach_id || !replaceData.date || replaceMutation.isPending}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {replaceMutation.isPending ? "..." : "Confirmer le remplacement"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

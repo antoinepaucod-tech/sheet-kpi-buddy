@@ -43,7 +43,7 @@ from models.payments import (
 )
 
 # Router imports
-from routers import auth, members, payments, annual_reviews, followups, onboarding, settings
+from routers import auth, members, payments, annual_reviews, followups, onboarding, settings, coaches
 
 # App setup
 app = FastAPI(title="Sheet KPI Buddy API", version="2.1.0")
@@ -60,6 +60,7 @@ api_router.include_router(annual_reviews.router)
 api_router.include_router(followups.router)
 api_router.include_router(onboarding.router)
 api_router.include_router(settings.router)
+api_router.include_router(coaches.router)
 
 
 # ── KPI Routes ───────────────────────────────────────────────────────────────
@@ -630,6 +631,74 @@ async def get_courses_summary(year: int, month: int):
         "avg_attendance_rate": avg_attendance,
         "total_expenses": total_expenses,
         "by_day": by_day
+    }
+
+
+@api_router.post("/courses/copy-planning/{year}/{month}")
+async def copy_planning_from_previous_month(year: int, month: int):
+    """Copy course planning from previous month"""
+    # Calculate previous month
+    if month == 1:
+        prev_month = 12
+        prev_year = year - 1
+    else:
+        prev_month = month - 1
+        prev_year = year
+    
+    # Check if target month already has courses
+    existing = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+    if existing:
+        return {
+            "message": f"Le mois {MONTHS_FR[month-1]} {year} contient déjà {len(existing)} cours. Utilisez /courses/copy-planning/{year}/{month}?force=true pour écraser.",
+            "existing_count": len(existing),
+            "copied": 0
+        }
+    
+    # Get previous month courses
+    prev_courses = await db.course_kpis.find({"year": prev_year, "month": prev_month}, {"_id": 0}).to_list(500)
+    
+    if not prev_courses:
+        return {
+            "message": f"Aucun cours trouvé pour {MONTHS_FR[prev_month-1]} {prev_year}",
+            "copied": 0
+        }
+    
+    # Copy courses with reset attendance
+    copied = []
+    for course in prev_courses:
+        new_course = CourseKPI(
+            year=year,
+            month=month,
+            month_name=MONTHS_FR[month - 1],
+            course_name=course.get("course_name", ""),
+            day_of_week=course.get("day_of_week", ""),
+            time_slot=course.get("time_slot", ""),
+            instructor_id=course.get("instructor_id"),
+            instructor_name=course.get("instructor_name", ""),
+            coach_id=course.get("coach_id"),
+            max_capacity=course.get("max_capacity", 10),
+            # Reset attendance to 0
+            week1_attendance=0,
+            week2_attendance=0,
+            week3_attendance=0,
+            week4_attendance=0,
+            week5_attendance=0,
+            s1=0, s2=0, s3=0, s4=0, s5=0,
+            attendance_rate=0,
+            monthly_expenses=course.get("monthly_expenses", 0),
+            notes=""
+        )
+        doc = new_course.model_dump()
+        await db.course_kpis.insert_one(doc)
+        doc.pop('_id', None)
+        copied.append(doc)
+    
+    return {
+        "message": f"{len(copied)} cours copiés de {MONTHS_FR[prev_month-1]} {prev_year} vers {MONTHS_FR[month-1]} {year}",
+        "source": f"{MONTHS_FR[prev_month-1]} {prev_year}",
+        "target": f"{MONTHS_FR[month-1]} {year}",
+        "copied": len(copied),
+        "courses": copied
     }
 
 
