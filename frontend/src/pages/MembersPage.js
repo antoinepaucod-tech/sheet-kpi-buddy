@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { format, differenceInDays, parseISO } from "date-fns";
+import { format, differenceInDays, parseISO, addYears } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Users,
@@ -18,10 +18,13 @@ import {
   ChevronUp,
   Clock,
   CheckCircle2,
+  CreditCard,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
+import { Switch } from "../components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -64,6 +67,18 @@ const MEMBERSHIP_OPTIONS = [
   "Annuel PT",
 ];
 
+const PAYMENT_METHODS = [
+  { value: "prelevement", label: "Prélèvement automatique" },
+  { value: "carte", label: "Carte bancaire" },
+  { value: "virement", label: "Virement" },
+  { value: "especes", label: "Espèces" },
+];
+
+const BILLING_CYCLE_TYPES = [
+  { value: "monthly_day", label: "Jour fixe du mois" },
+  { value: "interval_days", label: "Tous les X jours" },
+];
+
 export default function MembersPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
@@ -84,11 +99,25 @@ export default function MembersPage() {
     subscription_end_date: "",
     cash_collected: 0,
     notes: "",
+    // Billing
+    billing_enabled: true,
+    billing_amount: 0,
+    billing_cycle_type: "monthly_day",
+    billing_cycle_value: 1,
+    billing_payment_method: "prelevement",
+    // Annual review
+    annual_review_enabled: false,
   });
   const [renewData, setRenewData] = useState({
     new_end_date: "",
     renewal_duration: "12 mois",
     notes: "",
+    // Billing cycle options for renewal
+    update_billing: false,
+    billing_cycle_type: "monthly_day",
+    billing_cycle_value: 1,
+    billing_amount: 0,
+    billing_payment_method: "prelevement",
   });
 
   // Fetch members
@@ -190,9 +219,15 @@ export default function MembersPage() {
       membership: "Annuel",
       member_type: "Membres Généraux Récurrents",
       contract_signed_date: format(new Date(), "yyyy-MM-dd"),
-      subscription_end_date: format(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+      subscription_end_date: format(addYears(new Date(), 1), "yyyy-MM-dd"),
       cash_collected: 0,
       notes: "",
+      billing_enabled: true,
+      billing_amount: 100,
+      billing_cycle_type: "monthly_day",
+      billing_cycle_value: 1,
+      billing_payment_method: "prelevement",
+      annual_review_enabled: false,
     });
     setModalOpen(true);
   };
@@ -209,6 +244,12 @@ export default function MembersPage() {
       subscription_end_date: member.subscription_end_date || "",
       cash_collected: member.cash_collected || 0,
       notes: member.notes || "",
+      billing_enabled: member.billing_enabled !== false,
+      billing_amount: member.billing_amount || 0,
+      billing_cycle_type: member.billing_cycle_type || "monthly_day",
+      billing_cycle_value: member.billing_cycle_value || 1,
+      billing_payment_method: member.billing_payment_method || "prelevement",
+      annual_review_enabled: member.annual_review_enabled || false,
     });
     setModalOpen(true);
   };
@@ -218,13 +259,17 @@ export default function MembersPage() {
     const currentEnd = member.subscription_end_date
       ? parseISO(member.subscription_end_date)
       : new Date();
-    const newEnd = new Date(currentEnd);
-    newEnd.setFullYear(newEnd.getFullYear() + 1);
+    const newEnd = addYears(currentEnd, 1);
     
     setRenewData({
       new_end_date: format(newEnd, "yyyy-MM-dd"),
       renewal_duration: "12 mois",
       notes: "",
+      update_billing: false,
+      billing_cycle_type: member.billing_cycle_type || "monthly_day",
+      billing_cycle_value: member.billing_cycle_value || 1,
+      billing_amount: member.billing_amount || 0,
+      billing_payment_method: member.billing_payment_method || "prelevement",
     });
     setRenewModalOpen(true);
   };
@@ -578,6 +623,104 @@ export default function MembersPage() {
                 className="bg-[#121214] border-white/10 text-white mt-1"
               />
             </div>
+
+            {/* Billing Section */}
+            <div className="border-t border-white/10 pt-4 mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-white/70 text-sm flex items-center gap-2">
+                  <CreditCard size={14} className="text-green-400" />
+                  Facturation récurrente
+                </label>
+                <Switch
+                  checked={formData.billing_enabled}
+                  onCheckedChange={(v) => setFormData({ ...formData, billing_enabled: v })}
+                />
+              </div>
+              
+              {formData.billing_enabled && (
+                <div className="space-y-3 bg-[#121214] rounded-lg p-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-white/40 text-xs">Montant (CHF)</label>
+                      <Input
+                        type="number"
+                        value={formData.billing_amount}
+                        onChange={(e) => setFormData({ ...formData, billing_amount: parseFloat(e.target.value) || 0 })}
+                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                        data-testid="billing-amount-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/40 text-xs">Méthode</label>
+                      <Select value={formData.billing_payment_method} onValueChange={(v) => setFormData({ ...formData, billing_payment_method: v })}>
+                        <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1C1C1E] border-white/10">
+                          {PAYMENT_METHODS.map((m) => (
+                            <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-white/40 text-xs">Cycle de facturation</label>
+                      <Select value={formData.billing_cycle_type} onValueChange={(v) => setFormData({ ...formData, billing_cycle_type: v })}>
+                        <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1C1C1E] border-white/10">
+                          {BILLING_CYCLE_TYPES.map((t) => (
+                            <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-white/40 text-xs">
+                        {formData.billing_cycle_type === "monthly_day" ? "Jour du mois (1-28)" : "Intervalle (jours)"}
+                      </label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={formData.billing_cycle_type === "monthly_day" ? 28 : 365}
+                        value={formData.billing_cycle_value}
+                        onChange={(e) => setFormData({ ...formData, billing_cycle_value: parseInt(e.target.value) || 1 })}
+                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                        data-testid="billing-cycle-value-input"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-white/30 text-xs">
+                    {formData.billing_cycle_type === "monthly_day"
+                      ? `Facturé le ${formData.billing_cycle_value} de chaque mois`
+                      : `Facturé tous les ${formData.billing_cycle_value} jours`}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Annual Review Section */}
+            <div className="border-t border-white/10 pt-4">
+              <div className="flex items-center justify-between">
+                <label className="text-white/70 text-sm flex items-center gap-2">
+                  <ClipboardCheck size={14} className="text-purple-400" />
+                  Bilan annuel (poids, nutrition, programme)
+                </label>
+                <Switch
+                  checked={formData.annual_review_enabled}
+                  onCheckedChange={(v) => setFormData({ ...formData, annual_review_enabled: v })}
+                  data-testid="annual-review-switch"
+                />
+              </div>
+              {formData.annual_review_enabled && (
+                <p className="text-white/30 text-xs mt-2">
+                  Un bilan sera planifié automatiquement 1 an après la date de signature
+                </p>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setModalOpen(false)}>Annuler</Button>
@@ -646,12 +789,104 @@ export default function MembersPage() {
                   placeholder="Optionnel"
                 />
               </div>
+
+              {/* Billing cycle update option */}
+              <div className="border-t border-white/10 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-white/70 text-sm flex items-center gap-2">
+                    <CreditCard size={14} className="text-green-400" />
+                    Modifier le cycle de facturation
+                  </label>
+                  <Switch
+                    checked={renewData.update_billing}
+                    onCheckedChange={(v) => setRenewData({ ...renewData, update_billing: v })}
+                    data-testid="update-billing-switch"
+                  />
+                </div>
+                
+                {renewData.update_billing && (
+                  <div className="space-y-3 bg-[#121214] rounded-lg p-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-white/40 text-xs">Montant (CHF)</label>
+                        <Input
+                          type="number"
+                          value={renewData.billing_amount}
+                          onChange={(e) => setRenewData({ ...renewData, billing_amount: parseFloat(e.target.value) || 0 })}
+                          className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                          data-testid="renew-billing-amount"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-white/40 text-xs">Méthode</label>
+                        <Select value={renewData.billing_payment_method} onValueChange={(v) => setRenewData({ ...renewData, billing_payment_method: v })}>
+                          <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#1C1C1E] border-white/10">
+                            {PAYMENT_METHODS.map((m) => (
+                              <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-white/40 text-xs">Cycle de facturation</label>
+                        <Select value={renewData.billing_cycle_type} onValueChange={(v) => setRenewData({ ...renewData, billing_cycle_type: v })}>
+                          <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#1C1C1E] border-white/10">
+                            {BILLING_CYCLE_TYPES.map((t) => (
+                              <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-white/40 text-xs">
+                          {renewData.billing_cycle_type === "monthly_day" ? "Jour du mois (1-28)" : "Intervalle (jours)"}
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={renewData.billing_cycle_type === "monthly_day" ? 28 : 365}
+                          value={renewData.billing_cycle_value}
+                          onChange={(e) => setRenewData({ ...renewData, billing_cycle_value: parseInt(e.target.value) || 1 })}
+                          className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                          data-testid="renew-billing-cycle-value"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-white/30 text-xs">
+                      {renewData.billing_cycle_type === "monthly_day"
+                        ? `Facturé le ${renewData.billing_cycle_value} de chaque mois`
+                        : `Facturé tous les ${renewData.billing_cycle_value} jours`}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setRenewModalOpen(false)}>Annuler</Button>
             <Button
-              onClick={() => renewMutation.mutate({ id: selectedMember?.id, data: renewData })}
+              onClick={() => {
+                const payload = {
+                  new_end_date: renewData.new_end_date,
+                  renewal_duration: renewData.renewal_duration,
+                  notes: renewData.notes,
+                };
+                if (renewData.update_billing) {
+                  payload.billing_cycle_type = renewData.billing_cycle_type;
+                  payload.billing_cycle_value = renewData.billing_cycle_value;
+                  payload.billing_amount = renewData.billing_amount;
+                  payload.billing_payment_method = renewData.billing_payment_method;
+                }
+                renewMutation.mutate({ id: selectedMember?.id, data: payload });
+              }}
               disabled={!renewData.new_end_date || renewMutation.isPending}
               className="bg-emerald-600 hover:bg-emerald-700"
               data-testid="confirm-renew-btn"

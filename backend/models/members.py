@@ -16,6 +16,12 @@ class CustomerMember(BaseModel):
     subscription_end_date: Optional[str] = None  # Date d'expiration
     exit_date: Optional[str] = None  # Date de sortie
     cash_collected: float = 0
+    # Billing cycle
+    billing_enabled: bool = True
+    billing_amount: float = 0
+    billing_cycle_type: str = "monthly_day"  # "monthly_day" or "interval_days"
+    billing_cycle_value: int = 1  # Day of month (1-28) or interval in days (e.g., 28)
+    billing_payment_method: str = "prelevement"  # "prelevement", "carte", "virement", "especes"
     # Onboarding flags
     onboarding_bsport: bool = False
     onboarding_hubfit: bool = False
@@ -24,6 +30,10 @@ class CustomerMember(BaseModel):
     session_introduction: bool = False
     onboarding_completed: bool = False
     onboarding_completed_date: Optional[str] = None
+    # Annual review
+    annual_review_enabled: bool = False
+    annual_review_date: Optional[str] = None  # Date du prochain bilan annuel
+    last_annual_review_date: Optional[str] = None
     # Monthly follow-up
     last_followup_date: Optional[str] = None
     next_followup_date: Optional[str] = None
@@ -43,6 +53,14 @@ class CustomerMemberCreate(BaseModel):
     subscription_end_date: Optional[str] = None
     cash_collected: float = 0
     notes: Optional[str] = ""
+    # Billing cycle
+    billing_enabled: bool = True
+    billing_amount: float = 0
+    billing_cycle_type: str = "monthly_day"
+    billing_cycle_value: int = 1
+    billing_payment_method: str = "prelevement"
+    # Annual review
+    annual_review_enabled: bool = False
     # Onboarding
     onboarding_bsport: bool = False
     onboarding_hubfit: bool = False
@@ -87,7 +105,7 @@ class MemberFollowUp(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     member_id: str
     followup_date: str
-    followup_type: str = "monthly"  # "monthly", "onboarding", "renewal", "payment"
+    followup_type: str = "monthly"  # "monthly", "onboarding", "renewal", "payment", "annual"
     status: str = "scheduled"  # "scheduled", "completed", "missed", "rescheduled"
     completed_date: Optional[str] = None
     notes: Optional[str] = ""
@@ -104,3 +122,51 @@ class MemberFollowUpCreate(BaseModel):
     followup_date: str
     followup_type: str = "monthly"
     notes: Optional[str] = ""
+
+
+class AnnualReview(BaseModel):
+    """Annual review/bilan for members - weight, nutrition, program adjustments"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    review_date: str
+    # Weight tracking
+    weight_start: Optional[float] = None  # Poids au début (kg)
+    weight_current: Optional[float] = None  # Poids actuel (kg)
+    weight_goal: Optional[float] = None  # Objectif de poids (kg)
+    weight_change: Optional[float] = None  # Variation
+    # Body measurements (optional)
+    body_fat_percentage: Optional[float] = None
+    muscle_mass: Optional[float] = None
+    # Nutrition adjustments
+    nutrition_current: Optional[str] = ""  # Régime actuel
+    nutrition_adjustments: Optional[str] = ""  # Ajustements recommandés
+    calories_target: Optional[int] = None
+    protein_target: Optional[int] = None  # grammes
+    # Program adjustments
+    current_program: Optional[str] = ""  # Programme actuel
+    program_adjustments: Optional[str] = ""  # Modifications du programme
+    training_frequency: Optional[int] = None  # Séances par semaine recommandées
+    # Goals and notes
+    goals_achieved: Optional[str] = ""  # Objectifs atteints
+    new_goals: Optional[str] = ""  # Nouveaux objectifs
+    coach_notes: Optional[str] = ""  # Notes du coach
+    member_feedback: Optional[str] = ""  # Retour du membre
+    # Next review
+    next_review_date: Optional[str] = None
+    # Status
+    status: str = "scheduled"  # "scheduled", "completed", "missed"
+    completed_date: Optional[str] = None
+    performed_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class AnnualReviewCreate(BaseModel):
+    member_id: str
+    review_date: str
+    weight_start: Optional[float] = None
+    weight_current: Optional[float] = None
+    weight_goal: Optional[float] = None
+    nutrition_current: Optional[str] = ""
+    current_program: Optional[str] = ""
+    new_goals: Optional[str] = ""

@@ -29,7 +29,8 @@ from models.transactions import (
 from models.members import (
     CustomerMember, CustomerMemberCreate,
     MemberRenewalHistory, WeeklyTraining, WeeklyTrainingUpdate,
-    MemberFollowUp, MemberFollowUpCreate
+    MemberFollowUp, MemberFollowUpCreate,
+    AnnualReview, AnnualReviewCreate
 )
 from models.challenges import (
     SixWeeksChallenge, SixWeeksChallengeCreate,
@@ -465,10 +466,44 @@ async def get_member(member_id: str):
 
 @api_router.post("/members")
 async def create_member(data: CustomerMemberCreate):
-    member = CustomerMember(**data.model_dump())
+    member_data = data.model_dump()
+    
+    # Calculate annual review date if enabled (1 year from contract date)
+    if data.annual_review_enabled and data.contract_signed_date:
+        try:
+            contract_date = datetime.fromisoformat(data.contract_signed_date)
+            annual_date = contract_date.replace(year=contract_date.year + 1)
+            member_data["annual_review_date"] = annual_date.strftime("%Y-%m-%d")
+        except:
+            pass
+    
+    member = CustomerMember(**member_data)
     doc = member.model_dump()
     await db.customer_members.insert_one(doc)
     doc.pop('_id', None)
+    
+    # Create payment schedule if billing is enabled
+    if data.billing_enabled and data.billing_amount > 0:
+        schedule = PaymentSchedule(
+            member_id=doc["id"],
+            amount=data.billing_amount,
+            recurrence_type=data.billing_cycle_type,
+            recurrence_value=data.billing_cycle_value,
+            start_date=data.contract_signed_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            payment_method=data.billing_payment_method,
+            is_active=True
+        )
+        await db.payment_schedules.insert_one(schedule.model_dump())
+    
+    # Create annual review if enabled
+    if data.annual_review_enabled and doc.get("annual_review_date"):
+        annual_review = AnnualReview(
+            member_id=doc["id"],
+            review_date=doc["annual_review_date"],
+            status="scheduled"
+        )
+        await db.annual_reviews.insert_one(annual_review.model_dump())
+    
     return doc
 
 
@@ -478,8 +513,49 @@ async def update_member(member_id: str, data: CustomerMemberCreate):
     if not existing:
         raise HTTPException(status_code=404, detail="Membre introuvable")
     
-    update = {**data.model_dump(), "updated_at": datetime.now(timezone.utc).isoformat()}
-    await db.customer_members.update_one({"id": member_id}, {"$set": update})
+    update_data = data.model_dump()
+    
+    # Update annual review date if enabled and changed
+    if data.annual_review_enabled and data.contract_signed_date:
+        try:
+            contract_date = datetime.fromisoformat(data.contract_signed_date)
+            annual_date = contract_date.replace(year=contract_date.year + 1)
+            update_data["annual_review_date"] = annual_date.strftime("%Y-%m-%d")
+        except:
+            pass
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.customer_members.update_one({"id": member_id}, {"$set": update_data})
+    
+    # Update payment schedule if billing changed
+    existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "is_active": True})
+    
+    if data.billing_enabled and data.billing_amount > 0:
+        schedule_update = {
+            "amount": data.billing_amount,
+            "recurrence_type": data.billing_cycle_type,
+            "recurrence_value": data.billing_cycle_value,
+            "payment_method": data.billing_payment_method,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if existing_schedule:
+            await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": schedule_update})
+        else:
+            schedule = PaymentSchedule(
+                member_id=member_id,
+                amount=data.billing_amount,
+                recurrence_type=data.billing_cycle_type,
+                recurrence_value=data.billing_cycle_value,
+                start_date=data.contract_signed_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                payment_method=data.billing_payment_method,
+                is_active=True
+            )
+            await db.payment_schedules.insert_one(schedule.model_dump())
+    elif existing_schedule and not data.billing_enabled:
+        # Disable existing schedule
+        await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": {"is_active": False}})
+    
     return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
 
 
@@ -513,10 +589,53 @@ async def renew_membership(member_id: str, body: dict):
     )
     await db.member_renewals.insert_one(renewal.model_dump())
     
-    await db.customer_members.update_one(
-        {"id": member_id},
-        {"$set": {"subscription_end_date": new_end_date, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
+    # Update member subscription end date
+    member_update = {
+        "subscription_end_date": new_end_date,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Update billing cycle if provided
+    if "billing_cycle_type" in body:
+        member_update["billing_cycle_type"] = body["billing_cycle_type"]
+    if "billing_cycle_value" in body:
+        member_update["billing_cycle_value"] = body["billing_cycle_value"]
+    if "billing_amount" in body:
+        member_update["billing_amount"] = body["billing_amount"]
+    if "billing_payment_method" in body:
+        member_update["billing_payment_method"] = body["billing_payment_method"]
+    
+    # Update annual review date if enabled (1 year from renewal)
+    if member.get("annual_review_enabled"):
+        try:
+            end_date = datetime.fromisoformat(new_end_date)
+            member_update["annual_review_date"] = end_date.strftime("%Y-%m-%d")
+            # Create new annual review
+            annual_review = AnnualReview(
+                member_id=member_id,
+                review_date=member_update["annual_review_date"],
+                status="scheduled"
+            )
+            await db.annual_reviews.insert_one(annual_review.model_dump())
+        except:
+            pass
+    
+    await db.customer_members.update_one({"id": member_id}, {"$set": member_update})
+    
+    # Update payment schedule if billing cycle changed
+    if any(k in body for k in ["billing_cycle_type", "billing_cycle_value", "billing_amount", "billing_payment_method"]):
+        existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "is_active": True})
+        if existing_schedule:
+            schedule_update = {"updated_at": datetime.now(timezone.utc).isoformat()}
+            if "billing_cycle_type" in body:
+                schedule_update["recurrence_type"] = body["billing_cycle_type"]
+            if "billing_cycle_value" in body:
+                schedule_update["recurrence_value"] = body["billing_cycle_value"]
+            if "billing_amount" in body:
+                schedule_update["amount"] = body["billing_amount"]
+            if "billing_payment_method" in body:
+                schedule_update["payment_method"] = body["billing_payment_method"]
+            await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": schedule_update})
     
     doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     return {"member": doc, "message": "Abonnement renouvelé"}
@@ -1376,6 +1495,152 @@ async def get_alerts_summary():
         "upcoming_followups": upcoming_followups,
         "total_alerts": late_payments + missed_followups + expiring_count
     }
+
+
+# ── Annual Review Routes ─────────────────────────────────────────────────────
+
+@api_router.get("/annual-reviews")
+async def get_annual_reviews(
+    member_id: Optional[str] = None,
+    status: Optional[str] = None,
+    year: Optional[int] = None
+):
+    query = {}
+    if member_id:
+        query["member_id"] = member_id
+    if status:
+        query["status"] = status
+    if year:
+        query["review_date"] = {"$regex": f"^{year}"}
+    
+    docs = await db.annual_reviews.find(query, {"_id": 0}).sort("review_date", -1).to_list(500)
+    
+    # Enrich with member info
+    for doc in docs:
+        member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1})
+        if member:
+            doc["member_name"] = member.get("name", "")
+            doc["member_email"] = member.get("email", "")
+    
+    return docs
+
+
+@api_router.get("/annual-reviews/upcoming")
+async def get_upcoming_annual_reviews(days: int = 30):
+    """Get annual reviews scheduled in the next N days"""
+    today = datetime.now(timezone.utc).date()
+    end_date = today + timedelta(days=days)
+    
+    docs = await db.annual_reviews.find({
+        "review_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
+        "status": "scheduled"
+    }, {"_id": 0}).sort("review_date", 1).to_list(100)
+    
+    for doc in docs:
+        member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
+        if member:
+            doc["member_name"] = member.get("name", "")
+            doc["member_email"] = member.get("email", "")
+            doc["member_phone"] = member.get("phone", "")
+        doc["days_until"] = (datetime.fromisoformat(doc["review_date"]).date() - today).days
+    
+    return docs
+
+
+@api_router.get("/annual-reviews/{review_id}")
+async def get_annual_review(review_id: str):
+    doc = await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Bilan annuel introuvable")
+    
+    member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0})
+    if member:
+        doc["member"] = member
+    
+    return doc
+
+
+@api_router.post("/annual-reviews")
+async def create_annual_review(data: AnnualReviewCreate):
+    review = AnnualReview(**data.model_dump())
+    doc = review.model_dump()
+    await db.annual_reviews.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/annual-reviews/{review_id}")
+async def update_annual_review(review_id: str, body: dict):
+    existing = await db.annual_reviews.find_one({"id": review_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Bilan annuel introuvable")
+    
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.annual_reviews.update_one({"id": review_id}, {"$set": body})
+    return await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
+
+
+@api_router.post("/annual-reviews/{review_id}/complete")
+async def complete_annual_review(review_id: str, body: dict):
+    """Complete an annual review with all measurements and notes"""
+    existing = await db.annual_reviews.find_one({"id": review_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Bilan annuel introuvable")
+    
+    # Calculate weight change
+    weight_start = body.get("weight_start", existing.get("weight_start"))
+    weight_current = body.get("weight_current", existing.get("weight_current"))
+    if weight_start and weight_current:
+        body["weight_change"] = round(weight_current - weight_start, 1)
+    
+    update = {
+        **body,
+        "status": "completed",
+        "completed_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.annual_reviews.update_one({"id": review_id}, {"$set": update})
+    
+    # Update member's last annual review date
+    await db.customer_members.update_one(
+        {"id": existing["member_id"]},
+        {"$set": {
+            "last_annual_review_date": update["completed_date"],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Schedule next annual review if next_review_date provided
+    next_date = body.get("next_review_date")
+    if next_date:
+        next_review = AnnualReview(
+            member_id=existing["member_id"],
+            review_date=next_date,
+            status="scheduled"
+        )
+        await db.annual_reviews.insert_one(next_review.model_dump())
+        
+        await db.customer_members.update_one(
+            {"id": existing["member_id"]},
+            {"$set": {"annual_review_date": next_date}}
+        )
+    
+    return await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
+
+
+@api_router.delete("/annual-reviews/{review_id}")
+async def delete_annual_review(review_id: str):
+    result = await db.annual_reviews.delete_one({"id": review_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Bilan annuel introuvable")
+    return {"message": "Bilan annuel supprimé"}
+
+
+@api_router.get("/members/{member_id}/annual-reviews")
+async def get_member_annual_reviews(member_id: str):
+    """Get all annual reviews for a specific member"""
+    return await db.annual_reviews.find({"member_id": member_id}, {"_id": 0}).sort("review_date", -1).to_list(50)
 
 
 # ── Settings Routes ──────────────────────────────────────────────────────────

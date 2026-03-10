@@ -2,57 +2,63 @@
 L'utilisateur souhaite reconstruire une application SaaS de pilotage financier pour les clubs de sport, Sheet KPI Buddy. Le projet a évolué pour intégrer toutes les fonctionnalités d'un projet GitHub existant de l'utilisateur dans une nouvelle stack (FastAPI/React/MongoDB).
 
 **PRODUCT REQUIREMENTS:**
-- Intégrer toutes les fonctionnalités du projet GitHub de l'utilisateur, notamment :
-    - **Gestion Financière:** Transactions, transactions récurrentes, exclusions de transactions (dépenses et revenus), import/export CSV, rapports PDF mensuels.
-    - **Tableaux de Bord:** Un dashboard principal avec des KPIs détaillés (entonnoir de vente, types de membres, métriques avancées), un dashboard de comparaison multi-mois avec sélection de plage de dates.
-    - **Gestion des Membres & Cours:** Suivi des abonnements expirants, gestion des challenges (ex: 6 weeks challenge), KPIs par cours, et KPIs par client.
-    - **Authentification:** Système de login/inscription par utilisateur, avec isolation des données par club ().
-    - **Internationalisation (i18n):** Support FR/EN.
+- **Gestion Financière:** Transactions (y compris récurrentes et exclusions), import/export CSV, rapports PDF, suivi des paiements avec cycles de facturation (mensuel, tous les 28 jours), alertes pour retards.
+- **Tableaux de Bord:** Un dashboard principal avec KPIs détaillés, un dashboard de comparaison multi-mois, un suivi annuel pour les membres.
+- **Gestion des Membres & Cours:** Suivi des abonnements expirants, gestion des challenges (ex: 6 weeks challenge), KPIs par cours, KPIs par client, système d'onboarding, et un suivi de bilan annuel (poids, nutrition, programme).
+- **Authentification:** Système de login/inscription par utilisateur, avec isolation des données par club ().
+- **Migration de Données:** Une interface pour importer les données existantes de l'ancienne application Lovable.
+- **Internationalisation (i18n):** Support FR/EN.
 
 **User's preferred language**: Français
 
 **what currently exists?**
-Une application full-stack robuste avec un backend FastAPI et un frontend React. L'application inclut un système d'authentification JWT complet, la gestion des transactions (standard et récurrentes), des exclusions, des catégories, l'export PDF, et plusieurs tableaux de bord. Les modèles de données du backend ont été enrichis pour correspondre à la complexité du projet original de l'utilisateur, et l'interface a été mise à jour pour afficher ces données détaillées.
+Une application full-stack avec un backend FastAPI (récemment refactorisé d'un monolithe à une structure modulaire) et un frontend React. L'application gère l'authentification JWT, les KPIs, les transactions, et quatre fonctionnalités majeures (abonnements expirants, challenges, KPIs cours, KPIs clients). Elle inclut également des pages dédiées pour le suivi des paiements, l'onboarding des membres et les suivis. Les modèles de données et les endpoints correspondants ont été créés et testés.
 
 **Last working item**:
-- **Last item agent was working:** L'agent a commencé l'implémentation de quatre nouvelles fonctionnalités majeures demandées par l'utilisateur, basées sur son projet GitHub original : , , , et . Il a ajouté tous les modèles Pydantic et les endpoints API CRUD correspondants dans le fichier backend .
+- **Last item agent was working:** L'agent a commencé l'implémentation de trois améliorations demandées par l'utilisateur :
+    1.  Intégration du cycle de facturation () directement dans le formulaire de création/modification de membre.
+    2.  Possibilité de modifier ce cycle lors du renouvellement d'un abonnement.
+    3.  Ajout d'un système de suivi de bilan annuel pour les membres, activable via une option.
+    
+    L'agent a mis à jour les modèles backend () et créé un nouveau modèle (). Il a également modifié les endpoints de création de membre et de renouvellement dans  pour gérer cette nouvelle logique. Le travail sur le frontend a commencé, avec la modification du modal d'ajout/édition de membre dans  pour inclure les nouveaux champs.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** backend testing agent
+- **Which testing method agent to use?** both
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
 - N/A
 
 **In progress Task List**:
-- **Task 1: (P0) Finaliser l'implémentation des 4 nouvelles fonctionnalités majeures.**
-  - **Where to resume:** Les modèles et endpoints backend sont créés dans . Les prochaines étapes sont :
-    1.  Ajouter des données de test (seed) pour les nouvelles collections dans .
-    2.  Tester rigoureusement tous les nouveaux endpoints backend.
-    3.  Créer les pages et composants frontend pour chaque fonctionnalité.
-    4.  Intégrer les nouvelles pages dans la navigation () et le routage ().
-    5.  Valider l'intégration complète avec le testing agent.
-  - **What will be achieved with this?** L'application intégrera toutes les fonctionnalités de base du projet original de l'utilisateur, la rendant prête pour la migration de ses données.
+- **Task 1: (P0) Finaliser l'implémentation des cycles de facturation et du suivi annuel.**
+  - **Where to resume:** Le travail a été interrompu lors de la mise à jour du frontend. Reprendre la modification du fichier . Le modal utilisé pour ajouter et éditer des membres () doit être entièrement mis à jour pour inclure les nouveaux champs :
+    -  (Select: monthly ou custom_days)
+    -  (Input numérique, conditionnel)
+    -  (Checkbox)
+    Après la mise à jour du frontend, il faudra s'assurer que les appels API envoient correctement les nouvelles données, puis tester l'ensemble du flux de bout en bout (création de membre -> vérification de la création du planning de paiement ; renouvellement -> vérification de la mise à jour).
+  - **What will be achieved with this?** L'application permettra une gestion de la facturation plus fine et intégrée, ainsi qu'un nouveau type de suivi pour les membres, répondant directement aux demandes de l'utilisateur.
   - **Status:** IN PROGRESS
   - **Should Test frontend/backend/both after fix?** Both
   - **Blocked on something:** Non.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **(P0) Refactorisation du Backend:** Proposer et exécuter une refactorisation du fichier monolithique  en une structure de projet FastAPI standard (routers, models, etc.) pour améliorer la maintenabilité.
-  - **(P1) Préparation à la Migration de Données:** Créer une interface ou un script dédié pour permettre à l'utilisateur d'importer ses données existantes (transactions, KPIs) dans la nouvelle application.
+  - **(P0) Finaliser la refactorisation du backend** : Le fichier , bien que réduit, contient encore toute la logique des routes. Il doit être décomposé en utilisant des  dans un répertoire  pour une meilleure maintenabilité.
+  - **(P1) Alertes par email pour les paiements en retard** : Implémenter l'envoi d'emails via Resend. L'intégration est installée mais nécessite une clé API que l'utilisateur n'a pas encore fournie.
+  - **(P1) Interface de migration de données** : Créer une page dédiée pour permettre à l'utilisateur d'importer ses données depuis son ancienne application Lovable. Le format des données (CSV, JSON, etc.) doit être clarifié avec l'utilisateur.
+
 - **Future Tasks:**
-  - **(P2) Mises à Jour en Temps Réel:** Implémenter des WebSockets pour que les graphiques du tableau de bord se mettent à jour instantanément.
-  - **(P2) Automatisation des Renouvellements:** Créer un processus en arrière-plan pour gérer les renouvellements d'abonnements basés sur les données de .
-  - **(P2) Interface de Gestion des Utilisateurs:** Créer une page d'administration pour gérer les utilisateurs de l'application.
+  - **(P2) Mises à jour en temps réel** : Implémenter des WebSockets pour que les graphiques du tableau de bord se mettent à jour instantanément.
+  - **(P2) Automatisation des renouvellements** : Créer un processus en arrière-plan pour gérer les renouvellements d'abonnements.
+  - **(P2) Interface de gestion des utilisateurs** : Créer une page d'administration pour gérer les utilisateurs de l'application.
 
 **Completed work in this session**
-- **Intégration du projet GitHub:** Clonage et analyse complète du projet de l'utilisateur.
-- **Transactions Récurrentes:** Implémentation complète (Backend & Frontend) du système de gestion des transactions récurrentes.
-- **Authentification JWT:** Mise en place d'un système d'inscription/connexion sécurisé avec isolation des données par .
-- **Export PDF:** Création d'un endpoint et d'un bouton pour télécharger un rapport mensuel en PDF.
-- **Dashboard Multi-Mois:** Création d'une page d'analyse () avec sélection de plage de dates.
-- **Enrichissement des KPIs & UI:** Le modèle de données  a été massivement étendu pour inclure des dizaines de nouveaux champs (entonnoir de vente, métriques avancées, etc.), et un onglet DÉTAILS a été ajouté au tableau de bord pour les afficher.
+- Implémentation complète (backend & frontend) des 4 fonctionnalités : , , , .
+- Refactorisation majeure du backend : passage d'un  monolithique de ~1900 lignes à une structure modulaire avec des répertoires  et .
+- Implémentation d'un système de suivi des paiements avec une page dédiée ().
+- Implémentation d'un système d'onboarding et de suivi pour les membres ().
+- Ajout d'une 5ème semaine (S5) dans la vue des KPIs de cours ().
+- L'ensemble de ces fonctionnalités a été validé par le testing agent.
 
 **Earlier issues found/mentioned but not fixed**
 - N/A
@@ -64,63 +70,59 @@ Une application full-stack robuste avec un backend FastAPI et un frontend React.
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, Pydantic, MongoDB (), JWT (, ), PDF Generation ().
+- **Backend:** FastAPI, Pydantic, MongoDB (), JWT,  pour les PDF,  pour les emails.
 - **Frontend:** React, Context API, TanStack Query, Recharts, shadcn/ui, TailwindCSS.
 
 **key DB schema**
-- : (Très enrichi) { , , , , , , , ... }
-- : { , , Tue Mar 10 09:46:17 UTC 2026, , , ... }
-- : { , , , , , ... }
-- : { , , , ,  }
-- : { , , , ,  }
-- **(Nouveau, non peuplé):** , , , .
+- : (Mis à jour) 
+- : 
+- : 
+- : 
+- , , , , , , , , .
 
 **changes in tech stack**
-- **Dépendances Backend Ajoutées:** , , .
+-  a été ajouté aux dépendances backend.
 
 **All files of reference**
-- : Fichier central contenant toute la logique backend. A besoin d'être refactorisé.
-- : Le tableau de bord principal.
-- : Le nouveau composant qui affiche les KPIs détaillés.
-- : Logique de routage et de protection des routes.
-- : Répertoire contenant le projet GitHub original de l'utilisateur pour référence.
+- : Contient la logique des endpoints à mettre à jour et à refactoriser.
+- : Modèle Pydantic et Mongo mis à jour.
+- : Nouveau modèle pour les bilans annuels.
+- : Page contenant le modal à modifier pour la création/édition des membres.
+- : Document de référence des exigences du produit.
 
 **Areas that need refactoring**:
-- ** est un monolithe critique.** Il contient plus de 1500 lignes, tous les modèles et toutes les routes. Il doit être urgemment décomposé en une structure de projet FastAPI standard (ex: , , ) pour rester maintenable.
+- ****: Le fichier contient toujours plus de 1000 lignes avec toutes les déclarations de routes. Il est impératif de le décomposer en plusieurs fichiers de routeurs (ex: , ) pour améliorer la scalabilité et la maintenabilité.
 
 **key api endpoints**
-- Auth: , 
-- KPIs: , , , 
-- Recurring Tx: , 
-- **Nouveaux endpoints (non testés):**
-    - 
-    - 
-    - 
-    - 
+- **Auth**: , 
+- **Members**:  (à tester avec les nouveaux champs),  (à tester avec les nouveaux champs)
+- **Annual Reviews**:  (nouveaux endpoints à tester)
+- **Payments**: , 
+- **Onboarding/Follow-ups**: , 
 
 **Critical Info for New Agent**
-- La priorité absolue de l'utilisateur est d'implémenter **toutes** les fonctionnalités restantes de son projet GitHub afin de pouvoir migrer ses données.
-- Le travail a commencé sur les 4 dernières fonctionnalités majeures. Le backend (modèles, endpoints) est défini mais non testé, et le frontend n'est pas commencé.
-- La refactorisation du fichier  est fortement recommandée. C'est le moment idéal pour le proposer à l'utilisateur, car de nouveaux modules seront créés.
+- La priorité est de terminer l'implémentation des trois fonctionnalités en cours (billing cycle intégré, mise à jour au renouvellement, suivi annuel) avant de passer à d'autres tâches.
+- L'utilisateur a explicitement demandé de reporter l'implémentation finale des alertes email (en attente de la clé API Resend) et l'outil de migration de données. Ne pas commencer ces tâches sans une nouvelle confirmation.
+- Une fois la tâche en cours terminée, il est fortement recommandé de proposer la refactorisation des routes du backend ( vers des ) comme prochaine étape technique.
 
 **documents and test reports created in this job**
-- 
-- 
+-  (mis à jour)
+- Le dernier rapport de test () a indiqué un succès complet des tests backend et frontend pour les fonctionnalités de paiement et d'onboarding.
 
 **Last 10 User Messages and any pending HUMAN messages**
 1.  **user:** 
-    - Agent a corrigé en ajoutant un onglet DÉTAILS avec tous les champs.
+    - Agent a confirmé que ces fonctionnalités manquaient et a proposé un plan pour les ajouter.
 2.  **user:** 
-    - Agent a confirmé que ces 4 fonctionnalités manquaient.
-3.  **user:** 
-    - Agent a commencé l'implémentation backend de ces 4 fonctionnalités.
+    - Agent a confirmé la réception des nouvelles priorités (billing cycle + suivi annuel) et a reporté les emails et la migration.
+3.  **user:** A confirmé le plan d'implémentation pour les nouvelles fonctionnalités.
+    - L'agent a commencé l'implémentation.
 
 **Project Health Check:**
-- **Functional:** L'application de base est stable, testée et fonctionnelle.
-- **In Progress:** Une phase majeure d'ajout de fonctionnalités est en cours.
+- **Functional:** L'application est stable et les fonctionnalités existantes sont testées.
+- **In Progress:** Une modification majeure touchant à la logique métier (membres, paiements) est en cours.
 
 **3rd Party Integrations**
-- None.
+- **Resend:** Installé mais non configuré. En attente d'une clé API de l'utilisateur pour activer les notifications par email.
 
 **Testing status**
 - **Testing agent used after significant changes:** YES
@@ -132,4 +134,4 @@ Une application full-stack robuste avec un backend FastAPI et un frontend React.
 - Le flux d'inscription est fonctionnel. Créez un nouvel utilisateur pour tester.
 
 **What agent forgot to execute**
-- L'agent a initialement oublié de mettre à jour l'interface utilisateur pour afficher les nouveaux champs de KPI ajoutés au backend, mais a corrigé cette omission après le retour de l'utilisateur.</analysis>
+- Rien. L'agent suivait les instructions directes de l'utilisateur pour prioriser les fonctionnalités.</analysis>
