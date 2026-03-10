@@ -6,6 +6,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { KPICard } from "../components/KPICard";
 import { EditKPIModal } from "../components/EditKPIModal";
+import { KPIDetailedView } from "../components/KPIDetailedView";
 import {
   TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw, Pencil,
   ChevronLeft, ChevronRight, FileDown,
@@ -431,14 +432,18 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
       {/* Tabs */}
       <Tabs defaultValue="revenue" className="space-y-4">
         <TabsList className="bg-[#1C1C1E] border border-white/10 rounded-sm p-1">
-          {["revenue", "funnel", "members", "metrics", "annual"].map((tab) => (
+          {["revenue", "details", "funnel", "members", "metrics", "annual"].map((tab) => (
             <TabsTrigger
               key={tab}
               value={tab}
               data-testid={`tab-${tab}`}
               className="rounded-sm text-white/50 data-[state=active]:bg-rose-600 data-[state=active]:text-white font-body text-sm uppercase tracking-wider"
             >
-              {tab === "annual" ? (lang === "fr" ? "Annuel" : "Annual") : t(tab)}
+              {tab === "annual" 
+                ? (lang === "fr" ? "Annuel" : "Annual") 
+                : tab === "details" 
+                ? (lang === "fr" ? "Détails" : "Details")
+                : t(tab)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -547,6 +552,21 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 </AreaChart>
               </ResponsiveContainer>
             </ChartCard>
+          </div>
+        </TabsContent>
+
+        {/* Details Tab - All detailed KPI fields */}
+        <TabsContent value="details" className="space-y-4" data-testid="tab-details-content">
+          <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-body text-white/50 uppercase tracking-wider">
+                {lang === "fr" ? "Données Détaillées du Mois" : "Detailed Monthly Data"}
+              </p>
+              <span className="text-xs font-mono text-white/30">
+                {current?.month ? formatMonthFull(current.month, lang) : ""}
+              </span>
+            </div>
+            <KPIDetailedView kpi={current} lang={lang} />
           </div>
         </TabsContent>
 
