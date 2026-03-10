@@ -1,53 +1,71 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { Layout } from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import TransactionsPage from "./pages/TransactionsPage";
+import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
+import { formatMonthFull } from "./utils/format";
+import { useTranslations } from "./hooks/useTranslations";
 import axios from "axios";
+import "@/App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+function AppInner() {
+  const { t, lang } = useTranslations();
+  const { kpis } = useMonthlyKPIData();
+  const [selectedMonth, setSelectedMonth] = useState("");
 
+  // Auto-seed if no data
   useEffect(() => {
-    helloWorldApi();
+    axios.get(`${API}/init`).then((res) => {
+      if (!res.data.has_data) {
+        axios.post(`${API}/seed`).catch(() => {});
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Set default month to latest
+  useEffect(() => {
+    if (kpis.length > 0 && !selectedMonth) {
+      setSelectedMonth(kpis[kpis.length - 1].month);
+    }
+  }, [kpis, selectedMonth]);
+
+  const availableMonths = useMemo(
+    () =>
+      kpis.map((k) => ({
+        value: k.month,
+        label: formatMonthFull(k.month, lang),
+      })).reverse(),
+    [kpis, lang]
+  );
+
+  return (
+    <BrowserRouter>
+      <Layout
+        selectedMonth={selectedMonth}
+        setSelectedMonth={setSelectedMonth}
+        availableMonths={availableMonths}
+      >
+        <Routes>
+          <Route path="/" element={<Dashboard selectedMonth={selectedMonth} />} />
+          <Route path="/transactions" element={<TransactionsPage selectedMonth={selectedMonth} />} />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
+  );
+}
+
+function App() {
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
   }, []);
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <LanguageProvider>
+      <AppInner />
+    </LanguageProvider>
   );
 }
 
