@@ -1,14 +1,16 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import jwt
+from passlib.context import CryptContext
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -17,11 +19,97 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# JWT Configuration
+JWT_SECRET = os.environ.get('JWT_SECRET', 'kpibuddy-secret-key-change-in-production')
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+# ── Auth Models ─────────────────────────────────────────────────────────────
+
+class UserBase(BaseModel):
+    email: str
+    club_name: str
+
+
+class UserCreate(UserBase):
+    password: str
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class User(UserBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    hashed_password: str
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    club_name: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+# ── Auth Helpers ────────────────────────────────────────────────────────────
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def create_access_token(user_id: str, email: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+    payload = {"user_id": user_id, "email": email, "exp": expire}
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Token manquant")
+    
+    try:
+        scheme, token = authorization.split(" ")
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Schéma d'authentification invalide")
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Format d'autorisation invalide")
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Token invalide")
+        
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "hashed_password": 0})
+        if not user:
+            raise HTTPException(status_code=401, detail="Utilisateur non trouvé")
+        
+        return user
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expiré")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token invalide")
 
 
 # ── Models ──────────────────────────────────────────────────────────────────
@@ -155,6 +243,64 @@ def compute_metrics(kpi: dict) -> dict:
 def strip_id(doc: dict) -> dict:
     doc.pop('_id', None)
     return doc
+
+
+# ── Routes: Authentication ───────────────────────────────────────────────────
+
+@api_router.post("/auth/register", response_model=TokenResponse)
+async def register(data: UserCreate):
+    # Check if email already exists
+    existing = await db.users.find_one({"email": data.email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
+    
+    # Create user
+    user = User(
+        email=data.email.lower(),
+        club_name=data.club_name,
+        hashed_password=hash_password(data.password)
+    )
+    await db.users.insert_one(user.model_dump())
+    
+    # Generate token
+    token = create_access_token(user.id, user.email)
+    
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(id=user.id, email=user.email, club_name=user.club_name)
+    )
+
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login(data: UserLogin):
+    user = await db.users.find_one({"email": data.email.lower()})
+    if not user or not verify_password(data.password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+    
+    token = create_access_token(user["id"], user["email"])
+    
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(id=user["id"], email=user["email"], club_name=user["club_name"])
+    )
+
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return UserResponse(**current_user)
+
+
+@api_router.put("/auth/club-name")
+async def update_club_name(body: dict, current_user: dict = Depends(get_current_user)):
+    new_name = body.get("club_name", "").strip()
+    if not new_name:
+        raise HTTPException(status_code=400, detail="Nom du club requis")
+    
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"club_name": new_name}}
+    )
+    return {"message": "Nom du club mis à jour", "club_name": new_name}
 
 
 # ── Routes: Monthly KPIs ─────────────────────────────────────────────────────

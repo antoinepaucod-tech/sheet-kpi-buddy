@@ -9,8 +9,11 @@ import {
   ChevronRight,
   Globe,
   RefreshCw,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
+import { useAuth } from "../contexts/AuthContext";
 import {
   Select,
   SelectContent,
@@ -22,6 +25,7 @@ import { cn } from "../lib/utils";
 
 export function Layout({ children, selectedMonth, setSelectedMonth, availableMonths }) {
   const { t, lang, setLang } = useTranslations();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -78,10 +82,27 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
-          {!collapsed && (
-            <p className="text-xs text-white/20 font-mono">Sheet KPI Buddy v1.0</p>
+        {/* User section */}
+        <div className="p-3 border-t border-white/10">
+          {!collapsed && user && (
+            <div className="mb-3 px-2">
+              <p className="text-xs text-white/40 truncate">{user.email}</p>
+              <p className="text-sm text-white font-medium truncate">{user.club_name}</p>
+            </div>
           )}
+          <button
+            onClick={logout}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-sm transition-colors w-full",
+              "text-white/40 hover:text-red-400 hover:bg-red-500/10"
+            )}
+            data-testid="logout-btn"
+          >
+            <LogOut size={16} />
+            {!collapsed && (
+              <span className="text-sm">{lang === "fr" ? "Déconnexion" : "Logout"}</span>
+            )}
+          </button>
         </div>
       </aside>
 
@@ -89,7 +110,13 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#09090B]/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {user && (
+              <div className="flex items-center gap-2 text-white/60">
+                <User size={14} />
+                <span className="text-sm font-medium">{user.club_name}</span>
+              </div>
+            )}
             {availableMonths && availableMonths.length > 0 && (
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger
