@@ -118,21 +118,108 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
 
 class MonthlyKPI(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    month: str
+    month: str  # format: "YYYY-MM"
+    year: Optional[int] = None
+    month_name: Optional[str] = ""
+    
+    # Revenue - Base
+    total_revenue: float = 0
     revenue_members: float = 0
     revenue_coaching: float = 0
-    total_revenue: float = 0
-    total_expenses: float = 0
-    net_profit: float = 0
+    
+    # Revenue - Detailed (from original Supabase schema)
+    general_eft_revenue: float = 0
+    pt_revenue: float = 0
+    retail_revenue: float = 0
+    fast_cash_revenue: float = 0
+    
+    # Members - Base
+    total_members: int = 0
     new_members: int = 0
     lost_members: int = 0
-    total_members: int = 0
+    
+    # Members - Detailed (from original Supabase schema)
+    pif_members: int = 0
+    pif_exits: int = 0
+    pif_churn: float = 0
+    pauses: int = 0
+    recurring_general_members: int = 0
+    general_exits: int = 0
+    general_churn: float = 0
+    pt_members: int = 0
+    pt_exits: int = 0
+    pt_churn: float = 0
+    total_active_members: int = 0
+    
+    # Funnel - Sales (from original Supabase schema)
+    leads: int = 0
+    calls_made: int = 0
+    call_percentage: float = 0
+    scheduled: int = 0
+    sched_percentage: float = 0
+    show: int = 0
+    show_percentage: float = 0
+    close: int = 0
+    close_percentage: float = 0
+    cash_collected: float = 0
+    avg_per_sale: float = 0
+    
+    # Organic (from original Supabase schema)
+    organic_leads: int = 0
+    organic_close: int = 0
+    organic_close_percentage: float = 0
+    organic_cash_collected: float = 0
+    
+    # Trials (from original Supabase schema)
+    in_trial: int = 0
+    trial_ending: int = 0
+    converted: int = 0
+    conversion_percentage: float = 0
+    
+    # Expenses - Base
+    total_expenses: float = 0
     marketing_spend: float = 0
     ad_spend: float = 0
+    
+    # Expenses - Detailed
     loyer: float = 0
     salaires: float = 0
+    salaires_coach: float = 0
     utilities: float = 0
     other_expenses: float = 0
+    
+    # Expenses - Extended (from original Supabase schema)
+    rent: float = 0
+    repairs_maintenance: float = 0
+    computer_software: float = 0
+    internet_telephone: float = 0
+    subscriptions: float = 0
+    bank_finance_charges: float = 0
+    insurance: float = 0
+    food_expenses: float = 0
+    credit_repayment: float = 0
+    
+    # Metrics - Base
+    churn_rate: float = 0
+    cac: float = 0
+    roas: float = 0
+    net_profit: float = 0
+    profit_margin: float = 0
+    
+    # Metrics - Advanced (from original Supabase schema)
+    profit: float = 0
+    profit_percentage: float = 0
+    general_acrm: float = 0
+    general_ltv: float = 0
+    pt_acrm: float = 0
+    pt_ltv: float = 0
+    cpl: float = 0
+    cpr: float = 0
+    ro_ads: float = 0
+    gym_floor_sqft: float = 0
+    total_classes: int = 0
+    
+    # Notes & timestamps
     note: Optional[str] = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -337,6 +424,125 @@ async def upsert_monthly_kpi(data: MonthlyKPICreate):
         await db.monthly_kpis.insert_one(doc)
         doc.pop('_id', None)
     return compute_metrics(doc)
+
+
+@api_router.post("/monthly-kpis/bulk")
+async def bulk_import_kpis(data: List[dict]):
+    """Bulk import KPIs - useful for migrating data from Supabase"""
+    imported = 0
+    updated = 0
+    
+    for kpi_data in data:
+        month = kpi_data.get("month")
+        if not month:
+            continue
+        
+        # Map Supabase field names to our schema (snake_case from both)
+        mapped = {
+            "month": month,
+            "year": kpi_data.get("year"),
+            "month_name": kpi_data.get("month_name", ""),
+            # Revenue
+            "total_revenue": kpi_data.get("total_revenue", 0),
+            "revenue_members": kpi_data.get("revenue_members", 0),
+            "revenue_coaching": kpi_data.get("revenue_coaching", 0),
+            "general_eft_revenue": kpi_data.get("general_eft_revenue", 0),
+            "pt_revenue": kpi_data.get("pt_revenue", 0),
+            "retail_revenue": kpi_data.get("retail_revenue", 0),
+            "fast_cash_revenue": kpi_data.get("fast_cash_revenue", 0),
+            # Members
+            "total_members": kpi_data.get("total_members", kpi_data.get("total_active_members", 0)),
+            "new_members": kpi_data.get("new_members", 0),
+            "lost_members": kpi_data.get("lost_members", 0),
+            "pif_members": kpi_data.get("pif_members", 0),
+            "pif_exits": kpi_data.get("pif_exits", 0),
+            "pif_churn": kpi_data.get("pif_churn", 0),
+            "pauses": kpi_data.get("pauses", 0),
+            "recurring_general_members": kpi_data.get("recurring_general_members", 0),
+            "general_exits": kpi_data.get("general_exits", 0),
+            "general_churn": kpi_data.get("general_churn", 0),
+            "pt_members": kpi_data.get("pt_members", 0),
+            "pt_exits": kpi_data.get("pt_exits", 0),
+            "pt_churn": kpi_data.get("pt_churn", 0),
+            "total_active_members": kpi_data.get("total_active_members", 0),
+            # Funnel
+            "leads": kpi_data.get("leads", 0),
+            "calls_made": kpi_data.get("calls_made", 0),
+            "call_percentage": kpi_data.get("call_percentage", 0),
+            "scheduled": kpi_data.get("scheduled", 0),
+            "sched_percentage": kpi_data.get("sched_percentage", 0),
+            "show": kpi_data.get("show", 0),
+            "show_percentage": kpi_data.get("show_percentage", 0),
+            "close": kpi_data.get("close", 0),
+            "close_percentage": kpi_data.get("close_percentage", 0),
+            "cash_collected": kpi_data.get("cash_collected", 0),
+            "avg_per_sale": kpi_data.get("avg_per_sale", 0),
+            # Organic
+            "organic_leads": kpi_data.get("organic_leads", 0),
+            "organic_close": kpi_data.get("organic_close", 0),
+            "organic_close_percentage": kpi_data.get("organic_close_percentage", 0),
+            "organic_cash_collected": kpi_data.get("organic_cash_collected", 0),
+            # Trials
+            "in_trial": kpi_data.get("in_trial", 0),
+            "trial_ending": kpi_data.get("trial_ending", 0),
+            "converted": kpi_data.get("converted", 0),
+            "conversion_percentage": kpi_data.get("conversion_percentage", 0),
+            # Expenses
+            "total_expenses": kpi_data.get("total_expenses", 0),
+            "marketing_spend": kpi_data.get("marketing_spend", 0),
+            "ad_spend": kpi_data.get("ad_spend", 0),
+            "loyer": kpi_data.get("loyer", kpi_data.get("rent", 0)),
+            "salaires": kpi_data.get("salaires", kpi_data.get("salaries", 0)),
+            "salaires_coach": kpi_data.get("salaires_coach", kpi_data.get("salaries_coach", 0)),
+            "utilities": kpi_data.get("utilities", 0),
+            "other_expenses": kpi_data.get("other_expenses", 0),
+            "rent": kpi_data.get("rent", 0),
+            "repairs_maintenance": kpi_data.get("repairs_maintenance", kpi_data.get("repairs_and_maintenance", 0)),
+            "computer_software": kpi_data.get("computer_software", 0),
+            "internet_telephone": kpi_data.get("internet_telephone", 0),
+            "subscriptions": kpi_data.get("subscriptions", 0),
+            "bank_finance_charges": kpi_data.get("bank_finance_charges", 0),
+            "insurance": kpi_data.get("insurance", 0),
+            "food_expenses": kpi_data.get("food_expenses", 0),
+            "credit_repayment": kpi_data.get("credit_repayment", 0),
+            # Metrics
+            "churn_rate": kpi_data.get("churn_rate", 0),
+            "cac": kpi_data.get("cac", 0),
+            "roas": kpi_data.get("roas", kpi_data.get("ro_ads", 0)),
+            "net_profit": kpi_data.get("net_profit", kpi_data.get("profit", 0)),
+            "profit_margin": kpi_data.get("profit_margin", kpi_data.get("profit_percentage", 0)),
+            "profit": kpi_data.get("profit", 0),
+            "profit_percentage": kpi_data.get("profit_percentage", 0),
+            "general_acrm": kpi_data.get("general_acrm", 0),
+            "general_ltv": kpi_data.get("general_ltv", 0),
+            "pt_acrm": kpi_data.get("pt_acrm", 0),
+            "pt_ltv": kpi_data.get("pt_ltv", 0),
+            "cpl": kpi_data.get("cpl", 0),
+            "cpr": kpi_data.get("cpr", 0),
+            "ro_ads": kpi_data.get("ro_ads", 0),
+            "gym_floor_sqft": kpi_data.get("gym_floor_sqft", 0),
+            "total_classes": kpi_data.get("total_classes", 0),
+            # Notes
+            "note": kpi_data.get("note", ""),
+        }
+        
+        existing = await db.monthly_kpis.find_one({"month": month})
+        if existing:
+            mapped['updated_at'] = datetime.now(timezone.utc).isoformat()
+            await db.monthly_kpis.update_one({"month": month}, {"$set": mapped})
+            updated += 1
+        else:
+            kpi = MonthlyKPI(**{k: v for k, v in mapped.items() if v is not None})
+            doc = kpi.model_dump()
+            await db.monthly_kpis.insert_one(doc)
+            imported += 1
+    
+    return {
+        "imported": imported,
+        "updated": updated,
+        "total": imported + updated,
+        "message": f"Import terminé: {imported} créés, {updated} mis à jour"
+    }
 
 
 # ── Routes: Transactions ─────────────────────────────────────────────────────

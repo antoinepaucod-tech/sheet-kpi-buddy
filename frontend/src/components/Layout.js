@@ -11,6 +11,7 @@ import {
   RefreshCw,
   LogOut,
   User,
+  BarChart3,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -31,6 +32,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
 
   const navItems = [
     { path: "/", icon: LayoutDashboard, label: t("dashboard") },
+    { path: "/compare", icon: BarChart3, label: lang === "fr" ? "Analyse Multi-Mois" : "Multi-Month" },
     { path: "/transactions", icon: ArrowLeftRight, label: t("transactions") },
     { path: "/recurring", icon: RefreshCw, label: t("recurringTransactions") },
     { path: "/categories", icon: Tag, label: t("categories") },
