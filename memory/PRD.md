@@ -6,18 +6,29 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 ## Architecture
 - **Backend**: FastAPI + MongoDB (Motor async) — DB: kpibuddy
 - **Frontend**: React + shadcn/ui + Recharts + Tailwind CSS
+- **Auth**: JWT (7 jours) avec bcrypt pour les mots de passe
 - **Internationalisation**: Context FR/EN (~180 clés de traduction)
 - **Données**: 24 mois de démo pré-chargées (2023-2024), auto-seed au premier lancement
 
 ## Collections MongoDB
+- `users` - Comptes utilisateurs (email, club_name, hashed_password)
 - `monthly_kpis` - KPIs par mois (revenus, dépenses, membres, etc.)
 - `accounting_transactions` - Transactions comptables CRUD
 - `accounting_categories` - Catégories (LOYER, SALAIRES, COACHING, etc.)
-- `excluded_recurring_expenses` - Transactions exclues (suppression → exclusion)
+- `excluded_recurring_expenses` - Transactions exclues (dépenses + revenus)
 - `recurring_transactions` - Templates de transactions récurrentes
 - `club_settings` - Paramètres du club (nom, objectifs KPI)
 
 ## Fonctionnalités Implémentées (2026-03)
+
+### Authentification JWT (NEW)
+- [x] Page de connexion/inscription (/auth)
+- [x] Onglets Connexion/Inscription avec formulaire adaptatif
+- [x] JWT token stocké dans localStorage (7 jours)
+- [x] Protection des routes (redirection vers /auth si non connecté)
+- [x] Nom du club affiché dans topbar et sidebar
+- [x] Bouton de déconnexion dans sidebar
+- [x] Endpoint PUT /api/auth/club-name pour modifier le nom
 
 ### Dashboard (/)
 - [x] 6 KPI cards : Revenus Totaux, Bénéfice Net, Membres Actifs, Churn Rate, CAC, ROAS
@@ -25,10 +36,19 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 - [x] Sélecteur de mois (topbar) + navigation prev/next arrows
 - [x] Nom du club depuis Paramètres dans le header
 - [x] Bouton "Modifier" → EditKPIModal pour new_members, lost_members, etc.
+- [x] **Bouton "PDF" → Télécharger le rapport PDF mensuel** (NEW)
 - [x] Section "Objectifs du mois" avec 6 progress bars dynamiques
 - [x] Click sur graphique → sélectionne ce mois
 - [x] 5 onglets : REVENUS, ACQUISITION, MEMBRES, MÉTRIQUES, ANNUEL
 - [x] Graphiques Recharts : AreaChart, BarChart, LineChart, ComposedChart
+
+### Export PDF Rapport Mensuel (NEW)
+- [x] Endpoint GET /api/report/pdf/{month}
+- [x] Résumé des KPIs (revenus, profit, membres, churn, CAC, ROAS)
+- [x] Détail des dépenses (loyer, salaires, charges, marketing)
+- [x] Liste des transactions du mois (15 premières)
+- [x] Note mensuelle si présente
+- [x] Footer avec date de génération
 
 ### Onglet Annuel (/dashboard → ANNUEL)
 - [x] CA Annuel, Bénéfice Annuel, Dépenses, Nouveaux membres totaux
@@ -42,12 +62,12 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 - [x] Barre de recherche (description + catégorie)
 - [x] Ajout transaction via modal avec formulaire dynamique
 - [x] Suppression → enregistrement dans excluded_recurring_expenses + toast
-- [x] Section "Transactions Exclues" avec restauration possible
+- [x] **Section "Transactions Exclues" avec colonne Type (Revenu/Dépense)** (NEW)
 - [x] Filtrage par type (Dépense/Revenu)
 - [x] Export CSV (avec BOM UTF-8 pour Excel)
 - [x] Sync avec le mois global sélectionné
 
-### Transactions Récurrentes (/recurring) - NEW
+### Transactions Récurrentes (/recurring)
 - [x] Liste des templates récurrents (description, catégorie, montant, jour de récurrence)
 - [x] Indicateurs stats (total, actifs, inactifs)
 - [x] Modal d'ajout/édition avec tous les champs (type, catégorie, description, montant, jour 1-28)
@@ -86,45 +106,48 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 - [x] Auto-seed au premier chargement
 
 ## Endpoints API
+### Auth
+- `POST /api/auth/register` - Créer un compte
+- `POST /api/auth/login` - Se connecter
+- `GET /api/auth/me` - Récupérer l'utilisateur courant
+- `PUT /api/auth/club-name` - Modifier le nom du club
+
+### KPIs & Reports
 - `GET /api/init` - Vérifie si données existent
 - `POST /api/seed` - Charge 24 mois de démo
 - `GET/POST /api/monthly-kpis` - KPIs mensuels
 - `GET /api/monthly-kpis/{month}` - KPI d'un mois spécifique
 - `POST /api/monthly-kpis/{month}/recalculate` - Recalcul depuis transactions
 - `POST /api/monthly-kpis/recalculate-all` - Recalcul tous les mois
+- `GET /api/report/pdf/{month}` - Générer rapport PDF
+
+### Transactions
 - `GET/POST/DELETE /api/transactions` - Transactions
-- `GET/POST/DELETE /api/categories` - Catégories
+- `POST /api/transactions/bulk` - Import en masse
 - `GET/DELETE /api/excluded` - Exclusions récurrentes
+
+### Recurring
 - `GET/POST/PUT/DELETE /api/recurring-transactions` - Templates récurrents
 - `POST /api/recurring-transactions/generate/{year}/{month}` - Génération mensuelle
+
+### Other
+- `GET/POST/DELETE /api/categories` - Catégories
 - `GET/PUT /api/settings` - Paramètres du club
 
 ## Tests
-- Backend: 100% (toutes routes, 11 tests itération 4)
+- Backend: 100% (toutes routes, iterations 1-6)
 - Frontend: 100% (toutes features vérifiées)
-- Itérations: 4 passes complètes
-
-## Features v2.0 (2026-03)
-- [x] Comparaison N-1 — toggle sur onglet REVENUS, lignes pointillées 2023
-- [x] Notes mensuelles — EditKPIModal avec textarea, bandeau jaune sur dashboard
-- [x] Import CSV — modal PapaParse, aperçu avant import, bulk POST
-- [x] 24 mois de KPIs seedés (2023 + 2024)
-- [x] currentYearData — tous les graphiques filtrés sur l'année en cours
-- [x] Transactions récurrentes — génération automatique mensuelle (NEW)
-- [x] Traductions enrichies — ~180 clés FR/EN (NEW)
+- Itérations: 6 passes complètes
 
 ## Backlog Prioritaire
 
-### P0
-- [ ] Authentification multi-clubs (JWT ou OAuth)
-
 ### P1
 - [ ] Mode temps réel via WebSocket ou SSE
-- [ ] Export PDF rapport mensuel
-- [ ] Exclusions revenus clients (en plus des dépenses)
+- [ ] Multi-clubs (workspace par club avec isolation des données)
+- [ ] Export rapport annuel PDF
 
 ### P2
-- [ ] Multi-clubs (workspace par club)
 - [ ] Alertes email si KPI hors objectif (SendGrid)
 - [ ] Tableau de bord public (lien partage lecture seule)
 - [ ] Mobile app (PWA)
+- [ ] Notifications automatiques si transaction récurrente non générée
