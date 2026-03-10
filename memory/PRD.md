@@ -215,7 +215,12 @@ Collections:
   - /routers/annual_reviews.py - Annual review management
   - /routers/followups.py - Follow-up scheduling
   - /routers/onboarding.py - Onboarding and alerts
+  - /routers/settings.py - Membership types, member types config
   - server.py reduced from ~1900 to ~1050 lines
+- ✅ Created Settings/Types configuration page (/settings/types)
+  - Membership types (Mensuel, Trimestriel, Annuel, 6 Weeks Challenge, etc.)
+  - Member types (Généraux Récurrents, PIF, PT)
+  - Dynamic loading in member form from database
 
 ### December 2024 - Session 2
 - ✅ Added Payment System with schedules (28-day intervals & monthly)

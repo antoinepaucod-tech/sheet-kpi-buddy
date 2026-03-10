@@ -19,6 +19,7 @@ import {
   CreditCard,
   ClipboardCheck,
   ClipboardList,
+  Sliders,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -51,6 +52,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
     { path: "/recurring", icon: RefreshCw, label: t("recurringTransactions") },
     { path: "/categories", icon: Tag, label: t("categories") },
     { path: "/settings", icon: Settings, label: t("settings") },
+    { path: "/settings/types", icon: Sliders, label: lang === "fr" ? "Config. Types" : "Types Config" },
   ];
 
   return (

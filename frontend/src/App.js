@@ -18,6 +18,7 @@ import ClientKPIPage from "./pages/ClientKPIPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import AnnualReviewsPage from "./pages/AnnualReviewsPage";
+import SettingsTypesPage from "./pages/SettingsTypesPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -115,6 +116,7 @@ function AppInner() {
                   <Route path="/annual-reviews" element={<AnnualReviewsPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings/types" element={<SettingsTypesPage />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

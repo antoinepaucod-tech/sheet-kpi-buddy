@@ -43,7 +43,7 @@ from models.payments import (
 )
 
 # Router imports
-from routers import auth, members, payments, annual_reviews, followups, onboarding
+from routers import auth, members, payments, annual_reviews, followups, onboarding, settings
 
 # App setup
 app = FastAPI(title="Sheet KPI Buddy API", version="2.1.0")
@@ -59,6 +59,7 @@ api_router.include_router(payments.router)
 api_router.include_router(annual_reviews.router)
 api_router.include_router(followups.router)
 api_router.include_router(onboarding.router)
+api_router.include_router(settings.router)
 
 
 # ── KPI Routes ───────────────────────────────────────────────────────────────

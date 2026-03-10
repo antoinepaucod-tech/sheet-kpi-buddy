@@ -52,13 +52,14 @@ import { useTranslations } from "../hooks/useTranslations";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const MEMBER_TYPES = [
+// Fallback values (used if API returns empty)
+const DEFAULT_MEMBER_TYPES = [
   "Membres Généraux Récurrents",
   "Membres PIF",
   "Membres PT",
 ];
 
-const MEMBERSHIP_OPTIONS = [
+const DEFAULT_MEMBERSHIPS = [
   "Mensuel",
   "3 Mois",
   "6 Mois",
@@ -141,6 +142,27 @@ export default function MembersPage() {
         : [],
     enabled: !!expandedMember,
   });
+
+  // Fetch membership types from settings
+  const { data: membershipTypes = [] } = useQuery({
+    queryKey: ["membership-types"],
+    queryFn: () => axios.get(`${API}/settings/membership-types?active_only=true`).then((r) => r.data),
+  });
+
+  // Fetch member types from settings
+  const { data: memberTypes = [] } = useQuery({
+    queryKey: ["member-types"],
+    queryFn: () => axios.get(`${API}/settings/member-types?active_only=true`).then((r) => r.data),
+  });
+
+  // Build options from API data or fallback to defaults
+  const MEMBERSHIP_OPTIONS = membershipTypes.length > 0
+    ? membershipTypes.map(t => t.name)
+    : DEFAULT_MEMBERSHIPS;
+
+  const MEMBER_TYPES = memberTypes.length > 0
+    ? memberTypes.map(t => t.name)
+    : DEFAULT_MEMBER_TYPES;
 
   // Create/Update mutation
   const saveMutation = useMutation({
