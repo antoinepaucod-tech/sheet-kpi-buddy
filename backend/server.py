@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -11,6 +12,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import jwt
 from passlib.context import CryptContext
+from io import BytesIO
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -196,6 +198,8 @@ class ExcludedRecurringExpense(BaseModel):
     category: str
     description: str
     amount: float
+    type: str = "expense"  # "expense" | "revenue" - support both types
+    sub_type: Optional[str] = None  # "members" | "coaching" for revenue
     excluded_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -370,7 +374,9 @@ async def delete_transaction(transaction_id: str):
         original_transaction_id=transaction_id,
         category=tx.get('category', ''),
         description=tx.get('description', ''),
-        amount=tx.get('amount', 0)
+        amount=tx.get('amount', 0),
+        type=tx.get('type', 'expense'),
+        sub_type=tx.get('sub_type')
     )
     await db.excluded_recurring_expenses.insert_one(excl.model_dump())
     await db.accounting_transactions.delete_one({"id": transaction_id})
@@ -536,6 +542,217 @@ async def bulk_import_transactions(transactions: List[TransactionCreate]):
         doc.pop('_id', None)
         imported.append(doc)
     return {"imported": len(imported), "skipped": len(skipped), "transactions": imported}
+
+
+# ── Routes: PDF Report ────────────────────────────────────────────────────────
+
+@api_router.get("/report/pdf/{month}")
+async def generate_pdf_report(month: str):
+    """Generate a PDF report for the specified month"""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.lib.colors import HexColor
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    
+    # Fetch KPI data
+    kpi = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    if not kpi:
+        raise HTTPException(status_code=404, detail="Mois introuvable")
+    kpi = compute_metrics(kpi)
+    
+    # Fetch transactions for the month
+    txs = await db.accounting_transactions.find({
+        "date": {"$regex": f"^{month}"}
+    }, {"_id": 0}).to_list(1000)
+    
+    # Fetch club settings
+    settings = await db.club_settings.find_one({"id": "default"}, {"_id": 0})
+    club_name = settings.get("club_name", "Mon Club") if settings else "Mon Club"
+    
+    # Parse month name
+    year, m = month.split("-")
+    month_name = MONTHS_FR[int(m) - 1]
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=20*mm,
+        rightMargin=20*mm,
+        topMargin=20*mm,
+        bottomMargin=20*mm
+    )
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        alignment=TA_CENTER,
+        spaceAfter=10,
+        textColor=HexColor('#E11D48')
+    )
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontSize=14,
+        alignment=TA_CENTER,
+        spaceAfter=20,
+        textColor=HexColor('#666666')
+    )
+    section_style = ParagraphStyle(
+        'SectionTitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=10,
+        spaceBefore=15,
+        textColor=HexColor('#333333')
+    )
+    
+    elements = []
+    
+    # Title
+    elements.append(Paragraph(club_name, title_style))
+    elements.append(Paragraph(f"Rapport Mensuel - {month_name} {year}", subtitle_style))
+    
+    # KPI Summary Table
+    elements.append(Paragraph("Résumé des KPIs", section_style))
+    
+    def fmt_chf(v):
+        return f"{v:,.2f} CHF".replace(",", "'")
+    
+    kpi_data = [
+        ["Indicateur", "Valeur"],
+        ["Revenus Totaux", fmt_chf(kpi.get("total_revenue", 0))],
+        ["Bénéfice Net", fmt_chf(kpi.get("net_profit", 0))],
+        ["Dépenses Totales", fmt_chf(kpi.get("total_expenses", 0))],
+        ["Marge Nette", f"{kpi.get('profit_margin', 0):.1f}%"],
+        ["Membres Actifs", str(kpi.get("total_members", 0))],
+        ["Nouveaux Membres", str(kpi.get("new_members", 0))],
+        ["Membres Perdus", str(kpi.get("lost_members", 0))],
+        ["Taux de Churn", f"{kpi.get('churn_rate', 0):.2f}%"],
+        ["CAC", fmt_chf(kpi.get("cac", 0))],
+        ["ROAS", f"{kpi.get('roas', 0):.1f}x"],
+    ]
+    
+    kpi_table = Table(kpi_data, colWidths=[100*mm, 60*mm])
+    kpi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#E11D48')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#FFFFFF')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, 1), (-1, -1), HexColor('#F8F8F8')),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#DDDDDD')),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+    ]))
+    elements.append(kpi_table)
+    
+    # Expenses breakdown
+    elements.append(Spacer(1, 10*mm))
+    elements.append(Paragraph("Détail des Dépenses", section_style))
+    
+    expense_data = [
+        ["Catégorie", "Montant"],
+        ["Loyer", fmt_chf(kpi.get("loyer", 0))],
+        ["Salaires", fmt_chf(kpi.get("salaires", 0))],
+        ["Charges", fmt_chf(kpi.get("utilities", 0))],
+        ["Marketing", fmt_chf(kpi.get("marketing_spend", 0))],
+        ["Autres", fmt_chf(kpi.get("other_expenses", 0))],
+    ]
+    
+    expense_table = Table(expense_data, colWidths=[100*mm, 60*mm])
+    expense_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#3B82F6')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#FFFFFF')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, 1), (-1, -1), HexColor('#F8F8F8')),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#DDDDDD')),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+    ]))
+    elements.append(expense_table)
+    
+    # Transactions list (last 10)
+    if txs:
+        elements.append(Spacer(1, 10*mm))
+        elements.append(Paragraph(f"Transactions du mois ({len(txs)} total)", section_style))
+        
+        tx_data = [["Date", "Description", "Type", "Montant"]]
+        for tx in txs[:15]:  # Show first 15
+            tx_type = "Revenu" if tx.get("type") == "revenue" else "Dépense"
+            sign = "+" if tx.get("type") == "revenue" else "-"
+            tx_data.append([
+                tx.get("date", ""),
+                tx.get("description", "")[:30],
+                tx_type,
+                f"{sign} {fmt_chf(tx.get('amount', 0))}"
+            ])
+        
+        if len(txs) > 15:
+            tx_data.append(["...", f"+{len(txs)-15} autres transactions", "", ""])
+        
+        tx_table = Table(tx_data, colWidths=[30*mm, 70*mm, 30*mm, 40*mm])
+        tx_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#666666')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#FFFFFF')),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (3, 0), (3, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BACKGROUND', (0, 1), (-1, -1), HexColor('#FAFAFA')),
+            ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#DDDDDD')),
+        ]))
+        elements.append(tx_table)
+    
+    # Note if exists
+    if kpi.get("note"):
+        elements.append(Spacer(1, 10*mm))
+        elements.append(Paragraph("Note du mois", section_style))
+        elements.append(Paragraph(kpi.get("note", ""), styles['Normal']))
+    
+    # Footer
+    elements.append(Spacer(1, 15*mm))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=8,
+        alignment=TA_CENTER,
+        textColor=HexColor('#999999')
+    )
+    elements.append(Paragraph(
+        f"Généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} - Sheet KPI Buddy",
+        footer_style
+    ))
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"rapport_{club_name.replace(' ', '_')}_{month}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 # ── Routes: Settings ─────────────────────────────────────────────────────────

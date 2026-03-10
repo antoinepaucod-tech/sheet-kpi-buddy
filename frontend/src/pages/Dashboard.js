@@ -8,7 +8,7 @@ import { KPICard } from "../components/KPICard";
 import { EditKPIModal } from "../components/EditKPIModal";
 import {
   TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw, Pencil,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, FileDown,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useTranslations } from "../hooks/useTranslations";
@@ -246,6 +246,22 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           >
             <Pencil size={12} className="mr-1.5" />
             {lang === "fr" ? "Modifier" : "Edit"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (selectedMonth) {
+                window.open(`${API}/report/pdf/${selectedMonth}`, '_blank');
+              }
+            }}
+            disabled={!selectedMonth}
+            className="text-white/30 hover:text-white hover:bg-white/5 text-xs"
+            data-testid="export-pdf-btn"
+            title={lang === "fr" ? "Télécharger le rapport PDF" : "Download PDF report"}
+          >
+            <FileDown size={12} className="mr-1.5" />
+            PDF
           </Button>
           <Button
             variant="outline"

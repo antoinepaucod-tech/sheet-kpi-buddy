@@ -290,7 +290,7 @@ export default function TransactionsPage({ selectedMonth }) {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-transparent">
-                  {[t("description"), t("category"), t("amount"), "Exclue le", t("actions")].map(
+                  {[t("description"), t("category"), t("type"), t("amount"), "Exclue le", t("actions")].map(
                     (h) => (
                       <TableHead key={h} className="text-white/30 uppercase tracking-wider text-xs font-body">
                         {h}
@@ -308,6 +308,18 @@ export default function TransactionsPage({ selectedMonth }) {
                   >
                     <TableCell className="text-white/60 text-sm line-through">{ex.description}</TableCell>
                     <TableCell className="text-white/40 text-xs font-mono">{ex.category}</TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          ex.type === "revenue"
+                            ? "bg-green-500/10 text-green-400 border-green-500/20 text-xs"
+                            : "bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs"
+                        }
+                      >
+                        {ex.type === "revenue" ? t("revenueType") : t("expense")}
+                        {ex.sub_type && ` · ${ex.sub_type}`}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="font-mono text-sm text-white/40">{formatCHF(ex.amount)}</TableCell>
                     <TableCell className="text-white/30 text-xs font-mono">
                       {new Date(ex.excluded_at).toLocaleDateString()}
