@@ -12,7 +12,7 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 
 ## Collections MongoDB
 - `users` - Comptes utilisateurs (email, club_name, hashed_password)
-- `monthly_kpis` - KPIs par mois (revenus, dépenses, membres, etc.)
+- `monthly_kpis` - KPIs par mois (~60 champs, compatible Supabase)
 - `accounting_transactions` - Transactions comptables CRUD
 - `accounting_categories` - Catégories (LOYER, SALAIRES, COACHING, etc.)
 - `excluded_recurring_expenses` - Transactions exclues (dépenses + revenus)
@@ -21,34 +21,40 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 
 ## Fonctionnalités Implémentées (2026-03)
 
-### Authentification JWT (NEW)
+### Authentification JWT
 - [x] Page de connexion/inscription (/auth)
 - [x] Onglets Connexion/Inscription avec formulaire adaptatif
 - [x] JWT token stocké dans localStorage (7 jours)
 - [x] Protection des routes (redirection vers /auth si non connecté)
 - [x] Nom du club affiché dans topbar et sidebar
 - [x] Bouton de déconnexion dans sidebar
-- [x] Endpoint PUT /api/auth/club-name pour modifier le nom
 
-### Dashboard (/)
+### Dashboard Mensuel (/)
 - [x] 6 KPI cards : Revenus Totaux, Bénéfice Net, Membres Actifs, Churn Rate, CAC, ROAS
 - [x] Tendances vs mois précédent avec indicateurs visuels (↑↓)
 - [x] Sélecteur de mois (topbar) + navigation prev/next arrows
-- [x] Nom du club depuis Paramètres dans le header
-- [x] Bouton "Modifier" → EditKPIModal pour new_members, lost_members, etc.
-- [x] **Bouton "PDF" → Télécharger le rapport PDF mensuel** (NEW)
+- [x] Bouton "Modifier" → EditKPIModal
+- [x] Bouton "PDF" → Télécharger le rapport PDF mensuel
 - [x] Section "Objectifs du mois" avec 6 progress bars dynamiques
 - [x] Click sur graphique → sélectionne ce mois
 - [x] 5 onglets : REVENUS, ACQUISITION, MEMBRES, MÉTRIQUES, ANNUEL
 - [x] Graphiques Recharts : AreaChart, BarChart, LineChart, ComposedChart
 
-### Export PDF Rapport Mensuel (NEW)
+### Analyse Multi-Mois (/compare) - NEW
+- [x] Sélection de plage de dates (début → fin)
+- [x] Raccourcis rapides : 3M, 6M, 12M, Tout
+- [x] Métriques agrégées : CA Total, Bénéfice, Dépenses, Marge Nette, Nouveaux Membres, Churn Moyen
+- [x] Meilleur mois et Mois le plus faible
+- [x] 4 onglets graphiques : Revenus, Membres, Dépenses, KPIs
+- [x] Tableau récapitulatif avec colonnes : Mois, Revenus, Dépenses, Profit, Membres, Churn, ROAS
+- [x] Ligne de totaux/moyennes en pied de tableau
+
+### Export PDF Rapport Mensuel
 - [x] Endpoint GET /api/report/pdf/{month}
 - [x] Résumé des KPIs (revenus, profit, membres, churn, CAC, ROAS)
 - [x] Détail des dépenses (loyer, salaires, charges, marketing)
 - [x] Liste des transactions du mois (15 premières)
 - [x] Note mensuelle si présente
-- [x] Footer avec date de génération
 
 ### Onglet Annuel (/dashboard → ANNUEL)
 - [x] CA Annuel, Bénéfice Annuel, Dépenses, Nouveaux membres totaux
@@ -61,51 +67,51 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 - [x] Séparation Membres vs Coaching via useCoachMembership hook
 - [x] Barre de recherche (description + catégorie)
 - [x] Ajout transaction via modal avec formulaire dynamique
-- [x] Suppression → enregistrement dans excluded_recurring_expenses + toast
-- [x] **Section "Transactions Exclues" avec colonne Type (Revenu/Dépense)** (NEW)
+- [x] Suppression → enregistrement dans exclusions avec type (dépense/revenu)
+- [x] Section "Transactions Exclues" avec colonne Type
 - [x] Filtrage par type (Dépense/Revenu)
 - [x] Export CSV (avec BOM UTF-8 pour Excel)
-- [x] Sync avec le mois global sélectionné
 
 ### Transactions Récurrentes (/recurring)
 - [x] Liste des templates récurrents (description, catégorie, montant, jour de récurrence)
 - [x] Indicateurs stats (total, actifs, inactifs)
-- [x] Modal d'ajout/édition avec tous les champs (type, catégorie, description, montant, jour 1-28)
-- [x] Toggle actif/inactif via bouton Power avec feedback toast
-- [x] Génération automatique des transactions pour un mois choisi (via modal année/mois)
+- [x] Modal d'ajout/édition avec tous les champs
+- [x] Toggle actif/inactif via bouton Power
+- [x] Génération automatique des transactions pour un mois choisi
 - [x] Exclusion automatique des templates marqués comme exclus
-- [x] Suppression avec confirmation
 
 ### Catégories (/categories)
 - [x] Liste en 2 colonnes (Dépenses / Revenus)
 - [x] Couleur + colonne KPI mappée
-- [x] Ajout nouvelle catégorie (nom, type, kpi_column, couleur)
-- [x] Suppression avec confirmation + toast
+- [x] Ajout nouvelle catégorie
+- [x] Suppression avec confirmation
 - [x] Bouton Recalculer les KPIs
 
 ### Paramètres (/settings)
 - [x] Nom du club (affiché dans le dashboard)
 - [x] 6 objectifs KPI (Churn Rate, CAC, ROAS, Nouveaux membres, Marge, Croissance)
 - [x] Sauvegarde avec toast confirmation
-- [x] Bouton Recalculer tout (recalcule depuis transactions avec merge)
-
-### Calculs Métier (backend)
-- [x] Churn Rate = lost_members / (total_members + lost_members) * 100
-- [x] CAC = marketing_spend / new_members
-- [x] ROAS = total_revenue / ad_spend
-- [x] Profit Margin = net_profit / total_revenue * 100
-- [x] Recalcul KPIs depuis transactions (avec merge, préserve les champs manuels)
+- [x] Bouton Recalculer tout
 
 ### UX/Design
 - [x] Dark mode permanent (#09090B)
-- [x] FR/EN switch dans topbar avec persistance localStorage
+- [x] FR/EN switch avec persistance localStorage
 - [x] Devise fr-CH (CHF avec séparateurs)
-- [x] Polices Barlow Condensed + IBM Plex Sans + JetBrains Mono
 - [x] Toast notifications partout
 - [x] data-testid sur tous les éléments interactifs
-- [x] Auto-seed au premier chargement
+
+## Modèle KPI Enrichi (pour migration Supabase)
+Le modèle MonthlyKPI contient maintenant ~60 champs pour supporter la migration complète depuis Supabase :
+- **Revenue** : total_revenue, general_eft_revenue, pt_revenue, retail_revenue, fast_cash_revenue
+- **Members** : pif_members, recurring_general_members, pt_members, total_active_members + exits et churn pour chaque type
+- **Funnel** : leads, calls_made, scheduled, show, close, cash_collected, avg_per_sale
+- **Organic** : organic_leads, organic_close, organic_cash_collected
+- **Trials** : in_trial, trial_ending, converted
+- **Expenses** : rent, repairs_maintenance, computer_software, insurance, subscriptions, etc.
+- **Metrics** : general_acrm, general_ltv, pt_acrm, pt_ltv, cpl, cpr, ro_ads
 
 ## Endpoints API
+
 ### Auth
 - `POST /api/auth/register` - Créer un compte
 - `POST /api/auth/login` - Se connecter
@@ -113,10 +119,9 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 - `PUT /api/auth/club-name` - Modifier le nom du club
 
 ### KPIs & Reports
-- `GET /api/init` - Vérifie si données existent
-- `POST /api/seed` - Charge 24 mois de démo
 - `GET/POST /api/monthly-kpis` - KPIs mensuels
 - `GET /api/monthly-kpis/{month}` - KPI d'un mois spécifique
+- `POST /api/monthly-kpis/bulk` - Import en masse (migration Supabase)
 - `POST /api/monthly-kpis/{month}/recalculate` - Recalcul depuis transactions
 - `POST /api/monthly-kpis/recalculate-all` - Recalcul tous les mois
 - `GET /api/report/pdf/{month}` - Générer rapport PDF
@@ -131,13 +136,15 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 - `POST /api/recurring-transactions/generate/{year}/{month}` - Génération mensuelle
 
 ### Other
+- `GET /api/init` - Vérifie si données existent
+- `POST /api/seed` - Charge données démo
 - `GET/POST/DELETE /api/categories` - Catégories
 - `GET/PUT /api/settings` - Paramètres du club
 
 ## Tests
-- Backend: 100% (toutes routes, iterations 1-6)
+- Backend: 100% (toutes routes, iterations 1-7)
 - Frontend: 100% (toutes features vérifiées)
-- Itérations: 6 passes complètes
+- Itérations: 7 passes complètes
 
 ## Backlog Prioritaire
 
