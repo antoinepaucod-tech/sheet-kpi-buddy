@@ -1,86 +1,101 @@
 # Sheet KPI Buddy - Product Requirements Document
 
 ## Overview
-Application SaaS de pilotage financier pour clubs de sport, permettant le suivi des KPIs, la gestion des membres, des transactions et des abonnements.
+Application SaaS de pilotage financier pour clubs de sport, permettant le suivi des KPIs, la gestion des membres, des transactions, des paiements et des abonnements.
 
 ## Core Features
 
-### 1. Authentication & Multi-tenancy
-- **Status**: ✅ Implemented
+### 1. Authentication & Multi-tenancy ✅
 - JWT-based authentication (register/login)
 - Data isolation by club_id
 - Club name customization
 
-### 2. Monthly KPIs Dashboard
-- **Status**: ✅ Implemented
+### 2. Monthly KPIs Dashboard ✅
 - Main dashboard with revenue/expense tracking
 - Advanced metrics (churn, CAC, ROAS, profit margin)
 - Detailed KPI view with 30+ fields (funnel, members by type, expenses)
 - Multi-month comparison view (/compare)
 - PDF report generation
 
-### 3. Transaction Management
-- **Status**: ✅ Implemented
+### 3. Transaction Management ✅
 - CRUD for transactions
 - Category mapping to KPI columns
 - Auto-recalculation of monthly KPIs
 - Bulk import support
 
-### 4. Recurring Transactions
-- **Status**: ✅ Implemented
+### 4. Recurring Transactions ✅
 - Define recurring expenses/revenues
 - Monthly generation with day specification
-- Exclusion system (deleted transactions not regenerated)
+- Exclusion system
 
-### 5. Member Management (ExpiringSubscriptions)
-- **Status**: ✅ Implemented (Dec 2024)
+### 5. Member Management ✅
 - Full CRUD for members
 - Contract signature date tracking
 - Subscription expiration dates
 - Member types (Généraux Récurrents, PIF, PT)
 - Expiring members filter (30 days)
 - Renewal workflow with history
-- Frontend page at /members
 
-### 6. 6 Weeks Challenge (SixWeeksChallenge)
-- **Status**: ✅ Implemented (Dec 2024)
+### 6. Payment System ✅ (NEW - Dec 2024)
+- **Payment Schedules**: Define recurring payments per member
+  - Monthly day (ex: le 15 du mois)
+  - Interval days (ex: tous les 28 jours)
+  - Payment methods: prélèvement, carte, virement, espèces
+- **Payment Tracking**: 
+  - Status: En attente, Payé, En retard, Échoué, Annulé
+  - Late payment alerts with days overdue
+  - Mark as paid with date and reference
+- **Payment Generation**: Generate monthly payments from schedules
+- **Alerts**: Late payments dashboard with contact info
+
+### 7. Onboarding & Follow-ups ✅ (NEW - Dec 2024)
+- **5-Step Onboarding Checklist**:
+  - Inscription bsport
+  - Inscription Hubfit
+  - Consultation nutrition
+  - Questionnaire coaching
+  - Session d'introduction
+- **Progress Tracking**: Visual progress per member (0-100%)
+- **Follow-up Scheduling**:
+  - Types: mensuel, onboarding, renouvellement, paiement
+  - Status: planifié, complété, manqué, reporté
+  - Auto-schedule next follow-up on completion
+- **Reminders**: Upcoming and missed follow-ups views
+
+### 8. 6 Weeks Challenge ✅
 - Challenge CRUD with start/end dates
 - Participant management
 - Weekly check-ins (week1-week6)
 - Progress tracking per participant
-- Frontend page at /challenge
 
-### 7. Course KPIs (KPICourses)
-- **Status**: ✅ Implemented (Dec 2024)
+### 9. Course KPIs ✅
 - Course definition by day/time slot
 - Instructor assignment
-- Weekly attendance tracking (week1-week5)
+- **5-Week Attendance Tracking** (S1-S5) - Updated for months with 5 weeks
 - Automatic attendance rate calculation
 - Monthly expenses per course
 - Summary statistics by month
-- Frontend page at /courses
 
-### 8. Client KPIs (KPIClient)
-- **Status**: ✅ Implemented (Dec 2024)
+### 10. Client KPIs ✅
 - Weekly training tracking per member
 - Engagement levels (Excellent/Bon/Moyen/Faible)
 - Training summary with averages
 - Historical chart
-- Quick entry for recent weeks
-- Frontend page at /clients
 
-### 9. Instructor Management
-- **Status**: ✅ Implemented (Dec 2024)
-- CRUD for instructors
-- Hourly rate tracking
-- Active/inactive status
+### 11. Alerts Summary ✅ (NEW - Dec 2024)
+- Aggregated dashboard showing:
+  - Late payments count
+  - Missed follow-ups count
+  - Expiring subscriptions (30 days)
+  - Incomplete onboarding count
+  - Upcoming follow-ups count
 
 ## Technical Architecture
 
 ### Backend (FastAPI)
 ```
 /app/backend/
-├── server.py              # Main routes (~1074 lines, refactored)
+├── server.py              # Main routes (~1400 lines)
 ├── core/
 │   ├── config.py          # Database & constants
 │   └── security.py        # JWT & password handling
@@ -88,9 +103,10 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 │   ├── auth.py           # User models
 │   ├── kpi.py            # MonthlyKPI, ClubSettings
 │   ├── transactions.py   # Transaction, Category, Recurring
-│   ├── members.py        # CustomerMember, WeeklyTraining
+│   ├── members.py        # CustomerMember, WeeklyTraining, MemberFollowUp
 │   ├── challenges.py     # SixWeeksChallenge, ChallengeParticipant
-│   └── courses.py        # CourseKPI, Instructor
+│   ├── courses.py        # CourseKPI, Instructor
+│   └── payments.py       # PaymentSchedule, Payment (NEW)
 └── tests/
 ```
 
@@ -98,82 +114,61 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 ```
 /app/frontend/src/
 ├── pages/
-│   ├── Dashboard.jsx        # Main KPI dashboard
-│   ├── ComparePage.jsx      # Multi-month comparison
-│   ├── MembersPage.js       # Member management
-│   ├── ChallengePage.js     # 6 weeks challenge
-│   ├── CoursesPage.js       # Course KPIs
-│   ├── ClientKPIPage.js     # Client engagement
+│   ├── Dashboard.jsx
+│   ├── ComparePage.jsx
+│   ├── MembersPage.js
+│   ├── PaymentsPage.js        (NEW)
+│   ├── OnboardingPage.js      (NEW)
+│   ├── ChallengePage.js
+│   ├── CoursesPage.js         (Updated with S5)
+│   ├── ClientKPIPage.js
 │   ├── TransactionsPage.jsx
 │   ├── RecurringPage.jsx
 │   └── ...
 ├── contexts/
-│   ├── AuthContext.js
-│   └── LanguageContext.js
-└── components/ui/           # shadcn components
+└── components/ui/
 ```
 
 ### Database (MongoDB)
 Collections:
-- `users` - User accounts
-- `monthly_kpis` - Monthly financial data
-- `accounting_transactions` - Individual transactions
-- `accounting_categories` - Category definitions
-- `recurring_transactions` - Recurring definitions
-- `excluded_recurring_expenses` - Exclusion list
-- `customer_members` - Member profiles
-- `member_renewals` - Renewal history
-- `weekly_trainings` - Training records
-- `six_weeks_challenges` - Challenge definitions
-- `challenge_participants` - Challenge enrollment
-- `course_kpis` - Course attendance data
-- `instructors` - Instructor profiles
-- `club_settings` - Club configuration
+- `users`, `monthly_kpis`, `accounting_transactions`, `accounting_categories`
+- `recurring_transactions`, `excluded_recurring_expenses`
+- `customer_members`, `member_renewals`, `weekly_trainings`
+- `six_weeks_challenges`, `challenge_participants`
+- `course_kpis`, `instructors`
+- `payment_schedules` (NEW)
+- `payments` (NEW)
+- `member_followups` (NEW)
+- `club_settings`
 
 ## API Endpoints Summary
 
-### Authentication
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/auth/me
-- PUT /api/auth/club-name
+### New Endpoints (Dec 2024)
+- Payment Schedules: GET/POST/PUT/DELETE `/api/payment-schedules`
+- Payments: GET/POST `/api/payments`, POST `/api/payments/{id}/mark-paid`
+- Payment Alerts: GET `/api/payments/late`, `/api/payments/upcoming`
+- Payment Generation: POST `/api/payments/generate/{year}/{month}`
+- Onboarding: GET `/api/onboarding/pending`, PUT `/api/members/{id}/onboarding`
+- Follow-ups: GET/POST `/api/followups`, POST `/api/followups/{id}/complete`
+- Follow-up Alerts: GET `/api/followups/upcoming`, `/api/followups/missed`
+- Alerts Summary: GET `/api/alerts/summary`
 
-### KPIs
-- GET/POST /api/monthly-kpis
-- POST /api/monthly-kpis/bulk
-- GET /api/report/pdf/{month}
-
-### Members
-- GET/POST /api/members
-- GET /api/members/expiring
-- POST /api/members/{id}/renew
-- GET /api/members/{id}/renewals
-
-### Challenges
-- GET/POST /api/challenges
-- POST /api/challenges/{id}/participants
-- PUT /api/challenges/{id}/participants/{pid}
-
-### Courses
-- GET/POST /api/courses
-- GET /api/courses/summary/{year}/{month}
-- GET/POST /api/instructors
-
-### Trainings
-- GET/POST /api/trainings
-- GET /api/trainings/summary/{member_id}
+## Testing Status
+- Backend: 22/22 tests passing ✅
+- Frontend: 100% functional ✅
+- Test files: `/app/test_reports/iteration_9.json`
 
 ## Backlog
 
 ### P1 - High Priority
-- [ ] Data import wizard for migrating existing data
-- [ ] Automatic subscription renewal reminders
+- [ ] Email notifications (Resend integration ready, needs API key)
+- [ ] Auto-send payment reminders
+- [ ] Export member data to CSV
 
 ### P2 - Medium Priority
 - [ ] Real-time updates with WebSockets
 - [ ] User/admin management interface
 - [ ] Advanced reporting (custom date ranges)
-- [ ] Email notifications for expiring subscriptions
 
 ### P3 - Low Priority
 - [ ] Mobile app / PWA
@@ -182,8 +177,15 @@ Collections:
 
 ## Changelog
 
-### December 2024
+### December 2024 - Session 2
+- ✅ Added Payment System with schedules (28-day intervals & monthly)
+- ✅ Added Onboarding 5-step checklist with progress tracking
+- ✅ Added Follow-up scheduling system with 4 types
+- ✅ Added Alerts summary endpoint
+- ✅ Updated Courses page with S5 column for 5-week months
+- ✅ Added Resend email integration (ready for API key)
+
+### December 2024 - Session 1
 - ✅ Implemented 4 major features: Members, Challenges, Courses, Client KPIs
-- ✅ Refactored backend: split 1938-line monolith into modular structure
+- ✅ Refactored backend: split monolith into modular structure
 - ✅ Added QueryClientProvider to App.js
-- ✅ Testing: 100% pass rate (22/22 backend tests)
