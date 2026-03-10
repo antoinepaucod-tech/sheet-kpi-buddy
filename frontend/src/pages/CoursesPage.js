@@ -268,11 +268,12 @@ export default function CoursesPage() {
               <TableHead className="text-white/50">Horaire</TableHead>
               <TableHead className="text-white/50">Cours</TableHead>
               <TableHead className="text-white/50">Coach</TableHead>
-              <TableHead className="text-white/50">Capacité</TableHead>
+              <TableHead className="text-white/50">Cap.</TableHead>
               <TableHead className="text-white/50 text-center">S1</TableHead>
               <TableHead className="text-white/50 text-center">S2</TableHead>
               <TableHead className="text-white/50 text-center">S3</TableHead>
               <TableHead className="text-white/50 text-center">S4</TableHead>
+              <TableHead className="text-white/50 text-center">S5</TableHead>
               <TableHead className="text-white/50">Taux</TableHead>
               <TableHead className="text-white/50 text-right">Actions</TableHead>
             </TableRow>
@@ -280,13 +281,13 @@ export default function CoursesPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center text-white/50 py-8">
+                <TableCell colSpan={12} className="text-center text-white/50 py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredCourses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center text-white/50 py-8">
+                <TableCell colSpan={12} className="text-center text-white/50 py-8">
                   Aucun cours pour cette période
                 </TableCell>
               </TableRow>
@@ -317,7 +318,7 @@ export default function CoursesPage() {
                       {course.max_capacity}
                     </Badge>
                   </TableCell>
-                  {[1, 2, 3, 4].map((week) => (
+                  {[1, 2, 3, 4, 5].map((week) => (
                     <TableCell key={week} className="text-center">
                       <Input
                         type="number"

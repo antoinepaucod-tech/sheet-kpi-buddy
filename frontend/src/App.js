@@ -15,6 +15,8 @@ import MembersPage from "./pages/MembersPage";
 import ChallengePage from "./pages/ChallengePage";
 import CoursesPage from "./pages/CoursesPage";
 import ClientKPIPage from "./pages/ClientKPIPage";
+import PaymentsPage from "./pages/PaymentsPage";
+import OnboardingPage from "./pages/OnboardingPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -107,6 +109,8 @@ function AppInner() {
                   <Route path="/challenge" element={<ChallengePage />} />
                   <Route path="/courses" element={<CoursesPage />} />
                   <Route path="/clients" element={<ClientKPIPage />} />
+                  <Route path="/payments" element={<PaymentsPage />} />
+                  <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                 </Routes>

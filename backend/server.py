@@ -28,13 +28,18 @@ from models.transactions import (
 )
 from models.members import (
     CustomerMember, CustomerMemberCreate,
-    MemberRenewalHistory, WeeklyTraining, WeeklyTrainingUpdate
+    MemberRenewalHistory, WeeklyTraining, WeeklyTrainingUpdate,
+    MemberFollowUp, MemberFollowUpCreate
 )
 from models.challenges import (
     SixWeeksChallenge, SixWeeksChallengeCreate,
     ChallengeParticipant, ChallengeParticipantCreate
 )
 from models.courses import Instructor, CourseKPI, CourseKPICreate
+from models.payments import (
+    PaymentSchedule, PaymentScheduleCreate,
+    Payment, PaymentCreate, PaymentUpdate
+)
 
 # App setup
 app = FastAPI(title="Sheet KPI Buddy API", version="2.0.0")
@@ -815,6 +820,562 @@ async def delete_instructor(instructor_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Instructeur introuvable")
     return {"message": "Instructeur supprimé"}
+
+
+# ── Payment Schedule Routes ──────────────────────────────────────────────────
+
+@api_router.get("/payment-schedules")
+async def get_payment_schedules(member_id: Optional[str] = None, active_only: Optional[bool] = None):
+    query = {}
+    if member_id:
+        query["member_id"] = member_id
+    if active_only:
+        query["is_active"] = True
+    return await db.payment_schedules.find(query, {"_id": 0}).to_list(1000)
+
+
+@api_router.post("/payment-schedules")
+async def create_payment_schedule(data: PaymentScheduleCreate):
+    schedule = PaymentSchedule(**data.model_dump())
+    doc = schedule.model_dump()
+    await db.payment_schedules.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/payment-schedules/{schedule_id}")
+async def update_payment_schedule(schedule_id: str, body: dict):
+    existing = await db.payment_schedules.find_one({"id": schedule_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Planning de paiement introuvable")
+    
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.payment_schedules.update_one({"id": schedule_id}, {"$set": body})
+    return await db.payment_schedules.find_one({"id": schedule_id}, {"_id": 0})
+
+
+@api_router.delete("/payment-schedules/{schedule_id}")
+async def delete_payment_schedule(schedule_id: str):
+    result = await db.payment_schedules.delete_one({"id": schedule_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Planning de paiement introuvable")
+    return {"message": "Planning de paiement supprimé"}
+
+
+# ── Payment Routes ───────────────────────────────────────────────────────────
+
+@api_router.get("/payments")
+async def get_payments(
+    member_id: Optional[str] = None,
+    status: Optional[str] = None,
+    due_from: Optional[str] = None,
+    due_to: Optional[str] = None
+):
+    query = {}
+    if member_id:
+        query["member_id"] = member_id
+    if status:
+        query["status"] = status
+    if due_from or due_to:
+        query["due_date"] = {}
+        if due_from:
+            query["due_date"]["$gte"] = due_from
+        if due_to:
+            query["due_date"]["$lte"] = due_to
+    
+    return await db.payments.find(query, {"_id": 0}).sort("due_date", -1).to_list(1000)
+
+
+@api_router.get("/payments/late")
+async def get_late_payments():
+    """Get all late payments (past due and not paid)"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    docs = await db.payments.find({
+        "due_date": {"$lt": today},
+        "status": {"$in": ["pending", "late"]}
+    }, {"_id": 0}).sort("due_date", 1).to_list(500)
+    
+    # Mark as late if not already
+    for doc in docs:
+        if doc["status"] == "pending":
+            await db.payments.update_one(
+                {"id": doc["id"]},
+                {"$set": {"status": "late", "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            doc["status"] = "late"
+    
+    # Enrich with member info
+    for doc in docs:
+        member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
+        if member:
+            doc["member_name"] = member.get("name", "")
+            doc["member_email"] = member.get("email", "")
+            doc["member_phone"] = member.get("phone", "")
+    
+    return docs
+
+
+@api_router.get("/payments/upcoming")
+async def get_upcoming_payments(days: int = 7):
+    """Get payments due in the next N days"""
+    today = datetime.now(timezone.utc).date()
+    end_date = today + timedelta(days=days)
+    
+    docs = await db.payments.find({
+        "due_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
+        "status": "pending"
+    }, {"_id": 0}).sort("due_date", 1).to_list(500)
+    
+    # Enrich with member info
+    for doc in docs:
+        member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1})
+        if member:
+            doc["member_name"] = member.get("name", "")
+            doc["member_email"] = member.get("email", "")
+    
+    return docs
+
+
+@api_router.post("/payments")
+async def create_payment(data: PaymentCreate):
+    payment = Payment(**data.model_dump())
+    doc = payment.model_dump()
+    await db.payments.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/payments/{payment_id}")
+async def update_payment(payment_id: str, data: PaymentUpdate):
+    existing = await db.payments.find_one({"id": payment_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Paiement introuvable")
+    
+    update = {k: v for k, v in data.model_dump().items() if v is not None}
+    update["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.payments.update_one({"id": payment_id}, {"$set": update})
+    return await db.payments.find_one({"id": payment_id}, {"_id": 0})
+
+
+@api_router.post("/payments/{payment_id}/mark-paid")
+async def mark_payment_paid(payment_id: str, body: dict = {}):
+    """Quick action to mark a payment as paid"""
+    existing = await db.payments.find_one({"id": payment_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Paiement introuvable")
+    
+    update = {
+        "status": "paid",
+        "paid_date": body.get("paid_date", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+        "payment_method": body.get("payment_method", existing.get("payment_method")),
+        "reference": body.get("reference", ""),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.payments.update_one({"id": payment_id}, {"$set": update})
+    return await db.payments.find_one({"id": payment_id}, {"_id": 0})
+
+
+@api_router.delete("/payments/{payment_id}")
+async def delete_payment(payment_id: str):
+    result = await db.payments.delete_one({"id": payment_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Paiement introuvable")
+    return {"message": "Paiement supprimé"}
+
+
+@api_router.post("/payments/generate/{year}/{month}")
+async def generate_monthly_payments(year: int, month: int):
+    """Generate payments for a month based on payment schedules"""
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
+    
+    schedules = await db.payment_schedules.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    if not schedules:
+        return {"message": "Aucun planning de paiement actif", "created": 0}
+    
+    month_str = f"{year}-{month:02d}"
+    days_in_month = monthrange(year, month)[1]
+    created = []
+    
+    for sched in schedules:
+        # Check if payment already exists for this schedule/month
+        existing = await db.payments.find_one({
+            "schedule_id": sched["id"],
+            "due_date": {"$regex": f"^{month_str}"}
+        })
+        if existing:
+            continue
+        
+        # Calculate due date based on recurrence type
+        if sched["recurrence_type"] == "monthly_day":
+            day = min(sched["recurrence_value"], days_in_month)
+            due_date = f"{month_str}-{day:02d}"
+        else:  # interval_days
+            # For interval-based, calculate from start_date
+            start = datetime.fromisoformat(sched["start_date"]).date()
+            interval = sched["recurrence_value"]
+            
+            # Find the due date that falls in this month
+            current = start
+            while current.month != month or current.year != year:
+                current = current + timedelta(days=interval)
+                if current.year > year or (current.year == year and current.month > month):
+                    current = None
+                    break
+            
+            if current is None:
+                continue
+            due_date = current.isoformat()
+        
+        payment = Payment(
+            member_id=sched["member_id"],
+            schedule_id=sched["id"],
+            amount=sched["amount"],
+            due_date=due_date,
+            status="pending",
+            payment_method=sched.get("payment_method")
+        )
+        doc = payment.model_dump()
+        await db.payments.insert_one(doc)
+        doc.pop('_id', None)
+        created.append(doc)
+    
+    return {
+        "month": month_str,
+        "month_name": MONTHS_FR[month - 1],
+        "created": len(created),
+        "payments": created
+    }
+
+
+# ── Follow-up Routes ─────────────────────────────────────────────────────────
+
+@api_router.get("/followups")
+async def get_followups(
+    member_id: Optional[str] = None,
+    status: Optional[str] = None,
+    followup_type: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None
+):
+    query = {}
+    if member_id:
+        query["member_id"] = member_id
+    if status:
+        query["status"] = status
+    if followup_type:
+        query["followup_type"] = followup_type
+    if from_date or to_date:
+        query["followup_date"] = {}
+        if from_date:
+            query["followup_date"]["$gte"] = from_date
+        if to_date:
+            query["followup_date"]["$lte"] = to_date
+    
+    return await db.member_followups.find(query, {"_id": 0}).sort("followup_date", 1).to_list(1000)
+
+
+@api_router.get("/followups/upcoming")
+async def get_upcoming_followups(days: int = 7):
+    """Get follow-ups scheduled in the next N days"""
+    today = datetime.now(timezone.utc).date()
+    end_date = today + timedelta(days=days)
+    
+    docs = await db.member_followups.find({
+        "followup_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
+        "status": {"$in": ["scheduled", "rescheduled"]}
+    }, {"_id": 0}).sort("followup_date", 1).to_list(500)
+    
+    # Enrich with member info
+    for doc in docs:
+        member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
+        if member:
+            doc["member_name"] = member.get("name", "")
+            doc["member_email"] = member.get("email", "")
+            doc["member_phone"] = member.get("phone", "")
+    
+    return docs
+
+
+@api_router.get("/followups/missed")
+async def get_missed_followups():
+    """Get all missed follow-ups (past date and not completed)"""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    docs = await db.member_followups.find({
+        "followup_date": {"$lt": today},
+        "status": {"$in": ["scheduled", "rescheduled"]}
+    }, {"_id": 0}).sort("followup_date", 1).to_list(500)
+    
+    # Mark as missed
+    for doc in docs:
+        await db.member_followups.update_one(
+            {"id": doc["id"]},
+            {"$set": {"status": "missed", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        doc["status"] = "missed"
+    
+    # Enrich with member info
+    for doc in docs:
+        member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1})
+        if member:
+            doc["member_name"] = member.get("name", "")
+            doc["member_email"] = member.get("email", "")
+    
+    return docs
+
+
+@api_router.post("/followups")
+async def create_followup(data: MemberFollowUpCreate):
+    followup = MemberFollowUp(**data.model_dump())
+    doc = followup.model_dump()
+    await db.member_followups.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@api_router.put("/followups/{followup_id}")
+async def update_followup(followup_id: str, body: dict):
+    existing = await db.member_followups.find_one({"id": followup_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Suivi introuvable")
+    
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.member_followups.update_one({"id": followup_id}, {"$set": body})
+    return await db.member_followups.find_one({"id": followup_id}, {"_id": 0})
+
+
+@api_router.post("/followups/{followup_id}/complete")
+async def complete_followup(followup_id: str, body: dict = {}):
+    """Mark a follow-up as completed"""
+    existing = await db.member_followups.find_one({"id": followup_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Suivi introuvable")
+    
+    update = {
+        "status": "completed",
+        "completed_date": body.get("completed_date", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+        "notes": body.get("notes", existing.get("notes", "")),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Schedule next monthly follow-up if specified
+    next_date = body.get("next_followup_date")
+    if next_date:
+        update["next_followup_date"] = next_date
+        # Create next follow-up
+        next_followup = MemberFollowUp(
+            member_id=existing["member_id"],
+            followup_date=next_date,
+            followup_type="monthly"
+        )
+        await db.member_followups.insert_one(next_followup.model_dump())
+        
+        # Update member's next followup date
+        await db.customer_members.update_one(
+            {"id": existing["member_id"]},
+            {"$set": {
+                "last_followup_date": update["completed_date"],
+                "next_followup_date": next_date,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    
+    await db.member_followups.update_one({"id": followup_id}, {"$set": update})
+    return await db.member_followups.find_one({"id": followup_id}, {"_id": 0})
+
+
+@api_router.delete("/followups/{followup_id}")
+async def delete_followup(followup_id: str):
+    result = await db.member_followups.delete_one({"id": followup_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Suivi introuvable")
+    return {"message": "Suivi supprimé"}
+
+
+# ── Onboarding Routes ────────────────────────────────────────────────────────
+
+@api_router.get("/onboarding/pending")
+async def get_pending_onboarding():
+    """Get members with incomplete onboarding"""
+    docs = await db.customer_members.find({
+        "onboarding_completed": {"$ne": True},
+        "exit_date": None
+    }, {"_id": 0}).to_list(500)
+    
+    # Calculate onboarding progress for each
+    for doc in docs:
+        steps = [
+            doc.get("onboarding_bsport", False),
+            doc.get("onboarding_hubfit", False),
+            doc.get("onboarding_nutrition", False),
+            doc.get("questionnaire_coaching", False),
+            doc.get("session_introduction", False)
+        ]
+        doc["onboarding_progress"] = sum(steps)
+        doc["onboarding_total"] = 5
+        doc["onboarding_percentage"] = round((sum(steps) / 5) * 100)
+    
+    # Sort by progress (lowest first)
+    docs.sort(key=lambda x: x["onboarding_progress"])
+    return docs
+
+
+@api_router.put("/members/{member_id}/onboarding")
+async def update_member_onboarding(member_id: str, body: dict):
+    """Update onboarding steps for a member"""
+    existing = await db.customer_members.find_one({"id": member_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    
+    update = {}
+    onboarding_fields = [
+        "onboarding_bsport", "onboarding_hubfit", "onboarding_nutrition",
+        "questionnaire_coaching", "session_introduction"
+    ]
+    
+    for field in onboarding_fields:
+        if field in body:
+            update[field] = body[field]
+    
+    # Check if all steps are completed
+    all_steps = [
+        update.get(f, existing.get(f, False)) for f in onboarding_fields
+    ]
+    if all(all_steps):
+        update["onboarding_completed"] = True
+        update["onboarding_completed_date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    else:
+        update["onboarding_completed"] = False
+        update["onboarding_completed_date"] = None
+    
+    update["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.customer_members.update_one({"id": member_id}, {"$set": update})
+    return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+
+
+# ── Email Notification Routes ────────────────────────────────────────────────
+
+@api_router.post("/notifications/send-reminder")
+async def send_reminder_email(body: dict):
+    """Send a reminder email (payment, follow-up, renewal)"""
+    import os
+    import asyncio
+    
+    try:
+        import resend
+    except ImportError:
+        raise HTTPException(status_code=500, detail="Email service not configured")
+    
+    api_key = os.environ.get("RESEND_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="RESEND_API_KEY not configured")
+    
+    resend.api_key = api_key
+    sender_email = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+    
+    recipient = body.get("recipient_email")
+    subject = body.get("subject")
+    html_content = body.get("html_content")
+    reminder_type = body.get("reminder_type")  # "payment", "followup", "renewal"
+    reference_id = body.get("reference_id")
+    
+    if not all([recipient, subject, html_content]):
+        raise HTTPException(status_code=400, detail="recipient_email, subject, and html_content required")
+    
+    params = {
+        "from": sender_email,
+        "to": [recipient],
+        "subject": subject,
+        "html": html_content
+    }
+    
+    try:
+        email = await asyncio.to_thread(resend.Emails.send, params)
+        
+        # Update the reminder_sent flag on the relevant record
+        if reminder_type == "payment" and reference_id:
+            await db.payments.update_one(
+                {"id": reference_id},
+                {"$set": {
+                    "reminder_sent": True,
+                    "reminder_sent_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+        elif reminder_type == "followup" and reference_id:
+            await db.member_followups.update_one(
+                {"id": reference_id},
+                {"$set": {
+                    "reminder_sent": True,
+                    "reminder_sent_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+        
+        return {
+            "status": "success",
+            "message": f"Email sent to {recipient}",
+            "email_id": email.get("id")
+        }
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+
+
+@api_router.get("/alerts/summary")
+async def get_alerts_summary():
+    """Get summary of all alerts (late payments, missed followups, expiring subscriptions)"""
+    today = datetime.now(timezone.utc).date()
+    thirty_days = today + timedelta(days=30)
+    
+    # Late payments
+    late_payments = await db.payments.count_documents({
+        "due_date": {"$lt": today.isoformat()},
+        "status": {"$in": ["pending", "late"]}
+    })
+    
+    # Missed follow-ups
+    missed_followups = await db.member_followups.count_documents({
+        "followup_date": {"$lt": today.isoformat()},
+        "status": {"$in": ["scheduled", "rescheduled"]}
+    })
+    
+    # Expiring subscriptions (30 days)
+    members = await db.customer_members.find({
+        "exit_date": None
+    }, {"_id": 0, "subscription_end_date": 1}).to_list(1000)
+    
+    expiring_count = 0
+    for m in members:
+        if m.get("subscription_end_date"):
+            try:
+                end_date = datetime.fromisoformat(m["subscription_end_date"]).date()
+                if today <= end_date <= thirty_days:
+                    expiring_count += 1
+            except:
+                pass
+    
+    # Incomplete onboarding
+    incomplete_onboarding = await db.customer_members.count_documents({
+        "onboarding_completed": {"$ne": True},
+        "exit_date": None
+    })
+    
+    # Upcoming follow-ups (7 days)
+    seven_days = today + timedelta(days=7)
+    upcoming_followups = await db.member_followups.count_documents({
+        "followup_date": {"$gte": today.isoformat(), "$lte": seven_days.isoformat()},
+        "status": {"$in": ["scheduled", "rescheduled"]}
+    })
+    
+    return {
+        "late_payments": late_payments,
+        "missed_followups": missed_followups,
+        "expiring_subscriptions": expiring_count,
+        "incomplete_onboarding": incomplete_onboarding,
+        "upcoming_followups": upcoming_followups,
+        "total_alerts": late_payments + missed_followups + expiring_count
+    }
 
 
 # ── Settings Routes ──────────────────────────────────────────────────────────

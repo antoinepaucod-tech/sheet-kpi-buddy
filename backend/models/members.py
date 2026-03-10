@@ -22,6 +22,12 @@ class CustomerMember(BaseModel):
     onboarding_nutrition: bool = False
     questionnaire_coaching: bool = False
     session_introduction: bool = False
+    onboarding_completed: bool = False
+    onboarding_completed_date: Optional[str] = None
+    # Monthly follow-up
+    last_followup_date: Optional[str] = None
+    next_followup_date: Optional[str] = None
+    followup_notes: Optional[str] = ""
     notes: Optional[str] = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -37,6 +43,14 @@ class CustomerMemberCreate(BaseModel):
     subscription_end_date: Optional[str] = None
     cash_collected: float = 0
     notes: Optional[str] = ""
+    # Onboarding
+    onboarding_bsport: bool = False
+    onboarding_hubfit: bool = False
+    onboarding_nutrition: bool = False
+    questionnaire_coaching: bool = False
+    session_introduction: bool = False
+    # Follow-up
+    next_followup_date: Optional[str] = None
 
 
 class MemberRenewalHistory(BaseModel):
@@ -65,3 +79,28 @@ class WeeklyTrainingUpdate(BaseModel):
     calendar_year: int
     calendar_week: int
     trainings_count: int
+
+
+
+class MemberFollowUp(BaseModel):
+    """Monthly follow-up record for members"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    followup_date: str
+    followup_type: str = "monthly"  # "monthly", "onboarding", "renewal", "payment"
+    status: str = "scheduled"  # "scheduled", "completed", "missed", "rescheduled"
+    completed_date: Optional[str] = None
+    notes: Optional[str] = ""
+    performed_by: Optional[str] = None
+    next_followup_date: Optional[str] = None
+    reminder_sent: bool = False
+    reminder_sent_at: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class MemberFollowUpCreate(BaseModel):
+    member_id: str
+    followup_date: str
+    followup_type: str = "monthly"
+    notes: Optional[str] = ""

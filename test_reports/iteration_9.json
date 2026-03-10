@@ -1,0 +1,71 @@
+{
+  "summary": "Iteration 9 testing complete: All new Payment, Onboarding & Follow-up features working correctly. Backend 22/22 tests passed. Frontend pages verified: PaymentsPage, OnboardingPage, CoursesPage S5 column.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration9_payments_onboarding.py",
+    "/app/test_reports/pytest/pytest_results_iter9.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Payment schedules support both recurrence types: monthly_day (fixed day of month) and interval_days (every X days like 28)",
+    "Onboarding has 5 steps: bsport, hubfit, nutrition, questionnaire_coaching, session_introduction",
+    "Completing all 5 onboarding steps automatically sets onboarding_completed=true with date",
+    "Follow-ups have 4 types: monthly, onboarding, renewal, payment",
+    "Alerts summary endpoint aggregates: late_payments, missed_followups, expiring_subscriptions, incomplete_onboarding, upcoming_followups",
+    "Courses table now has S5 (week 5) column for months with 5 weeks"
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration9_payments_onboarding.py"],
+  "success_rate": {"backend": "100% (22/22)", "frontend": "100%"},
+  "seed_data_creation": "Tests create temporary data with TEST_ prefix and cleanup after",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All new features tested and working: (1) PaymentsPage at /payments - payment tracking with tabs for all payments, late, upcoming, and schedules. Supports creating payment schedules with monthly_day or interval_days recurrence. Generate payments for a month. Mark payments as paid. (2) OnboardingPage at /onboarding - shows members with incomplete onboarding, 5-step checklist (bsport, hubfit, nutrition, coaching questionnaire, intro session), clickable steps to toggle completion, follow-up scheduling with 4 types. (3) CoursesPage S5 column - table now has S1-S5 attendance columns for weeks 1-5. (4) Alerts summary API returns counts of late payments, missed followups, expiring subscriptions, incomplete onboarding. Test credentials: test@crossfit.ch / test123.",
+  "features_tested": {
+    "payments_page_loads": "PASS - Page loads with 'Suivi des Paiements' title",
+    "payments_tabs": "PASS - 4 tabs: Paiements, En retard, À venir, Plannings",
+    "payments_stats_cards": "PASS - Total, En retard, En attente, Payés, Montant en retard",
+    "payments_add_schedule_button": "PASS - 'Nouveau planning' button visible and opens modal",
+    "payments_add_payment_button": "PASS - 'Paiement manuel' button visible",
+    "payments_schedule_modal": "PASS - Modal has member, amount, recurrence type, day, start date fields",
+    "payment_schedules_api_get": "PASS - GET /api/payment-schedules returns list",
+    "payment_schedules_api_post_monthly_day": "PASS - POST creates schedule with monthly_day recurrence",
+    "payment_schedules_api_post_interval_days": "PASS - POST creates schedule with interval_days (28 days)",
+    "payment_schedules_api_delete": "PASS - DELETE removes schedule",
+    "payments_api_get": "PASS - GET /api/payments returns list",
+    "payments_api_post": "PASS - POST /api/payments creates payment",
+    "payments_api_mark_paid": "PASS - POST /api/payments/{id}/mark-paid updates status to paid",
+    "payments_api_late": "PASS - GET /api/payments/late returns late payments and updates status",
+    "payments_api_upcoming": "PASS - GET /api/payments/upcoming returns upcoming payments",
+    "payments_api_generate": "PASS - POST /api/payments/generate/{year}/{month} generates payments from schedules",
+    "payments_api_delete": "PASS - DELETE /api/payments/{id} removes payment",
+    "onboarding_page_loads": "PASS - Page loads with 'Onboarding & Suivi' title",
+    "onboarding_tabs": "PASS - 4 tabs: Onboarding, À venir, Manqués, Historique",
+    "onboarding_stats_cards": "PASS - Onboarding en cours, Suivis à venir, Suivis manqués, Complétés ce mois",
+    "onboarding_member_cards": "PASS - Member cards with 5 onboarding steps displayed",
+    "onboarding_steps_clickable": "PASS - Clicking step toggles completion",
+    "onboarding_add_followup_button": "PASS - 'Planifier un suivi' button opens modal",
+    "onboarding_followup_modal": "PASS - Modal has member, date, type, notes fields",
+    "onboarding_pending_api": "PASS - GET /api/onboarding/pending returns members with onboarding progress",
+    "onboarding_update_api": "PASS - PUT /api/members/{id}/onboarding updates steps",
+    "onboarding_complete_all_steps": "PASS - Completing all 5 steps sets onboarding_completed=true",
+    "followups_api_get": "PASS - GET /api/followups returns list",
+    "followups_api_post": "PASS - POST /api/followups creates follow-up",
+    "followups_api_complete": "PASS - POST /api/followups/{id}/complete marks as completed",
+    "followups_api_upcoming": "PASS - GET /api/followups/upcoming returns upcoming follow-ups",
+    "followups_api_missed": "PASS - GET /api/followups/missed returns missed follow-ups",
+    "followups_api_delete": "PASS - DELETE /api/followups/{id} removes follow-up",
+    "alerts_summary_api": "PASS - GET /api/alerts/summary returns all alert counts",
+    "courses_page_s5_column": "PASS - Table has S1, S2, S3, S4, S5 columns",
+    "courses_api_week5_attendance": "PASS - PUT /api/courses/{id} supports week5_attendance field",
+    "navigation_paiements": "PASS - Sidebar link to /payments works",
+    "navigation_onboarding": "PASS - Sidebar link to /onboarding works"
+  }
+}
