@@ -88,8 +88,16 @@ Application SaaS de pilotage financier pour clubs de sport (CrossFit, fitness, t
 - `GET/PUT /api/settings` - Paramètres du club
 
 ## Tests
-- Backend: 100% (14/14 endpoints)
-- Frontend: 100% (toutes les features testées)
+- Backend: 100% (toutes routes)
+- Frontend: 100% (toutes features vérifiées)
+- Itérations: 3 passes complètes
+
+## Features v2.0 (2026-03)
+- [x] Comparaison N-1 — toggle sur onglet REVENUS, lignes pointillées 2023
+- [x] Notes mensuelles — EditKPIModal avec textarea, bandeau jaune sur dashboard
+- [x] Import CSV — modal PapaParse, aperçu avant import, bulk POST
+- [x] 24 mois de KPIs seedés (2023 + 2024)
+- [x] currentYearData — tous les graphiques filtrés sur l'année en cours
 
 ## Backlog Prioritaire
 
