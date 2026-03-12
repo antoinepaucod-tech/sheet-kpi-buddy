@@ -50,7 +50,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const COLOR_OPTIONS = [
   "#0A84FF", "#30D158", "#FFD60A", "#FF453A", "#64D2FF",
-  "#FF453A", "#64D2FF", "#FFD60A", "#30D158", "#0A84FF"
+  "#BF5AF2", "#FF9F0A", "#AC8E68", "#FF375F", "#5E5CE6"
 ];
 
 const SPECIALTIES = [
