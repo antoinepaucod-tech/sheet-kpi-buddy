@@ -88,7 +88,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
         <div className="space-y-3 py-2">
           {MANUAL_FIELDS.map((field) => (
             <div key={field.key} className="flex items-center justify-between gap-4">
-              <Label className="text-white/60 text-xs uppercase tracking-wider flex-1">
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider flex-1">
                 {lang === "fr" ? field.labelFr : field.labelEn}
               </Label>
               <Input
@@ -101,10 +101,10 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
             </div>
           ))}
 
-          <Separator className="bg-white/5" />
+          <Separator className="bg-[rgba(255,255,255,0.05)]" />
 
           <div className="space-y-1.5">
-            <Label className="text-white/60 text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider flex items-center gap-1.5">
               <FileText size={11} />
               {lang === "fr" ? "Note du mois" : "Monthly note"}
             </Label>
@@ -125,7 +125,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
           <Button
             variant="outline"
             onClick={onClose}
-            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]"
           >
             {t("cancel")}
           </Button>

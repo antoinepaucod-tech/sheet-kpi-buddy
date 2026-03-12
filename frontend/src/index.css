@@ -297,3 +297,207 @@ body {
 button:active:not(:disabled) {
   transform: scale(0.98);
 }
+
+
+/* ================================================================
+   GLOBAL SHADCN/UI OVERRIDES — Apple Design System
+   Applied automatically to ALL components without per-file edits
+   ================================================================ */
+
+/* --- ALL INPUTS (input, textarea) --- */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
+  background: var(--color-bg-tertiary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-text) !important;
+  font-size: var(--text-sm) !important;
+  outline: none !important;
+  transition: border-color var(--transition-fast) !important;
+}
+input:focus:not([type="checkbox"]):not([type="radio"]),
+textarea:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: none !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-tertiary) !important;
+}
+
+/* --- ALL SELECT TRIGGERS --- */
+[role="combobox"],
+button[data-slot="select-trigger"],
+.SelectTrigger {
+  background: var(--color-bg-tertiary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-sm) !important;
+}
+
+/* --- SELECT DROPDOWN CONTENT --- */
+[role="listbox"],
+[data-radix-popper-content-wrapper] [role="listbox"] {
+  background: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+}
+[role="option"] {
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-sm) !important;
+}
+[role="option"]:hover,
+[role="option"][data-highlighted] {
+  background: var(--color-bg-tertiary) !important;
+}
+[role="option"][data-state="checked"] {
+  background: var(--color-accent-subtle) !important;
+  color: var(--color-accent) !important;
+}
+
+/* --- ALL DIALOGS/MODALS --- */
+[role="dialog"] {
+  background: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-xl) !important;
+  color: var(--color-text-primary) !important;
+}
+[role="dialog"] [class*="DialogOverlay"],
+[data-radix-popper-content-wrapper] {
+  backdrop-filter: blur(20px);
+}
+
+/* --- ALL BUTTONS (shadcn Button component) --- */
+button[class*="bg-primary"],
+button[class*="bg-[var(--color-accent)]"] {
+  border-radius: var(--radius-md) !important;
+  font-weight: var(--font-semibold) !important;
+  font-size: var(--text-sm) !important;
+  transition: opacity var(--transition-fast) !important;
+}
+button[class*="bg-primary"]:hover,
+button[class*="bg-[var(--color-accent)]"]:hover {
+  opacity: 0.85 !important;
+}
+
+/* --- ALL TABLES --- */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+table thead th,
+table thead td {
+  background: var(--color-bg-tertiary) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--font-semibold) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: var(--space-3) var(--space-4) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+table tbody tr:nth-child(odd) {
+  background: var(--color-bg-primary);
+}
+table tbody tr:nth-child(even) {
+  background: var(--color-bg-secondary);
+}
+table tbody td {
+  padding: var(--space-3) var(--space-4) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  font-size: var(--text-sm) !important;
+}
+table tbody tr:hover {
+  background: var(--color-bg-tertiary) !important;
+}
+
+/* --- ALL TABS --- */
+[role="tablist"] {
+  background: var(--color-bg-tertiary) !important;
+  border-radius: var(--radius-md) !important;
+  padding: var(--space-1) !important;
+  border: 1px solid var(--color-border) !important;
+}
+[role="tab"] {
+  border-radius: var(--radius-sm) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: var(--font-medium) !important;
+  color: var(--color-text-secondary) !important;
+  transition: all var(--transition-fast) !important;
+}
+[role="tab"][data-state="active"] {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* --- ALL BADGES --- */
+.tf-badge, [class*="Badge"] {
+  font-size: var(--text-xs) !important;
+  font-weight: var(--font-semibold) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* --- RECHARTS GLOBAL OVERRIDES --- */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--color-border) !important;
+  stroke-opacity: 0.5 !important;
+}
+.recharts-cartesian-axis-tick-value {
+  fill: var(--color-text-secondary) !important;
+  font-size: var(--text-xs) !important;
+  font-family: var(--font-mono) !important;
+}
+.recharts-surface {
+  overflow: visible !important;
+}
+/* Remove chart borders */
+.recharts-wrapper .recharts-surface > rect:first-child {
+  display: none !important;
+}
+
+/* --- ICONS — Force 1.5px stroke globally --- */
+svg.lucide,
+svg[class*="lucide-"] {
+  stroke-width: 1.5px !important;
+}
+
+/* --- TOOLTIP (Recharts) --- */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-xs) !important;
+}
+
+/* --- DIALOG OVERLAY --- */
+[data-state="open"][class*="DialogOverlay"] {
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* --- CHECKBOX/SWITCH --- */
+[role="checkbox"][data-state="checked"],
+[role="switch"][data-state="checked"] {
+  background: var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
+}
+
+/* --- POPOVER CONTENT --- */
+[data-radix-popper-content-wrapper] > div {
+  background: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* --- CARD COMPONENTS --- */
+[class*="rounded-[var(--radius-lg)]"] {
+  border-radius: var(--radius-lg) !important;
+}

@@ -256,7 +256,7 @@ export default function ChallengePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Challenge List */}
         <div className="space-y-3">
-          <h2 className="text-white/70 text-sm font-medium uppercase tracking-wide">Challenges</h2>
+          <h2 className="text-[var(--color-text-secondary)] text-sm font-medium uppercase tracking-wide">Challenges</h2>
           {isLoading ? (
             <p className="text-[var(--color-text-secondary)]">Chargement...</p>
           ) : challenges.length === 0 ? (
@@ -314,7 +314,7 @@ export default function ChallengePage() {
         <div className="lg:col-span-2">
           {!selectedChallenge ? (
             <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-12 border border-[var(--color-border)] text-center">
-              <Target size={48} className="mx-auto text-white/10 mb-4" />
+              <Target size={48} className="mx-auto mb-4" style={{ color: 'var(--color-text-tertiary)' }} />
               <p className="text-[var(--color-text-secondary)]">Sélectionnez un challenge pour voir les détails</p>
             </div>
           ) : !challengeDetail ? (
@@ -463,7 +463,7 @@ export default function ChallengePage() {
                               className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
                                 participant[`week${week}`]
                                   ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
-                                  : "bg-white/5 text-[var(--color-text-tertiary)] hover:bg-[rgba(255,255,255,0.1)]"
+                                  : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)] hover:bg-[rgba(255,255,255,0.1)]"
                               }`}
                               data-testid={`check-w${week}-${participant.id}`}
                             >
@@ -600,7 +600,7 @@ export default function ChallengePage() {
                 checked={formData.is_active}
                 onCheckedChange={(v) => setFormData({ ...formData, is_active: v })}
               />
-              <span className="text-white/70">Challenge actif</span>
+              <span className="text-[var(--color-text-secondary)]">Challenge actif</span>
             </div>
           </div>
           <DialogFooter>
@@ -723,7 +723,7 @@ export default function ChallengePage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.max(0, checkins - 1))}
-                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-white/20 flex items-center justify-center"
+                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-[var(--color-bg-tertiary)] flex items-center justify-center"
                         >
                           -
                         </button>
@@ -732,7 +732,7 @@ export default function ChallengePage() {
                         </span>
                         <button
                           onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.min(7, checkins + 1))}
-                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-white/20 flex items-center justify-center"
+                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-[var(--color-bg-tertiary)] flex items-center justify-center"
                         >
                           +
                         </button>

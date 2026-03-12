@@ -164,7 +164,7 @@ export default function CategoriesPage() {
           <Button
             variant="outline"
             onClick={() => setShowKpiModal(true)}
-            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="add-kpi-column-btn"
           >
             <Plus size={12} className="mr-1.5" />
@@ -174,7 +174,7 @@ export default function CategoriesPage() {
             variant="outline"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="recalculate-btn"
           >
             {recalculating ? <Loader2 size={12} className="animate-spin mr-1.5" /> : null}
@@ -209,7 +209,7 @@ export default function CategoriesPage() {
             </TableHeader>
             <TableBody>
               {expenseCategories.map((cat) => (
-                <TableRow key={cat.id} className="border-white/5 hover:bg-white/3" data-testid={`cat-row-${cat.id}`}>
+                <TableRow key={cat.id} className="border-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)]" data-testid={`cat-row-${cat.id}`}>
                   <TableCell>
                     <span className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-[var(--radius-lg)] flex-shrink-0" style={{ backgroundColor: cat.color }} />
@@ -249,7 +249,7 @@ export default function CategoriesPage() {
             </TableHeader>
             <TableBody>
               {revenueCategories.map((cat) => (
-                <TableRow key={cat.id} className="border-white/5 hover:bg-white/3" data-testid={`cat-row-${cat.id}`}>
+                <TableRow key={cat.id} className="border-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)]" data-testid={`cat-row-${cat.id}`}>
                   <TableCell>
                     <span className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-[var(--radius-lg)] flex-shrink-0" style={{ backgroundColor: cat.color }} />
@@ -283,7 +283,7 @@ export default function CategoriesPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label className="text-white/60 tf-label inline">Nom *</Label>
+              <Label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })}
@@ -295,7 +295,7 @@ export default function CategoriesPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-white/60 tf-label inline">Type *</Label>
+                <Label className="text-[var(--color-text-secondary)] tf-label inline">Type *</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-type-select">
                     <SelectValue />
@@ -308,7 +308,7 @@ export default function CategoriesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-white/60 tf-label inline">Colonne KPI *</Label>
+                <Label className="text-[var(--color-text-secondary)] tf-label inline">Colonne KPI *</Label>
                 <Select value={form.kpi_column} onValueChange={(v) => setForm({ ...form, kpi_column: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-kpi-select">
                     <SelectValue />
@@ -331,7 +331,7 @@ export default function CategoriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white/60 tf-label inline">Couleur</Label>
+              <Label className="text-[var(--color-text-secondary)] tf-label inline">Couleur</Label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORY_COLORS.map((c) => (
                   <button
@@ -353,7 +353,7 @@ export default function CategoriesPage() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
-              className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
+              className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]"
             >
               {t("cancel")}
             </Button>
@@ -382,7 +382,7 @@ export default function CategoriesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]">
+            <AlertDialogCancel className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]">
               {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
@@ -409,7 +409,7 @@ export default function CategoriesPage() {
               Créez une nouvelle colonne KPI pour regrouper vos catégories de dépenses ou revenus.
             </p>
             <div className="space-y-1.5">
-              <Label className="text-white/60 tf-label inline">Nom affiché *</Label>
+              <Label className="text-[var(--color-text-secondary)] tf-label inline">Nom affiché *</Label>
               <Input
                 value={kpiForm.label}
                 onChange={(e) => setKpiForm({ ...kpiForm, label: e.target.value })}
@@ -419,7 +419,7 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-white/60 tf-label inline">Code technique *</Label>
+              <Label className="text-[var(--color-text-secondary)] tf-label inline">Code technique *</Label>
               <Input
                 value={kpiForm.value}
                 onChange={(e) => setKpiForm({ ...kpiForm, value: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
@@ -429,7 +429,7 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-white/60 tf-label inline">Type *</Label>
+              <Label className="text-[var(--color-text-secondary)] tf-label inline">Type *</Label>
               <Select value={kpiForm.type} onValueChange={(v) => setKpiForm({ ...kpiForm, type: v })}>
                 <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                   <SelectValue />
@@ -444,7 +444,7 @@ export default function CategoriesPage() {
             {/* List of custom columns */}
             {customKpiColumns.length > 0 && (
               <div className="border-t border-[var(--color-border)] pt-4">
-                <Label className="text-white/60 tf-label inline mb-2 block">Colonnes personnalisées</Label>
+                <Label className="text-[var(--color-text-secondary)] tf-label inline mb-2 block">Colonnes personnalisées</Label>
                 <div className="space-y-2">
                   {customKpiColumns.map((col) => (
                     <div key={col.value} className="flex items-center justify-between bg-[var(--color-bg-secondary)] rounded px-3 py-2">
@@ -469,7 +469,7 @@ export default function CategoriesPage() {
             <Button
               variant="outline"
               onClick={() => setShowKpiModal(false)}
-              className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
+              className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]"
             >
               {t("cancel")}
             </Button>

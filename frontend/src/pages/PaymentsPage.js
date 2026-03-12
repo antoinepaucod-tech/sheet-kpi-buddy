@@ -363,7 +363,7 @@ export default function PaymentsPage() {
                   </TableRow>
                 ) : enrichedPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">Aucun paiement</TableCell>
+                    <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">Aucun paiement — generez vos premiers echeanciers.</TableCell>
                   </TableRow>
                 ) : (
                   enrichedPayments.map((payment) => {
@@ -373,11 +373,11 @@ export default function PaymentsPage() {
                     return (
                       <TableRow key={payment.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]" data-testid={`payment-${payment.id}`}>
                         <TableCell className="text-white font-medium">{payment.member_name}</TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {format(parseISO(payment.due_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell className="text-white font-medium">{payment.amount?.toLocaleString("fr-CH")} CHF</TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {PAYMENT_METHODS.find((m) => m.value === payment.payment_method)?.label || "-"}
                         </TableCell>
                         <TableCell>
@@ -387,7 +387,7 @@ export default function PaymentsPage() {
                             {daysLate > 0 && <span className="ml-1">({daysLate}j)</span>}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {payment.paid_date ? format(parseISO(payment.paid_date), "dd/MM/yyyy") : "-"}
                         </TableCell>
                         <TableCell className="text-right">
@@ -456,12 +456,12 @@ export default function PaymentsPage() {
                       <TableRow key={payment.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                         <TableCell className="text-white font-medium">{payment.member_name}</TableCell>
                         <TableCell>
-                          <div className="text-white/70 text-sm">
+                          <div className="text-[var(--color-text-secondary)] text-sm">
                             <p>{payment.member_email}</p>
                             <p>{payment.member_phone}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {format(parseISO(payment.due_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
@@ -533,7 +533,7 @@ export default function PaymentsPage() {
                     return (
                       <TableRow key={payment.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                         <TableCell className="text-white font-medium">{payment.member_name}</TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {format(parseISO(payment.due_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
@@ -542,7 +542,7 @@ export default function PaymentsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-white font-medium">{payment.amount?.toLocaleString("fr-CH")} CHF</TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {PAYMENT_METHODS.find((m) => m.value === payment.payment_method)?.label || "-"}
                         </TableCell>
                       </TableRow>
@@ -581,15 +581,15 @@ export default function PaymentsPage() {
                     <TableRow key={schedule.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]" data-testid={`schedule-${schedule.id}`}>
                       <TableCell className="text-white font-medium">{getMemberName(schedule.member_id)}</TableCell>
                       <TableCell className="text-white font-medium">{schedule.amount?.toLocaleString("fr-CH")} CHF</TableCell>
-                      <TableCell className="text-white/70">
+                      <TableCell className="text-[var(--color-text-secondary)]">
                         {schedule.recurrence_type === "monthly_day"
                           ? `Le ${schedule.recurrence_value} du mois`
                           : `Tous les ${schedule.recurrence_value} jours`}
                       </TableCell>
-                      <TableCell className="text-white/70">
+                      <TableCell className="text-[var(--color-text-secondary)]">
                         {PAYMENT_METHODS.find((m) => m.value === schedule.payment_method)?.label || "-"}
                       </TableCell>
-                      <TableCell className="text-white/70">
+                      <TableCell className="text-[var(--color-text-secondary)]">
                         {schedule.start_date ? format(parseISO(schedule.start_date), "dd/MM/yyyy") : "-"}
                       </TableCell>
                       <TableCell>

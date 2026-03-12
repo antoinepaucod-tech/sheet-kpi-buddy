@@ -405,7 +405,7 @@ export default function CoursesPage() {
                   data-testid={`course-row-${course.id}`}
                 >
                   <TableCell>
-                    <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
+                    <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
                       {course.day_of_week}
                     </Badge>
                   </TableCell>
@@ -414,7 +414,7 @@ export default function CoursesPage() {
                     {course.time_slot}
                   </TableCell>
                   <TableCell className="text-white font-medium">{course.course_name}</TableCell>
-                  <TableCell className="text-white/70 flex items-center gap-1">
+                  <TableCell className="text-[var(--color-text-secondary)] flex items-center gap-1">
                     <User size={12} className="text-[var(--color-text-secondary)]" />
                     {course.instructor || "-"}
                   </TableCell>

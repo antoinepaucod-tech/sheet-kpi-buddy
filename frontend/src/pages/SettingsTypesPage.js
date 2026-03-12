@@ -360,8 +360,8 @@ export default function SettingsTypesPage() {
                         />
                       </TableCell>
                       <TableCell className="text-white font-medium">{item.name}</TableCell>
-                      <TableCell className="text-white/70">{formatDuration(item)}</TableCell>
-                      <TableCell className="text-white/70">{item.price} CHF</TableCell>
+                      <TableCell className="text-[var(--color-text-secondary)]">{formatDuration(item)}</TableCell>
+                      <TableCell className="text-[var(--color-text-secondary)]">{item.price} CHF</TableCell>
                       <TableCell className="text-[var(--color-text-secondary)] text-sm">
                         {item.is_recurring ? (
                           item.default_billing_cycle_type === "monthly_day" 
@@ -373,7 +373,7 @@ export default function SettingsTypesPage() {
                         {item.is_recurring ? (
                           <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">Récurrent</Badge>
                         ) : (
-                          <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-white/60 border-0">One-time</Badge>
+                          <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] border-0">One-time</Badge>
                         )}
                       </TableCell>
                       <TableCell>
@@ -388,7 +388,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]"
+                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[rgba(255,255,255,0.1)]"
                             onClick={() => openEditMembership(item)}
                             data-testid={`edit-membership-${item.id}`}
                           >
@@ -480,7 +480,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]"
+                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[rgba(255,255,255,0.1)]"
                             onClick={() => openEditMemberType(item)}
                             data-testid={`edit-member-type-${item.id}`}
                           >
@@ -591,7 +591,7 @@ export default function SettingsTypesPage() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <label className="text-white/70 text-sm">Abonnement récurrent</label>
+              <label className="text-[var(--color-text-secondary)] text-sm">Abonnement récurrent</label>
               <Switch
                 checked={membershipForm.is_recurring}
                 onCheckedChange={(v) => setMembershipForm({ ...membershipForm, is_recurring: v })}
@@ -643,7 +643,7 @@ export default function SettingsTypesPage() {
             )}
             
             <div className="flex items-center justify-between">
-              <label className="text-white/70 text-sm">Actif</label>
+              <label className="text-[var(--color-text-secondary)] text-sm">Actif</label>
               <Switch
                 checked={membershipForm.is_active}
                 onCheckedChange={(v) => setMembershipForm({ ...membershipForm, is_active: v })}
@@ -720,7 +720,7 @@ export default function SettingsTypesPage() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <label className="text-white/70 text-sm">Actif</label>
+              <label className="text-[var(--color-text-secondary)] text-sm">Actif</label>
               <Switch
                 checked={memberTypeForm.is_active}
                 onCheckedChange={(v) => setMemberTypeForm({ ...memberTypeForm, is_active: v })}

@@ -207,7 +207,7 @@ export default function SettingsPage() {
           {lang === "fr" ? "Informations du club" : "Club information"}
         </p>
         <div className="space-y-1.5">
-          <Label className="text-white/60 tf-label inline">
+          <Label className="text-[var(--color-text-secondary)] tf-label inline">
             {lang === "fr" ? "Nom du club" : "Club name"}
           </Label>
           <Input
@@ -227,7 +227,7 @@ export default function SettingsPage() {
 
         {TARGET_FIELDS.map((field, idx) => (
           <div key={field.key}>
-            {idx > 0 && <Separator className="bg-white/5 my-5" />}
+            {idx > 0 && <Separator className="bg-[rgba(255,255,255,0.05)] my-5" />}
             <div className="flex items-start justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-0.5">
@@ -279,7 +279,7 @@ export default function SettingsPage() {
             variant="outline"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs flex-shrink-0"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs flex-shrink-0"
             data-testid="recalculate-all-btn"
           >
             {recalculating ? (

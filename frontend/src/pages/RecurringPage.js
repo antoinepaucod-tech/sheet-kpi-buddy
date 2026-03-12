@@ -189,7 +189,7 @@ export default function RecurringPage() {
           <Button
             variant="outline"
             onClick={() => setShowGenerateModal(true)}
-            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="generate-month-btn"
           >
             <Calendar size={12} className="mr-1.5" />
@@ -251,7 +251,7 @@ export default function RecurringPage() {
               {recurring.map((item) => (
                 <TableRow
                   key={item.id}
-                  className={`border-white/5 hover:bg-white/3 transition-colors ${!item.is_active ? 'opacity-40' : ''}`}
+                  className={`border-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)] transition-colors ${!item.is_active ? 'opacity-40' : ''}`}
                   data-testid={`recurring-row-${item.id}`}
                 >
                   <TableCell 
@@ -260,7 +260,7 @@ export default function RecurringPage() {
                   >
                     {item.description}
                   </TableCell>
-                  <TableCell className="text-white/60 text-xs font-mono">{item.category}</TableCell>
+                  <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{item.category}</TableCell>
                   <TableCell>
                     <Badge
                       className={
@@ -272,10 +272,10 @@ export default function RecurringPage() {
                       {item.type === "revenue" ? t("revenueType") : t("expense")}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-mono text-sm text-white/60">
+                  <TableCell className="font-mono text-sm text-[var(--color-text-secondary)]">
                     {item.recurrence_day || 1}
                   </TableCell>
-                  <TableCell className={`font-mono text-sm font-bold ${item.type === "revenue" ? "text-[var(--color-success)]" : "text-white/80"}`}>
+                  <TableCell className={`font-mono text-sm font-bold ${item.type === "revenue" ? "text-[var(--color-success)]" : "text-[var(--color-text-primary)]"}`}>
                     {item.type === "revenue" ? "+" : "-"} {formatCHF(item.amount)}
                   </TableCell>
                   <TableCell>
@@ -315,7 +315,7 @@ export default function RecurringPage() {
           
           <div className="space-y-4 py-4">
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase">{t("type")}</Label>
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("type")}</Label>
               <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v, category: "" })}>
                 <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                   <SelectValue />
@@ -328,7 +328,7 @@ export default function RecurringPage() {
             </div>
             
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase">{t("category")}</Label>
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("category")}</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                   <SelectValue placeholder={lang === "fr" ? "Sélectionner" : "Select"} />
@@ -344,7 +344,7 @@ export default function RecurringPage() {
             </div>
             
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase">{t("description")}</Label>
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("description")}</Label>
               <Input
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -355,7 +355,7 @@ export default function RecurringPage() {
             
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase">{t("amount")} (CHF)</Label>
+                <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("amount")} (CHF)</Label>
                 <Input
                   type="number"
                   value={form.amount}
@@ -365,7 +365,7 @@ export default function RecurringPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase">{t("recurrenceDay")}</Label>
+                <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("recurrenceDay")}</Label>
                 <Select value={form.recurrence_day.toString()} onValueChange={(v) => setForm({ ...form, recurrence_day: parseInt(v) })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
@@ -383,7 +383,7 @@ export default function RecurringPage() {
             
             {form.type === "revenue" && (
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase">{t("subType")}</Label>
+                <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("subType")}</Label>
                 <Select value={form.sub_type || "none"} onValueChange={(v) => setForm({ ...form, sub_type: v === "none" ? "" : v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
@@ -402,7 +402,7 @@ export default function RecurringPage() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
-              className="border-[var(--color-border)] text-white/60"
+              className="border-[var(--color-border)] text-[var(--color-text-secondary)]"
             >
               {t("cancel")}
             </Button>
@@ -434,7 +434,7 @@ export default function RecurringPage() {
             
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase">{lang === "fr" ? "Année" : "Year"}</Label>
+                <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{lang === "fr" ? "Année" : "Year"}</Label>
                 <Select value={generateYear.toString()} onValueChange={(v) => setGenerateYear(parseInt(v))}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
@@ -449,7 +449,7 @@ export default function RecurringPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase">{t("month")}</Label>
+                <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("month")}</Label>
                 <Select value={generateMonth.toString()} onValueChange={(v) => setGenerateMonth(parseInt(v))}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
@@ -470,7 +470,7 @@ export default function RecurringPage() {
             <Button
               variant="outline"
               onClick={() => setShowGenerateModal(false)}
-              className="border-[var(--color-border)] text-white/60"
+              className="border-[var(--color-border)] text-[var(--color-text-secondary)]"
             >
               {t("cancel")}
             </Button>
@@ -509,7 +509,7 @@ export default function RecurringPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]">
+            <AlertDialogCancel className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]">
               {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction

@@ -328,7 +328,7 @@ export default function ClientKPIPage() {
             variant="outline"
             size="sm"
             onClick={() => setFilterEngagement("all")}
-            className="border-[var(--color-border)] text-white/70"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)]"
           >
             Réinitialiser filtre
           </Button>
@@ -384,11 +384,11 @@ export default function ClientKPIPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
+                      <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
                         {member.member_type?.replace("Membres ", "")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white/70">{member.membership}</TableCell>
+                    <TableCell className="text-[var(--color-text-secondary)]">{member.membership}</TableCell>
                     <TableCell>
                       <span className="text-white font-medium">{member.totalTrainings}</span>
                       <span className="text-[var(--color-text-secondary)] text-xs ml-1">séances</span>

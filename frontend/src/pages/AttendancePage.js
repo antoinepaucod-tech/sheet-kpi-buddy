@@ -292,7 +292,7 @@ export default function AttendancePage() {
               </tr>
             ) : (
               filteredMembers.map((member) => (
-                <tr key={member.id} className="border-b border-white/5 hover:bg-white/[0.02]" data-testid={`attendance-row-${member.id}`}>
+                <tr key={member.id} className="border-b border-[var(--color-border)] hover:bg-white/[0.02]" data-testid={`attendance-row-${member.id}`}>
                   <td className="py-2 px-4 sticky left-0 bg-[var(--color-bg-secondary)] z-10">
                     <div>
                       <p className="text-white text-sm font-medium">{member.name}</p>
@@ -319,7 +319,7 @@ export default function AttendancePage() {
                     );
                   })}
                   <td className="py-2 px-3 text-center">
-                    <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-[var(--color-accent)]/20 text-[var(--color-info)]" : "bg-white/5 text-[var(--color-text-tertiary)]"}`}>
+                    <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-[var(--color-accent)]/20 text-[var(--color-info)]" : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)]"}`}>
                       {memberTotals[member.id] || 0}
                     </Badge>
                   </td>

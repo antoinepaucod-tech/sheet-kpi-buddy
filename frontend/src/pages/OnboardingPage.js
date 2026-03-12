@@ -277,7 +277,7 @@ export default function OnboardingPage() {
             <AlertTriangle className="text-[var(--color-danger)]" size={24} />
             <div>
               <p className="text-[var(--color-danger)] font-medium">Actions requises</p>
-              <p className="text-white/70 text-sm">
+              <p className="text-[var(--color-text-secondary)] text-sm">
                 {alerts.late_payments > 0 && `${alerts.late_payments} paiements en retard`}
                 {alerts.late_payments > 0 && alerts.missed_followups > 0 && " • "}
                 {alerts.missed_followups > 0 && `${alerts.missed_followups} suivis manqués`}
@@ -332,7 +332,7 @@ export default function OnboardingPage() {
           <TabsTrigger value="onboarding" className="data-[state=active]:bg-[var(--color-accent)]">Onboarding ({stats.pendingOnboarding})</TabsTrigger>
           <TabsTrigger value="upcoming" className="data-[state=active]:bg-[var(--color-accent)]">À venir ({stats.upcomingFollowups})</TabsTrigger>
           <TabsTrigger value="missed" className="data-[state=active]:bg-[var(--color-danger)]">Manqués ({stats.missedFollowups})</TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-white/20">Historique</TabsTrigger>
+          <TabsTrigger value="history" className="data-[state=active]:bg-[var(--color-bg-tertiary)]">Historique</TabsTrigger>
         </TabsList>
 
         {/* Onboarding Tab */}
@@ -348,7 +348,7 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="flex items-center gap-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] px-4 py-2 border border-[var(--color-border)]">
-              <label className="text-white/70 text-sm">Afficher les complétés</label>
+              <label className="text-[var(--color-text-secondary)] text-sm">Afficher les complétés</label>
               <Switch
                 checked={showCompleted}
                 onCheckedChange={setShowCompleted}
@@ -458,8 +458,8 @@ export default function OnboardingPage() {
                               isStepCompleted
                                 ? "bg-[var(--color-success)]/10 border-[var(--color-success)]/30"
                                 : isCompleted 
-                                  ? "bg-white/5 border-[var(--color-border)] opacity-50"
-                                  : "bg-white/5 border-[var(--color-border)] hover:border-[var(--color-accent)]/50 cursor-pointer"
+                                  ? "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] opacity-50"
+                                  : "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] hover:border-[var(--color-accent)]/50 cursor-pointer"
                             }`}
                             data-testid={`step-${step.key}-${member.id}`}
                           >
@@ -471,7 +471,7 @@ export default function OnboardingPage() {
                                 <Circle size={16} className="text-[var(--color-text-tertiary)]" />
                               )}
                             </div>
-                            <p className={`text-xs ${isStepCompleted ? "text-[var(--color-success)]" : "text-white/70"}`}>
+                            <p className={`text-xs ${isStepCompleted ? "text-[var(--color-success)]" : "text-[var(--color-text-secondary)]"}`}>
                               {step.label}
                             </p>
                           </div>
@@ -519,12 +519,12 @@ export default function OnboardingPage() {
                       <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                         <TableCell className="text-white font-medium">{followup.member_name}</TableCell>
                         <TableCell>
-                          <div className="text-white/70 text-sm">
+                          <div className="text-[var(--color-text-secondary)] text-sm">
                             <p>{followup.member_email}</p>
                             <p>{followup.member_phone}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
@@ -533,7 +533,7 @@ export default function OnboardingPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
+                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
                             {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
                           </Badge>
                         </TableCell>
@@ -590,11 +590,11 @@ export default function OnboardingPage() {
                       <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                         <TableCell className="text-white font-medium">{followup.member_name}</TableCell>
                         <TableCell>
-                          <div className="text-white/70 text-sm">
+                          <div className="text-[var(--color-text-secondary)] text-sm">
                             <p>{followup.member_email}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-white/70">
+                        <TableCell className="text-[var(--color-text-secondary)]">
                           {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
@@ -603,7 +603,7 @@ export default function OnboardingPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
+                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
                             {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
                           </Badge>
                         </TableCell>
@@ -667,11 +667,11 @@ export default function OnboardingPage() {
                   allFollowups.slice(0, 50).map((followup) => (
                     <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                       <TableCell className="text-white font-medium">{getMemberName(followup.member_id)}</TableCell>
-                      <TableCell className="text-white/70">
+                      <TableCell className="text-[var(--color-text-secondary)]">
                         {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
+                        <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
                           {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
                         </Badge>
                       </TableCell>

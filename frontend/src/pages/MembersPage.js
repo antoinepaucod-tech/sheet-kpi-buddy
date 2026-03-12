@@ -442,11 +442,11 @@ export default function MembersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
+                      <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
                         {member.member_type?.replace("Membres ", "")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white/70">
+                    <TableCell className="text-[var(--color-text-secondary)]">
                       <div className="flex items-center gap-1.5">
                         {member.membership}
                         {member.is_duo && (
@@ -454,12 +454,12 @@ export default function MembersPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-white/70">
+                    <TableCell className="text-[var(--color-text-secondary)]">
                       {member.contract_signed_date
                         ? format(parseISO(member.contract_signed_date), "dd MMM yyyy", { locale: fr })
                         : "-"}
                     </TableCell>
-                    <TableCell className="text-white/70">
+                    <TableCell className="text-[var(--color-text-secondary)]">
                       {member.subscription_end_date
                         ? format(parseISO(member.subscription_end_date), "dd MMM yyyy", { locale: fr })
                         : "-"}
@@ -521,7 +521,7 @@ export default function MembersPage() {
                             </div>
                             <div>
                               <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Notes</p>
-                              <p className="text-white/70 text-sm">{member.notes || "Aucune note"}</p>
+                              <p className="text-[var(--color-text-secondary)] text-sm">{member.notes || "Aucune note"}</p>
                             </div>
                           </div>
                           {renewals.length > 0 && (
@@ -531,7 +531,7 @@ export default function MembersPage() {
                                 {renewals.map((r) => (
                                   <div key={r.id} className="flex items-center gap-4 text-sm">
                                     <CheckCircle2 size={14} className="text-[var(--color-success)]" />
-                                    <span className="text-white/70">{r.renewal_duration}</span>
+                                    <span className="text-[var(--color-text-secondary)]">{r.renewal_duration}</span>
                                     <span className="text-[var(--color-text-secondary)]">→</span>
                                     <span className="text-white">{r.new_end_date}</span>
                                     <span className="text-[var(--color-text-tertiary)] text-xs">
@@ -689,7 +689,7 @@ export default function MembersPage() {
             {/* Billing Section - Read-only when membership type is selected */}
             <div className="border-t border-[var(--color-border)] pt-4 mt-4">
               <div className="flex items-center justify-between mb-3">
-                <label className="text-white/70 text-sm flex items-center gap-2">
+                <label className="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
                   <CreditCard size={14} className="text-[var(--color-success)]" />
                   Facturation récurrente
                 </label>
@@ -787,7 +787,7 @@ export default function MembersPage() {
             {/* Review Section - Choose frequency */}
             <div className="border-t border-[var(--color-border)] pt-4">
               <div className="flex items-center justify-between mb-3">
-                <label className="text-white/70 text-sm flex items-center gap-2">
+                <label className="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
                   <ClipboardCheck size={14} className="text-[var(--color-info)]" />
                   Suivi / Bilan (poids, nutrition, programme)
                 </label>
@@ -942,7 +942,7 @@ export default function MembersPage() {
               {/* Billing cycle update option */}
               <div className="border-t border-[var(--color-border)] pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-white/70 text-sm flex items-center gap-2">
+                  <label className="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
                     <CreditCard size={14} className="text-[var(--color-success)]" />
                     Modifier le cycle de facturation
                   </label>

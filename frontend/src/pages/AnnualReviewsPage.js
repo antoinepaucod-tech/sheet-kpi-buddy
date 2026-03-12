@@ -290,7 +290,7 @@ export default function AnnualReviewsPage() {
     }
 
     return (
-      <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-white/60 border-0">
+      <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] border-0">
         Planifié
       </Badge>
     );
@@ -453,7 +453,7 @@ export default function AnnualReviewsPage() {
                       {TYPE_LABELS[review.review_type] || "Annuel"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-white/70">
+                  <TableCell className="text-[var(--color-text-secondary)]">
                     {format(parseISO(review.review_date), "dd MMMM yyyy", { locale: fr })}
                   </TableCell>
                   <TableCell>{getStatusBadge(review)}</TableCell>
@@ -546,7 +546,7 @@ export default function AnnualReviewsPage() {
 
               {/* Weight Section */}
               <div>
-                <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-3">
                   <Weight size={16} className="text-[var(--color-accent)]" />
                   Suivi du poids
                 </h3>
@@ -611,7 +611,7 @@ export default function AnnualReviewsPage() {
 
               {/* Nutrition Section */}
               <div>
-                <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-3">
                   <Utensils size={16} className="text-[var(--color-success)]" />
                   Nutrition
                 </h3>
@@ -659,7 +659,7 @@ export default function AnnualReviewsPage() {
 
               {/* Program Section */}
               <div>
-                <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-3">
                   <Dumbbell size={16} className="text-[var(--color-warning)]" />
                   Programme d'entraînement
                 </h3>
@@ -696,7 +696,7 @@ export default function AnnualReviewsPage() {
 
               {/* Goals Section */}
               <div>
-                <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-3">
                   <Target size={16} className="text-[var(--color-info)]" />
                   Objectifs
                 </h3>
@@ -724,7 +724,7 @@ export default function AnnualReviewsPage() {
 
               {/* Notes Section */}
               <div>
-                <h3 className="text-white/70 text-sm font-medium mb-3">Notes</h3>
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium mb-3">Notes</h3>
                 <div className="space-y-3">
                   <div>
                     <label className="text-[var(--color-text-secondary)] text-xs">Notes du coach</label>
@@ -818,7 +818,7 @@ export default function AnnualReviewsPage() {
               {/* Weight Summary */}
               {(selectedReview.weight_start || selectedReview.weight_current) && (
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
-                  <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-3">
                     <Weight size={16} className="text-[var(--color-accent)]" />
                     Évolution du poids
                   </h3>
@@ -848,20 +848,20 @@ export default function AnnualReviewsPage() {
               {/* Nutrition */}
               {(selectedReview.nutrition_current || selectedReview.nutrition_adjustments) && (
                 <div>
-                  <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-2">
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-2">
                     <Utensils size={16} className="text-[var(--color-success)]" />
                     Nutrition
                   </h3>
                   {selectedReview.nutrition_current && (
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3 mb-2">
                       <p className="text-[var(--color-text-secondary)] text-xs mb-1">Régime actuel</p>
-                      <p className="text-white/80 text-sm">{selectedReview.nutrition_current}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.nutrition_current}</p>
                     </div>
                   )}
                   {selectedReview.nutrition_adjustments && (
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs mb-1">Ajustements</p>
-                      <p className="text-white/80 text-sm">{selectedReview.nutrition_adjustments}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.nutrition_adjustments}</p>
                     </div>
                   )}
                 </div>
@@ -870,20 +870,20 @@ export default function AnnualReviewsPage() {
               {/* Program */}
               {(selectedReview.current_program || selectedReview.program_adjustments) && (
                 <div>
-                  <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-2">
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-2">
                     <Dumbbell size={16} className="text-[var(--color-warning)]" />
                     Programme
                   </h3>
                   {selectedReview.current_program && (
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3 mb-2">
                       <p className="text-[var(--color-text-secondary)] text-xs mb-1">Programme</p>
-                      <p className="text-white/80 text-sm">{selectedReview.current_program}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.current_program}</p>
                     </div>
                   )}
                   {selectedReview.program_adjustments && (
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs mb-1">Modifications</p>
-                      <p className="text-white/80 text-sm">{selectedReview.program_adjustments}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.program_adjustments}</p>
                     </div>
                   )}
                 </div>
@@ -892,20 +892,20 @@ export default function AnnualReviewsPage() {
               {/* Goals */}
               {(selectedReview.goals_achieved || selectedReview.new_goals) && (
                 <div>
-                  <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-2">
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-2">
                     <Target size={16} className="text-[var(--color-info)]" />
                     Objectifs
                   </h3>
                   {selectedReview.goals_achieved && (
                     <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-3 mb-2">
                       <p className="text-[var(--color-success)] text-xs mb-1">Objectifs atteints</p>
-                      <p className="text-white/80 text-sm">{selectedReview.goals_achieved}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.goals_achieved}</p>
                     </div>
                   )}
                   {selectedReview.new_goals && (
                     <div className="bg-[var(--color-info)]/10 border border-[var(--color-info)]/20 rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-info)] text-xs mb-1">Nouveaux objectifs</p>
-                      <p className="text-white/80 text-sm">{selectedReview.new_goals}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.new_goals}</p>
                     </div>
                   )}
                 </div>
@@ -914,17 +914,17 @@ export default function AnnualReviewsPage() {
               {/* Notes */}
               {(selectedReview.coach_notes || selectedReview.member_feedback) && (
                 <div>
-                  <h3 className="text-white/70 text-sm font-medium mb-2">Notes</h3>
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium mb-2">Notes</h3>
                   {selectedReview.coach_notes && (
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3 mb-2">
                       <p className="text-[var(--color-text-secondary)] text-xs mb-1">Notes du coach</p>
-                      <p className="text-white/80 text-sm">{selectedReview.coach_notes}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.coach_notes}</p>
                     </div>
                   )}
                   {selectedReview.member_feedback && (
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs mb-1">Retour du membre</p>
-                      <p className="text-white/80 text-sm">{selectedReview.member_feedback}</p>
+                      <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.member_feedback}</p>
                     </div>
                   )}
                 </div>
@@ -952,7 +952,7 @@ export default function AnnualReviewsPage() {
             <div className="space-y-6 py-4">
               {/* Weight Chart */}
               <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
-                <h3 className="text-white/70 text-sm font-medium mb-3">Evolution du poids (kg)</h3>
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium mb-3">Evolution du poids (kg)</h3>
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={historyData.reviews.filter(r => r.weight_current).map(r => ({
                     date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
@@ -973,7 +973,7 @@ export default function AnnualReviewsPage() {
               {/* Body Composition Chart */}
               {historyData.reviews.some(r => r.body_fat_percentage || r.muscle_mass) && (
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
-                  <h3 className="text-white/70 text-sm font-medium mb-3">Composition corporelle</h3>
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium mb-3">Composition corporelle</h3>
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={historyData.reviews.filter(r => r.body_fat_percentage || r.muscle_mass).map(r => ({
                       date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
@@ -995,7 +995,7 @@ export default function AnnualReviewsPage() {
               {/* Training Frequency */}
               {historyData.reviews.some(r => r.training_frequency) && (
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
-                  <h3 className="text-white/70 text-sm font-medium mb-3">Fréquence d'entraînement (séances/semaine)</h3>
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium mb-3">Fréquence d'entraînement (séances/semaine)</h3>
                   <ResponsiveContainer width="100%" height={180}>
                     <LineChart data={historyData.reviews.filter(r => r.training_frequency).map(r => ({
                       date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
@@ -1013,7 +1013,7 @@ export default function AnnualReviewsPage() {
 
               {/* Summary Table */}
               <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
-                <h3 className="text-white/70 text-sm font-medium mb-3">Résumé des bilans</h3>
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium mb-3">Résumé des bilans</h3>
                 <Table>
                   <TableHeader>
                     <TableRow className="border-[var(--color-border)]">
@@ -1025,8 +1025,8 @@ export default function AnnualReviewsPage() {
                   </TableHeader>
                   <TableBody>
                     {historyData.reviews.map((r) => (
-                      <TableRow key={r.id} className="border-white/5">
-                        <TableCell className="text-white/70 text-sm">
+                      <TableRow key={r.id} className="border-[var(--color-border)]">
+                        <TableCell className="text-[var(--color-text-secondary)] text-sm">
                           {r.review_date ? format(parseISO(r.review_date), "dd MMM yyyy", { locale: fr }) : "-"}
                         </TableCell>
                         <TableCell className="text-white font-medium">{r.weight_current || "-"} kg</TableCell>

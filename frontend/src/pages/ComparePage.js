@@ -41,7 +41,7 @@ const ChartTooltip = ({ active, payload, label }) => {
       <p className="text-[var(--color-text-secondary)] mb-2 uppercase tracking-wider">{label}</p>
       {payload.map((item, i) => (
         <div key={i} className="flex justify-between gap-6" style={{ color: item.color }}>
-          <span className="text-white/70">{item.name}</span>
+          <span className="text-[var(--color-text-secondary)]">{item.name}</span>
           <span className="font-bold">{formatCHF(item.value)}</span>
         </div>
       ))}
@@ -199,7 +199,7 @@ export default function ComparePage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)]"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]"
           >
             <ArrowLeft size={14} className="mr-1.5" />
             {lang === "fr" ? "Retour" : "Back"}
@@ -254,7 +254,7 @@ export default function ComparePage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setQuickRange(m)}
-                className="text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs px-2 h-7"
+                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs px-2 h-7"
               >
                 {m}M
               </Button>
@@ -263,7 +263,7 @@ export default function ComparePage() {
               variant="ghost"
               size="sm"
               onClick={() => { setStartMonth(kpis[0]?.month || ""); setEndMonth(kpis[kpis.length-1]?.month || ""); }}
-              className="text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs px-2 h-7"
+              className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs px-2 h-7"
             >
               {lang === "fr" ? "Tout" : "All"}
             </Button>
@@ -323,7 +323,7 @@ export default function ComparePage() {
             <p className="text-lg font-display font-extrabold text-[var(--color-success)]">
               {formatMonthLabel(summary.best.month, lang)}
             </p>
-            <p className="text-sm text-white/60">{formatCHF(summary.best.total_revenue)}</p>
+            <p className="text-sm text-[var(--color-text-secondary)]">{formatCHF(summary.best.total_revenue)}</p>
           </div>
           <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -333,7 +333,7 @@ export default function ComparePage() {
             <p className="text-lg font-display font-extrabold text-[var(--color-danger)]">
               {formatMonthLabel(summary.worst.month, lang)}
             </p>
-            <p className="text-sm text-white/60">{formatCHF(summary.worst.total_revenue)}</p>
+            <p className="text-sm text-[var(--color-text-secondary)]">{formatCHF(summary.worst.total_revenue)}</p>
           </div>
         </div>
       )}
@@ -478,31 +478,31 @@ export default function ComparePage() {
             </thead>
             <tbody>
               {chartData.map((row, i) => (
-                <tr key={row.month} className="border-b border-white/5 hover:bg-white/3">
+                <tr key={row.month} className="border-b border-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)]">
                   <td className="p-3 text-white font-medium">{row.label}</td>
-                  <td className="p-3 text-right text-white/80 font-mono">{formatCHF(row.revenue)}</td>
-                  <td className="p-3 text-right text-white/60 font-mono">{formatCHF(row.expenses)}</td>
+                  <td className="p-3 text-right text-[var(--color-text-primary)] font-mono">{formatCHF(row.revenue)}</td>
+                  <td className="p-3 text-right text-[var(--color-text-secondary)] font-mono">{formatCHF(row.expenses)}</td>
                   <td className={`p-3 text-right font-mono font-bold ${row.profit >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
                     {formatCHF(row.profit)}
                   </td>
-                  <td className="p-3 text-right text-white/60 font-mono">{row.members}</td>
-                  <td className="p-3 text-right text-white/60 font-mono">{row.churn.toFixed(2)}%</td>
-                  <td className="p-3 text-right text-white/60 font-mono">{row.roas.toFixed(1)}x</td>
+                  <td className="p-3 text-right text-[var(--color-text-secondary)] font-mono">{row.members}</td>
+                  <td className="p-3 text-right text-[var(--color-text-secondary)] font-mono">{row.churn.toFixed(2)}%</td>
+                  <td className="p-3 text-right text-[var(--color-text-secondary)] font-mono">{row.roas.toFixed(1)}x</td>
                 </tr>
               ))}
             </tbody>
             {summary && (
               <tfoot>
-                <tr className="bg-white/5 font-bold">
+                <tr className="bg-[rgba(255,255,255,0.05)] font-bold">
                   <td className="p-3 text-white uppercase">Total / Moy.</td>
                   <td className="p-3 text-right text-white font-mono">{formatCHF(summary.total.revenue)}</td>
-                  <td className="p-3 text-right text-white/80 font-mono">{formatCHF(summary.total.expenses)}</td>
+                  <td className="p-3 text-right text-[var(--color-text-primary)] font-mono">{formatCHF(summary.total.expenses)}</td>
                   <td className={`p-3 text-right font-mono ${summary.total.profit >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
                     {formatCHF(summary.total.profit)}
                   </td>
-                  <td className="p-3 text-right text-white/60 font-mono">-</td>
-                  <td className="p-3 text-right text-white/60 font-mono">{summary.avg.churn.toFixed(2)}%</td>
-                  <td className="p-3 text-right text-white/60 font-mono">{summary.avg.roas.toFixed(1)}x</td>
+                  <td className="p-3 text-right text-[var(--color-text-secondary)] font-mono">-</td>
+                  <td className="p-3 text-right text-[var(--color-text-secondary)] font-mono">{summary.avg.churn.toFixed(2)}%</td>
+                  <td className="p-3 text-right text-[var(--color-text-secondary)] font-mono">{summary.avg.roas.toFixed(1)}x</td>
                 </tr>
               </tfoot>
             )}

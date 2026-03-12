@@ -83,7 +83,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
         <div className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider">
                 {t("type")} *
               </Label>
               <Select
@@ -108,7 +108,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider">
                 {t("date")} *
               </Label>
               <Input
@@ -122,7 +122,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-white/60 text-xs uppercase tracking-wider">
+            <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider">
               {t("description")} *
             </Label>
             <Input
@@ -136,7 +136,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider">
                 {t("amount")} (CHF) *
               </Label>
               <Input
@@ -150,7 +150,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider">
                 {t("category")} *
               </Label>
               <Select
@@ -186,7 +186,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
 
           {form.type === "revenue" && (
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider">
                 {t("subType")}
               </Label>
               <Select
@@ -222,7 +222,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
           <Button
             variant="outline"
             onClick={onClose}
-            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]"
             data-testid="tx-cancel-btn"
           >
             {t("cancel")}

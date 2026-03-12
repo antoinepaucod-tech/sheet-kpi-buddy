@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 
 const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue }) => (
-  <div className="bg-[var(--color-bg-secondary)] border border-white/5 p-3 rounded-[var(--radius-lg)]">
+  <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)]">
     <div className="flex items-center gap-2 mb-1">
       {Icon && <Icon size={12} className="text-[var(--color-text-tertiary)]" />}
       <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</span>
@@ -19,7 +19,7 @@ const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue }) =
 const SectionTitle = ({ children }) => (
   <div className="flex items-center gap-2 mb-3 mt-5">
     <div className="w-1 h-4 bg-[var(--color-accent)] rounded-full" />
-    <h3 className="text-xs font-display font-bold text-white/60 uppercase tracking-wider">{children}</h3>
+    <h3 className="text-xs font-display font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">{children}</h3>
   </div>
 );
 

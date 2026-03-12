@@ -231,7 +231,7 @@ export default function NotificationsPage() {
         ) : filteredLogs.length === 0 ? (
           <div className="text-center text-[var(--color-text-secondary)] py-12">
             <Mail className="mx-auto mb-3 opacity-30" size={40} />
-            <p>Aucun email envoyé</p>
+            <p>Aucun message — envoyez votre premiere notification.</p>
           </div>
         ) : (
           filteredLogs.map((log) => {
@@ -272,7 +272,7 @@ export default function NotificationsPage() {
                   </div>
                 </div>
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-white/5 pt-3">
+                  <div className="px-4 pb-4 border-t border-[var(--color-border)] pt-3">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-[var(--color-text-secondary)] text-xs">Destinataire</p>
@@ -297,7 +297,7 @@ export default function NotificationsPage() {
                       {log.reference_id && (
                         <div className="col-span-2">
                           <p className="text-[var(--color-text-secondary)] text-xs">Référence</p>
-                          <p className="text-white/60 text-xs font-mono">{log.reference_id}</p>
+                          <p className="text-[var(--color-text-secondary)] text-xs font-mono">{log.reference_id}</p>
                         </div>
                       )}
                     </div>

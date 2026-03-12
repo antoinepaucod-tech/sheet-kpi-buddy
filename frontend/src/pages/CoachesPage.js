@@ -278,7 +278,7 @@ export default function CoachesPage() {
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {(coach.specialties || []).slice(0, 3).map((s) => (
-                        <Badge key={s} variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-white/70 border-0 text-xs">
+                        <Badge key={s} variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] border-0 text-xs">
                           {s}
                         </Badge>
                       ))}
@@ -313,7 +313,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]"
+                        className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[rgba(255,255,255,0.1)]"
                         onClick={() => openEditModal(coach)}
                         data-testid={`edit-${coach.id}`}
                       >
@@ -401,7 +401,7 @@ export default function CoachesPage() {
                     className={`px-3 py-1 rounded-full text-sm transition-all ${
                       (formData.specialties || []).includes(specialty)
                         ? "bg-[var(--color-warning)] text-white"
-                        : "bg-[rgba(255,255,255,0.1)] text-white/70 hover:bg-white/20"
+                        : "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)]"
                     }`}
                   >
                     {specialty}
@@ -435,7 +435,7 @@ export default function CoachesPage() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <label className="text-white/70 text-sm">Actif</label>
+              <label className="text-[var(--color-text-secondary)] text-sm">Actif</label>
               <Switch
                 checked={formData.is_active}
                 onCheckedChange={(v) => setFormData({ ...formData, is_active: v })}

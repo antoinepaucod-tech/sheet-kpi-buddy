@@ -102,7 +102,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
         <div className="flex-1 overflow-auto space-y-4 py-2">
           {/* File format hint */}
           <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3 text-xs font-mono text-[var(--color-text-secondary)]">
-            <p className="text-white/70 mb-1">Format attendu (séparateur = ;) :</p>
+            <p className="text-[var(--color-text-secondary)] mb-1">Format attendu (séparateur = ;) :</p>
             <p>Date ; Description ; Catégorie ; Type ; Sous-type ; Montant (CHF)</p>
             <p className="mt-1 text-[var(--color-success)]/60">Compatible avec l'export de cette app (CSV)</p>
           </div>
@@ -156,16 +156,16 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
                   </thead>
                   <tbody>
                     {rows.slice(0, 20).map((row, i) => (
-                      <tr key={i} className="border-b border-white/5">
+                      <tr key={i} className="border-b border-[var(--color-border)]">
                         <td className="px-3 py-1.5 text-[var(--color-text-secondary)]">{row.date}</td>
                         <td className="px-3 py-1.5 text-white truncate max-w-[160px]">{row.description}</td>
-                        <td className="px-3 py-1.5 text-white/60">{row.category}</td>
+                        <td className="px-3 py-1.5 text-[var(--color-text-secondary)]">{row.category}</td>
                         <td className="px-3 py-1.5">
                           <Badge className={row.type === "revenue" ? "bg-[var(--color-success)]/10 text-[var(--color-success)] text-xs" : "bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs"}>
                             {row.type}
                           </Badge>
                         </td>
-                        <td className={`px-3 py-1.5 font-bold ${row.type === "revenue" ? "text-[var(--color-success)]" : "text-white/70"}`}>
+                        <td className={`px-3 py-1.5 font-bold ${row.type === "revenue" ? "text-[var(--color-success)]" : "text-[var(--color-text-secondary)]"}`}>
                           {formatCHF(row.amount)}
                         </td>
                       </tr>
@@ -200,7 +200,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
           <Button
             variant="outline"
             onClick={handleClose}
-            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]"
           >
             {result ? (lang === "fr" ? "Fermer" : "Close") : t("cancel")}
           </Button>

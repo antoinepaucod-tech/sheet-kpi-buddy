@@ -108,7 +108,7 @@ export default function TransactionsPage({ selectedMonth }) {
           <Button
             variant="outline"
             onClick={() => setShowImport(true)}
-            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="import-csv-btn"
           >
             <Upload size={12} className="mr-1.5" />
@@ -117,7 +117,7 @@ export default function TransactionsPage({ selectedMonth }) {
           <Button
             variant="outline"
             onClick={exportCSV}
-            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="export-csv-btn"
           >
             <Download size={12} className="mr-1.5" />
@@ -216,10 +216,10 @@ export default function TransactionsPage({ selectedMonth }) {
               {filtered.map((tx) => (
                 <TableRow
                   key={tx.id}
-                  className="border-white/5 hover:bg-white/3 transition-colors"
+                  className="border-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)] transition-colors"
                   data-testid={`tx-row-${tx.id}`}
                 >
-                  <TableCell className="font-mono text-sm text-white/60">{tx.date}</TableCell>
+                  <TableCell className="font-mono text-sm text-[var(--color-text-secondary)]">{tx.date}</TableCell>
                   <TableCell className="text-white text-sm">{tx.description}</TableCell>
                   <TableCell>
                     <span
@@ -247,7 +247,7 @@ export default function TransactionsPage({ selectedMonth }) {
                   </TableCell>
                   <TableCell
                     className={`font-mono text-sm font-bold ${
-                      tx.type === "revenue" ? "text-[var(--color-success)]" : "text-white/80"
+                      tx.type === "revenue" ? "text-[var(--color-success)]" : "text-[var(--color-text-primary)]"
                     }`}
                   >
                     {tx.type === "revenue" ? "+" : "-"} {formatCHF(tx.amount)}
@@ -303,10 +303,10 @@ export default function TransactionsPage({ selectedMonth }) {
                 {excluded.map((ex) => (
                   <TableRow
                     key={ex.id}
-                    className="border-white/5 opacity-60"
+                    className="border-[var(--color-border)] opacity-60"
                     data-testid={`excluded-row-${ex.id}`}
                   >
-                    <TableCell className="text-white/60 text-sm line-through">{ex.description}</TableCell>
+                    <TableCell className="text-[var(--color-text-secondary)] text-sm line-through">{ex.description}</TableCell>
                     <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{ex.category}</TableCell>
                     <TableCell>
                       <Badge
@@ -355,7 +355,7 @@ export default function TransactionsPage({ selectedMonth }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
+              className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]"
               data-testid="delete-cancel-btn"
             >
               {t("cancel")}
