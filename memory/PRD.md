@@ -36,6 +36,7 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 - Renewal workflow with history
 - Billing Cycle Integration (monthly_day, interval_days)
 - Review frequency: monthly, quarterly, semi-annually, annually
+- **Duo Subscriptions**: 2 members linked, 1 price, auto-partner creation
 
 ### 6. Payment System
 - Payment Schedules: Define recurring payments per member
@@ -47,25 +48,25 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 - 5-Step Onboarding Checklist
 - Follow-up Scheduling (monthly, onboarding, renewal, payment)
 
-### 8. 6 Weeks Challenge (UPDATED March 2025)
-- **Challenge types**: Fixed dates (group) or Personal (individual start dates)
-- **Check-in goals**: Configurable weekly check-in target (1-7)
+### 8. 6 Weeks Challenge
+- Challenge types: Fixed dates (group) or Personal (individual start dates)
+- Check-in goals: Configurable weekly check-in target (1-7)
 - Participant management with personal dates
-- **Dual tracking**: Boolean week completion + Detailed weekly check-in counters
+- Dual tracking: Boolean week completion + Detailed weekly check-in counters
 - Progress tracking per participant
 
-### 9. Bilans / Suivis (UPDATED March 2025)
-- **Multi-frequency**: Monthly, Quarterly, Semi-annual, Annual reviews
-- **Type-based filtering** and color-coded badges
+### 9. Bilans / Suivis
+- Multi-frequency: Monthly, Quarterly, Semi-annual, Annual reviews
+- Type-based filtering and color-coded badges
 - Weight, nutrition, and training program tracking
 - Auto-schedule next review based on frequency
-- Complete review form with all metrics
+- **History Charts**: LineChart evolution for weight, body composition, training frequency
 
 ### 10. Course KPIs
 - Course definition by day/time slot
 - Instructor/Coach assignment with hourly rates
 - 5-Week Attendance Tracking (S1-S5)
-- **Salary expense generation**: Auto-generate coach salary expenses from courses
+- Salary expense generation: Auto-generate coach salary expenses from courses
 
 ### 11. Client KPIs
 - Weekly training tracking per member
@@ -76,8 +77,8 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 - Replacement tracking
 - Integration with Course KPIs
 
-### 13. Data Reset (NEW March 2025)
-- Reset all transactional data (members, payments, KPIs, etc.)
+### 13. Data Reset
+- Reset all transactional data
 - Keep user account, settings, categories, types
 - Requires "RESET" confirmation
 
@@ -90,10 +91,10 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 
 ## Technical Architecture
 
-### Backend (FastAPI)
+### Backend (FastAPI) - FULLY REFACTORED
 ```
 /app/backend/
-├── server.py              # Main routes (KPIs, transactions, courses, etc.)
+├── server.py              # ~210 lines (seed, settings, init only)
 ├── core/
 │   ├── config.py          # Database & constants
 │   └── security.py        # JWT & password handling
@@ -101,7 +102,7 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 │   ├── auth.py
 │   ├── kpi.py
 │   ├── transactions.py
-│   ├── members.py         # + review_frequency
+│   ├── members.py         # + is_duo, duo_partner_id, duo_primary, review_frequency
 │   ├── challenges.py      # + challenge_type, checkins_goal, personal dates
 │   ├── courses.py
 │   ├── payments.py
@@ -111,14 +112,20 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 │   └── settings.py
 ├── routers/
 │   ├── auth.py
-│   ├── members.py
+│   ├── members.py         # + duo auto-partner creation
 │   ├── payments.py
-│   ├── annual_reviews.py  # Multi-frequency reviews
+│   ├── annual_reviews.py  # + history endpoint + multi-frequency
 │   ├── followups.py
 │   ├── onboarding.py
-│   ├── settings.py        # + reset-data endpoint
+│   ├── settings.py        # + reset-data
 │   ├── coaches.py
-│   └── challenges.py      # NEW - extracted from server.py
+│   ├── challenges.py      # Extracted from server.py
+│   ├── kpis.py            # NEW - Extracted from server.py
+│   ├── transactions.py    # NEW - Extracted from server.py
+│   ├── trainings.py       # NEW - Extracted from server.py
+│   ├── courses.py         # NEW - Extracted from server.py
+│   ├── alerts.py          # NEW - Extracted from server.py
+│   └── reports.py         # NEW - Extracted from server.py
 └── tests/
 ```
 
@@ -128,11 +135,11 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 ├── pages/
 │   ├── Dashboard.js
 │   ├── ComparePage.js
-│   ├── MembersPage.js        # + review_frequency selector
+│   ├── MembersPage.js        # + duo checkbox, partner fields, DUO badge
 │   ├── PaymentsPage.js
 │   ├── OnboardingPage.js
-│   ├── AnnualReviewsPage.js  # Renamed "Bilans / Suivis" + type filter
-│   ├── ChallengePage.js      # + challenge_type, checkins_goal, personal dates
+│   ├── AnnualReviewsPage.js  # + type filter, history charts (LineChart)
+│   ├── ChallengePage.js      # + challenge_type, personal dates
 │   ├── CoursesPage.js        # + salary generation button
 │   ├── CoachesPage.js
 │   ├── ClientKPIPage.js
@@ -149,76 +156,26 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 └── hooks/
 ```
 
-## Changelog
-
-### March 2025 - Session 4 (Current)
-- ✅ **Phase 3: 6 Weeks Challenge Enhancement**
-  - challenge_type: "fixed" (group dates) or "personal" (individual dates)
-  - checkins_goal: configurable 1-7 check-ins per week
-  - personal_start_date / personal_end_date per participant
-  - week1_checkins...week6_checkins integer counters (0-7)
-  - Detailed check-in modal with weekly counters
-  - Type badges in challenge list (Date fixe / Personnel)
-  - Extracted routes from server.py to routers/challenges.py
-  
-- ✅ **Phase 4: Reviews/Bilans Enhancement**
-  - Renamed "Bilans Annuels" to "Bilans / Suivis"
-  - review_type field: monthly, quarterly, semi-annually, annually
-  - review_frequency on member model
-  - Type filter dropdown in reviews page
-  - Color-coded type badges (Mensuel/Trimestriel/Semestriel/Annuel)
-  - Auto-schedule next review based on frequency after completion
-  - Updated sidebar navigation label
-  
-- ✅ **Phase 5: Data Reset**
-  - POST /api/settings/reset-data with {confirm: "RESET"}
-  - Deletes all transactional data while keeping config
-  - Settings page "Zone dangereuse" section with confirmation modal
-  
-- ✅ **Coach Salary Integration**
-  - POST /api/courses/generate-salary-expenses/{year}/{month}
-  - Calculates coach remuneration from course hours × hourly rate
-  - Auto-creates "SALAIRES COACHS" category
-  - Generates expense transactions per coach
-  - "Générer dépenses salaires coachs" button on Courses page
-
-### March 2025 - Session 3
-- ✅ Billing Cycle integration
-- ✅ Annual Reviews dashboard
-- ✅ Backend refactoring to modular routers
-- ✅ Settings/Types configuration
-- ✅ UX improvements (member form, onboarding)
-
-### December 2024 - Session 2
-- ✅ Payment System
-- ✅ Onboarding 5-step checklist
-- ✅ Follow-up scheduling
-- ✅ Alerts summary
-
-### December 2024 - Session 1
-- ✅ Members, Challenges, Courses, Client KPIs
-- ✅ Backend modular structure
-
 ## Backlog
 
 ### P1 - High Priority
-- [ ] Finaliser la refactorisation backend (migrer routes restantes de server.py)
+- [ ] Saisie globale des séances (vue tableau de présence)
+- [ ] Intégration API Bsport (en attente des infos utilisateur)
 - [ ] Email notifications (Resend - en attente clé API)
 - [ ] Export member data to CSV
 
 ### P2 - Medium Priority
-- [ ] Graphiques d'évolution pour l'historique des bilans
 - [ ] Alertes WhatsApp via Twilio (en attente instructions utilisateur)
-- [ ] Interface de migration de données "Lovable"
+- [ ] Interface de migration de données
 - [ ] Real-time updates with WebSockets
 - [ ] Automatisation des renouvellements d'abonnements
 
 ### P3 - Low Priority
 - [ ] Mobile app / PWA
-- [ ] Integration with booking systems (bsport, hubfit)
+- [ ] Integration with booking systems
 - [ ] Multi-currency support
 
 ## Testing Status
-- Backend: 18/18 tests passing (Phase 3 & 4) ✅
+- Backend: 17/17 tests passing (iteration_12) ✅
 - Frontend: 100% functional ✅
-- Test files: /app/test_reports/iteration_11.json (latest)
+- Test files: /app/test_reports/iteration_12.json (latest)
