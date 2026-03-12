@@ -787,10 +787,10 @@ export default function MembersPage() {
 
             {/* Review Section - Choose frequency */}
             <div className="border-t border-[var(--color-border)] pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
-                  <ClipboardCheck size={14} className="text-[var(--color-info)]" />
-                  Suivi / Bilan (poids, nutrition, programme)
+              <div className="flex items-center justify-between mb-3 bg-[rgba(100,210,255,0.08)] border border-[rgba(100,210,255,0.15)] rounded-[var(--radius-lg)] p-3">
+                <label className="text-white text-sm font-medium flex items-center gap-2">
+                  <ClipboardCheck size={16} className="text-[var(--color-info)]" />
+                  Activer le Suivi / Bilan
                 </label>
                 <Switch
                   checked={formData.review_enabled}

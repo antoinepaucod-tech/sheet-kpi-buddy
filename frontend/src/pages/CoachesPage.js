@@ -75,6 +75,7 @@ export default function CoachesPage() {
     is_active: true,
     notes: "",
   });
+  const [customSpecialty, setCustomSpecialty] = useState("");
 
   // Fetch coaches
   const { data: coaches = [], isLoading } = useQuery({
@@ -407,6 +408,53 @@ export default function CoachesPage() {
                     {specialty}
                   </button>
                 ))}
+                {/* Custom specialties already added */}
+                {(formData.specialties || []).filter(s => !SPECIALTIES.includes(s)).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleSpecialty(s)}
+                    className="px-3 py-1 rounded-full text-sm bg-[var(--color-accent)] text-white"
+                  >
+                    {s} ×
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  value={customSpecialty}
+                  onChange={(e) => setCustomSpecialty(e.target.value)}
+                  placeholder="Ajouter une spécialité..."
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && customSpecialty.trim()) {
+                      e.preventDefault();
+                      const newSpec = customSpecialty.trim();
+                      if (!(formData.specialties || []).includes(newSpec)) {
+                        setFormData({ ...formData, specialties: [...(formData.specialties || []), newSpec] });
+                      }
+                      setCustomSpecialty("");
+                    }
+                  }}
+                  data-testid="custom-specialty-input"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    if (customSpecialty.trim()) {
+                      const newSpec = customSpecialty.trim();
+                      if (!(formData.specialties || []).includes(newSpec)) {
+                        setFormData({ ...formData, specialties: [...(formData.specialties || []), newSpec] });
+                      }
+                      setCustomSpecialty("");
+                    }
+                  }}
+                  className="bg-[var(--color-accent)] hover:opacity-85 h-8 px-3 text-xs"
+                  data-testid="add-custom-specialty-btn"
+                >
+                  + Ajouter
+                </Button>
               </div>
             </div>
             <div>

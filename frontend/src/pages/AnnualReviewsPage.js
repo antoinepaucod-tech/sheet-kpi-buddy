@@ -168,7 +168,26 @@ export default function AnnualReviewsPage() {
 
   // Filter reviews
   const filteredReviews = useMemo(() => {
-    let result = filterPeriod === "upcoming" ? upcomingReviews : allReviews;
+    let result;
+    
+    if (filterPeriod === "upcoming") {
+      result = upcomingReviews;
+    } else if (filterPeriod === "thisweek") {
+      const today = new Date();
+      result = allReviews.filter((r) => {
+        if (r.status !== "scheduled") return false;
+        const days = differenceInDays(parseISO(r.review_date), today);
+        return days >= 0 && days <= 7;
+      });
+    } else if (filterPeriod === "late") {
+      const today = new Date();
+      result = allReviews.filter((r) => {
+        if (r.status !== "scheduled") return false;
+        return parseISO(r.review_date) < today;
+      });
+    } else {
+      result = allReviews;
+    }
 
     if (filterStatus !== "all") {
       result = result.filter((r) => r.status === filterStatus);
@@ -354,14 +373,26 @@ export default function AnnualReviewsPage() {
           <p className="text-[var(--color-success)] text-xs uppercase">Complétés</p>
           <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.completed}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,214,10,0.2)]">
+        <div
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
+            filterPeriod === "thisweek" ? "border-[var(--color-warning)]" : "border-[rgba(255,214,10,0.2)] hover:border-[var(--color-warning)]"
+          }`}
+          onClick={() => setFilterPeriod("thisweek")}
+          data-testid="filter-thisweek"
+        >
           <p className="text-[var(--color-warning)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             Cette semaine
           </p>
           <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{stats.next7Days}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)]">
+        <div
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
+            filterPeriod === "late" ? "border-[var(--color-danger)]" : "border-[rgba(255,69,58,0.2)] hover:border-[var(--color-danger)]"
+          }`}
+          onClick={() => setFilterPeriod("late")}
+          data-testid="filter-late"
+        >
           <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             En retard
