@@ -601,7 +601,7 @@ export default function CoursesPage() {
 
       {/* Edit Course Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Modifier le cours</DialogTitle>
           </DialogHeader>
@@ -681,7 +681,7 @@ export default function CoursesPage() {
 
       {/* Replace Coach Modal */}
       <Dialog open={replaceModalOpen} onOpenChange={setReplaceModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCog className="text-[var(--color-warning)]" size={20} />

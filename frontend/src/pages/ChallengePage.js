@@ -695,7 +695,7 @@ export default function ChallengePage() {
 
       {/* Weekly Check-ins Modal */}
       <Dialog open={checkinModalOpen} onOpenChange={setCheckinModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-lg">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Target className="text-[var(--color-warning)]" size={20} />

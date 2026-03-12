@@ -78,7 +78,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="font-display text-xl font-extrabold uppercase tracking-tight">
             {lang === "fr" ? "Modifier KPIs" : "Edit KPIs"} — {kpi ? formatMonthFull(kpi.month, lang) : ""}

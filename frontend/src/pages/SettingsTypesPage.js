@@ -512,7 +512,7 @@ export default function SettingsTypesPage() {
 
       {/* Membership Type Modal */}
       <Dialog open={membershipModalOpen} onOpenChange={setMembershipModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingMembership ? "Modifier le type d'abonnement" : "Nouveau type d'abonnement"}
@@ -667,7 +667,7 @@ export default function SettingsTypesPage() {
 
       {/* Member Type Modal */}
       <Dialog open={memberTypeModalOpen} onOpenChange={setMemberTypeModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingMemberType ? "Modifier le type de membre" : "Nouveau type de membre"}

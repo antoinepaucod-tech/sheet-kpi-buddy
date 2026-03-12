@@ -527,7 +527,7 @@ export default function AnnualReviewsPage() {
 
       {/* Complete Review Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ClipboardCheck className="text-[var(--color-info)]" size={20} />
@@ -792,7 +792,7 @@ export default function AnnualReviewsPage() {
 
       {/* Detail View Modal */}
       <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ClipboardCheck className="text-[var(--color-success)]" size={20} />
@@ -941,7 +941,7 @@ export default function AnnualReviewsPage() {
 
       {/* History Chart Modal */}
       <Dialog open={historyModalOpen} onOpenChange={(open) => { setHistoryModalOpen(open); if (!open) setHistoryMemberId(null); }}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BarChart3 className="text-[var(--color-accent)]" size={20} />

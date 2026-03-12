@@ -556,7 +556,7 @@ export default function MembersPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-lg">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {selectedMember ? "Modifier le membre" : "Ajouter un membre"}
@@ -888,7 +888,7 @@ export default function MembersPage() {
 
       {/* Renew Modal */}
       <Dialog open={renewModalOpen} onOpenChange={setRenewModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <RefreshCw className="text-[var(--color-success)]" size={20} />

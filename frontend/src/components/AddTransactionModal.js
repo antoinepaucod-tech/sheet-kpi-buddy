@@ -73,7 +73,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-xl font-extrabold uppercase tracking-tight">
             {t("addTransaction")}

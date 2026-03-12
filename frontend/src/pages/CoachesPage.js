@@ -343,7 +343,7 @@ export default function CoachesPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
               {selectedCoach ? "Modifier le coach" : "Nouveau coach"}
@@ -458,7 +458,7 @@ export default function CoachesPage() {
 
       {/* Stats Modal */}
       <Dialog open={statsModalOpen} onOpenChange={setStatsModalOpen}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BarChart3 className="text-[var(--color-accent)]" size={20} />

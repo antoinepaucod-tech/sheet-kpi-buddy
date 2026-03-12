@@ -92,7 +92,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-display text-xl font-extrabold uppercase tracking-tight">
             {lang === "fr" ? "Importer des transactions CSV" : "Import CSV transactions"}

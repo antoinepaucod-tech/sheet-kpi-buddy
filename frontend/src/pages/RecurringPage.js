@@ -306,7 +306,7 @@ export default function RecurringPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-extrabold uppercase">
               {editItem ? (lang === "fr" ? "Modifier" : "Edit") : t("addRecurring")}
@@ -418,7 +418,7 @@ export default function RecurringPage() {
 
       {/* Generate Modal */}
       <Dialog open={showGenerateModal} onOpenChange={setShowGenerateModal}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-extrabold uppercase">
               {t("generateMonthly")}

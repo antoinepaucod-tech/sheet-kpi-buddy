@@ -275,7 +275,7 @@ export default function CategoriesPage() {
 
       {/* Add Category Modal */}
       <Dialog open={showModal} onOpenChange={(v) => !v && setShowModal(false)}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-extrabold uppercase">
               Nouvelle Catégorie
@@ -398,7 +398,7 @@ export default function CategoriesPage() {
 
       {/* Add KPI Column Modal */}
       <Dialog open={showKpiModal} onOpenChange={(v) => !v && setShowKpiModal(false)}>
-        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-extrabold uppercase">
               Nouvelle Colonne KPI

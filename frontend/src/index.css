@@ -642,6 +642,22 @@ button:active:not(:disabled) {
   font-variant-numeric: tabular-nums !important;
 }
 
+/* --- KPI VALUE (auto-scales to fit card) --- */
+.tf-kpi-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+@media (min-width: 1536px) {
+  .tf-kpi-value { font-size: 20px; }
+}
+
 /* --- NUMBER DISPLAY (Hero KPI numbers — Inter, not mono) --- */
 .tf-number-hero {
   font-family: var(--font-display);
@@ -657,12 +673,15 @@ button:active:not(:disabled) {
 .tf-number-large {
   font-family: var(--font-display);
   font-weight: var(--font-bold);
-  font-size: var(--text-lg);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
+}
+@media (min-width: 1280px) {
+  .tf-number-large { font-size: 20px; }
 }
 
 .tf-number-medium {
