@@ -109,7 +109,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
           {/* File picker */}
           <div
-            className="border-2 border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] p-6 text-center cursor-pointer hover:border-rose-500/50 transition-colors"
+            className="border-2 border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] p-6 text-center cursor-pointer hover:border-[var(--color-accent)]/50 transition-colors"
             onClick={() => fileRef.current?.click()}
           >
             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFile} data-testid="csv-file-input" />
@@ -130,7 +130,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
           {/* Errors */}
           {errors.length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-lg)] p-3 space-y-1">
+            <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-3 space-y-1">
               {errors.map((e, i) => (
                 <p key={i} className="text-[var(--color-danger)] text-xs font-mono flex items-center gap-1.5">
                   <AlertTriangle size={11} /> {e}
@@ -161,7 +161,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
                         <td className="px-3 py-1.5 text-white truncate max-w-[160px]">{row.description}</td>
                         <td className="px-3 py-1.5 text-white/60">{row.category}</td>
                         <td className="px-3 py-1.5">
-                          <Badge className={row.type === "revenue" ? "bg-green-500/10 text-[var(--color-success)] text-xs" : "bg-blue-500/10 text-[var(--color-accent)] text-xs"}>
+                          <Badge className={row.type === "revenue" ? "bg-[var(--color-success)]/10 text-[var(--color-success)] text-xs" : "bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs"}>
                             {row.type}
                           </Badge>
                         </td>
@@ -181,7 +181,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
           {/* Import result */}
           {result && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-[var(--radius-lg)] p-4">
+            <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Check size={16} className="text-[var(--color-success)]" />
                 <p className="text-[var(--color-success)] font-bold font-mono">

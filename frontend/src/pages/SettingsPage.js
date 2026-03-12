@@ -27,7 +27,7 @@ const TARGET_FIELDS = [
     labelEn: "Target Churn Rate (%)",
     type: "percent",
     description: "En dessous de ce taux = bonne rétention",
-    color: "#F97316",
+    color: "#FFD60A",
   },
   {
     key: "cac",
@@ -35,7 +35,7 @@ const TARGET_FIELDS = [
     labelEn: "Target CAC (CHF)",
     type: "currency",
     description: "Coût d'acquisition par nouveau membre",
-    color: "#8B5CF6",
+    color: "#64D2FF",
   },
   {
     key: "roas",
@@ -43,7 +43,7 @@ const TARGET_FIELDS = [
     labelEn: "Target ROAS",
     type: "multiplier",
     description: "Retour sur investissement publicitaire",
-    color: "#FACC15",
+    color: "#FFD60A",
   },
   {
     key: "new_members",
@@ -51,7 +51,7 @@ const TARGET_FIELDS = [
     labelEn: "Target new members/month",
     type: "number",
     description: "Objectif d'acquisition mensuel",
-    color: "#22C55E",
+    color: "#30D158",
   },
   {
     key: "profit_margin",
@@ -59,7 +59,7 @@ const TARGET_FIELDS = [
     labelEn: "Target net margin (%)",
     type: "percent",
     description: "Pourcentage de bénéfice sur le chiffre d'affaires",
-    color: "#22C55E",
+    color: "#30D158",
   },
   {
     key: "revenue_growth",
@@ -67,7 +67,7 @@ const TARGET_FIELDS = [
     labelEn: "Target revenue growth (%)",
     type: "percent",
     description: "Croissance mensuelle visée",
-    color: "#E11D48",
+    color: "#FF453A",
   },
 ];
 
@@ -293,7 +293,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Reset Data */}
-      <div className="bg-[var(--color-bg-secondary)] border border-red-500/20 rounded-[var(--radius-lg)] p-6">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-6">
         <p className="text-xs font-text text-[var(--color-danger)]/60 uppercase tracking-wider mb-3">
           {lang === "fr" ? "Zone dangereuse" : "Danger zone"}
         </p>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
           <Button
             variant="outline"
             onClick={() => setResetModalOpen(true)}
-            className="border-red-500/30 text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10 text-xs flex-shrink-0"
+            className="border-[rgba(255,69,58,0.3)] text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 text-xs flex-shrink-0"
             data-testid="reset-data-btn"
           >
             <Trash2 size={12} className="mr-1.5" />
@@ -335,8 +335,8 @@ export default function SettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-lg)] p-3">
-              <ul className="text-red-300 text-sm space-y-1">
+            <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-3">
+              <ul className="text-[var(--color-danger)] text-sm space-y-1">
                 <li>- Membres et historique de renouvellements</li>
                 <li>- Paiements et plannings de paiement</li>
                 <li>- KPIs mensuels</li>
@@ -347,9 +347,9 @@ export default function SettingsPage() {
                 <li>- Coachs</li>
               </ul>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[var(--radius-lg)] p-3">
+            <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-3">
               <p className="text-[var(--color-success)] text-sm font-medium mb-1">Données conservées :</p>
-              <ul className="text-emerald-300 text-sm space-y-1">
+              <ul className="text-[var(--color-success)] text-sm space-y-1">
                 <li>- Votre compte utilisateur</li>
                 <li>- Paramètres du club et objectifs KPI</li>
                 <li>- Catégories comptables</li>
@@ -377,7 +377,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleResetData}
               disabled={resetConfirm !== "RESET" || resetting}
-              className="bg-red-600 hover:bg-red-700 disabled:opacity-30"
+              className="bg-[var(--color-danger)] hover:opacity-85 disabled:opacity-30"
               data-testid="confirm-reset-btn"
             >
               {resetting ? <Loader2 size={14} className="animate-spin mr-1" /> : <Trash2 size={14} className="mr-1" />}

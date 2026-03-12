@@ -202,7 +202,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                     <SelectItem
                       key={m.value}
                       value={m.value}
-                      className="text-white focus:bg-white/10 focus:text-white"
+                      className="text-white focus:bg-[rgba(255,255,255,0.1)] focus:text-white"
                     >
                       {m.label}
                     </SelectItem>

@@ -26,12 +26,12 @@ import axios from "axios";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CHART_COLORS = {
-  revenue: "#E11D48",
-  expenses: "#3B82F6",
-  profit: "#22C55E",
-  members: "#8B5CF6",
-  churn: "#F97316",
-  cac: "#06B6D4",
+  revenue: "#0A84FF",
+  expenses: "#FF453A",
+  profit: "#30D158",
+  members: "#64D2FF",
+  churn: "#FFD60A",
+  cac: "#64D2FF",
 };
 
 const ChartTooltip = ({ active, payload, label }) => {
@@ -52,9 +52,9 @@ const ChartTooltip = ({ active, payload, label }) => {
 const MetricCard = ({ label, value, trend, icon: Icon, variant = "default" }) => {
   const variants = {
     default: "border-[var(--color-border)]",
-    success: "border-green-500/30 bg-green-500/5",
-    warning: "border-yellow-500/30 bg-yellow-500/5",
-    danger: "border-red-500/30 bg-red-500/5",
+    success: "border-[rgba(48,209,88,0.3)] bg-[rgba(48,209,88,0.05)]",
+    warning: "border-[rgba(255,214,10,0.3)] bg-[rgba(255,214,10,0.05)]",
+    danger: "border-[rgba(255,69,58,0.3)] bg-[rgba(255,69,58,0.05)]",
   };
   
   return (
@@ -222,7 +222,7 @@ export default function ComparePage() {
               </SelectTrigger>
               <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                 {availableMonths.map(m => (
-                  <SelectItem key={m.value} value={m.value} className="text-white focus:bg-white/10">
+                  <SelectItem key={m.value} value={m.value} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                     {m.label}
                   </SelectItem>
                 ))}
@@ -237,7 +237,7 @@ export default function ComparePage() {
               </SelectTrigger>
               <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                 {availableMonths.map(m => (
-                  <SelectItem key={m.value} value={m.value} className="text-white focus:bg-white/10">
+                  <SelectItem key={m.value} value={m.value} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                     {m.label}
                   </SelectItem>
                 ))}
@@ -315,7 +315,7 @@ export default function ComparePage() {
       {/* Best/Worst Months */}
       {summary && (
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[var(--color-bg-secondary)] border border-green-500/20 rounded-[var(--radius-lg)] p-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp size={14} className="text-[var(--color-success)]" />
               <span className="text-xs text-[var(--color-text-secondary)] uppercase">{lang === "fr" ? "Meilleur Mois" : "Best Month"}</span>
@@ -325,7 +325,7 @@ export default function ComparePage() {
             </p>
             <p className="text-sm text-white/60">{formatCHF(summary.best.total_revenue)}</p>
           </div>
-          <div className="bg-[var(--color-bg-secondary)] border border-red-500/20 rounded-[var(--radius-lg)] p-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingDown size={14} className="text-[var(--color-danger)]" />
               <span className="text-xs text-[var(--color-text-secondary)] uppercase">{lang === "fr" ? "Mois le Plus Faible" : "Weakest Month"}</span>
@@ -410,9 +410,9 @@ export default function ComparePage() {
                 <YAxis tick={{ fill: "#666", fontSize: 10 }} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
                 <Tooltip content={<ChartTooltip />} />
                 <Legend />
-                <Bar dataKey="loyer" name={lang === "fr" ? "Loyer" : "Rent"} stackId="a" fill="#3B82F6" />
-                <Bar dataKey="salaires" name={lang === "fr" ? "Salaires" : "Salaries"} stackId="a" fill="#8B5CF6" />
-                <Bar dataKey="marketing" name="Marketing" stackId="a" fill="#E11D48" />
+                <Bar dataKey="loyer" name={lang === "fr" ? "Loyer" : "Rent"} stackId="a" fill="#0A84FF" />
+                <Bar dataKey="salaires" name={lang === "fr" ? "Salaires" : "Salaries"} stackId="a" fill="#64D2FF" />
+                <Bar dataKey="marketing" name="Marketing" stackId="a" fill="#FF453A" />
               </BarChart>
             </ResponsiveContainer>
           </div>

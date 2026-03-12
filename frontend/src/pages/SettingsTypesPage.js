@@ -51,8 +51,8 @@ import { useTranslations } from "../hooks/useTranslations";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const COLOR_OPTIONS = [
-  "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", 
-  "#ec4899", "#06b6d4", "#f97316", "#84cc16", "#6366f1"
+  "#0A84FF", "#30D158", "#FFD60A", "#FF453A", "#64D2FF", 
+  "#0A84FF", "#30D158", "#FFD60A", "#FF453A", "#64D2FF"
 ];
 
 export default function SettingsTypesPage() {
@@ -74,7 +74,7 @@ export default function SettingsTypesPage() {
     default_billing_cycle_value: 1,
     is_active: true,
     display_order: 0,
-    color: "#3b82f6",
+    color: "#0A84FF",
   });
   
   // Member type modal
@@ -86,7 +86,7 @@ export default function SettingsTypesPage() {
     description: "",
     is_active: true,
     display_order: 0,
-    color: "#3b82f6",
+    color: "#0A84FF",
   });
 
   // Fetch membership types
@@ -186,7 +186,7 @@ export default function SettingsTypesPage() {
       default_billing_cycle_value: 1,
       is_active: true,
       display_order: membershipTypes.length,
-      color: "#3b82f6",
+      color: "#0A84FF",
     });
   };
 
@@ -198,7 +198,7 @@ export default function SettingsTypesPage() {
       description: "",
       is_active: true,
       display_order: memberTypes.length,
-      color: "#3b82f6",
+      color: "#0A84FF",
     });
   };
 
@@ -215,7 +215,7 @@ export default function SettingsTypesPage() {
       default_billing_cycle_value: item.default_billing_cycle_value || 1,
       is_active: item.is_active,
       display_order: item.display_order,
-      color: item.color || "#3b82f6",
+      color: item.color || "#0A84FF",
     });
     setMembershipModalOpen(true);
   };
@@ -228,7 +228,7 @@ export default function SettingsTypesPage() {
       description: item.description || "",
       is_active: item.is_active,
       display_order: item.display_order,
-      color: item.color || "#3b82f6",
+      color: item.color || "#0A84FF",
     });
     setMemberTypeModalOpen(true);
   };
@@ -280,7 +280,7 @@ export default function SettingsTypesPage() {
           onClick={() => seedMutation.mutate()}
           disabled={seedMutation.isPending}
           variant="outline"
-          className="border-[var(--color-border-strong)] text-white hover:bg-white/10"
+          className="border-[var(--color-border-strong)] text-white hover:bg-[rgba(255,255,255,0.1)]"
           data-testid="seed-defaults-btn"
         >
           <Download size={16} className="mr-2" />
@@ -293,7 +293,7 @@ export default function SettingsTypesPage() {
         <TabsList className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
           <TabsTrigger 
             value="memberships" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            className="data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-white"
             data-testid="tab-memberships"
           >
             <CreditCard size={16} className="mr-2" />
@@ -301,7 +301,7 @@ export default function SettingsTypesPage() {
           </TabsTrigger>
           <TabsTrigger 
             value="members"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            className="data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-white"
             data-testid="tab-member-types"
           >
             <Users size={16} className="mr-2" />
@@ -317,7 +317,7 @@ export default function SettingsTypesPage() {
               <Button 
                 size="sm" 
                 onClick={() => { resetMembershipForm(); setMembershipModalOpen(true); }}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[var(--color-accent)] hover:opacity-85"
                 data-testid="add-membership-type-btn"
               >
                 <Plus size={16} className="mr-1" />
@@ -356,7 +356,7 @@ export default function SettingsTypesPage() {
                       <TableCell>
                         <div 
                           className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: item.color || "#3b82f6" }}
+                          style={{ backgroundColor: item.color || "#0A84FF" }}
                         />
                       </TableCell>
                       <TableCell className="text-white font-medium">{item.name}</TableCell>
@@ -371,14 +371,14 @@ export default function SettingsTypesPage() {
                       </TableCell>
                       <TableCell>
                         {item.is_recurring ? (
-                          <Badge className="bg-blue-500/20 text-[var(--color-accent)] border-0">Récurrent</Badge>
+                          <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">Récurrent</Badge>
                         ) : (
-                          <Badge variant="secondary" className="bg-white/10 text-white/60 border-0">One-time</Badge>
+                          <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-white/60 border-0">One-time</Badge>
                         )}
                       </TableCell>
                       <TableCell>
                         {item.is_active ? (
-                          <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">Actif</Badge>
+                          <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">Actif</Badge>
                         ) : (
                           <Badge variant="destructive">Inactif</Badge>
                         )}
@@ -388,7 +388,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-white/10"
+                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]"
                             onClick={() => openEditMembership(item)}
                             data-testid={`edit-membership-${item.id}`}
                           >
@@ -397,7 +397,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
+                            className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
                             onClick={() => {
                               if (window.confirm("Supprimer ce type d'abonnement ?")) {
                                 deleteMembershipMutation.mutate(item.id);
@@ -425,7 +425,7 @@ export default function SettingsTypesPage() {
               <Button 
                 size="sm" 
                 onClick={() => { resetMemberTypeForm(); setMemberTypeModalOpen(true); }}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[var(--color-accent)] hover:opacity-85"
                 data-testid="add-member-type-btn"
               >
                 <Plus size={16} className="mr-1" />
@@ -462,7 +462,7 @@ export default function SettingsTypesPage() {
                       <TableCell>
                         <div 
                           className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: item.color || "#3b82f6" }}
+                          style={{ backgroundColor: item.color || "#0A84FF" }}
                         />
                       </TableCell>
                       <TableCell className="text-white font-medium">{item.name}</TableCell>
@@ -470,7 +470,7 @@ export default function SettingsTypesPage() {
                       <TableCell className="text-[var(--color-text-secondary)] text-sm">{item.description || "-"}</TableCell>
                       <TableCell>
                         {item.is_active ? (
-                          <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">Actif</Badge>
+                          <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">Actif</Badge>
                         ) : (
                           <Badge variant="destructive">Inactif</Badge>
                         )}
@@ -480,7 +480,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-white/10"
+                            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]"
                             onClick={() => openEditMemberType(item)}
                             data-testid={`edit-member-type-${item.id}`}
                           >
@@ -489,7 +489,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
+                            className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
                             onClick={() => {
                               if (window.confirm("Supprimer ce type de membre ?")) {
                                 deleteMemberTypeMutation.mutate(item.id);
@@ -656,7 +656,7 @@ export default function SettingsTypesPage() {
             <Button
               onClick={handleSaveMembership}
               disabled={!membershipForm.name || createMembershipMutation.isPending || updateMembershipMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-[var(--color-accent)] hover:opacity-85"
               data-testid="save-membership-btn"
             >
               {createMembershipMutation.isPending || updateMembershipMutation.isPending ? "..." : "Enregistrer"}
@@ -733,7 +733,7 @@ export default function SettingsTypesPage() {
             <Button
               onClick={handleSaveMemberType}
               disabled={!memberTypeForm.name || !memberTypeForm.code || createMemberTypeMutation.isPending || updateMemberTypeMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-[var(--color-accent)] hover:opacity-85"
               data-testid="save-member-type-btn"
             >
               {createMemberTypeMutation.isPending || updateMemberTypeMutation.isPending ? "..." : "Enregistrer"}

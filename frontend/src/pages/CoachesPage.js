@@ -49,8 +49,8 @@ import { useTranslations } from "../hooks/useTranslations";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const COLOR_OPTIONS = [
-  "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-  "#ec4899", "#06b6d4", "#f97316", "#84cc16", "#6366f1"
+  "#0A84FF", "#30D158", "#FFD60A", "#FF453A", "#64D2FF",
+  "#FF453A", "#64D2FF", "#FFD60A", "#30D158", "#0A84FF"
 ];
 
 const SPECIALTIES = [
@@ -71,7 +71,7 @@ export default function CoachesPage() {
     phone: "",
     hourly_rate: 0,
     specialties: [],
-    color: "#3b82f6",
+    color: "#0A84FF",
     is_active: true,
     notes: "",
   });
@@ -120,7 +120,7 @@ export default function CoachesPage() {
       phone: "",
       hourly_rate: 0,
       specialties: [],
-      color: "#3b82f6",
+      color: "#0A84FF",
       is_active: true,
       notes: "",
     });
@@ -134,7 +134,7 @@ export default function CoachesPage() {
       phone: coach.phone || "",
       hourly_rate: coach.hourly_rate || 0,
       specialties: coach.specialties || [],
-      color: coach.color || "#3b82f6",
+      color: coach.color || "#0A84FF",
       is_active: coach.is_active !== false,
       notes: coach.notes || "",
     });
@@ -188,7 +188,7 @@ export default function CoachesPage() {
         </div>
         <Button
           onClick={() => { resetForm(); setModalOpen(true); }}
-          className="bg-orange-600 hover:bg-orange-700"
+          className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85"
           data-testid="add-coach-btn"
         >
           <Plus size={16} className="mr-2" />
@@ -202,11 +202,11 @@ export default function CoachesPage() {
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total Coachs</p>
           <p className="text-2xl font-mono font-bold text-white">{coaches.length}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-emerald-500/30">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-success)]/30">
           <p className="text-[var(--color-success)] text-xs uppercase">Actifs</p>
           <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{activeCoaches}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-orange-500/30">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-warning)]/30">
           <p className="text-[var(--color-warning)] text-xs uppercase">Taux horaire moyen</p>
           <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{avgHourlyRate} CHF</p>
         </div>
@@ -257,7 +257,7 @@ export default function CoachesPage() {
                   <TableCell>
                     <div
                       className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: coach.color || "#3b82f6" }}
+                      style={{ backgroundColor: coach.color || "#0A84FF" }}
                     />
                   </TableCell>
                   <TableCell className="text-white font-medium">{coach.name}</TableCell>
@@ -278,12 +278,12 @@ export default function CoachesPage() {
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {(coach.specialties || []).slice(0, 3).map((s) => (
-                        <Badge key={s} variant="secondary" className="bg-white/10 text-white/70 border-0 text-xs">
+                        <Badge key={s} variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-white/70 border-0 text-xs">
                           {s}
                         </Badge>
                       ))}
                       {(coach.specialties || []).length > 3 && (
-                        <Badge variant="secondary" className="bg-white/10 text-[var(--color-text-secondary)] border-0 text-xs">
+                        <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] border-0 text-xs">
                           +{coach.specialties.length - 3}
                         </Badge>
                       )}
@@ -294,7 +294,7 @@ export default function CoachesPage() {
                   </TableCell>
                   <TableCell>
                     {coach.is_active ? (
-                      <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">Actif</Badge>
+                      <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">Actif</Badge>
                     ) : (
                       <Badge variant="destructive">Inactif</Badge>
                     )}
@@ -304,7 +304,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
+                        className="h-8 w-8 text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
                         onClick={() => openStatsModal(coach)}
                         data-testid={`stats-${coach.id}`}
                       >
@@ -313,7 +313,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-white/10"
+                        className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]"
                         onClick={() => openEditModal(coach)}
                         data-testid={`edit-${coach.id}`}
                       >
@@ -322,7 +322,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
+                        className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
                         onClick={() => {
                           if (window.confirm("Supprimer ce coach ?")) {
                             deleteMutation.mutate(coach.id);
@@ -400,8 +400,8 @@ export default function CoachesPage() {
                     onClick={() => toggleSpecialty(specialty)}
                     className={`px-3 py-1 rounded-full text-sm transition-all ${
                       (formData.specialties || []).includes(specialty)
-                        ? "bg-orange-500 text-white"
-                        : "bg-white/10 text-white/70 hover:bg-white/20"
+                        ? "bg-[var(--color-warning)] text-white"
+                        : "bg-[rgba(255,255,255,0.1)] text-white/70 hover:bg-white/20"
                     }`}
                   >
                     {specialty}
@@ -447,7 +447,7 @@ export default function CoachesPage() {
             <Button
               onClick={() => saveMutation.mutate(formData)}
               disabled={!formData.name || saveMutation.isPending}
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85"
               data-testid="save-coach-btn"
             >
               {saveMutation.isPending ? "..." : "Enregistrer"}
@@ -482,7 +482,7 @@ export default function CoachesPage() {
                   <p className="text-[var(--color-text-secondary)] tf-label inline">Participants</p>
                   <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{coachStats.total_participants}</p>
                 </div>
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-[var(--radius-lg)] p-4 text-center">
+                <div className="bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-lg)] p-4 text-center">
                   <p className="text-[var(--color-warning)] text-xs uppercase">Gains estimés</p>
                   <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{coachStats.earnings} CHF</p>
                 </div>

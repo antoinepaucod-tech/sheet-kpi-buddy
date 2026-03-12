@@ -265,8 +265,8 @@ export default function RecurringPage() {
                     <Badge
                       className={
                         item.type === "revenue"
-                          ? "bg-green-500/10 text-[var(--color-success)] border-green-500/20 text-xs"
-                          : "bg-blue-500/10 text-[var(--color-accent)] border-blue-500/20 text-xs"
+                          ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 text-xs"
+                          : "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/20 text-xs"
                       }
                     >
                       {item.type === "revenue" ? t("revenueType") : t("expense")}
@@ -281,7 +281,7 @@ export default function RecurringPage() {
                   <TableCell>
                     <button
                       onClick={() => handleToggleActive(item)}
-                      className={`p-1 rounded transition-colors ${item.is_active ? 'text-[var(--color-success)] hover:text-green-300' : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'}`}
+                      className={`p-1 rounded transition-colors ${item.is_active ? 'text-[var(--color-success)] hover:text-[var(--color-success)]' : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'}`}
                       title={t("toggleStatus")}
                       data-testid={`toggle-${item.id}`}
                     >
@@ -321,8 +321,8 @@ export default function RecurringPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                  <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
-                  <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
+                  <SelectItem value="expense" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("expense")}</SelectItem>
+                  <SelectItem value="revenue" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("revenueType")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -335,7 +335,7 @@ export default function RecurringPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name} className="text-white focus:bg-white/10">
+                    <SelectItem key={cat.id} value={cat.name} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                       {cat.name}
                     </SelectItem>
                   ))}
@@ -372,7 +372,7 @@ export default function RecurringPage() {
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-48">
                     {DAYS.map((d) => (
-                      <SelectItem key={d} value={d.toString()} className="text-white focus:bg-white/10">
+                      <SelectItem key={d} value={d.toString()} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                         {d}
                       </SelectItem>
                     ))}
@@ -389,9 +389,9 @@ export default function RecurringPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                    <SelectItem value="none" className="text-white focus:bg-white/10">-</SelectItem>
-                    <SelectItem value="members" className="text-white focus:bg-white/10">{t("membersType")}</SelectItem>
-                    <SelectItem value="coaching" className="text-white focus:bg-white/10">{t("coachingType")}</SelectItem>
+                    <SelectItem value="none" className="text-white focus:bg-[rgba(255,255,255,0.1)]">-</SelectItem>
+                    <SelectItem value="members" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("membersType")}</SelectItem>
+                    <SelectItem value="coaching" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("coachingType")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -441,7 +441,7 @@ export default function RecurringPage() {
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {[2023, 2024, 2025, 2026].map((y) => (
-                      <SelectItem key={y} value={y.toString()} className="text-white focus:bg-white/10">
+                      <SelectItem key={y} value={y.toString()} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                         {y}
                       </SelectItem>
                     ))}
@@ -456,7 +456,7 @@ export default function RecurringPage() {
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {MONTHS_OPTIONS.map((m) => (
-                      <SelectItem key={m.value} value={m.value.toString()} className="text-white focus:bg-white/10">
+                      <SelectItem key={m.value} value={m.value.toString()} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                         {m.label}
                       </SelectItem>
                     ))}
@@ -514,7 +514,7 @@ export default function RecurringPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              className="bg-[var(--color-danger)] hover:opacity-85 text-white font-bold"
             >
               {t("delete")}
             </AlertDialogAction>

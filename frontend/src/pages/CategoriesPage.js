@@ -26,9 +26,9 @@ import axios from "axios";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CATEGORY_COLORS = [
-  "#E11D48", "#3B82F6", "#8B5CF6", "#22C55E", "#10B981",
-  "#F59E0B", "#EC4899", "#F97316", "#6B7280", "#FACC15",
-  "#06B6D4", "#84CC16",
+  "#0A84FF", "#30D158", "#FFD60A", "#FF453A", "#64D2FF",
+  "#0A84FF", "#30D158", "#FFD60A", "#3A3A3C", "#FF453A",
+  "#64D2FF", "#30D158",
 ];
 
 // Default KPI columns + ability to add custom ones
@@ -51,7 +51,7 @@ const DEFAULT_KPI_COLUMNS = [
   { value: "other_revenue", label: "Autres revenus", type: "revenue" },
 ];
 
-const EMPTY_FORM = { name: "", kpi_column: "other_expenses", type: "expense", color: "#3B82F6" };
+const EMPTY_FORM = { name: "", kpi_column: "other_expenses", type: "expense", color: "#0A84FF" };
 const EMPTY_KPI_FORM = { value: "", label: "", type: "expense" };
 
 export default function CategoriesPage() {
@@ -301,8 +301,8 @@ export default function CategoriesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                    <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
-                    <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
+                    <SelectItem value="expense" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("expense")}</SelectItem>
+                    <SelectItem value="revenue" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("revenueType")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -318,10 +318,10 @@ export default function CategoriesPage() {
                       {form.type === "expense" ? "Dépenses" : "Revenus"}
                     </div>
                     {(form.type === "expense" ? expenseKpiColumns : revenueKpiColumns).map((col) => (
-                      <SelectItem key={col.value} value={col.value} className="text-white focus:bg-white/10">
+                      <SelectItem key={col.value} value={col.value} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                         <span className="flex items-center gap-2">
                           {col.label}
-                          {col.custom && <Badge variant="secondary" className="text-[10px] bg-white/10 text-[var(--color-text-secondary)]">custom</Badge>}
+                          {col.custom && <Badge variant="secondary" className="text-[10px] bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]">custom</Badge>}
                         </span>
                       </SelectItem>
                     ))}
@@ -387,7 +387,7 @@ export default function CategoriesPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              className="bg-[var(--color-danger)] hover:opacity-85 text-white font-bold"
               data-testid="delete-cat-confirm-btn"
             >
               {t("delete")}
@@ -435,8 +435,8 @@ export default function CategoriesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                  <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
-                  <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
+                  <SelectItem value="expense" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("expense")}</SelectItem>
+                  <SelectItem value="revenue" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("revenueType")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -476,7 +476,7 @@ export default function CategoriesPage() {
             <Button
               onClick={handleAddKpiColumn}
               disabled={!kpiForm.value || !kpiForm.label}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wider"
+              className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider"
               data-testid="kpi-save-btn"
             >
               Ajouter

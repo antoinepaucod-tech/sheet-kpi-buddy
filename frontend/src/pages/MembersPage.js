@@ -323,9 +323,9 @@ export default function MembersPage() {
     } else if (days <= 7) {
       return <Badge variant="destructive">Expire dans {days}j</Badge>;
     } else if (days <= 30) {
-      return <Badge variant="warning" className="bg-orange-500/20 text-[var(--color-warning)]">Expire dans {days}j</Badge>;
+      return <Badge variant="warning" className="bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]">Expire dans {days}j</Badge>;
     }
-    return <Badge variant="secondary" className="bg-emerald-500/20 text-[var(--color-success)]">Actif</Badge>;
+    return <Badge variant="secondary" className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]">Actif</Badge>;
   };
 
   return (
@@ -353,7 +353,7 @@ export default function MembersPage() {
           <p className="text-2xl font-mono font-bold text-white mt-1">{stats.total}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-orange-500' : 'border-[var(--color-border)] hover:border-orange-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-[var(--color-warning)]' : 'border-[var(--color-border)] hover:border-[var(--color-warning)]/50'}`}
           onClick={() => setShowExpiring(!showExpiring)}
           data-testid="expiring-filter"
         >
@@ -450,7 +450,7 @@ export default function MembersPage() {
                       <div className="flex items-center gap-1.5">
                         {member.membership}
                         {member.is_duo && (
-                          <Badge className="bg-indigo-500/20 text-indigo-400 border-0 text-[10px] px-1.5">DUO</Badge>
+                          <Badge className="bg-[var(--color-accent)]/20 text-[var(--color-accent)] border-0 text-[10px] px-1.5">DUO</Badge>
                         )}
                       </div>
                     </TableCell>
@@ -470,7 +470,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-success)] hover:text-emerald-300 hover:bg-emerald-500/10"
+                          className="text-[var(--color-success)] hover:text-[var(--color-success)] hover:bg-[var(--color-success)]/10"
                           onClick={() => openRenewModal(member)}
                           data-testid={`renew-${member.id}`}
                         >
@@ -479,7 +479,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
+                          className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
                           onClick={() => openEditModal(member)}
                           data-testid={`edit-${member.id}`}
                         >
@@ -488,7 +488,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
+                          className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
                           onClick={() => deleteMutation.mutate(member.id)}
                           data-testid={`delete-${member.id}`}
                         >
@@ -704,7 +704,7 @@ export default function MembersPage() {
                 <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                   {/* Info banner when values come from membership type */}
                   {membershipTypes.find(t => t.name === formData.membership) && (
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2 mb-2">
+                    <div className="bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20 rounded p-2 mb-2">
                       <p className="text-[var(--color-accent)] text-xs">
                         Valeurs définies par le type d'abonnement "{formData.membership}" 
                         <br/>
@@ -1037,7 +1037,7 @@ export default function MembersPage() {
                 renewMutation.mutate({ id: selectedMember?.id, data: payload });
               }}
               disabled={!renewData.new_end_date || renewMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
               data-testid="confirm-renew-btn"
             >
               {renewMutation.isPending ? "..." : "Renouveler"}

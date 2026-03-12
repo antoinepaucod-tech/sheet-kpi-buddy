@@ -66,10 +66,10 @@ const REVIEW_TYPES = [
 ];
 
 const TYPE_COLORS = {
-  monthly: "bg-cyan-500/20 text-cyan-400",
-  quarterly: "bg-blue-500/20 text-[var(--color-accent)]",
-  "semi-annually": "bg-violet-500/20 text-violet-400",
-  annually: "bg-purple-500/20 text-[var(--color-info)]",
+  monthly: "bg-[var(--color-info)]/20 text-[var(--color-info)]",
+  quarterly: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]",
+  "semi-annually": "bg-[var(--color-info)]/20 text-[var(--color-info)]",
+  annually: "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]",
 };
 
 const TYPE_LABELS = {
@@ -255,7 +255,7 @@ export default function AnnualReviewsPage() {
 
     if (review.status === "completed") {
       return (
-        <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">
+        <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
           <CheckCircle2 size={12} className="mr-1" />
           Complété
         </Badge>
@@ -273,7 +273,7 @@ export default function AnnualReviewsPage() {
 
     if (days <= 7) {
       return (
-        <Badge className="bg-orange-500/20 text-[var(--color-warning)] border-0">
+        <Badge className="bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)] border-0">
           <Clock size={12} className="mr-1" />
           Dans {days}j
         </Badge>
@@ -282,7 +282,7 @@ export default function AnnualReviewsPage() {
 
     if (days <= 30) {
       return (
-        <Badge className="bg-blue-500/20 text-[var(--color-accent)] border-0">
+        <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">
           <Calendar size={12} className="mr-1" />
           Dans {days}j
         </Badge>
@@ -290,7 +290,7 @@ export default function AnnualReviewsPage() {
     }
 
     return (
-      <Badge variant="secondary" className="bg-white/10 text-white/60 border-0">
+      <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-white/60 border-0">
         Planifié
       </Badge>
     );
@@ -316,7 +316,7 @@ export default function AnnualReviewsPage() {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
-            filterPeriod === "upcoming" ? "border-purple-500" : "border-[var(--color-border)] hover:border-purple-500/50"
+            filterPeriod === "upcoming" ? "border-[var(--color-info)]" : "border-[var(--color-border)] hover:border-[var(--color-info)]/50"
           }`}
           onClick={() => setFilterPeriod("upcoming")}
           data-testid="filter-upcoming"
@@ -338,7 +338,7 @@ export default function AnnualReviewsPage() {
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
-            filterStatus === "scheduled" ? "border-blue-500" : "border-[var(--color-border)] hover:border-blue-500/50"
+            filterStatus === "scheduled" ? "border-[var(--color-accent)]" : "border-[var(--color-border)] hover:border-[var(--color-accent)]/50"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("scheduled"); }}
         >
@@ -347,21 +347,21 @@ export default function AnnualReviewsPage() {
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
-            filterStatus === "completed" ? "border-emerald-500" : "border-[var(--color-border)] hover:border-emerald-500/50"
+            filterStatus === "completed" ? "border-[var(--color-success)]" : "border-[var(--color-border)] hover:border-[var(--color-success)]/50"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("completed"); }}
         >
           <p className="text-[var(--color-success)] text-xs uppercase">Complétés</p>
           <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.completed}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-orange-500/30">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-warning)]/30">
           <p className="text-[var(--color-warning)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             Cette semaine
           </p>
           <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{stats.next7Days}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-red-500/30">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)]">
           <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             En retard
@@ -439,7 +439,7 @@ export default function AnnualReviewsPage() {
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-[rgba(100,210,255,0.15)] flex items-center justify-center">
                         <User size={14} className="text-[var(--color-info)]" />
                       </div>
                       <div>
@@ -472,7 +472,7 @@ export default function AnnualReviewsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
+                          className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
                           onClick={() => openDetailModal(review)}
                           data-testid={`view-${review.id}`}
                         >
@@ -482,7 +482,7 @@ export default function AnnualReviewsPage() {
                       ) : (
                         <Button
                           size="sm"
-                          className="bg-purple-600 hover:bg-purple-700"
+                          className="bg-[var(--color-info)] hover:bg-[var(--color-info)] hover:opacity-85"
                           onClick={() => openCompleteModal(review)}
                           data-testid={`complete-${review.id}`}
                         >
@@ -493,7 +493,7 @@ export default function AnnualReviewsPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-[var(--color-accent)] hover:text-blue-300"
+                        className="text-[var(--color-accent)] hover:text-[var(--color-accent)]"
                         onClick={() => {
                           setHistoryMemberId(review.member_id);
                           setHistoryModalOpen(true);
@@ -507,7 +507,7 @@ export default function AnnualReviewsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-amber-400 hover:text-amber-300"
+                          className="text-[var(--color-warning)] hover:text-[var(--color-warning)]"
                           onClick={() => sendReminderMutation.mutate(review.id)}
                           disabled={sendReminderMutation.isPending}
                           title="Envoyer rappel"
@@ -781,7 +781,7 @@ export default function AnnualReviewsPage() {
                 completeMutation.mutate({ id: selectedReview?.id, data: payload });
               }}
               disabled={completeMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-[var(--color-info)] hover:bg-[var(--color-info)] hover:opacity-85"
               data-testid="save-review-btn"
             >
               {completeMutation.isPending ? "..." : "Compléter le bilan"}
@@ -809,7 +809,7 @@ export default function AnnualReviewsPage() {
                     Complété le: {selectedReview.completed_date && format(parseISO(selectedReview.completed_date), "dd MMMM yyyy", { locale: fr })}
                   </p>
                 </div>
-                <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">
+                <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
                   <CheckCircle2 size={12} className="mr-1" />
                   Complété
                 </Badge>
@@ -897,13 +897,13 @@ export default function AnnualReviewsPage() {
                     Objectifs
                   </h3>
                   {selectedReview.goals_achieved && (
-                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[var(--radius-lg)] p-3 mb-2">
+                    <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-3 mb-2">
                       <p className="text-[var(--color-success)] text-xs mb-1">Objectifs atteints</p>
                       <p className="text-white/80 text-sm">{selectedReview.goals_achieved}</p>
                     </div>
                   )}
                   {selectedReview.new_goals && (
-                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-[var(--radius-lg)] p-3">
+                    <div className="bg-[var(--color-info)]/10 border border-[var(--color-info)]/20 rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-info)] text-xs mb-1">Nouveaux objectifs</p>
                       <p className="text-white/80 text-sm">{selectedReview.new_goals}</p>
                     </div>
@@ -964,8 +964,8 @@ export default function AnnualReviewsPage() {
                     <YAxis stroke="#666" tick={{ fontSize: 11 }} domain={["dataMin - 2", "dataMax + 2"]} />
                     <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
                     <Legend />
-                    <Line type="monotone" dataKey="poids" stroke="#8B5CF6" strokeWidth={2} dot={{ fill: "#8B5CF6", r: 4 }} name="Poids actuel" />
-                    <Line type="monotone" dataKey="objectif" stroke="#22C55E" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: "#22C55E", r: 3 }} name="Objectif" />
+                    <Line type="monotone" dataKey="poids" stroke="#64D2FF" strokeWidth={2} dot={{ fill: "#64D2FF", r: 4 }} name="Poids actuel" />
+                    <Line type="monotone" dataKey="objectif" stroke="#30D158" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: "#30D158", r: 3 }} name="Objectif" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -985,8 +985,8 @@ export default function AnnualReviewsPage() {
                       <YAxis stroke="#666" tick={{ fontSize: 11 }} />
                       <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
                       <Legend />
-                      <Line type="monotone" dataKey="graisse" stroke="#F59E0B" strokeWidth={2} dot={{ fill: "#F59E0B", r: 4 }} name="% Graisse" />
-                      <Line type="monotone" dataKey="muscle" stroke="#3B82F6" strokeWidth={2} dot={{ fill: "#3B82F6", r: 4 }} name="Masse musculaire" />
+                      <Line type="monotone" dataKey="graisse" stroke="#FFD60A" strokeWidth={2} dot={{ fill: "#FFD60A", r: 4 }} name="% Graisse" />
+                      <Line type="monotone" dataKey="muscle" stroke="#0A84FF" strokeWidth={2} dot={{ fill: "#0A84FF", r: 4 }} name="Masse musculaire" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -1005,7 +1005,7 @@ export default function AnnualReviewsPage() {
                       <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 11 }} />
                       <YAxis stroke="#666" tick={{ fontSize: 11 }} />
                       <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
-                      <Line type="monotone" dataKey="freq" stroke="#10B981" strokeWidth={2} dot={{ fill: "#10B981", r: 4 }} name="Séances/semaine" />
+                      <Line type="monotone" dataKey="freq" stroke="#30D158" strokeWidth={2} dot={{ fill: "#30D158", r: 4 }} name="Séances/semaine" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

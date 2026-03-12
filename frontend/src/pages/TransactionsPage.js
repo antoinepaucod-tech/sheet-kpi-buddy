@@ -93,7 +93,7 @@ export default function TransactionsPage({ selectedMonth }) {
 
   const getCategoryColor = (catName) => {
     const cat = categories.find((c) => c.name === catName);
-    return cat?.color || "#6B7280";
+    return cat?.color || "#3A3A3C";
   };
 
   return (
@@ -178,9 +178,9 @@ export default function TransactionsPage({ selectedMonth }) {
             <SelectValue placeholder="Tous types" />
           </SelectTrigger>
           <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-            <SelectItem value="all" className="text-white focus:bg-white/10">Tous types</SelectItem>
-            <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
-            <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
+            <SelectItem value="all" className="text-white focus:bg-[rgba(255,255,255,0.1)]">Tous types</SelectItem>
+            <SelectItem value="revenue" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("revenueType")}</SelectItem>
+            <SelectItem value="expense" className="text-white focus:bg-[rgba(255,255,255,0.1)]">{t("expense")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -237,8 +237,8 @@ export default function TransactionsPage({ selectedMonth }) {
                     <Badge
                       className={
                         tx.type === "revenue"
-                          ? "bg-green-500/10 text-[var(--color-success)] border-green-500/20 text-xs"
-                          : "bg-blue-500/10 text-[var(--color-accent)] border-blue-500/20 text-xs"
+                          ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 text-xs"
+                          : "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/20 text-xs"
                       }
                     >
                       {tx.type === "revenue" ? t("revenueType") : t("expense")}
@@ -312,8 +312,8 @@ export default function TransactionsPage({ selectedMonth }) {
                       <Badge
                         className={
                           ex.type === "revenue"
-                            ? "bg-green-500/10 text-[var(--color-success)] border-green-500/20 text-xs"
-                            : "bg-blue-500/10 text-[var(--color-accent)] border-blue-500/20 text-xs"
+                            ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 text-xs"
+                            : "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/20 text-xs"
                         }
                       >
                         {ex.type === "revenue" ? t("revenueType") : t("expense")}
@@ -362,7 +362,7 @@ export default function TransactionsPage({ selectedMonth }) {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+              className="bg-[var(--color-danger)] hover:opacity-85 text-white font-bold"
               data-testid="delete-confirm-btn"
             >
               {t("delete")}

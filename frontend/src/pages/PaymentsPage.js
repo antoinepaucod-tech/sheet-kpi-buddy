@@ -67,11 +67,11 @@ const RECURRENCE_TYPES = [
 ];
 
 const STATUS_CONFIG = {
-  pending: { label: "En attente", color: "bg-blue-500/20 text-[var(--color-accent)]", icon: Clock },
-  paid: { label: "Payé", color: "bg-emerald-500/20 text-[var(--color-success)]", icon: Check },
-  late: { label: "En retard", color: "bg-red-500/20 text-[var(--color-danger)]", icon: AlertTriangle },
-  failed: { label: "Échoué", color: "bg-orange-500/20 text-[var(--color-warning)]", icon: X },
-  cancelled: { label: "Annulé", color: "bg-white/10 text-[var(--color-text-secondary)]", icon: X },
+  pending: { label: "En attente", color: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]", icon: Clock },
+  paid: { label: "Payé", color: "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]", icon: Check },
+  late: { label: "En retard", color: "bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)]", icon: AlertTriangle },
+  failed: { label: "Échoué", color: "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]", icon: X },
+  cancelled: { label: "Annulé", color: "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]", icon: X },
 };
 
 export default function PaymentsPage() {
@@ -260,7 +260,7 @@ export default function PaymentsPage() {
             <Plus size={16} className="mr-2" />
             Paiement manuel
           </Button>
-          <Button onClick={() => setScheduleModalOpen(true)} className="bg-green-600 hover:bg-green-700" data-testid="add-schedule-btn">
+          <Button onClick={() => setScheduleModalOpen(true)} className="bg-[var(--color-success)] hover:opacity-85" data-testid="add-schedule-btn">
             <Plus size={16} className="mr-2" />
             Nouveau planning
           </Button>
@@ -273,13 +273,13 @@ export default function PaymentsPage() {
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total paiements</p>
           <p className="text-2xl font-mono font-bold text-white mt-1">{stats.total}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-red-500/30 cursor-pointer hover:border-red-500" onClick={() => setFilterStatus(filterStatus === 'late' ? 'all' : 'late')}>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)] cursor-pointer hover:border-[var(--color-danger)]" onClick={() => setFilterStatus(filterStatus === 'late' ? 'all' : 'late')}>
           <p className="text-[var(--color-danger)] tf-label inline flex items-center gap-1">
             <AlertTriangle size={12} /> En retard
           </p>
           <p className="text-2xl font-mono font-bold text-[var(--color-danger)] mt-1">{stats.late}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-blue-500/50" onClick={() => setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending')}>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-accent)]/50" onClick={() => setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending')}>
           <p className="text-[var(--color-accent)] tf-label inline">En attente</p>
           <p className="text-2xl font-mono font-bold text-[var(--color-accent)] mt-1">{stats.pending}</p>
         </div>
@@ -297,10 +297,10 @@ export default function PaymentsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-          <TabsTrigger value="payments" className="data-[state=active]:bg-green-600">Paiements</TabsTrigger>
-          <TabsTrigger value="late" className="data-[state=active]:bg-red-600">En retard ({stats.late})</TabsTrigger>
-          <TabsTrigger value="upcoming" className="data-[state=active]:bg-blue-600">À venir ({upcomingPayments.length})</TabsTrigger>
-          <TabsTrigger value="schedules" className="data-[state=active]:bg-purple-600">Plannings ({schedules.length})</TabsTrigger>
+          <TabsTrigger value="payments" className="data-[state=active]:bg-[var(--color-success)]">Paiements</TabsTrigger>
+          <TabsTrigger value="late" className="data-[state=active]:bg-[var(--color-danger)]">En retard ({stats.late})</TabsTrigger>
+          <TabsTrigger value="upcoming" className="data-[state=active]:bg-[var(--color-accent)]">À venir ({upcomingPayments.length})</TabsTrigger>
+          <TabsTrigger value="schedules" className="data-[state=active]:bg-[var(--color-info)]">Plannings ({schedules.length})</TabsTrigger>
         </TabsList>
 
         {/* All Payments Tab */}
@@ -396,7 +396,7 @@ export default function PaymentsPage() {
                               <Button
                                 size="sm"
                                 onClick={() => openMarkPaid(payment)}
-                                className="bg-emerald-600 hover:bg-emerald-700"
+                                className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
                                 data-testid={`mark-paid-${payment.id}`}
                               >
                                 <Check size={14} className="mr-1" /> Payé
@@ -406,7 +406,7 @@ export default function PaymentsPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => deletePaymentMutation.mutate(payment.id)}
-                              className="text-[var(--color-danger)] hover:text-red-300"
+                              className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
                             >
                               <Trash2 size={14} />
                             </Button>
@@ -423,8 +423,8 @@ export default function PaymentsPage() {
 
         {/* Late Payments Tab */}
         <TabsContent value="late" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-red-500/30 overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-red-500/10">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(255,69,58,0.3)] overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-danger)]/10">
               <h3 className="text-[var(--color-danger)] font-medium flex items-center gap-2">
                 <AlertTriangle size={18} />
                 Paiements en retard - Action requise
@@ -465,7 +465,7 @@ export default function PaymentsPage() {
                           {format(parseISO(payment.due_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
-                          <Badge className="bg-red-500/20 text-[var(--color-danger)] border-0">
+                          <Badge className="bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] border-0">
                             {daysLate} jours
                           </Badge>
                         </TableCell>
@@ -486,7 +486,7 @@ export default function PaymentsPage() {
                             <Button
                               size="sm"
                               onClick={() => openMarkPaid(payment)}
-                              className="bg-emerald-600 hover:bg-emerald-700"
+                              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
                             >
                               <Check size={14} className="mr-1" /> Payé
                             </Button>
@@ -503,8 +503,8 @@ export default function PaymentsPage() {
 
         {/* Upcoming Payments Tab */}
         <TabsContent value="upcoming" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-blue-500/30 overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-blue-500/10">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-accent)]/30 overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-accent)]/10">
               <h3 className="text-[var(--color-accent)] font-medium flex items-center gap-2">
                 <Calendar size={18} />
                 Paiements à venir (14 jours)
@@ -537,7 +537,7 @@ export default function PaymentsPage() {
                           {format(parseISO(payment.due_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
-                          <Badge className={daysUntil <= 3 ? "bg-orange-500/20 text-[var(--color-warning)]" : "bg-blue-500/20 text-[var(--color-accent)]"}>
+                          <Badge className={daysUntil <= 3 ? "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]" : "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]"}>
                             {daysUntil} jours
                           </Badge>
                         </TableCell>
@@ -593,7 +593,7 @@ export default function PaymentsPage() {
                         {schedule.start_date ? format(parseISO(schedule.start_date), "dd/MM/yyyy") : "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge className={schedule.is_active ? "bg-emerald-500/20 text-[var(--color-success)]" : "bg-white/10 text-[var(--color-text-secondary)]"}>
+                        <Badge className={schedule.is_active ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]" : "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]"}>
                           {schedule.is_active ? "Actif" : "Inactif"}
                         </Badge>
                       </TableCell>
@@ -602,7 +602,7 @@ export default function PaymentsPage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => deleteScheduleMutation.mutate(schedule.id)}
-                          className="text-[var(--color-danger)] hover:text-red-300"
+                          className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -703,7 +703,7 @@ export default function PaymentsPage() {
             <Button
               onClick={() => createScheduleMutation.mutate(scheduleForm)}
               disabled={!scheduleForm.member_id || !scheduleForm.amount || createScheduleMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[var(--color-success)] hover:opacity-85"
             >
               {createScheduleMutation.isPending ? "..." : "Créer"}
             </Button>
@@ -758,7 +758,7 @@ export default function PaymentsPage() {
                 });
               }}
               disabled={markPaidMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
             >
               {markPaidMutation.isPending ? "..." : "Confirmer"}
             </Button>
@@ -812,7 +812,7 @@ export default function PaymentsPage() {
             <Button
               onClick={() => createPaymentMutation.mutate(paymentForm)}
               disabled={!paymentForm.member_id || !paymentForm.amount || createPaymentMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[var(--color-success)] hover:opacity-85"
             >
               {createPaymentMutation.isPending ? "..." : "Créer"}
             </Button>

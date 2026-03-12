@@ -97,10 +97,10 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                  <SelectItem value="expense" className="text-white focus:bg-white/10">
+                  <SelectItem value="expense" className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                     {t("expense")}
                   </SelectItem>
-                  <SelectItem value="revenue" className="text-white focus:bg-white/10">
+                  <SelectItem value="revenue" className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                     {t("revenueType")}
                   </SelectItem>
                 </SelectContent>
@@ -168,7 +168,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                     <SelectItem
                       key={cat.id}
                       value={cat.name}
-                      className="text-white focus:bg-white/10"
+                      className="text-white focus:bg-[rgba(255,255,255,0.1)]"
                     >
                       <span className="flex items-center gap-2">
                         <span
@@ -200,10 +200,10 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                  <SelectItem value="members" className="text-white focus:bg-white/10">
+                  <SelectItem value="members" className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                     {t("membersType")}
                   </SelectItem>
-                  <SelectItem value="coaching" className="text-white focus:bg-white/10">
+                  <SelectItem value="coaching" className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                     {t("coachingType")}
                   </SelectItem>
                 </SelectContent>

@@ -230,7 +230,7 @@ export default function CoursesPage() {
 
   const getAttendanceColor = (rate) => {
     if (rate >= 80) return "text-[var(--color-success)]";
-    if (rate >= 60) return "text-amber-400";
+    if (rate >= 60) return "text-[var(--color-warning)]";
     return "text-[var(--color-danger)]";
   };
 
@@ -251,13 +251,13 @@ export default function CoursesPage() {
             onClick={() => copyPlanningMutation.mutate()}
             disabled={copyPlanningMutation.isPending || courses.length > 0}
             variant="outline"
-            className="border-[var(--color-border-strong)] text-white hover:bg-white/10"
+            className="border-[var(--color-border-strong)] text-white hover:bg-[rgba(255,255,255,0.1)]"
             data-testid="copy-planning-btn"
           >
             <Copy size={16} className="mr-2" />
             {copyPlanningMutation.isPending ? "..." : "Copier mois précédent"}
           </Button>
-          <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700" data-testid="add-course-btn">
+          <Button onClick={openAddModal} className="bg-[var(--color-accent)] hover:opacity-85" data-testid="add-course-btn">
             <Plus size={16} className="mr-2" />
             {lang === "fr" ? "Ajouter un cours" : "Add course"}
           </Button>
@@ -266,12 +266,12 @@ export default function CoursesPage() {
 
       {/* Info banner if no courses */}
       {courses.length === 0 && !isLoading && (
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-[var(--radius-lg)] p-4">
+        <div className="bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/30 rounded-[var(--radius-lg)] p-4">
           <p className="text-[var(--color-accent)] text-sm">
             Aucun cours pour {MONTHS_FR[selectedMonth - 1]} {selectedYear}. 
             <button 
               onClick={() => copyPlanningMutation.mutate()}
-              className="underline ml-1 hover:text-blue-300"
+              className="underline ml-1 hover:text-[var(--color-accent)]"
             >
               Copier le planning du mois précédent
             </button>
@@ -356,7 +356,7 @@ export default function CoursesPage() {
             variant="outline"
             onClick={() => generateSalaryMutation.mutate()}
             disabled={generateSalaryMutation.isPending}
-            className="border-violet-500/30 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10"
+            className="border-[var(--color-info)]/30 text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[var(--color-info)]/10"
             data-testid="generate-salary-btn"
           >
             <DollarSign size={14} className="mr-1.5" />
@@ -419,7 +419,7 @@ export default function CoursesPage() {
                     {course.instructor || "-"}
                   </TableCell>
                   <TableCell>
-                    <Badge className="bg-blue-500/20 text-[var(--color-accent)] border-0">
+                    <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">
                       <Users size={10} className="mr-1" />
                       {course.max_capacity}
                     </Badge>
@@ -439,7 +439,7 @@ export default function CoursesPage() {
                   ))}
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Progress value={course.attendance_rate} className="w-16 h-2 bg-white/10" />
+                      <Progress value={course.attendance_rate} className="w-16 h-2 bg-[rgba(255,255,255,0.1)]" />
                       <span className={`text-sm font-medium ${getAttendanceColor(course.attendance_rate)}`}>
                         {course.attendance_rate}%
                       </span>
@@ -451,7 +451,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => openReplaceModal(course)}
-                        className="text-[var(--color-warning)] hover:text-orange-300 hover:bg-orange-500/10"
+                        className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[var(--color-warning)]/10"
                         title="Remplacer le coach"
                       >
                         <UserCog size={14} />
@@ -460,7 +460,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => openEditModal(course)}
-                        className="text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
+                        className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
                       >
                         <Edit size={14} />
                       </Button>
@@ -468,7 +468,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => deleteMutation.mutate(course.id)}
-                        className="text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
+                        className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -487,7 +487,7 @@ export default function CoursesPage() {
           {DAYS_FR.map((day) => (
             <div
               key={day}
-              className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-blue-500/50 transition-colors"
+              className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-accent)]/50 transition-colors"
               onClick={() => setSelectedDay(day)}
             >
               <p className="text-[var(--color-text-secondary)] tf-label inline">{day}</p>
@@ -590,7 +590,7 @@ export default function CoursesPage() {
             <Button
               onClick={() => createMutation.mutate(formData)}
               disabled={!formData.course_name || createMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-[var(--color-accent)] hover:opacity-85"
               data-testid="save-course-btn"
             >
               {createMutation.isPending ? "..." : "Ajouter"}
@@ -609,7 +609,7 @@ export default function CoursesPage() {
             <div className="space-y-4 py-4">
               <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                 <div className="flex items-center gap-4">
-                  <Badge className="bg-blue-500/20 text-[var(--color-accent)] border-0">{selectedCourse.day_of_week}</Badge>
+                  <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">{selectedCourse.day_of_week}</Badge>
                   <span className="text-white">{selectedCourse.time_slot}</span>
                   <span className="text-white font-medium">{selectedCourse.course_name}</span>
                 </div>
@@ -758,7 +758,7 @@ export default function CoursesPage() {
                 });
               }}
               disabled={!replaceData.replacement_coach_id || !replaceData.date || replaceMutation.isPending}
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85"
             >
               {replaceMutation.isPending ? "..." : "Confirmer le remplacement"}
             </Button>

@@ -48,10 +48,10 @@ function getWeekDateRange(year, week) {
 const CELL_COLORS = [
   "text-[var(--color-text-tertiary)]",       // 0
   "text-[var(--color-danger)]",        // 1
-  "text-amber-400",      // 2
+  "text-[var(--color-warning)]",      // 2
   "text-[var(--color-warning)]",     // 3
   "text-[var(--color-success)]",    // 4
-  "text-emerald-300",    // 5+
+  "text-[var(--color-success)]",    // 5+
 ];
 
 function getCellColor(val) {
@@ -62,10 +62,10 @@ function getCellColor(val) {
 
 function getCellBg(val) {
   if (!val || val <= 0) return "bg-white/[0.02]";
-  if (val === 1) return "bg-red-500/10";
-  if (val === 2) return "bg-amber-500/10";
-  if (val === 3) return "bg-yellow-500/10";
-  return "bg-emerald-500/10";
+  if (val === 1) return "bg-[var(--color-danger)]/10";
+  if (val === 2) return "bg-[var(--color-warning)]/10";
+  if (val === 3) return "bg-[var(--color-warning)]/10";
+  return "bg-[var(--color-success)]/10";
 }
 
 export default function AttendancePage() {
@@ -192,7 +192,7 @@ export default function AttendancePage() {
         </div>
         <Button
           onClick={handleSaveAll}
-          className="bg-teal-600 hover:bg-teal-700"
+          className="bg-[var(--color-accent)] hover:opacity-85"
           data-testid="save-all-btn"
         >
           <Save size={14} className="mr-1.5" />
@@ -212,7 +212,7 @@ export default function AttendancePage() {
           <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
             <Activity size={10} /> Séances (période)
           </p>
-          <p className="text-2xl font-mono font-bold text-teal-400">
+          <p className="text-2xl font-mono font-bold text-[var(--color-info)]">
             {Object.values(weekTotals).reduce((a, b) => a + b, 0)}
           </p>
         </div>
@@ -319,7 +319,7 @@ export default function AttendancePage() {
                     );
                   })}
                   <td className="py-2 px-3 text-center">
-                    <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-teal-500/20 text-teal-400" : "bg-white/5 text-[var(--color-text-tertiary)]"}`}>
+                    <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-[var(--color-accent)]/20 text-[var(--color-info)]" : "bg-white/5 text-[var(--color-text-tertiary)]"}`}>
                       {memberTotals[member.id] || 0}
                     </Badge>
                   </td>
@@ -335,13 +335,13 @@ export default function AttendancePage() {
                 </td>
                 {weeks.map((w) => (
                   <td key={w} className="py-3 px-1 text-center">
-                    <span className={`text-sm font-bold ${weekTotals[w] > 0 ? "text-teal-400" : "text-[var(--color-text-tertiary)]"}`}>
+                    <span className={`text-sm font-bold ${weekTotals[w] > 0 ? "text-[var(--color-info)]" : "text-[var(--color-text-tertiary)]"}`}>
                       {weekTotals[w] || 0}
                     </span>
                   </td>
                 ))}
                 <td className="py-3 px-3 text-center">
-                  <span className="text-sm font-bold text-teal-300">
+                  <span className="text-sm font-bold text-[var(--color-info)]">
                     {Object.values(weekTotals).reduce((a, b) => a + b, 0)}
                   </span>
                 </td>
@@ -353,10 +353,10 @@ export default function AttendancePage() {
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 text-xs text-[var(--color-text-secondary)]">
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500/20" /> 1 séance</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500/20" /> 2 séances</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-500/20" /> 3 séances</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500/20" /> 4+ séances</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[rgba(255,69,58,0.15)]" /> 1 séance</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[var(--color-warning)]/20" /> 2 séances</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[rgba(255,214,10,0.15)]" /> 3 séances</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[rgba(48,209,88,0.15)]" /> 4+ séances</span>
       </div>
     </div>
   );

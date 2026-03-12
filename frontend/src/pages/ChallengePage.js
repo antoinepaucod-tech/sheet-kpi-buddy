@@ -247,7 +247,7 @@ export default function ChallengePage() {
             {lang === "fr" ? "Suivi des participants et progression" : "Track participants and progress"}
           </p>
         </div>
-        <Button onClick={openAddModal} className="bg-amber-600 hover:bg-amber-700" data-testid="add-challenge-btn">
+        <Button onClick={openAddModal} className="bg-[var(--color-warning)] hover:opacity-85" data-testid="add-challenge-btn">
           <Plus size={16} className="mr-2" />
           {lang === "fr" ? "Nouveau Challenge" : "New Challenge"}
         </Button>
@@ -271,15 +271,15 @@ export default function ChallengePage() {
                 onClick={() => setSelectedChallenge(challenge.id)}
                 className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-all ${
                   selectedChallenge === challenge.id
-                    ? "border-amber-500 bg-amber-500/5"
+                    ? "border-[var(--color-warning)] bg-[var(--color-warning)]/5"
                     : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
                 }`}
                 data-testid={`challenge-${challenge.id}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-[var(--radius-lg)] ${challenge.is_active ? "bg-amber-500/20" : "bg-white/10"}`}>
-                      <Trophy size={18} className={challenge.is_active ? "text-amber-500" : "text-[var(--color-text-secondary)]"} />
+                    <div className={`p-2 rounded-[var(--radius-lg)] ${challenge.is_active ? "bg-[var(--color-warning)]/20" : "bg-[rgba(255,255,255,0.1)]"}`}>
+                      <Trophy size={18} className={challenge.is_active ? "text-[var(--color-warning)]" : "text-[var(--color-text-secondary)]"} />
                     </div>
                     <div>
                       <p className="text-white font-medium">{challenge.name}</p>
@@ -299,9 +299,9 @@ export default function ChallengePage() {
                 </div>
                 <div className="flex gap-2 mt-2">
                   {challenge.is_active && (
-                    <Badge className="bg-amber-500/20 text-amber-400 border-0">Actif</Badge>
+                    <Badge className="bg-[var(--color-warning)]/20 text-[var(--color-warning)] border-0">Actif</Badge>
                   )}
-                  <Badge className={`border-0 ${challenge.challenge_type === "personal" ? "bg-blue-500/20 text-[var(--color-accent)]" : "bg-white/10 text-[var(--color-text-secondary)]"}`}>
+                  <Badge className={`border-0 ${challenge.challenge_type === "personal" ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]" : "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]"}`}>
                     {challenge.challenge_type === "personal" ? "Personnel" : "Date fixe"}
                   </Badge>
                 </div>
@@ -339,10 +339,10 @@ export default function ChallengePage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge className={`border-0 ${challengeDetail.challenge_type === "personal" ? "bg-blue-500/20 text-[var(--color-accent)]" : "bg-white/10 text-[var(--color-text-secondary)]"}`}>
+                      <Badge className={`border-0 ${challengeDetail.challenge_type === "personal" ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]" : "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]"}`}>
                         {challengeDetail.challenge_type === "personal" ? "Personnel" : "Date fixe"}
                       </Badge>
-                      <Badge className="bg-amber-500/10 text-amber-400 border-0">
+                      <Badge className="bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-0">
                         Objectif : {challengeDetail.checkins_goal || 3}x / semaine
                       </Badge>
                     </div>
@@ -360,7 +360,7 @@ export default function ChallengePage() {
                       size="sm"
                       variant="ghost"
                       onClick={() => deleteMutation.mutate(challengeDetail.id)}
-                      className="text-[var(--color-danger)] hover:text-red-300"
+                      className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
                     >
                       <Trash2 size={16} />
                     </Button>
@@ -376,7 +376,7 @@ export default function ChallengePage() {
                     </div>
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase">Complétion moy.</p>
-                      <p className="text-2xl font-mono font-bold text-amber-400">{stats.avgCompletion}%</p>
+                      <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{stats.avgCompletion}%</p>
                     </div>
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase">100% complété</p>
@@ -384,7 +384,7 @@ export default function ChallengePage() {
                     </div>
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase">Statut</p>
-                      <Badge className={challengeDetail.is_active ? "bg-emerald-500/20 text-[var(--color-success)]" : "bg-white/10 text-[var(--color-text-secondary)]"}>
+                      <Badge className={challengeDetail.is_active ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]" : "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]"}>
                         {challengeDetail.is_active ? "Actif" : "Terminé"}
                       </Badge>
                     </div>
@@ -405,9 +405,9 @@ export default function ChallengePage() {
                         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                           <p className="text-[var(--color-text-secondary)] text-xs mb-1">S{week.week}</p>
                           <p className="text-lg font-bold text-white">{week.completed}</p>
-                          <p className="text-xs text-amber-400">{week.percentage}%</p>
+                          <p className="text-xs text-[var(--color-warning)]">{week.percentage}%</p>
                         </div>
-                        <Progress value={week.percentage} className="mt-2 h-1 bg-white/10" />
+                        <Progress value={week.percentage} className="mt-2 h-1 bg-[rgba(255,255,255,0.1)]" />
                       </div>
                     ))}
                   </div>
@@ -424,7 +424,7 @@ export default function ChallengePage() {
                   <Button
                     size="sm"
                     onClick={() => setAddParticipantOpen(true)}
-                    className="bg-amber-600 hover:bg-amber-700"
+                    className="bg-[var(--color-warning)] hover:opacity-85"
                     data-testid="add-participant-btn"
                   >
                     <Plus size={14} className="mr-1" />
@@ -451,7 +451,7 @@ export default function ChallengePage() {
                             </p>
                           )}
                           <div className="flex items-center gap-1 mt-1">
-                            <Progress value={participant.completionRate} className="w-24 h-1.5 bg-white/10" />
+                            <Progress value={participant.completionRate} className="w-24 h-1.5 bg-[rgba(255,255,255,0.1)]" />
                             <span className="text-xs text-[var(--color-text-secondary)]">{participant.completionRate}%</span>
                           </div>
                         </div>
@@ -462,8 +462,8 @@ export default function ChallengePage() {
                               onClick={() => toggleWeekCheckin(participant, week)}
                               className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
                                 participant[`week${week}`]
-                                  ? "bg-emerald-500/20 text-[var(--color-success)]"
-                                  : "bg-white/5 text-[var(--color-text-tertiary)] hover:bg-white/10"
+                                  ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
+                                  : "bg-white/5 text-[var(--color-text-tertiary)] hover:bg-[rgba(255,255,255,0.1)]"
                               }`}
                               data-testid={`check-w${week}-${participant.id}`}
                             >
@@ -475,7 +475,7 @@ export default function ChallengePage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => openCheckinModal(participant)}
-                          className="text-amber-400 hover:text-amber-300"
+                          className="text-[var(--color-warning)] hover:text-[var(--color-warning)]"
                           title="Check-ins détaillés"
                           data-testid={`detail-checkin-${participant.id}`}
                         >
@@ -485,12 +485,12 @@ export default function ChallengePage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => removeParticipantMutation.mutate(participant.id)}
-                          className="text-[var(--color-danger)] hover:text-red-300"
+                          className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
                         >
                           <Trash2 size={14} />
                         </Button>
                         {participant.completedWeeks === 6 && (
-                          <Award className="text-amber-400" size={20} />
+                          <Award className="text-[var(--color-warning)]" size={20} />
                         )}
                       </div>
                     ))}
@@ -569,8 +569,8 @@ export default function ChallengePage() {
             )}
             
             {formData.challenge_type === "personal" && (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-[var(--radius-lg)] p-3">
-                <p className="text-amber-400 text-sm">
+              <div className="bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-lg)] p-3">
+                <p className="text-[var(--color-warning)] text-sm">
                   Les dates seront définies individuellement pour chaque participant lors de l'inscription.
                 </p>
               </div>
@@ -608,7 +608,7 @@ export default function ChallengePage() {
             <Button
               onClick={() => saveMutation.mutate(formData)}
               disabled={!formData.name || saveMutation.isPending}
-              className="bg-amber-600 hover:bg-amber-700"
+              className="bg-[var(--color-warning)] hover:opacity-85"
               data-testid="save-challenge-btn"
             >
               {saveMutation.isPending ? "..." : formData.id ? "Mettre à jour" : "Créer"}
@@ -684,7 +684,7 @@ export default function ChallengePage() {
                 })
               }
               disabled={!participantData.member_id || addParticipantMutation.isPending}
-              className="bg-amber-600 hover:bg-amber-700"
+              className="bg-[var(--color-warning)] hover:opacity-85"
               data-testid="confirm-add-participant-btn"
             >
               {addParticipantMutation.isPending ? "..." : "Ajouter"}
@@ -698,7 +698,7 @@ export default function ChallengePage() {
         <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Target className="text-amber-400" size={20} />
+              <Target className="text-[var(--color-warning)]" size={20} />
               Check-ins hebdomadaires - {selectedParticipant?.member_name}
             </DialogTitle>
           </DialogHeader>
@@ -716,14 +716,14 @@ export default function ChallengePage() {
                     <div 
                       key={week} 
                       className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border ${
-                        isComplete ? "border-emerald-500/30" : "border-[var(--color-border)]"
+                        isComplete ? "border-[var(--color-success)]/30" : "border-[var(--color-border)]"
                       }`}
                     >
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-2">Semaine {week}</p>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.max(0, checkins - 1))}
-                          className="w-8 h-8 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-white/20 flex items-center justify-center"
                         >
                           -
                         </button>
@@ -732,7 +732,7 @@ export default function ChallengePage() {
                         </span>
                         <button
                           onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.min(7, checkins + 1))}
-                          className="w-8 h-8 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center"
+                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-white/20 flex items-center justify-center"
                         >
                           +
                         </button>
@@ -748,8 +748,8 @@ export default function ChallengePage() {
                   );
                 })}
               </div>
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-[var(--radius-lg)] p-3 mt-4">
-                <p className="text-amber-400 text-sm">
+              <div className="bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-lg)] p-3 mt-4">
+                <p className="text-[var(--color-warning)] text-sm">
                   Total : {WEEKS.reduce((sum, w) => sum + getWeeklyCheckins(selectedParticipant, w), 0)} check-ins 
                   / {(challengeDetail?.checkins_goal || 3) * 6} objectif
                 </p>

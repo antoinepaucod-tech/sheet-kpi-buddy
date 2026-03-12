@@ -72,10 +72,10 @@ const FOLLOWUP_TYPES = [
 ];
 
 const STATUS_CONFIG = {
-  scheduled: { label: "Planifié", color: "bg-blue-500/20 text-[var(--color-accent)]" },
-  completed: { label: "Complété", color: "bg-emerald-500/20 text-[var(--color-success)]" },
-  missed: { label: "Manqué", color: "bg-red-500/20 text-[var(--color-danger)]" },
-  rescheduled: { label: "Reporté", color: "bg-orange-500/20 text-[var(--color-warning)]" },
+  scheduled: { label: "Planifié", color: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]" },
+  completed: { label: "Complété", color: "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]" },
+  missed: { label: "Manqué", color: "bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)]" },
+  rescheduled: { label: "Reporté", color: "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]" },
 };
 
 export default function OnboardingPage() {
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
             {lang === "fr" ? "Intégration des membres et suivis mensuels" : "Member integration and monthly follow-ups"}
           </p>
         </div>
-        <Button onClick={() => setFollowupModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700" data-testid="add-followup-btn">
+        <Button onClick={() => setFollowupModalOpen(true)} className="bg-[var(--color-accent)] hover:opacity-85" data-testid="add-followup-btn">
           <Plus size={16} className="mr-2" />
           Planifier un suivi
         </Button>
@@ -272,7 +272,7 @@ export default function OnboardingPage() {
 
       {/* Alerts Banner */}
       {alerts && (alerts.late_payments > 0 || alerts.missed_followups > 0) && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-[var(--radius-lg)] p-4 flex items-center justify-between">
+        <div className="bg-[var(--color-danger)]/10 border border-[rgba(255,69,58,0.3)] rounded-[var(--radius-lg)] p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle className="text-[var(--color-danger)]" size={24} />
             <div>
@@ -286,12 +286,12 @@ export default function OnboardingPage() {
           </div>
           <div className="flex gap-2">
             {alerts.late_payments > 0 && (
-              <Badge className="bg-red-500/20 text-[var(--color-danger)] border-0">
+              <Badge className="bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] border-0">
                 <Bell size={12} className="mr-1" /> {alerts.late_payments} paiements
               </Badge>
             )}
             {alerts.missed_followups > 0 && (
-              <Badge className="bg-orange-500/20 text-[var(--color-warning)] border-0">
+              <Badge className="bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)] border-0">
                 <Calendar size={12} className="mr-1" /> {alerts.missed_followups} suivis
               </Badge>
             )}
@@ -301,25 +301,25 @@ export default function OnboardingPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-indigo-500/30 cursor-pointer" onClick={() => setActiveTab("onboarding")}>
-          <p className="text-indigo-400 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-accent)]/30 cursor-pointer" onClick={() => setActiveTab("onboarding")}>
+          <p className="text-[var(--color-accent)] text-xs uppercase flex items-center gap-1">
             <ClipboardCheck size={12} /> Onboarding en cours
           </p>
-          <p className="text-2xl font-mono font-bold text-indigo-400">{stats.pendingOnboarding}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.pendingOnboarding}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-blue-500/30 cursor-pointer" onClick={() => setActiveTab("upcoming")}>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-accent)]/30 cursor-pointer" onClick={() => setActiveTab("upcoming")}>
           <p className="text-[var(--color-accent)] text-xs uppercase flex items-center gap-1">
             <Calendar size={12} /> Suivis à venir
           </p>
           <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.upcomingFollowups}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-red-500/30 cursor-pointer" onClick={() => setActiveTab("missed")}>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)] cursor-pointer" onClick={() => setActiveTab("missed")}>
           <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} /> Suivis manqués
           </p>
           <p className="text-2xl font-mono font-bold text-[var(--color-danger)]">{stats.missedFollowups}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-emerald-500/30">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-success)]/30">
           <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
             <CheckCircle2 size={12} /> Complétés ce mois
           </p>
@@ -329,9 +329,9 @@ export default function OnboardingPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-          <TabsTrigger value="onboarding" className="data-[state=active]:bg-indigo-600">Onboarding ({stats.pendingOnboarding})</TabsTrigger>
-          <TabsTrigger value="upcoming" className="data-[state=active]:bg-blue-600">À venir ({stats.upcomingFollowups})</TabsTrigger>
-          <TabsTrigger value="missed" className="data-[state=active]:bg-red-600">Manqués ({stats.missedFollowups})</TabsTrigger>
+          <TabsTrigger value="onboarding" className="data-[state=active]:bg-[var(--color-accent)]">Onboarding ({stats.pendingOnboarding})</TabsTrigger>
+          <TabsTrigger value="upcoming" className="data-[state=active]:bg-[var(--color-accent)]">À venir ({stats.upcomingFollowups})</TabsTrigger>
+          <TabsTrigger value="missed" className="data-[state=active]:bg-[var(--color-danger)]">Manqués ({stats.missedFollowups})</TabsTrigger>
           <TabsTrigger value="history" className="data-[state=active]:bg-white/20">Historique</TabsTrigger>
         </TabsList>
 
@@ -355,7 +355,7 @@ export default function OnboardingPage() {
                 data-testid="show-completed-toggle"
               />
               {showCompleted && (
-                <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">
+                <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
                   +{stats.completedOnboarding}
                 </Badge>
               )}
@@ -366,7 +366,7 @@ export default function OnboardingPage() {
             {loadingOnboarding ? (
               <div className="text-center text-[var(--color-text-secondary)] py-8">Chargement...</div>
             ) : filteredOnboarding.length === 0 ? (
-              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-8 border border-emerald-500/30 text-center">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-8 border border-[var(--color-success)]/30 text-center">
                 <CheckCircle2 size={48} className="mx-auto text-[var(--color-success)] mb-4" />
                 <p className="text-[var(--color-success)] font-medium">
                   {showCompleted ? "Aucun membre trouvé" : "Tous les onboardings sont complétés !"}
@@ -374,7 +374,7 @@ export default function OnboardingPage() {
                 {!showCompleted && stats.completedOnboarding > 0 && (
                   <Button 
                     variant="link" 
-                    className="text-indigo-400 mt-2"
+                    className="text-[var(--color-accent)] mt-2"
                     onClick={() => setShowCompleted(true)}
                   >
                     Voir les {stats.completedOnboarding} membres complétés
@@ -391,9 +391,9 @@ export default function OnboardingPage() {
                     key={member.id}
                     className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border transition-all duration-300 ${
                       isCompleted 
-                        ? "border-emerald-500/30 bg-emerald-500/5" 
+                        ? "border-[var(--color-success)]/30 bg-[var(--color-success)]/5" 
                         : isEditing 
-                          ? "border-indigo-500/50 ring-2 ring-indigo-500/20" 
+                          ? "border-[var(--color-accent)]/50 ring-2 ring-indigo-500/20" 
                           : "border-[var(--color-border)]"
                     }`}
                     data-testid={`onboarding-${member.id}`}
@@ -401,19 +401,19 @@ export default function OnboardingPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          isCompleted ? "bg-emerald-500/20" : "bg-indigo-500/20"
+                          isCompleted ? "bg-[rgba(48,209,88,0.15)]" : "bg-[var(--color-accent)]/20"
                         }`}>
                           {isCompleted ? (
                             <CheckCircle2 className="text-[var(--color-success)]" size={24} />
                           ) : (
-                            <User className="text-indigo-400" size={24} />
+                            <User className="text-[var(--color-accent)]" size={24} />
                           )}
                         </div>
                         <div>
                           <p className="text-white font-medium text-lg flex items-center gap-2">
                             {member.name}
                             {isCompleted && (
-                              <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0 text-xs">
+                              <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0 text-xs">
                                 Complété
                               </Badge>
                             )}
@@ -438,8 +438,8 @@ export default function OnboardingPage() {
                       <div className="text-right">
                         <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Progression</p>
                         <div className="flex items-center gap-2">
-                          <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-white/10" />
-                          <span className={`font-bold ${isCompleted ? 'text-[var(--color-success)]' : 'text-indigo-400'}`}>
+                          <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-[rgba(255,255,255,0.1)]" />
+                          <span className={`font-bold ${isCompleted ? 'text-[var(--color-success)]' : 'text-[var(--color-accent)]'}`}>
                             {member.onboarding_percentage}%
                           </span>
                         </div>
@@ -456,10 +456,10 @@ export default function OnboardingPage() {
                             onClick={() => !isCompleted && toggleOnboardingStep(member.id, step.key, isStepCompleted)}
                             className={`p-3 rounded-[var(--radius-lg)] border transition-all ${
                               isStepCompleted
-                                ? "bg-emerald-500/10 border-emerald-500/30"
+                                ? "bg-[var(--color-success)]/10 border-[var(--color-success)]/30"
                                 : isCompleted 
                                   ? "bg-white/5 border-[var(--color-border)] opacity-50"
-                                  : "bg-white/5 border-[var(--color-border)] hover:border-indigo-500/50 cursor-pointer"
+                                  : "bg-white/5 border-[var(--color-border)] hover:border-[var(--color-accent)]/50 cursor-pointer"
                             }`}
                             data-testid={`step-${step.key}-${member.id}`}
                           >
@@ -487,8 +487,8 @@ export default function OnboardingPage() {
 
         {/* Upcoming Follow-ups Tab */}
         <TabsContent value="upcoming" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-blue-500/30 overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-blue-500/10">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-accent)]/30 overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-accent)]/10">
               <h3 className="text-[var(--color-accent)] font-medium flex items-center gap-2">
                 <Calendar size={18} />
                 Suivis à venir (14 jours)
@@ -528,7 +528,7 @@ export default function OnboardingPage() {
                           {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
-                          <Badge className={daysUntil <= 3 ? "bg-orange-500/20 text-[var(--color-warning)]" : "bg-blue-500/20 text-[var(--color-accent)]"}>
+                          <Badge className={daysUntil <= 3 ? "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]" : "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]"}>
                             {daysUntil === 0 ? "Aujourd'hui" : daysUntil === 1 ? "Demain" : `${daysUntil} jours`}
                           </Badge>
                         </TableCell>
@@ -541,7 +541,7 @@ export default function OnboardingPage() {
                           <Button
                             size="sm"
                             onClick={() => openCompleteModal(followup)}
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
                           >
                             <CheckCircle2 size={14} className="mr-1" /> Compléter
                           </Button>
@@ -557,8 +557,8 @@ export default function OnboardingPage() {
 
         {/* Missed Follow-ups Tab */}
         <TabsContent value="missed" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-red-500/30 overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-red-500/10">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(255,69,58,0.3)] overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-danger)]/10">
               <h3 className="text-[var(--color-danger)] font-medium flex items-center gap-2">
                 <AlertTriangle size={18} />
                 Suivis manqués - Action requise
@@ -598,7 +598,7 @@ export default function OnboardingPage() {
                           {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
-                          <Badge className="bg-red-500/20 text-[var(--color-danger)] border-0">
+                          <Badge className="bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] border-0">
                             {daysLate} jours
                           </Badge>
                         </TableCell>
@@ -612,7 +612,7 @@ export default function OnboardingPage() {
                             <Button
                               size="sm"
                               onClick={() => openCompleteModal(followup)}
-                              className="bg-emerald-600 hover:bg-emerald-700"
+                              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
                             >
                               Compléter
                             </Button>
@@ -751,7 +751,7 @@ export default function OnboardingPage() {
             <Button
               onClick={() => createFollowupMutation.mutate(followupForm)}
               disabled={!followupForm.member_id || createFollowupMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700"
+              className="bg-[var(--color-accent)] hover:opacity-85"
             >
               {createFollowupMutation.isPending ? "..." : "Planifier"}
             </Button>
@@ -811,7 +811,7 @@ export default function OnboardingPage() {
                 });
               }}
               disabled={completeFollowupMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
             >
               {completeFollowupMutation.isPending ? "..." : "Compléter"}
             </Button>

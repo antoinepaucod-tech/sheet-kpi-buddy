@@ -42,10 +42,10 @@ import { useTranslations } from "../hooks/useTranslations";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const TYPE_CONFIG = {
-  payment_reminder: { label: "Rappel paiement", icon: CreditCard, color: "bg-red-500/20 text-[var(--color-danger)]" },
-  review_reminder: { label: "Rappel bilan", icon: ClipboardList, color: "bg-purple-500/20 text-[var(--color-info)]" },
-  followup_reminder: { label: "Rappel suivi", icon: UserCheck, color: "bg-emerald-500/20 text-[var(--color-success)]" },
-  custom: { label: "Personnalisé", icon: Mail, color: "bg-blue-500/20 text-[var(--color-accent)]" },
+  payment_reminder: { label: "Rappel paiement", icon: CreditCard, color: "bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)]" },
+  review_reminder: { label: "Rappel bilan", icon: ClipboardList, color: "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]" },
+  followup_reminder: { label: "Rappel suivi", icon: UserCheck, color: "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]" },
+  custom: { label: "Personnalisé", icon: Mail, color: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]" },
 };
 
 export default function NotificationsPage() {
@@ -122,14 +122,14 @@ export default function NotificationsPage() {
     sendEmailMutation.mutate({
       recipient_email: composeData.recipient_email,
       subject: composeData.subject,
-      html_content: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;background:#09090B;color:#fff;padding:0;">
-        <div style="background:linear-gradient(135deg,#E11D48,#BE123C);padding:24px 32px;">
-          <h1 style="margin:0;font-size:20px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.05em;">TRANSFORM</h1>
+      html_content: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;background:#000000;color:#fff;padding:0;">
+        <div style="background:#0A84FF;padding:24px 32px;">
+          <h1 style="margin:0;font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.02em;">Transform</h1>
         </div>
         <div style="padding:32px;">
           <p style="color:#ccc;line-height:1.8;white-space:pre-wrap;">${composeData.message}</p>
         </div>
-        <div style="padding:16px 32px;border-top:1px solid #222;text-align:center;">
+        <div style="padding:16px 32px;border-top:1px solid rgba(255,255,255,0.1);text-align:center;">
           <p style="margin:0;font-size:12px;color:#666;">TRANSFORM - Pilotage financier pour clubs de sport</p>
         </div>
       </div>`,
@@ -154,7 +154,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => sendBulkMutation.mutate({ notification_type: "payment_reminder" })}
             disabled={sendBulkMutation.isPending}
-            className="border-red-500/30 text-[var(--color-danger)] hover:bg-red-500/10"
+            className="border-[rgba(255,69,58,0.3)] text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
             data-testid="bulk-payment-btn"
           >
             <CreditCard size={14} className="mr-1.5" />
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => sendBulkMutation.mutate({ notification_type: "review_reminder" })}
             disabled={sendBulkMutation.isPending}
-            className="border-purple-500/30 text-[var(--color-info)] hover:bg-purple-500/10"
+            className="border-[var(--color-info)]/30 text-[var(--color-info)] hover:bg-[var(--color-info)]/10"
             data-testid="bulk-review-btn"
           >
             <ClipboardList size={14} className="mr-1.5" />

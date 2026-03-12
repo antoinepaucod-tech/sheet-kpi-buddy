@@ -472,7 +472,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
           {/* Monthly note */}
           {current?.note && (
-            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-[var(--radius-lg)] px-4 py-2.5 flex items-start gap-2">
+            <div className="bg-[rgba(255,214,10,0.05)] border border-[var(--color-warning)]/20 rounded-[var(--radius-lg)] px-4 py-2.5 flex items-start gap-2">
               <span className="text-[var(--color-warning)]/60 text-xs mt-0.5">📝</span>
               <p className="text-[var(--color-warning)] text-sm font-text">{current.note}</p>
             </div>

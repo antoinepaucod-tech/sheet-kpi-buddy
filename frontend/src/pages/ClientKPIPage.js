@@ -51,15 +51,15 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const ENGAGEMENT_COLORS = {
   Excellent: "text-[var(--color-success)]",
   Bon: "text-[var(--color-accent)]",
-  Moyen: "text-amber-400",
+  Moyen: "text-[var(--color-warning)]",
   Faible: "text-[var(--color-danger)]",
 };
 
 const ENGAGEMENT_BG = {
-  Excellent: "bg-emerald-500/20",
-  Bon: "bg-blue-500/20",
-  Moyen: "bg-amber-500/20",
-  Faible: "bg-red-500/20",
+  Excellent: "bg-[rgba(48,209,88,0.15)]",
+  Bon: "bg-[rgba(10,132,255,0.15)]",
+  Moyen: "bg-[var(--color-warning)]/20",
+  Faible: "bg-[rgba(255,69,58,0.15)]",
 };
 
 export default function ClientKPIPage() {
@@ -203,7 +203,7 @@ export default function ClientKPIPage() {
       case "Bon":
         return <Activity className="text-[var(--color-accent)]" size={16} />;
       case "Moyen":
-        return <TrendingUp className="text-amber-400" size={16} />;
+        return <TrendingUp className="text-[var(--color-warning)]" size={16} />;
       default:
         return <BarChart3 className="text-[var(--color-danger)]" size={16} />;
     }
@@ -234,7 +234,7 @@ export default function ClientKPIPage() {
           <p className="text-2xl font-mono font-bold text-[var(--color-info)]">{globalStats.avgPerWeek}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-emerald-500' : 'border-[var(--color-border)] hover:border-emerald-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-[var(--color-success)]' : 'border-[var(--color-border)] hover:border-[var(--color-success)]/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Excellent' ? 'all' : 'Excellent')}
         >
           <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
@@ -243,21 +243,21 @@ export default function ClientKPIPage() {
           <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{globalStats.excellent}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-blue-500' : 'border-[var(--color-border)] hover:border-blue-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-[var(--color-accent)]' : 'border-[var(--color-border)] hover:border-[var(--color-accent)]/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Bon' ? 'all' : 'Bon')}
         >
           <p className="text-[var(--color-accent)] text-xs uppercase">Bon</p>
           <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{globalStats.bon}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-amber-500' : 'border-[var(--color-border)] hover:border-amber-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-[var(--color-warning)]' : 'border-[var(--color-border)] hover:border-[var(--color-warning)]/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Moyen' ? 'all' : 'Moyen')}
         >
-          <p className="text-amber-400 text-xs uppercase">Moyen</p>
-          <p className="text-2xl font-mono font-bold text-amber-400">{globalStats.moyen}</p>
+          <p className="text-[var(--color-warning)] text-xs uppercase">Moyen</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{globalStats.moyen}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-red-500' : 'border-[var(--color-border)] hover:border-red-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-[var(--color-danger)]' : 'border-[var(--color-border)] hover:border-[var(--color-danger)]/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Faible' ? 'all' : 'Faible')}
         >
           <p className="text-[var(--color-danger)] text-xs uppercase">Faible</p>
@@ -276,8 +276,8 @@ export default function ClientKPIPage() {
             <AreaChart data={weeklyAggregate}>
               <defs>
                 <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#A855F7" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0A84FF" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#0A84FF" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -290,7 +290,7 @@ export default function ClientKPIPage() {
               <Area
                 type="monotone"
                 dataKey="avg"
-                stroke="#A855F7"
+                stroke="#0A84FF"
                 fillOpacity={1}
                 fill="url(#colorAvg)"
                 name="Moyenne"
@@ -397,7 +397,7 @@ export default function ClientKPIPage() {
                       <div className="flex items-center gap-2">
                         <Progress
                           value={Math.min(member.avgPerWeek * 20, 100)}
-                          className="w-20 h-2 bg-white/10"
+                          className="w-20 h-2 bg-[rgba(255,255,255,0.1)]"
                         />
                         <span className={`font-medium ${ENGAGEMENT_COLORS[member.engagement]}`}>
                           {member.avgPerWeek}
@@ -454,7 +454,7 @@ export default function ClientKPIPage() {
                                     formatter={(value) => [value, 'Séances']}
                                     labelFormatter={(label) => `Semaine ${label}`}
                                   />
-                                  <Bar dataKey="trainings_count" fill="#A855F7" radius={[4, 4, 0, 0]} />
+                                  <Bar dataKey="trainings_count" fill="#0A84FF" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                               </ResponsiveContainer>
                             </div>
@@ -507,7 +507,7 @@ export default function ClientKPIPage() {
           <span className="text-[var(--color-text-secondary)]">Bon (3+ / sem.)</span>
         </div>
         <div className="flex items-center gap-2">
-          <TrendingUp size={14} className="text-amber-400" />
+          <TrendingUp size={14} className="text-[var(--color-warning)]" />
           <span className="text-[var(--color-text-secondary)]">Moyen (2+ / sem.)</span>
         </div>
         <div className="flex items-center gap-2">
