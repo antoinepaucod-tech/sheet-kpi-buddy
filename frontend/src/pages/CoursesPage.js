@@ -318,18 +318,18 @@ export default function CoursesPage() {
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
           <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
             <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <CalendarDays size={12} /> Total Cours
             </p>
-            <p className="text-2xl font-mono font-bold text-white">{summary.total_courses}</p>
+            <p className="tf-number-large">{summary.total_courses}</p>
           </div>
           <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
             <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <TrendingUp size={12} /> Taux moyen
             </p>
-            <p className={`text-2xl font-bold ${getAttendanceColor(summary.avg_attendance_rate)}`}>
+            <p className={`tf-number-large ${getAttendanceColor(summary.avg_attendance_rate)}`}>
               {summary.avg_attendance_rate}%
             </p>
           </div>
@@ -337,7 +337,7 @@ export default function CoursesPage() {
             <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <DollarSign size={12} /> Dépenses
             </p>
-            <p className="text-2xl font-mono font-bold text-white">
+            <p className="tf-number-large">
               {summary.total_expenses?.toLocaleString("fr-CH")} CHF
             </p>
           </div>

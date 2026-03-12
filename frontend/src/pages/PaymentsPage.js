@@ -268,30 +268,30 @@ export default function PaymentsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 tf-stagger">
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total paiements</p>
-          <p className="text-2xl font-mono font-bold text-white mt-1">{stats.total}</p>
+          <p className="tf-number-large mt-1">{stats.total}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)] cursor-pointer hover:border-[var(--color-danger)]" onClick={() => setFilterStatus(filterStatus === 'late' ? 'all' : 'late')}>
           <p className="text-[var(--color-danger)] tf-label inline flex items-center gap-1">
             <AlertTriangle size={12} /> En retard
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-danger)] mt-1">{stats.late}</p>
+          <p className="tf-number-large mt-1" style={{color:"var(--color-danger)"}}>{stats.late}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-accent)]/50" onClick={() => setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending')}>
           <p className="text-[var(--color-accent)] tf-label inline">En attente</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-accent)] mt-1">{stats.pending}</p>
+          <p className="tf-number-large mt-1" style={{color:"var(--color-accent)"}}>{stats.pending}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-success)] tf-label inline">Payés</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-success)] mt-1">{stats.paid}</p>
+          <p className="tf-number-large mt-1" style={{color:"var(--color-success)"}}>{stats.paid}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline flex items-center gap-1">
             <DollarSign size={12} /> Montant en retard
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-danger)] mt-1">{stats.lateAmount.toLocaleString("fr-CH")} CHF</p>
+          <p className="tf-number-large mt-1" style={{color:"var(--color-danger)"}}>{stats.lateAmount.toLocaleString("fr-CH")} CHF</p>
         </div>
       </div>
 

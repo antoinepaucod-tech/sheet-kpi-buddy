@@ -135,7 +135,7 @@ export default function TransactionsPage({ selectedMonth }) {
       </div>
 
       {/* Revenue split */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
         {[
           { label: t("revenueMembers"), value: formatCHF(memberRevenue), color: "text-[var(--color-success)]" },
           { label: t("revenueCoaching"), value: formatCHF(coachRevenue), color: "text-[var(--color-success)]" },

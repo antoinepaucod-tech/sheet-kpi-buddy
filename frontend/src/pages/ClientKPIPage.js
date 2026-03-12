@@ -227,11 +227,11 @@ export default function ClientKPIPage() {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total Membres</p>
-          <p className="text-2xl font-mono font-bold text-white">{globalStats.totalMembers}</p>
+          <p className="tf-number-large">{globalStats.totalMembers}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Moy. / Semaine</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-info)]">{globalStats.avgPerWeek}</p>
+          <p className="tf-number-large" style={{color:"var(--color-info)"}}>{globalStats.avgPerWeek}</p>
         </div>
         <div 
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-[var(--color-success)]' : 'border-[var(--color-border)] hover:border-[var(--color-success)]/50'}`}
@@ -240,28 +240,28 @@ export default function ClientKPIPage() {
           <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
             <Flame size={10} /> Excellent
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{globalStats.excellent}</p>
+          <p className="tf-number-large" style={{color:"var(--color-success)"}}>{globalStats.excellent}</p>
         </div>
         <div 
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-[var(--color-accent)]' : 'border-[var(--color-border)] hover:border-[var(--color-accent)]/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Bon' ? 'all' : 'Bon')}
         >
           <p className="text-[var(--color-accent)] text-xs uppercase">Bon</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{globalStats.bon}</p>
+          <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{globalStats.bon}</p>
         </div>
         <div 
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-[var(--color-warning)]' : 'border-[var(--color-border)] hover:border-[var(--color-warning)]/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Moyen' ? 'all' : 'Moyen')}
         >
           <p className="text-[var(--color-warning)] text-xs uppercase">Moyen</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{globalStats.moyen}</p>
+          <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{globalStats.moyen}</p>
         </div>
         <div 
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-[var(--color-danger)]' : 'border-[var(--color-border)] hover:border-[var(--color-danger)]/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Faible' ? 'all' : 'Faible')}
         >
           <p className="text-[var(--color-danger)] text-xs uppercase">Faible</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-danger)]">{globalStats.faible}</p>
+          <p className="tf-number-large" style={{color:"var(--color-danger)"}}>{globalStats.faible}</p>
         </div>
       </div>
 
@@ -419,15 +419,15 @@ export default function ClientKPIPage() {
                           <div className="grid grid-cols-4 gap-4">
                             <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                               <p className="text-[var(--color-text-secondary)] text-xs uppercase">Total séances</p>
-                              <p className="text-2xl font-mono font-bold text-white">{memberSummary.total_trainings}</p>
+                              <p className="tf-number-large">{memberSummary.total_trainings}</p>
                             </div>
                             <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                               <p className="text-[var(--color-text-secondary)] text-xs uppercase">Semaines suivies</p>
-                              <p className="text-2xl font-mono font-bold text-white">{memberSummary.weeks_tracked}</p>
+                              <p className="tf-number-large">{memberSummary.weeks_tracked}</p>
                             </div>
                             <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                               <p className="text-[var(--color-text-secondary)] text-xs uppercase">Moyenne / sem.</p>
-                              <p className={`text-2xl font-bold ${ENGAGEMENT_COLORS[memberSummary.engagement_level]}`}>
+                              <p className={`tf-number-large ${ENGAGEMENT_COLORS[memberSummary.engagement_level]}`}>
                                 {memberSummary.avg_per_week}
                               </p>
                             </div>

@@ -347,10 +347,10 @@ export default function MembersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 tf-stagger">
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total</p>
-          <p className="text-2xl font-mono font-bold text-white mt-1">{stats.total}</p>
+          <p className="tf-number-large mt-1">{stats.total}</p>
         </div>
         <div 
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-[var(--color-warning)]' : 'border-[var(--color-border)] hover:border-[var(--color-warning)]/50'}`}
@@ -361,12 +361,12 @@ export default function MembersPage() {
             <AlertTriangle size={12} />
             Expirant (30j)
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-warning)] mt-1">{stats.expiring}</p>
+          <p className="tf-number-large mt-1" style={{color:"var(--color-warning)"}}>{stats.expiring}</p>
         </div>
         {MEMBER_TYPES.map((type) => (
           <div key={type} className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
             <p className="text-[var(--color-text-secondary)] tf-label inline truncate">{type.replace("Membres ", "")}</p>
-            <p className="text-2xl font-mono font-bold text-white mt-1">{stats.byType[type]}</p>
+            <p className="tf-number-large mt-1">{stats.byType[type]}</p>
           </div>
         ))}
       </div>
@@ -515,7 +515,7 @@ export default function MembersPage() {
                             </div>
                             <div>
                               <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Cash collecté</p>
-                              <p className="text-2xl font-mono font-bold text-[var(--color-success)]">
+                              <p className="tf-number-large" style={{color:"var(--color-success)"}}>
                                 {member.cash_collected?.toLocaleString("fr-CH")} CHF
                               </p>
                             </div>

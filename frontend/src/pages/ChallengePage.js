@@ -372,15 +372,15 @@ export default function ChallengePage() {
                   <div className="grid grid-cols-4 gap-4 mt-6">
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase">Participants</p>
-                      <p className="text-2xl font-mono font-bold text-white">{stats.totalParticipants}</p>
+                      <p className="tf-number-large">{stats.totalParticipants}</p>
                     </div>
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase">Complétion moy.</p>
-                      <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{stats.avgCompletion}%</p>
+                      <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{stats.avgCompletion}%</p>
                     </div>
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase">100% complété</p>
-                      <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.fullyCompleted}</p>
+                      <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.fullyCompleted}</p>
                     </div>
                     <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase">Statut</p>
@@ -727,7 +727,7 @@ export default function ChallengePage() {
                         >
                           -
                         </button>
-                        <span className={`text-2xl font-bold flex-1 text-center ${isComplete ? "text-[var(--color-success)]" : "text-white"}`}>
+                        <span className={`tf-number-large flex-1 text-center ${isComplete ? "text-[var(--color-success)]" : "text-white"}`}>
                           {checkins}
                         </span>
                         <button

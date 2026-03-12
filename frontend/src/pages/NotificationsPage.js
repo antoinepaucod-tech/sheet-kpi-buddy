@@ -185,15 +185,15 @@ export default function NotificationsPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total envoyés</p>
-          <p className="text-2xl font-mono font-bold text-white">{stats.total}</p>
+          <p className="tf-number-large">{stats.total}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Réussis</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.sent}</p>
+          <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.sent}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Aujourd'hui</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.todayCount}</p>
+          <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.todayCount}</p>
         </div>
       </div>
 

@@ -206,19 +206,19 @@ export default function AttendancePage() {
           <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
             <Users size={10} /> Membres
           </p>
-          <p className="text-2xl font-mono font-bold text-white">{members.length}</p>
+          <p className="tf-number-large">{members.length}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
             <Activity size={10} /> Séances (période)
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-info)]">
+          <p className="tf-number-large" style={{color:"var(--color-info)"}}>
             {Object.values(weekTotals).reduce((a, b) => a + b, 0)}
           </p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Semaines affichées</p>
-          <p className="text-2xl font-mono font-bold text-white">S{weeks[0]} → S{weeks[weeks.length - 1]}</p>
+          <p className="tf-number-large">S{weeks[0]} → S{weeks[weeks.length - 1]}</p>
         </div>
       </div>
 

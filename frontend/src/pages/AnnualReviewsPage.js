@@ -325,7 +325,7 @@ export default function AnnualReviewsPage() {
             <Clock size={12} />
             À venir (60j)
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-info)]">{stats.next30Days}</p>
+          <p className="tf-number-large" style={{color:"var(--color-info)"}}>{stats.next30Days}</p>
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
@@ -334,7 +334,7 @@ export default function AnnualReviewsPage() {
           onClick={() => { setFilterPeriod("all"); setFilterStatus("all"); }}
         >
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total</p>
-          <p className="text-2xl font-mono font-bold text-white">{stats.total}</p>
+          <p className="tf-number-large">{stats.total}</p>
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
@@ -343,7 +343,7 @@ export default function AnnualReviewsPage() {
           onClick={() => { setFilterPeriod("all"); setFilterStatus("scheduled"); }}
         >
           <p className="text-[var(--color-accent)] text-xs uppercase">Planifiés</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.scheduled}</p>
+          <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.scheduled}</p>
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
@@ -352,21 +352,21 @@ export default function AnnualReviewsPage() {
           onClick={() => { setFilterPeriod("all"); setFilterStatus("completed"); }}
         >
           <p className="text-[var(--color-success)] text-xs uppercase">Complétés</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.completed}</p>
+          <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.completed}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-warning)]/30">
           <p className="text-[var(--color-warning)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             Cette semaine
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{stats.next7Days}</p>
+          <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{stats.next7Days}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)]">
           <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             En retard
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-danger)]">{stats.missed}</p>
+          <p className="tf-number-large" style={{color:"var(--color-danger)"}}>{stats.missed}</p>
         </div>
       </div>
 

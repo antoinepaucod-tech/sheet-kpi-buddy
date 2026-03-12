@@ -188,7 +188,7 @@ export default function ComparePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "Analyse Multi-Mois" : "Multi-Month Analysis"}
           </h1>
           <p className="text-[var(--color-text-secondary)] text-sm mt-1">

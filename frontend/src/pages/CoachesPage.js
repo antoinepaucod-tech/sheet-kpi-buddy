@@ -200,15 +200,15 @@ export default function CoachesPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
           <p className="text-[var(--color-text-secondary)] tf-label inline">Total Coachs</p>
-          <p className="text-2xl font-mono font-bold text-white">{coaches.length}</p>
+          <p className="tf-number-large">{coaches.length}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-success)]/30">
           <p className="text-[var(--color-success)] text-xs uppercase">Actifs</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{activeCoaches}</p>
+          <p className="tf-number-large" style={{color:"var(--color-success)"}}>{activeCoaches}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-warning)]/30">
           <p className="text-[var(--color-warning)] text-xs uppercase">Taux horaire moyen</p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{avgHourlyRate} CHF</p>
+          <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{avgHourlyRate} CHF</p>
         </div>
       </div>
 
@@ -470,21 +470,21 @@ export default function CoachesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
                   <p className="text-[var(--color-text-secondary)] tf-label inline">Cours donnés</p>
-                  <p className="text-2xl font-mono font-bold text-white">{coachStats.total_courses}</p>
+                  <p className="tf-number-large">{coachStats.total_courses}</p>
                 </div>
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
                   <p className="text-[var(--color-text-secondary)] tf-label inline">Heures travaillées</p>
-                  <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{coachStats.total_hours}h</p>
+                  <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{coachStats.total_hours}h</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
                   <p className="text-[var(--color-text-secondary)] tf-label inline">Participants</p>
-                  <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{coachStats.total_participants}</p>
+                  <p className="tf-number-large" style={{color:"var(--color-success)"}}>{coachStats.total_participants}</p>
                 </div>
                 <div className="bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-lg)] p-4 text-center">
                   <p className="text-[var(--color-warning)] text-xs uppercase">Gains estimés</p>
-                  <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{coachStats.earnings} CHF</p>
+                  <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{coachStats.earnings} CHF</p>
                 </div>
               </div>
               <p className="text-[var(--color-text-tertiary)] text-xs text-center">

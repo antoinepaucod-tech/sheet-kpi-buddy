@@ -179,8 +179,28 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64" data-testid="dashboard-loading">
-        <Loader2 className="animate-spin" size={32} style={{ color: 'var(--color-accent)' }} />
+      <div className="space-y-6" data-testid="dashboard-loading">
+        {/* Skeleton header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="tf-skeleton" style={{ width: '180px', height: '28px', marginBottom: '8px' }} />
+            <div className="tf-skeleton" style={{ width: '120px', height: '14px' }} />
+          </div>
+        </div>
+        {/* Skeleton KPI grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="tf-stat">
+              <div className="tf-skeleton tf-skeleton-text" style={{ width: '60%' }} />
+              <div className="tf-skeleton tf-skeleton-value" />
+            </div>
+          ))}
+        </div>
+        {/* Skeleton chart */}
+        <div className="tf-card">
+          <div className="tf-skeleton tf-skeleton-text" style={{ width: '30%' }} />
+          <div className="tf-skeleton" style={{ height: '200px', marginTop: '16px' }} />
+        </div>
       </div>
     );
   }
@@ -282,7 +302,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" data-testid="kpi-grid">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 tf-stagger" data-testid="kpi-grid">
         <KPICard
           label={t("totalRevenue")}
           value={formatCHF(current?.total_revenue)}
@@ -348,7 +368,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           <p className="tf-label" style={{ marginBottom: 'var(--space-4)' }}>
             {lang === "fr" ? "Objectifs du mois" : "Monthly targets"}
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-5 tf-stagger">
             {[
               {
                 label: t("churnRate"),
@@ -578,7 +598,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         <TabsContent value="funnel" className="space-y-4" data-testid="tab-funnel-content">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Acquisition stats */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 tf-stagger">
               {[
                 { label: t("newMembers"), value: formatNum(current?.new_members), color: "var(--color-success)" },
                 { label: t("lostMembers"), value: formatNum(current?.lost_members), color: "var(--color-danger)" },
@@ -587,7 +607,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               ].map(({ label, value, color }) => (
                 <div key={label} className="tf-stat">
                   <p className="tf-stat-label">{label}</p>
-                  <p className="font-mono" style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color, marginTop: 'var(--space-2)' }}>{value}</p>
+                  <p className="tf-number-large" style={{ color, marginTop: 'var(--space-2)' }}>{value}</p>
                 </div>
               ))}
             </div>
@@ -699,7 +719,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           </div>
 
           {/* Summary metrics row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
             {[
               { label: t("profitMargin"), value: formatPct(current?.profit_margin) },
               { label: t("roas"), value: `${(current?.roas ?? 0).toFixed(2)}x` },
@@ -726,7 +746,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               </div>
 
               {/* Annual KPI cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
                 {[
                   { label: lang === "fr" ? "CA ANNUEL" : "ANNUAL REVENUE", value: formatCHF(annualData.totalRevenue), color: "var(--color-accent)" },
                   { label: lang === "fr" ? "BENEFICE ANNUEL" : "ANNUAL PROFIT", value: formatCHF(annualData.totalProfit), color: annualData.totalProfit >= 0 ? "var(--color-success)" : "var(--color-danger)" },
@@ -735,7 +755,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 ].map(({ label, value, color }) => (
                   <div key={label} className="tf-stat">
                     <p className="tf-stat-label">{label}</p>
-                    <p className="font-mono" style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color, marginTop: 'var(--space-2)' }}>{value}</p>
+                    <p className="tf-number-large" style={{ color, marginTop: 'var(--space-2)' }}>{value}</p>
                   </div>
                 ))}
               </div>

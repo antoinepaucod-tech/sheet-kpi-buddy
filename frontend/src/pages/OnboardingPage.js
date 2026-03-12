@@ -300,30 +300,30 @@ export default function OnboardingPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-accent)]/30 cursor-pointer" onClick={() => setActiveTab("onboarding")}>
           <p className="text-[var(--color-accent)] text-xs uppercase flex items-center gap-1">
             <ClipboardCheck size={12} /> Onboarding en cours
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.pendingOnboarding}</p>
+          <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.pendingOnboarding}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-accent)]/30 cursor-pointer" onClick={() => setActiveTab("upcoming")}>
           <p className="text-[var(--color-accent)] text-xs uppercase flex items-center gap-1">
             <Calendar size={12} /> Suivis à venir
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.upcomingFollowups}</p>
+          <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.upcomingFollowups}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)] cursor-pointer" onClick={() => setActiveTab("missed")}>
           <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} /> Suivis manqués
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-danger)]">{stats.missedFollowups}</p>
+          <p className="tf-number-large" style={{color:"var(--color-danger)"}}>{stats.missedFollowups}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-success)]/30">
           <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
             <CheckCircle2 size={12} /> Complétés ce mois
           </p>
-          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.completedThisMonth}</p>
+          <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.completedThisMonth}</p>
         </div>
       </div>
 

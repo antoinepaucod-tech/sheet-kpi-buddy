@@ -23,6 +23,8 @@ body {
   font-family: var(--font-text);
   font-size: var(--text-base);
   line-height: 1.5;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 /* ===== SCROLLBAR ===== */
@@ -293,11 +295,6 @@ body {
   transition: all var(--transition-fast);
 }
 
-/* Active/pressed state */
-button:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
 
 /* ================================================================
    GLOBAL SHADCN/UI OVERRIDES — Apple Design System
@@ -500,4 +497,249 @@ svg[class*="lucide-"] {
 /* --- CARD COMPONENTS --- */
 [class*="rounded-[var(--radius-lg)]"] {
   border-radius: var(--radius-lg) !important;
+}
+
+/* ================================================================
+   APPLE ANIMATIONS & MOTION SYSTEM
+   ================================================================ */
+
+/* --- KEYFRAMES --- */
+@keyframes tf-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tf-fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tf-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes tf-slide-in-right {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tf-pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes tf-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* --- PAGE CONTENT FADE IN --- */
+main {
+  animation: tf-fade-in 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+/* --- CARD HOVER (Apple-subtle) --- */
+.tf-card,
+.tf-stat {
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+.tf-card:hover {
+  border-color: var(--color-border-strong);
+}
+.tf-stat:hover {
+  border-color: var(--color-border-strong);
+  background: rgba(28, 28, 30, 0.8);
+}
+
+/* --- STAGGER ANIMATIONS for grid children --- */
+.tf-stagger > * {
+  animation: tf-fade-in-up 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+.tf-stagger > *:nth-child(1) { animation-delay: 0.00s; }
+.tf-stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.tf-stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.tf-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+.tf-stagger > *:nth-child(5) { animation-delay: 0.24s; }
+.tf-stagger > *:nth-child(6) { animation-delay: 0.30s; }
+.tf-stagger > *:nth-child(7) { animation-delay: 0.36s; }
+.tf-stagger > *:nth-child(8) { animation-delay: 0.42s; }
+
+/* --- SLIDE IN for sidebar items --- */
+.tf-sidebar-item {
+  transition: color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast) !important;
+}
+.tf-sidebar-item:hover {
+  transform: translateX(2px);
+}
+
+/* --- TABLE ROW ANIMATION --- */
+table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+/* --- SKELETON LOADER --- */
+.tf-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-bg-tertiary) 40%,
+    var(--color-bg-secondary) 80%
+  );
+  background-size: 200% 100%;
+  animation: tf-shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+.tf-skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+.tf-skeleton-value {
+  height: 34px;
+  width: 100px;
+  border-radius: 4px;
+}
+
+/* --- PROGRESS BAR ANIMATION --- */
+[class*="tf-progress"] {
+  transition: width 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* --- DIALOG ENTRANCE (Apple scale) --- */
+[role="dialog"] {
+  animation: tf-scale-in 0.25s cubic-bezier(0.25, 0.1, 0.25, 1) both !important;
+}
+
+/* --- TAB CONTENT --- */
+[role="tabpanel"] {
+  animation: tf-fade-in 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+/* --- BUTTON PRESS (Apple haptic feel) --- */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  transition: transform 0.1s ease !important;
+}
+
+/* --- BADGE APPEAR --- */
+.tf-badge,
+[class*="Badge"] {
+  animation: tf-fade-in 0.3s ease both;
+}
+
+/* ================================================================
+   APPLE TYPOGRAPHY — TABULAR NUMBERS & HARMONIZATION
+   ================================================================ */
+
+/* --- TABULAR NUMBERS (aligned columns like Apple Finance) --- */
+.font-mono,
+.tf-stat-value,
+[class*="font-mono"] {
+  font-family: var(--font-mono) !important;
+  font-feature-settings: "tnum" 1, "zero" 1 !important;
+  -webkit-font-feature-settings: "tnum" 1, "zero" 1 !important;
+  font-variant-numeric: tabular-nums slashed-zero !important;
+}
+
+/* --- NUMBER DISPLAY (Hero KPI numbers) --- */
+.tf-number-hero {
+  font-family: var(--font-mono);
+  font-weight: var(--font-bold);
+  font-size: var(--text-3xl);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+  color: var(--color-text-primary);
+}
+
+.tf-number-large {
+  font-family: var(--font-mono);
+  font-weight: var(--font-bold);
+  font-size: var(--text-2xl);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+  color: var(--color-text-primary);
+}
+
+.tf-number-medium {
+  font-family: var(--font-mono);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+.tf-number-small {
+  font-family: var(--font-mono);
+  font-weight: var(--font-bold);
+  font-size: var(--text-sm);
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+/* --- PAGE TITLE (SF Pro Display style) --- */
+.tf-page-header {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* --- SECTION TITLE --- */
+.tf-section-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+/* --- BODY TEXT --- */
+.tf-body {
+  font-family: var(--font-text);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+.tf-body-secondary {
+  font-family: var(--font-text);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+/* --- TABLE DATA (mono for alignment) --- */
+table tbody td {
+  font-family: var(--font-text) !important;
+  font-feature-settings: "tnum" 1 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* --- CHART TOOLTIP VALUES --- */
+.recharts-tooltip-wrapper {
+  font-feature-settings: "tnum" 1 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* --- KPI CARD STAT VALUE (enforce mono+tnum) --- */
+.tf-stat-value {
+  font-family: var(--font-mono);
+  font-weight: var(--font-bold);
+  font-size: var(--text-2xl);
+  color: var(--color-text-primary);
+  margin-top: var(--space-1);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums slashed-zero;
 }
