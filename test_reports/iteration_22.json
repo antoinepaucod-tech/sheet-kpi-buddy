@@ -1,0 +1,82 @@
+{
+  "summary": "Iteration 22: Verified KPI overflow bug fix (P0). CSS clamp(14px, 1.1vw, 20px) working correctly. All 6 KPI cards display without overflow at 1280px, 1440px, and 1920px. Grid uses xl:grid-cols-6 breakpoint correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_22.json"],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (skipped per request)",
+    "frontend": "100%"
+  },
+  "test_credentials": "email=test@transform.ch, password=Test1234!",
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "KPI overflow bug fix verified. CSS uses clamp(14px, 1.1vw, 20px) for .tf-kpi-value and .tf-number-large classes. Grid uses xl:grid-cols-6 (>=1280px threshold). All pages tested without overflow issues.",
+  "test_results": {
+    "bug_fix_verification": {
+      "status": "PASS",
+      "bug_description": "KPI values were overflowing card containers at 1440px viewport width",
+      "fix_applied": "CSS clamp(14px, 1.1vw, 20px) + grid breakpoint changed from lg:grid-cols-6 to xl:grid-cols-6",
+      "verification_details": {
+        "1920px": "All 6 KPI cards visible, no overflow - scrollWidth equals clientWidth",
+        "1440px": "All 6 KPI cards visible, no overflow - scrollWidth equals clientWidth",
+        "1280px": "All 6 KPI cards visible, no overflow - scrollWidth equals clientWidth"
+      }
+    },
+    "kpi_values_tested": [
+      "71 500.00 CHF (Revenue)",
+      "23 400.00 CHF (Net Profit)",
+      "340 (Members)",
+      "3.4% (Churn Rate)",
+      "157.14 CHF (CAC)",
+      "23.8x (ROAS)"
+    ],
+    "css_computed_styles": {
+      "tf_kpi_value": {
+        "fontSize": "20px (max of clamp)",
+        "fontWeight": "700",
+        "whiteSpace": "normal",
+        "overflow": "hidden",
+        "textOverflow": "ellipsis"
+      }
+    },
+    "grid_breakpoint_verification": {
+      "1920px": "6 columns",
+      "1440px": "6 columns",
+      "1280px": "6 columns (xl breakpoint threshold)",
+      "1024px": "3 columns (below xl)",
+      "768px": "3 columns (md breakpoint)"
+    },
+    "dashboard_features_tested": {
+      "monthly_targets_section": "PASS - renders without overflow",
+      "chart_tabs": {
+        "revenue": "PASS",
+        "details": "PASS",
+        "funnel": "PASS",
+        "members": "PASS",
+        "metrics": "PASS",
+        "annual": "PASS"
+      },
+      "month_navigation": {
+        "prev_button": "PASS - navigated from dec. 24 to nov. 24",
+        "next_button": "PASS - navigated back to dec. 24"
+      }
+    },
+    "other_pages_tested": {
+      "members_page": "PASS - loads correctly at 1440px",
+      "payments_page": "PASS - 5 .tf-number-large elements render without overflow",
+      "funnel_tab": "PASS - 4 .tf-number-large elements render without overflow (35, 12, 5 500.00 CHF, 157.14 CHF)"
+    },
+    "login_flow": "PASS - credentials test@transform.ch / Test1234! work correctly"
+  }
+}

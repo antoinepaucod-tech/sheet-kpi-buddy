@@ -188,7 +188,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           </div>
         </div>
         {/* Skeleton KPI grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="tf-stat">
               <div className="tf-skeleton tf-skeleton-text" style={{ width: '60%' }} />
@@ -302,7 +302,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 tf-stagger" data-testid="kpi-grid">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 tf-stagger" data-testid="kpi-grid">
         <KPICard
           label={t("totalRevenue")}
           value={formatCHF(current?.total_revenue)}

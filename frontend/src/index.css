@@ -646,16 +646,14 @@ button:active:not(:disabled) {
 .tf-kpi-value {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 17px;
+  font-size: clamp(14px, 1.1vw, 20px);
   letter-spacing: -0.01em;
   line-height: 1.2;
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
-  white-space: nowrap;
-}
-@media (min-width: 1536px) {
-  .tf-kpi-value { font-size: 20px; }
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* --- NUMBER DISPLAY (Hero KPI numbers — Inter, not mono) --- */
@@ -673,15 +671,14 @@ button:active:not(:disabled) {
 .tf-number-large {
   font-family: var(--font-display);
   font-weight: var(--font-bold);
-  font-size: 17px;
+  font-size: clamp(14px, 1.1vw, 20px);
   letter-spacing: -0.01em;
   line-height: 1.2;
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
-}
-@media (min-width: 1280px) {
-  .tf-number-large { font-size: 20px; }
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tf-number-medium {
