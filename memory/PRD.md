@@ -8,86 +8,60 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 ### 1. Authentication & Multi-tenancy
 - JWT-based authentication (register/login)
 - Data isolation by club_id
-- Club name customization
 
 ### 2. Monthly KPIs Dashboard
 - Main dashboard with revenue/expense tracking
 - Advanced metrics (churn, CAC, ROAS, profit margin)
-- Detailed KPI view with 30+ fields
-- Multi-month comparison view (/compare)
-- PDF report generation
+- Multi-month comparison view, PDF report generation
 
 ### 3. Transaction Management
-- CRUD for transactions
-- Category mapping to KPI columns
-- Auto-recalculation of monthly KPIs
-- Bulk import support
+- CRUD, category mapping, auto-recalculation, bulk import
 
 ### 4. Recurring Transactions
-- Define recurring expenses/revenues
-- Monthly generation with day specification
+- Define recurring expenses/revenues, monthly generation
 
 ### 5. Member Management
-- Full CRUD for members
-- Contract signature date tracking
-- Subscription expiration dates
-- Member types (Généraux Récurrents, PIF, PT)
-- Expiring members filter (30 days)
-- Renewal workflow with history
-- Billing Cycle Integration (monthly_day, interval_days)
-- Review frequency: monthly, quarterly, semi-annually, annually
+- Full CRUD, contract tracking, subscription dates
+- Member types, renewal workflow, billing cycle
+- Review frequency: monthly/quarterly/semi-annually/annually
 - **Duo Subscriptions**: 2 members linked, 1 price, auto-partner creation
 
 ### 6. Payment System
-- Payment Schedules: Define recurring payments per member
-- Payment Tracking with status
-- Late payment alerts
-- Payment Generation
+- Payment schedules, tracking, late payment alerts
 
 ### 7. Onboarding & Follow-ups
-- 5-Step Onboarding Checklist
-- Follow-up Scheduling (monthly, onboarding, renewal, payment)
+- 5-Step checklist, follow-up scheduling
 
 ### 8. 6 Weeks Challenge
-- Challenge types: Fixed dates (group) or Personal (individual start dates)
-- Check-in goals: Configurable weekly check-in target (1-7)
-- Participant management with personal dates
-- Dual tracking: Boolean week completion + Detailed weekly check-in counters
-- Progress tracking per participant
+- Fixed/Personal types, configurable check-in goals
+- Dual tracking (boolean + counters), personal dates
 
 ### 9. Bilans / Suivis
-- Multi-frequency: Monthly, Quarterly, Semi-annual, Annual reviews
-- Type-based filtering and color-coded badges
-- Weight, nutrition, and training program tracking
-- Auto-schedule next review based on frequency
-- **History Charts**: LineChart evolution for weight, body composition, training frequency
+- Multi-frequency reviews with type filtering
+- **History Charts**: LineChart evolution (weight, body comp, training freq)
+- Auto-schedule next review
 
 ### 10. Course KPIs
-- Course definition by day/time slot
-- Instructor/Coach assignment with hourly rates
-- 5-Week Attendance Tracking (S1-S5)
-- Salary expense generation: Auto-generate coach salary expenses from courses
+- Course definition, instructor assignment, attendance tracking
+- **Salary expense generation** from courses
 
 ### 11. Client KPIs
-- Weekly training tracking per member
-- Engagement levels
+- Weekly training tracking, engagement levels
 
-### 12. Coach Management
-- Coach CRUD with hourly rates
-- Replacement tracking
-- Integration with Course KPIs
+### 12. Global Attendance (NEW)
+- Grid view: members × weeks
+- Editable session counts with color coding
+- Totals per member and per week
+- Week navigation and year selection
 
-### 13. Data Reset
-- Reset all transactional data
-- Keep user account, settings, categories, types
-- Requires "RESET" confirmation
+### 13. Coach Management
+- Coach CRUD, replacement tracking
 
-### 14. Settings & Configuration
-- Club info, KPI targets
-- Subscription types management
-- Member types management
-- Custom KPI columns
-- Expense categories
+### 14. Data Reset
+- Reset all transactional data, keep config
+
+### 15. Settings & Configuration
+- Club info, KPI targets, subscription types, member types, custom KPI columns
 
 ## Technical Architecture
 
@@ -96,86 +70,45 @@ Application SaaS de pilotage financier pour clubs de sport, permettant le suivi 
 /app/backend/
 ├── server.py              # ~210 lines (seed, settings, init only)
 ├── core/
-│   ├── config.py          # Database & constants
-│   └── security.py        # JWT & password handling
-├── models/
-│   ├── auth.py
-│   ├── kpi.py
-│   ├── transactions.py
-│   ├── members.py         # + is_duo, duo_partner_id, duo_primary, review_frequency
-│   ├── challenges.py      # + challenge_type, checkins_goal, personal dates
-│   ├── courses.py
-│   ├── payments.py
-│   ├── coaches.py
-│   ├── subscription_types.py
-│   ├── kpi_columns.py
-│   └── settings.py
-├── routers/
-│   ├── auth.py
-│   ├── members.py         # + duo auto-partner creation
-│   ├── payments.py
-│   ├── annual_reviews.py  # + history endpoint + multi-frequency
-│   ├── followups.py
-│   ├── onboarding.py
-│   ├── settings.py        # + reset-data
-│   ├── coaches.py
-│   ├── challenges.py      # Extracted from server.py
-│   ├── kpis.py            # NEW - Extracted from server.py
-│   ├── transactions.py    # NEW - Extracted from server.py
-│   ├── trainings.py       # NEW - Extracted from server.py
-│   ├── courses.py         # NEW - Extracted from server.py
-│   ├── alerts.py          # NEW - Extracted from server.py
-│   └── reports.py         # NEW - Extracted from server.py
+│   ├── config.py
+│   └── security.py
+├── models/ (10 files)
+├── routers/ (15 files)
+│   ├── auth.py, members.py, payments.py, annual_reviews.py
+│   ├── followups.py, onboarding.py, settings.py, coaches.py
+│   ├── challenges.py, kpis.py, transactions.py, trainings.py
+│   ├── courses.py, alerts.py, reports.py
 └── tests/
 ```
 
 ### Frontend (React)
 ```
-/app/frontend/src/
-├── pages/
-│   ├── Dashboard.js
-│   ├── ComparePage.js
-│   ├── MembersPage.js        # + duo checkbox, partner fields, DUO badge
-│   ├── PaymentsPage.js
-│   ├── OnboardingPage.js
-│   ├── AnnualReviewsPage.js  # + type filter, history charts (LineChart)
-│   ├── ChallengePage.js      # + challenge_type, personal dates
-│   ├── CoursesPage.js        # + salary generation button
-│   ├── CoachesPage.js
-│   ├── ClientKPIPage.js
-│   ├── TransactionsPage.js
-│   ├── RecurringPage.js
-│   ├── CategoriesPage.js
-│   ├── SettingsPage.js       # + data reset section
-│   ├── SettingsTypesPage.js
-│   └── AuthPage.js
-├── components/
-│   ├── Layout.js             # Updated sidebar labels
-│   └── ui/
-├── contexts/
-└── hooks/
+/app/frontend/src/pages/ (17 files)
+├── Dashboard.js, ComparePage.js, MembersPage.js, PaymentsPage.js
+├── OnboardingPage.js, AnnualReviewsPage.js, ChallengePage.js
+├── CoursesPage.js, CoachesPage.js, ClientKPIPage.js
+├── AttendancePage.js (NEW), TransactionsPage.js, RecurringPage.js
+├── CategoriesPage.js, SettingsPage.js, SettingsTypesPage.js, AuthPage.js
 ```
 
 ## Backlog
 
 ### P1 - High Priority
-- [ ] Saisie globale des séances (vue tableau de présence)
 - [ ] Intégration API Bsport (en attente des infos utilisateur)
 - [ ] Email notifications (Resend - en attente clé API)
 - [ ] Export member data to CSV
 
 ### P2 - Medium Priority
-- [ ] Alertes WhatsApp via Twilio (en attente instructions utilisateur)
+- [ ] Alertes WhatsApp via Twilio (en attente)
 - [ ] Interface de migration de données
-- [ ] Real-time updates with WebSockets
-- [ ] Automatisation des renouvellements d'abonnements
+- [ ] Real-time updates (WebSockets)
+- [ ] Automatisation renouvellements
 
 ### P3 - Low Priority
 - [ ] Mobile app / PWA
-- [ ] Integration with booking systems
 - [ ] Multi-currency support
 
 ## Testing Status
-- Backend: 17/17 tests passing (iteration_12) ✅
-- Frontend: 100% functional ✅
-- Test files: /app/test_reports/iteration_12.json (latest)
+- Iteration 13: 11/11 backend + 100% frontend ✅
+- Iteration 12: 17/17 backend + 100% frontend ✅
+- Iteration 11: 18/18 backend + 100% frontend ✅
