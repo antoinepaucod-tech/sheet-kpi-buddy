@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, LogIn, UserPlus } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { useAuth } from "../contexts/AuthContext";
 import { useTranslations } from "../hooks/useTranslations";
 import { useToast } from "../hooks/use-toast";
@@ -52,12 +49,12 @@ export default function AuthPage() {
         await login(form.email, form.password);
         toast({
           title: lang === "fr" ? "Bienvenue !" : "Welcome!",
-          description: lang === "fr" ? "Connexion réussie" : "Login successful",
+          description: lang === "fr" ? "Connexion reussie" : "Login successful",
         });
       } else {
         await register(form.email, form.password, form.clubName);
         toast({
-          title: lang === "fr" ? "Compte créé !" : "Account created!",
+          title: lang === "fr" ? "Compte cree !" : "Account created!",
           description: lang === "fr" ? "Bienvenue sur Transform" : "Welcome to Transform",
         });
       }
@@ -76,16 +73,16 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-bg-primary)' }}>
       <Toaster />
       
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="font-heading text-5xl font-extrabold text-white uppercase tracking-tight">
+        <div className="text-center mb-10">
+          <h1 className="font-display" style={{ fontSize: 'var(--text-3xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
             Transform
           </h1>
-          <p className="text-white/40 text-sm mt-2">
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginTop: 'var(--space-2)' }}>
             {lang === "fr" 
               ? "Pilotage financier pour clubs de sport"
               : "Financial management for sports clubs"}
@@ -93,27 +90,41 @@ export default function AuthPage() {
         </div>
         
         {/* Auth Card */}
-        <div className="bg-[#121214] border border-white/10 rounded-sm p-6">
+        <div className="tf-card">
           {/* Tab Switcher */}
-          <div className="flex mb-6 bg-[#121214] rounded-sm p-1">
+          <div className="flex mb-6" style={{ background: 'var(--color-bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-1)' }}>
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 text-sm font-medium rounded-sm transition-colors ${
-                isLogin 
-                  ? "bg-rose-600 text-white" 
-                  : "text-white/50 hover:text-white"
-              }`}
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-semibold)',
+                borderRadius: 'var(--radius-sm)',
+                transition: 'var(--transition-fast)',
+                background: isLogin ? 'var(--color-accent)' : 'transparent',
+                color: isLogin ? '#fff' : 'var(--color-text-secondary)',
+                border: 'none',
+                cursor: 'pointer',
+              }}
               data-testid="tab-login"
             >
               {lang === "fr" ? "Connexion" : "Login"}
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 text-sm font-medium rounded-sm transition-colors ${
-                !isLogin 
-                  ? "bg-rose-600 text-white" 
-                  : "text-white/50 hover:text-white"
-              }`}
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-semibold)',
+                borderRadius: 'var(--radius-sm)',
+                transition: 'var(--transition-fast)',
+                background: !isLogin ? 'var(--color-accent)' : 'transparent',
+                color: !isLogin ? '#fff' : 'var(--color-text-secondary)',
+                border: 'none',
+                cursor: 'pointer',
+              }}
               data-testid="tab-register"
             >
               {lang === "fr" ? "Inscription" : "Register"}
@@ -121,38 +132,39 @@ export default function AuthPage() {
           </div>
           
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="tf-label" style={{ display: 'block', marginBottom: 'var(--space-2)' }}>
                 Email
-              </Label>
-              <Input
+              </label>
+              <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="bg-[#121214] border-white/10 text-white"
+                className="tf-input w-full"
                 placeholder="club@example.com"
                 data-testid="input-email"
               />
             </div>
             
-            <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">
+            <div>
+              <label className="tf-label" style={{ display: 'block', marginBottom: 'var(--space-2)' }}>
                 {lang === "fr" ? "Mot de passe" : "Password"}
-              </Label>
+              </label>
               <div className="relative">
-                <Input
+                <input
                   type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white pr-10"
-                  placeholder="••••••••"
+                  className="tf-input w-full"
+                  style={{ paddingRight: '40px' }}
+                  placeholder="--------"
                   data-testid="input-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -160,46 +172,47 @@ export default function AuthPage() {
             </div>
             
             {!isLogin && (
-              <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase tracking-wider">
+              <div>
+                <label className="tf-label" style={{ display: 'block', marginBottom: 'var(--space-2)' }}>
                   {lang === "fr" ? "Nom du club" : "Club Name"}
-                </Label>
-                <Input
+                </label>
+                <input
                   type="text"
                   value={form.clubName}
                   onChange={(e) => setForm({ ...form, clubName: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white"
+                  className="tf-input w-full"
                   placeholder={lang === "fr" ? "CrossFit Example" : "CrossFit Example"}
                   data-testid="input-club-name"
                 />
               </div>
             )}
             
-            <Button
+            <button
               type="submit"
               disabled={loading}
-              className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider h-11 mt-6"
+              className="tf-btn-primary w-full flex items-center justify-center gap-2"
+              style={{ marginTop: 'var(--space-6)', height: '44px' }}
               data-testid="submit-btn"
             >
               {loading ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : isLogin ? (
                 <>
-                  <LogIn size={16} className="mr-2" />
+                  <LogIn size={16} />
                   {lang === "fr" ? "Se connecter" : "Login"}
                 </>
               ) : (
                 <>
-                  <UserPlus size={16} className="mr-2" />
-                  {lang === "fr" ? "Créer mon compte" : "Create account"}
+                  <UserPlus size={16} />
+                  {lang === "fr" ? "Creer mon compte" : "Create account"}
                 </>
               )}
-            </Button>
+            </button>
           </form>
         </div>
         
         {/* Footer */}
-        <p className="text-center text-white/20 text-xs mt-6 font-mono">
+        <p className="text-center font-mono" style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--text-xs)', marginTop: 'var(--space-6)' }}>
           TRANSFORM v2.0
         </p>
       </div>

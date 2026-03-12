@@ -49,10 +49,10 @@ import {
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ENGAGEMENT_COLORS = {
-  Excellent: "text-emerald-400",
-  Bon: "text-blue-400",
+  Excellent: "text-[var(--color-success)]",
+  Bon: "text-[var(--color-accent)]",
   Moyen: "text-amber-400",
-  Faible: "text-red-400",
+  Faible: "text-[var(--color-danger)]",
 };
 
 const ENGAGEMENT_BG = {
@@ -199,13 +199,13 @@ export default function ClientKPIPage() {
   const getEngagementIcon = (engagement) => {
     switch (engagement) {
       case "Excellent":
-        return <Flame className="text-emerald-400" size={16} />;
+        return <Flame className="text-[var(--color-success)]" size={16} />;
       case "Bon":
-        return <Activity className="text-blue-400" size={16} />;
+        return <Activity className="text-[var(--color-accent)]" size={16} />;
       case "Moyen":
         return <TrendingUp className="text-amber-400" size={16} />;
       default:
-        return <BarChart3 className="text-red-400" size={16} />;
+        return <BarChart3 className="text-[var(--color-danger)]" size={16} />;
     }
   };
 
@@ -214,10 +214,10 @@ export default function ClientKPIPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "KPIs Clients" : "Client KPIs"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {lang === "fr" ? "Engagement et séances hebdomadaires par membre" : "Engagement and weekly sessions per member"}
           </p>
         </div>
@@ -225,50 +225,50 @@ export default function ClientKPIPage() {
 
       {/* Global Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-          <p className="text-white/40 text-xs uppercase tracking-wider">Total Membres</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Total Membres</p>
           <p className="text-2xl font-mono font-bold text-white">{globalStats.totalMembers}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-          <p className="text-white/40 text-xs uppercase tracking-wider">Moy. / Semaine</p>
-          <p className="text-2xl font-mono font-bold text-purple-400">{globalStats.avgPerWeek}</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Moy. / Semaine</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-info)]">{globalStats.avgPerWeek}</p>
         </div>
         <div 
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-emerald-500' : 'border-white/10 hover:border-emerald-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-emerald-500' : 'border-[var(--color-border)] hover:border-emerald-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Excellent' ? 'all' : 'Excellent')}
         >
-          <p className="text-emerald-400 text-xs uppercase flex items-center gap-1">
+          <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
             <Flame size={10} /> Excellent
           </p>
-          <p className="text-2xl font-mono font-bold text-emerald-400">{globalStats.excellent}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{globalStats.excellent}</p>
         </div>
         <div 
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-blue-500' : 'border-white/10 hover:border-blue-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-blue-500' : 'border-[var(--color-border)] hover:border-blue-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Bon' ? 'all' : 'Bon')}
         >
-          <p className="text-blue-400 text-xs uppercase">Bon</p>
-          <p className="text-2xl font-mono font-bold text-blue-400">{globalStats.bon}</p>
+          <p className="text-[var(--color-accent)] text-xs uppercase">Bon</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{globalStats.bon}</p>
         </div>
         <div 
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-amber-500' : 'border-white/10 hover:border-amber-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-amber-500' : 'border-[var(--color-border)] hover:border-amber-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Moyen' ? 'all' : 'Moyen')}
         >
           <p className="text-amber-400 text-xs uppercase">Moyen</p>
           <p className="text-2xl font-mono font-bold text-amber-400">{globalStats.moyen}</p>
         </div>
         <div 
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-red-500' : 'border-white/10 hover:border-red-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-red-500' : 'border-[var(--color-border)] hover:border-red-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Faible' ? 'all' : 'Faible')}
         >
-          <p className="text-red-400 text-xs uppercase">Faible</p>
-          <p className="text-2xl font-mono font-bold text-red-400">{globalStats.faible}</p>
+          <p className="text-[var(--color-danger)] text-xs uppercase">Faible</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-danger)]">{globalStats.faible}</p>
         </div>
       </div>
 
       {/* Weekly Chart */}
-      <div className="bg-[#121214] rounded-sm p-6 border border-white/10">
+      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border border-[var(--color-border)]">
         <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-          <TrendingUp size={18} className="text-purple-400" />
+          <TrendingUp size={18} className="text-[var(--color-info)]" />
           Moyenne d'entraînements par semaine ({selectedYear})
         </h3>
         <div className="h-48">
@@ -303,21 +303,21 @@ export default function ClientKPIPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={lang === "fr" ? "Rechercher un membre..." : "Search member..."}
-            className="pl-10 bg-[#121214] border-white/10 text-white"
+            className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
             data-testid="client-search"
           />
         </div>
         <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-          <SelectTrigger className="w-[120px] bg-[#121214] border-white/10 text-white" data-testid="year-filter">
-            <Calendar size={14} className="mr-2 text-white/40" />
+          <SelectTrigger className="w-[120px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="year-filter">
+            <Calendar size={14} className="mr-2 text-[var(--color-text-secondary)]" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             {[2023, 2024, 2025].map((y) => (
               <SelectItem key={y} value={y.toString()} className="text-white">{y}</SelectItem>
             ))}
@@ -328,7 +328,7 @@ export default function ClientKPIPage() {
             variant="outline"
             size="sm"
             onClick={() => setFilterEngagement("all")}
-            className="border-white/10 text-white/70"
+            className="border-[var(--color-border)] text-white/70"
           >
             Réinitialiser filtre
           </Button>
@@ -336,28 +336,28 @@ export default function ClientKPIPage() {
       </div>
 
       {/* Members Table */}
-      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
+      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-white/50">Membre</TableHead>
-              <TableHead className="text-white/50">Type</TableHead>
-              <TableHead className="text-white/50">Abonnement</TableHead>
-              <TableHead className="text-white/50">Total séances</TableHead>
-              <TableHead className="text-white/50">Moy. / semaine</TableHead>
-              <TableHead className="text-white/50">Engagement</TableHead>
+            <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+              <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Abonnement</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Total séances</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Moy. / semaine</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Engagement</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-white/50 py-8">
+                <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredMembers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-white/50 py-8">
+                <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
                   Aucun membre trouvé
                 </TableCell>
               </TableRow>
@@ -366,32 +366,32 @@ export default function ClientKPIPage() {
                 <>
                   <TableRow
                     key={member.id}
-                    className="border-white/10 hover:bg-white/5 cursor-pointer"
+                    className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer"
                     onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
                     data-testid={`client-row-${member.id}`}
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {expandedMember === member.id ? (
-                          <ChevronUp size={14} className="text-white/30" />
+                          <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" />
                         ) : (
-                          <ChevronDown size={14} className="text-white/30" />
+                          <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />
                         )}
                         <div>
                           <p className="text-white font-medium">{member.name}</p>
-                          <p className="text-white/40 text-xs">{member.email}</p>
+                          <p className="text-[var(--color-text-secondary)] text-xs">{member.email}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-white/20 text-white/70">
+                      <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
                         {member.member_type?.replace("Membres ", "")}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-white/70">{member.membership}</TableCell>
                     <TableCell>
                       <span className="text-white font-medium">{member.totalTrainings}</span>
-                      <span className="text-white/40 text-xs ml-1">séances</span>
+                      <span className="text-[var(--color-text-secondary)] text-xs ml-1">séances</span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -412,27 +412,27 @@ export default function ClientKPIPage() {
                     </TableCell>
                   </TableRow>
                   {expandedMember === member.id && memberSummary && (
-                    <TableRow className="bg-[#121214]">
+                    <TableRow className="bg-[var(--color-bg-secondary)]">
                       <TableCell colSpan={6}>
                         <div className="py-6 px-4 space-y-6">
                           {/* Summary stats */}
                           <div className="grid grid-cols-4 gap-4">
-                            <div className="bg-[#121214] rounded-sm p-4">
-                              <p className="text-white/40 text-xs uppercase">Total séances</p>
+                            <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase">Total séances</p>
                               <p className="text-2xl font-mono font-bold text-white">{memberSummary.total_trainings}</p>
                             </div>
-                            <div className="bg-[#121214] rounded-sm p-4">
-                              <p className="text-white/40 text-xs uppercase">Semaines suivies</p>
+                            <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase">Semaines suivies</p>
                               <p className="text-2xl font-mono font-bold text-white">{memberSummary.weeks_tracked}</p>
                             </div>
-                            <div className="bg-[#121214] rounded-sm p-4">
-                              <p className="text-white/40 text-xs uppercase">Moyenne / sem.</p>
+                            <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase">Moyenne / sem.</p>
                               <p className={`text-2xl font-bold ${ENGAGEMENT_COLORS[memberSummary.engagement_level]}`}>
                                 {memberSummary.avg_per_week}
                               </p>
                             </div>
-                            <div className="bg-[#121214] rounded-sm p-4">
-                              <p className="text-white/40 text-xs uppercase">Engagement</p>
+                            <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase">Engagement</p>
                               <Badge className={`${ENGAGEMENT_BG[memberSummary.engagement_level]} ${ENGAGEMENT_COLORS[memberSummary.engagement_level]} border-0 mt-1`}>
                                 {memberSummary.engagement_level}
                               </Badge>
@@ -441,7 +441,7 @@ export default function ClientKPIPage() {
 
                           {/* Weekly chart */}
                           <div>
-                            <p className="text-white/40 text-xs uppercase mb-3">Évolution hebdomadaire</p>
+                            <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-3">Évolution hebdomadaire</p>
                             <div className="h-32">
                               <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={memberSummary.details?.slice(-12) || []}>
@@ -462,7 +462,7 @@ export default function ClientKPIPage() {
 
                           {/* Quick entry for recent weeks */}
                           <div>
-                            <p className="text-white/40 text-xs uppercase mb-3">Saisie rapide (dernières semaines)</p>
+                            <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-3">Saisie rapide (dernières semaines)</p>
                             <div className="flex flex-wrap gap-2">
                               {Array.from({ length: 8 }, (_, i) => {
                                 const week = new Date().getWeek?.() || Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604800000);
@@ -470,14 +470,14 @@ export default function ClientKPIPage() {
                                 const existing = memberSummary.details?.find((d) => d.calendar_week === targetWeek);
                                 return (
                                   <div key={targetWeek} className="text-center">
-                                    <p className="text-white/40 text-xs mb-1">S{targetWeek}</p>
+                                    <p className="text-[var(--color-text-secondary)] text-xs mb-1">S{targetWeek}</p>
                                     <Input
                                       type="number"
                                       min="0"
                                       max="7"
                                       defaultValue={existing?.trainings_count || 0}
                                       onBlur={(e) => handleTrainingUpdate(member.id, targetWeek, e.target.value)}
-                                      className="w-14 h-8 text-center bg-[#121214] border-white/10 text-white"
+                                      className="w-14 h-8 text-center bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
                                       data-testid={`training-w${targetWeek}-${member.id}`}
                                     />
                                   </div>
@@ -499,20 +499,20 @@ export default function ClientKPIPage() {
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 text-sm">
         <div className="flex items-center gap-2">
-          <Flame size={14} className="text-emerald-400" />
-          <span className="text-white/50">Excellent (4+ / sem.)</span>
+          <Flame size={14} className="text-[var(--color-success)]" />
+          <span className="text-[var(--color-text-secondary)]">Excellent (4+ / sem.)</span>
         </div>
         <div className="flex items-center gap-2">
-          <Activity size={14} className="text-blue-400" />
-          <span className="text-white/50">Bon (3+ / sem.)</span>
+          <Activity size={14} className="text-[var(--color-accent)]" />
+          <span className="text-[var(--color-text-secondary)]">Bon (3+ / sem.)</span>
         </div>
         <div className="flex items-center gap-2">
           <TrendingUp size={14} className="text-amber-400" />
-          <span className="text-white/50">Moyen (2+ / sem.)</span>
+          <span className="text-[var(--color-text-secondary)]">Moyen (2+ / sem.)</span>
         </div>
         <div className="flex items-center gap-2">
-          <BarChart3 size={14} className="text-red-400" />
-          <span className="text-white/50">Faible (&lt;2 / sem.)</span>
+          <BarChart3 size={14} className="text-[var(--color-danger)]" />
+          <span className="text-[var(--color-text-secondary)]">Faible (&lt;2 / sem.)</span>
         </div>
       </div>
     </div>

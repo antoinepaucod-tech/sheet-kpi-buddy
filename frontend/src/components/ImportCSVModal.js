@@ -92,36 +92,36 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="bg-[#121214] border-white/10 text-white max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="font-heading text-xl font-extrabold uppercase tracking-tight">
+          <DialogTitle className="font-display text-xl font-extrabold uppercase tracking-tight">
             {lang === "fr" ? "Importer des transactions CSV" : "Import CSV transactions"}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto space-y-4 py-2">
           {/* File format hint */}
-          <div className="bg-[#121214] border border-white/10 rounded-sm p-3 text-xs font-mono text-white/50">
+          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3 text-xs font-mono text-[var(--color-text-secondary)]">
             <p className="text-white/70 mb-1">Format attendu (séparateur = ;) :</p>
             <p>Date ; Description ; Catégorie ; Type ; Sous-type ; Montant (CHF)</p>
-            <p className="mt-1 text-green-400/60">Compatible avec l'export de cette app (CSV)</p>
+            <p className="mt-1 text-[var(--color-success)]/60">Compatible avec l'export de cette app (CSV)</p>
           </div>
 
           {/* File picker */}
           <div
-            className="border-2 border-dashed border-white/10 rounded-sm p-6 text-center cursor-pointer hover:border-rose-500/50 transition-colors"
+            className="border-2 border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] p-6 text-center cursor-pointer hover:border-rose-500/50 transition-colors"
             onClick={() => fileRef.current?.click()}
           >
             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFile} data-testid="csv-file-input" />
             {fileName ? (
               <div className="flex items-center justify-center gap-2">
-                <FileText size={18} className="text-rose-500" />
+                <FileText size={18} className="text-[var(--color-accent)]" />
                 <span className="text-white font-mono text-sm">{fileName}</span>
               </div>
             ) : (
               <>
-                <Upload size={24} className="text-white/20 mx-auto mb-2" />
-                <p className="text-white/40 text-sm">
+                <Upload size={24} className="text-[var(--color-text-tertiary)] mx-auto mb-2" />
+                <p className="text-[var(--color-text-secondary)] text-sm">
                   {lang === "fr" ? "Cliquez pour choisir un fichier CSV" : "Click to select a CSV file"}
                 </p>
               </>
@@ -130,9 +130,9 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
           {/* Errors */}
           {errors.length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-sm p-3 space-y-1">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-lg)] p-3 space-y-1">
               {errors.map((e, i) => (
-                <p key={i} className="text-red-400 text-xs font-mono flex items-center gap-1.5">
+                <p key={i} className="text-[var(--color-danger)] text-xs font-mono flex items-center gap-1.5">
                   <AlertTriangle size={11} /> {e}
                 </p>
               ))}
@@ -142,36 +142,36 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
           {/* Preview */}
           {rows.length > 0 && !result && (
             <div>
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-2">
+              <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">
                 {lang === "fr" ? `Aperçu — ${rows.length} transaction(s)` : `Preview — ${rows.length} transaction(s)`}
               </p>
-              <div className="bg-[#0D0D0F] border border-white/10 rounded-sm overflow-auto max-h-48">
+              <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-auto max-h-48">
                 <table className="w-full text-xs font-mono">
                   <thead>
-                    <tr className="border-b border-white/10">
+                    <tr className="border-b border-[var(--color-border)]">
                       {["Date", "Description", "Catégorie", "Type", "Montant"].map((h) => (
-                        <th key={h} className="px-3 py-2 text-left text-white/30 uppercase tracking-wider">{h}</th>
+                        <th key={h} className="px-3 py-2 text-left text-[var(--color-text-tertiary)] uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {rows.slice(0, 20).map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
-                        <td className="px-3 py-1.5 text-white/50">{row.date}</td>
+                        <td className="px-3 py-1.5 text-[var(--color-text-secondary)]">{row.date}</td>
                         <td className="px-3 py-1.5 text-white truncate max-w-[160px]">{row.description}</td>
                         <td className="px-3 py-1.5 text-white/60">{row.category}</td>
                         <td className="px-3 py-1.5">
-                          <Badge className={row.type === "revenue" ? "bg-green-500/10 text-green-400 text-xs" : "bg-blue-500/10 text-blue-400 text-xs"}>
+                          <Badge className={row.type === "revenue" ? "bg-green-500/10 text-[var(--color-success)] text-xs" : "bg-blue-500/10 text-[var(--color-accent)] text-xs"}>
                             {row.type}
                           </Badge>
                         </td>
-                        <td className={`px-3 py-1.5 font-bold ${row.type === "revenue" ? "text-green-400" : "text-white/70"}`}>
+                        <td className={`px-3 py-1.5 font-bold ${row.type === "revenue" ? "text-[var(--color-success)]" : "text-white/70"}`}>
                           {formatCHF(row.amount)}
                         </td>
                       </tr>
                     ))}
                     {rows.length > 20 && (
-                      <tr><td colSpan={5} className="px-3 py-1.5 text-white/20 text-center">+{rows.length - 20} de plus...</td></tr>
+                      <tr><td colSpan={5} className="px-3 py-1.5 text-[var(--color-text-tertiary)] text-center">+{rows.length - 20} de plus...</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -181,14 +181,14 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
           {/* Import result */}
           {result && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-sm p-4">
+            <div className="bg-green-500/10 border border-green-500/20 rounded-[var(--radius-lg)] p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Check size={16} className="text-green-400" />
-                <p className="text-green-400 font-bold font-mono">
+                <Check size={16} className="text-[var(--color-success)]" />
+                <p className="text-[var(--color-success)] font-bold font-mono">
                   {lang === "fr" ? "Import réussi !" : "Import successful!"}
                 </p>
               </div>
-              <p className="text-white/50 text-sm font-mono">
+              <p className="text-[var(--color-text-secondary)] text-sm font-mono">
                 {result.imported} {lang === "fr" ? "importées" : "imported"}
                 {result.skipped > 0 && `, ${result.skipped} ${lang === "fr" ? "ignorées (exclues)" : "skipped (excluded)"}`}
               </p>
@@ -196,11 +196,11 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
           )}
         </div>
 
-        <DialogFooter className="gap-2 border-t border-white/10 pt-4">
+        <DialogFooter className="gap-2 border-t border-[var(--color-border)] pt-4">
           <Button
             variant="outline"
             onClick={handleClose}
-            className="border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
           >
             {result ? (lang === "fr" ? "Fermer" : "Close") : t("cancel")}
           </Button>
@@ -208,7 +208,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
             <Button
               onClick={handleImport}
               disabled={importing || !rows.length}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider"
+              className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider"
               data-testid="confirm-import-btn"
             >
               {importing ? <Loader2 size={12} className="animate-spin mr-1.5" /> : <Upload size={12} className="mr-1.5" />}

@@ -78,9 +78,9 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bg-[#121214] border-white/10 text-white max-w-sm">
+      <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
         <DialogHeader>
-          <DialogTitle className="font-heading text-xl font-extrabold uppercase tracking-tight">
+          <DialogTitle className="font-display text-xl font-extrabold uppercase tracking-tight">
             {lang === "fr" ? "Modifier KPIs" : "Edit KPIs"} — {kpi ? formatMonthFull(kpi.month, lang) : ""}
           </DialogTitle>
         </DialogHeader>
@@ -95,7 +95,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
                 type="number"
                 value={form[field.key] ?? 0}
                 onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                className="bg-[#121214] border-white/10 text-white font-mono w-28 text-right"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white font-mono w-28 text-right"
                 data-testid={`edit-kpi-${field.key}`}
               />
             </div>
@@ -113,26 +113,26 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
               onChange={(e) => setNote(e.target.value)}
               placeholder={lang === "fr" ? "Commentaires, événements du mois..." : "Comments, monthly events..."}
               rows={3}
-              className="w-full bg-[#121214] border border-white/10 text-white text-sm rounded-sm px-3 py-2 resize-none focus:outline-none focus:border-white/20 placeholder:text-white/20 font-body"
+              className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-white text-sm rounded-[var(--radius-lg)] px-3 py-2 resize-none focus:outline-none focus:border-[var(--color-border-strong)] placeholder:text-[var(--color-text-tertiary)] font-text"
               data-testid="edit-kpi-note"
             />
           </div>
 
-          {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
+          {error && <p className="text-[var(--color-danger)] text-xs font-mono">{error}</p>}
         </div>
 
         <DialogFooter className="gap-2">
           <Button
             variant="outline"
             onClick={onClose}
-            className="border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
           >
             {t("cancel")}
           </Button>
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider"
+            className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider"
             data-testid="edit-kpi-save-btn"
           >
             {saving ? <Loader2 size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />}

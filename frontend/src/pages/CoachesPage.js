@@ -177,10 +177,10 @@ export default function CoachesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "Gestion des Coachs" : "Coach Management"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {lang === "fr"
               ? "Gérez vos coachs et leurs taux horaires"
               : "Manage your coaches and their hourly rates"}
@@ -198,62 +198,62 @@ export default function CoachesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-          <p className="text-white/40 text-xs uppercase tracking-wider">Total Coachs</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Total Coachs</p>
           <p className="text-2xl font-mono font-bold text-white">{coaches.length}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-emerald-500/30">
-          <p className="text-emerald-400 text-xs uppercase">Actifs</p>
-          <p className="text-2xl font-mono font-bold text-emerald-400">{activeCoaches}</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-emerald-500/30">
+          <p className="text-[var(--color-success)] text-xs uppercase">Actifs</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{activeCoaches}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-orange-500/30">
-          <p className="text-orange-400 text-xs uppercase">Taux horaire moyen</p>
-          <p className="text-2xl font-mono font-bold text-orange-400">{avgHourlyRate} CHF</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-orange-500/30">
+          <p className="text-[var(--color-warning)] text-xs uppercase">Taux horaire moyen</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{avgHourlyRate} CHF</p>
         </div>
       </div>
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={lang === "fr" ? "Rechercher un coach..." : "Search coach..."}
-          className="pl-10 bg-[#121214] border-white/10 text-white"
+          className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
           data-testid="coach-search"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
+      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-white/50 w-8"></TableHead>
-              <TableHead className="text-white/50">Nom</TableHead>
-              <TableHead className="text-white/50">Contact</TableHead>
-              <TableHead className="text-white/50">Spécialités</TableHead>
-              <TableHead className="text-white/50">Taux horaire</TableHead>
-              <TableHead className="text-white/50">Statut</TableHead>
-              <TableHead className="text-white/50 text-right">Actions</TableHead>
+            <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+              <TableHead className="text-[var(--color-text-secondary)] w-8"></TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Nom</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Contact</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Spécialités</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Taux horaire</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-white/50 py-8">
+                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredCoaches.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-white/50 py-8">
+                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
                   {search ? "Aucun coach trouvé" : "Aucun coach. Ajoutez votre premier coach !"}
                 </TableCell>
               </TableRow>
             ) : (
               filteredCoaches.map((coach) => (
-                <TableRow key={coach.id} className="border-white/10 hover:bg-white/5" data-testid={`coach-row-${coach.id}`}>
+                <TableRow key={coach.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]" data-testid={`coach-row-${coach.id}`}>
                   <TableCell>
                     <div
                       className="w-4 h-4 rounded-full"
@@ -264,12 +264,12 @@ export default function CoachesPage() {
                   <TableCell>
                     <div className="space-y-1">
                       {coach.email && (
-                        <p className="text-white/50 text-sm flex items-center gap-1">
+                        <p className="text-[var(--color-text-secondary)] text-sm flex items-center gap-1">
                           <Mail size={12} /> {coach.email}
                         </p>
                       )}
                       {coach.phone && (
-                        <p className="text-white/50 text-sm flex items-center gap-1">
+                        <p className="text-[var(--color-text-secondary)] text-sm flex items-center gap-1">
                           <Phone size={12} /> {coach.phone}
                         </p>
                       )}
@@ -283,18 +283,18 @@ export default function CoachesPage() {
                         </Badge>
                       ))}
                       {(coach.specialties || []).length > 3 && (
-                        <Badge variant="secondary" className="bg-white/10 text-white/50 border-0 text-xs">
+                        <Badge variant="secondary" className="bg-white/10 text-[var(--color-text-secondary)] border-0 text-xs">
                           +{coach.specialties.length - 3}
                         </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="text-orange-400 font-medium">{coach.hourly_rate || 0} CHF/h</span>
+                    <span className="text-[var(--color-warning)] font-medium">{coach.hourly_rate || 0} CHF/h</span>
                   </TableCell>
                   <TableCell>
                     {coach.is_active ? (
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-0">Actif</Badge>
+                      <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">Actif</Badge>
                     ) : (
                       <Badge variant="destructive">Inactif</Badge>
                     )}
@@ -304,7 +304,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                        className="h-8 w-8 text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
                         onClick={() => openStatsModal(coach)}
                         data-testid={`stats-${coach.id}`}
                       >
@@ -313,7 +313,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"
+                        className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-white hover:bg-white/10"
                         onClick={() => openEditModal(coach)}
                         data-testid={`edit-${coach.id}`}
                       >
@@ -322,7 +322,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        className="h-8 w-8 text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
                         onClick={() => {
                           if (window.confirm("Supprimer ce coach ?")) {
                             deleteMutation.mutate(coach.id);
@@ -343,7 +343,7 @@ export default function CoachesPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
           <DialogHeader>
             <DialogTitle>
               {selectedCoach ? "Modifier le coach" : "Nouveau coach"}
@@ -351,47 +351,47 @@ export default function CoachesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Nom *</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 placeholder="Nom du coach"
                 data-testid="coach-name-input"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Email</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Email</label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Téléphone</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Téléphone</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
             </div>
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Taux horaire (CHF/h) *</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Taux horaire (CHF/h) *</label>
               <Input
                 type="number"
                 min={0}
                 value={formData.hourly_rate}
                 onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })}
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 data-testid="coach-rate-input"
               />
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase mb-2 block">Spécialités</label>
+              <label className="text-[var(--color-text-secondary)] text-xs uppercase mb-2 block">Spécialités</label>
               <div className="flex flex-wrap gap-2">
                 {SPECIALTIES.map((specialty) => (
                   <button
@@ -410,7 +410,7 @@ export default function CoachesPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase mb-2 block">Couleur</label>
+              <label className="text-[var(--color-text-secondary)] text-xs uppercase mb-2 block">Couleur</label>
               <div className="flex gap-2">
                 {COLOR_OPTIONS.map((color) => (
                   <button
@@ -426,11 +426,11 @@ export default function CoachesPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Notes</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Notes</label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 placeholder="Notes (optionnel)"
               />
             </div>
@@ -458,36 +458,36 @@ export default function CoachesPage() {
 
       {/* Stats Modal */}
       <Dialog open={statsModalOpen} onOpenChange={setStatsModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <BarChart3 className="text-blue-400" size={20} />
+              <BarChart3 className="text-[var(--color-accent)]" size={20} />
               Statistiques - {selectedCoach?.name}
             </DialogTitle>
           </DialogHeader>
           {coachStats && (
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#121214] rounded-sm p-4 text-center">
-                  <p className="text-white/40 text-xs uppercase tracking-wider">Cours donnés</p>
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
+                  <p className="text-[var(--color-text-secondary)] tf-label inline">Cours donnés</p>
                   <p className="text-2xl font-mono font-bold text-white">{coachStats.total_courses}</p>
                 </div>
-                <div className="bg-[#121214] rounded-sm p-4 text-center">
-                  <p className="text-white/40 text-xs uppercase tracking-wider">Heures travaillées</p>
-                  <p className="text-2xl font-mono font-bold text-blue-400">{coachStats.total_hours}h</p>
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
+                  <p className="text-[var(--color-text-secondary)] tf-label inline">Heures travaillées</p>
+                  <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{coachStats.total_hours}h</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#121214] rounded-sm p-4 text-center">
-                  <p className="text-white/40 text-xs uppercase tracking-wider">Participants</p>
-                  <p className="text-2xl font-mono font-bold text-emerald-400">{coachStats.total_participants}</p>
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
+                  <p className="text-[var(--color-text-secondary)] tf-label inline">Participants</p>
+                  <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{coachStats.total_participants}</p>
                 </div>
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-sm p-4 text-center">
-                  <p className="text-orange-400 text-xs uppercase">Gains estimés</p>
-                  <p className="text-2xl font-mono font-bold text-orange-400">{coachStats.earnings} CHF</p>
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-[var(--radius-lg)] p-4 text-center">
+                  <p className="text-[var(--color-warning)] text-xs uppercase">Gains estimés</p>
+                  <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{coachStats.earnings} CHF</p>
                 </div>
               </div>
-              <p className="text-white/30 text-xs text-center">
+              <p className="text-[var(--color-text-tertiary)] text-xs text-center">
                 Basé sur un taux horaire de {coachStats.hourly_rate} CHF/h
               </p>
             </div>

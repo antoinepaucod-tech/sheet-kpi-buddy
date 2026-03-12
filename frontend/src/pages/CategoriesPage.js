@@ -153,10 +153,10 @@ export default function CategoriesPage() {
       <Toaster />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {t("categories")}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {categories.length} catégorie{categories.length !== 1 ? "s" : ""} · {allKpiColumns.length} colonnes KPI
           </p>
         </div>
@@ -164,7 +164,7 @@ export default function CategoriesPage() {
           <Button
             variant="outline"
             onClick={() => setShowKpiModal(true)}
-            className="border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-xs"
+            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="add-kpi-column-btn"
           >
             <Plus size={12} className="mr-1.5" />
@@ -174,7 +174,7 @@ export default function CategoriesPage() {
             variant="outline"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-xs"
+            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="recalculate-btn"
           >
             {recalculating ? <Loader2 size={12} className="animate-spin mr-1.5" /> : null}
@@ -182,7 +182,7 @@ export default function CategoriesPage() {
           </Button>
           <Button
             onClick={() => setShowModal(true)}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider text-xs"
+            className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider text-xs"
             data-testid="add-category-btn"
           >
             <Plus size={14} className="mr-1.5" />
@@ -193,18 +193,18 @@ export default function CategoriesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Expense categories */}
-        <div className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/10">
-            <p className="text-xs font-body text-white/40 uppercase tracking-wider">
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+          <div className="px-5 py-3 border-b border-[var(--color-border)]">
+            <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
               Dépenses · {expenseCategories.length}
             </p>
           </div>
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="text-white/30 uppercase text-xs">Nom</TableHead>
-                <TableHead className="text-white/30 uppercase text-xs">Colonne KPI</TableHead>
-                <TableHead className="text-white/30 uppercase text-xs w-16">Action</TableHead>
+              <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Nom</TableHead>
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Colonne KPI</TableHead>
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs w-16">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -212,15 +212,15 @@ export default function CategoriesPage() {
                 <TableRow key={cat.id} className="border-white/5 hover:bg-white/3" data-testid={`cat-row-${cat.id}`}>
                   <TableCell>
                     <span className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                      <span className="w-3 h-3 rounded-[var(--radius-lg)] flex-shrink-0" style={{ backgroundColor: cat.color }} />
                       <span className="font-mono text-sm text-white">{cat.name}</span>
                     </span>
                   </TableCell>
-                  <TableCell className="text-white/40 text-xs font-mono">{cat.kpi_column}</TableCell>
+                  <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{cat.kpi_column}</TableCell>
                   <TableCell>
                     <button
                       onClick={() => setDeleteId(cat.id)}
-                      className="text-white/20 hover:text-red-400 transition-colors"
+                      className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
                       data-testid={`delete-cat-${cat.id}`}
                     >
                       <Trash2 size={13} />
@@ -233,18 +233,18 @@ export default function CategoriesPage() {
         </div>
 
         {/* Revenue categories */}
-        <div className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/10">
-            <p className="text-xs font-body text-white/40 uppercase tracking-wider">
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+          <div className="px-5 py-3 border-b border-[var(--color-border)]">
+            <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
               Revenus · {revenueCategories.length}
             </p>
           </div>
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="text-white/30 uppercase text-xs">Nom</TableHead>
-                <TableHead className="text-white/30 uppercase text-xs">Colonne KPI</TableHead>
-                <TableHead className="text-white/30 uppercase text-xs w-16">Action</TableHead>
+              <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Nom</TableHead>
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Colonne KPI</TableHead>
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs w-16">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -252,15 +252,15 @@ export default function CategoriesPage() {
                 <TableRow key={cat.id} className="border-white/5 hover:bg-white/3" data-testid={`cat-row-${cat.id}`}>
                   <TableCell>
                     <span className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                      <span className="w-3 h-3 rounded-[var(--radius-lg)] flex-shrink-0" style={{ backgroundColor: cat.color }} />
                       <span className="font-mono text-sm text-white">{cat.name}</span>
                     </span>
                   </TableCell>
-                  <TableCell className="text-white/40 text-xs font-mono">{cat.kpi_column}</TableCell>
+                  <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{cat.kpi_column}</TableCell>
                   <TableCell>
                     <button
                       onClick={() => setDeleteId(cat.id)}
-                      className="text-white/20 hover:text-red-400 transition-colors"
+                      className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
                       data-testid={`delete-cat-${cat.id}`}
                     >
                       <Trash2 size={13} />
@@ -275,32 +275,32 @@ export default function CategoriesPage() {
 
       {/* Add Category Modal */}
       <Dialog open={showModal} onOpenChange={(v) => !v && setShowModal(false)}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-sm">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-heading text-xl font-extrabold uppercase">
+            <DialogTitle className="font-display text-xl font-extrabold uppercase">
               Nouvelle Catégorie
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">Nom *</Label>
+              <Label className="text-white/60 tf-label inline">Nom *</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })}
                 placeholder="Ex: ASSURANCE"
-                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20 font-mono"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white placeholder:text-[var(--color-text-tertiary)] font-mono"
                 data-testid="cat-name-input"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase tracking-wider">Type *</Label>
+                <Label className="text-white/60 tf-label inline">Type *</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white" data-testid="cat-type-select">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-type-select">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
                     <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
                   </SelectContent>
@@ -308,20 +308,20 @@ export default function CategoriesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-xs uppercase tracking-wider">Colonne KPI *</Label>
+                <Label className="text-white/60 tf-label inline">Colonne KPI *</Label>
                 <Select value={form.kpi_column} onValueChange={(v) => setForm({ ...form, kpi_column: v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white" data-testid="cat-kpi-select">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-kpi-select">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10 max-h-60">
-                    <div className="px-2 py-1 text-white/40 text-xs uppercase">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-60">
+                    <div className="px-2 py-1 text-[var(--color-text-secondary)] text-xs uppercase">
                       {form.type === "expense" ? "Dépenses" : "Revenus"}
                     </div>
                     {(form.type === "expense" ? expenseKpiColumns : revenueKpiColumns).map((col) => (
                       <SelectItem key={col.value} value={col.value} className="text-white focus:bg-white/10">
                         <span className="flex items-center gap-2">
                           {col.label}
-                          {col.custom && <Badge variant="secondary" className="text-[10px] bg-white/10 text-white/50">custom</Badge>}
+                          {col.custom && <Badge variant="secondary" className="text-[10px] bg-white/10 text-[var(--color-text-secondary)]">custom</Badge>}
                         </span>
                       </SelectItem>
                     ))}
@@ -331,13 +331,13 @@ export default function CategoriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">Couleur</Label>
+              <Label className="text-white/60 tf-label inline">Couleur</Label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORY_COLORS.map((c) => (
                   <button
                     key={c}
                     onClick={() => setForm({ ...form, color: c })}
-                    className="w-7 h-7 rounded-sm transition-transform hover:scale-110"
+                    className="w-7 h-7 rounded-[var(--radius-lg)] transition-transform hover:scale-110"
                     style={{
                       backgroundColor: c,
                       outline: form.color === c ? `2px solid white` : "none",
@@ -353,14 +353,14 @@ export default function CategoriesPage() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
-              className="border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+              className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
             >
               {t("cancel")}
             </Button>
             <Button
               onClick={handleSave}
               disabled={saving || !form.name}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider"
+              className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider"
               data-testid="cat-save-btn"
             >
               {saving ? <Loader2 size={12} className="animate-spin mr-1" /> : null}
@@ -372,17 +372,17 @@ export default function CategoriesPage() {
 
       {/* Delete Confirm */}
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
-        <AlertDialogContent className="bg-[#121214] border-white/10 text-white">
+        <AlertDialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-heading text-xl font-extrabold uppercase">
+            <AlertDialogTitle className="font-display text-xl font-extrabold uppercase">
               Supprimer la catégorie ?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
+            <AlertDialogDescription className="text-[var(--color-text-secondary)]">
               Les transactions existantes ne seront pas affectées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-white/60 hover:text-white hover:bg-white/5">
+            <AlertDialogCancel className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]">
               {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
@@ -398,43 +398,43 @@ export default function CategoriesPage() {
 
       {/* Add KPI Column Modal */}
       <Dialog open={showKpiModal} onOpenChange={(v) => !v && setShowKpiModal(false)}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-sm">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-heading text-xl font-extrabold uppercase">
+            <DialogTitle className="font-display text-xl font-extrabold uppercase">
               Nouvelle Colonne KPI
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-white/50 text-sm">
+            <p className="text-[var(--color-text-secondary)] text-sm">
               Créez une nouvelle colonne KPI pour regrouper vos catégories de dépenses ou revenus.
             </p>
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">Nom affiché *</Label>
+              <Label className="text-white/60 tf-label inline">Nom affiché *</Label>
               <Input
                 value={kpiForm.label}
                 onChange={(e) => setKpiForm({ ...kpiForm, label: e.target.value })}
                 placeholder="Ex: Frais bancaires"
-                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white placeholder:text-[var(--color-text-tertiary)]"
                 data-testid="kpi-label-input"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">Code technique *</Label>
+              <Label className="text-white/60 tf-label inline">Code technique *</Label>
               <Input
                 value={kpiForm.value}
                 onChange={(e) => setKpiForm({ ...kpiForm, value: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
                 placeholder="Ex: frais_bancaires"
-                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20 font-mono"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white placeholder:text-[var(--color-text-tertiary)] font-mono"
                 data-testid="kpi-value-input"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-white/60 text-xs uppercase tracking-wider">Type *</Label>
+              <Label className="text-white/60 tf-label inline">Type *</Label>
               <Select value={kpiForm.type} onValueChange={(v) => setKpiForm({ ...kpiForm, type: v })}>
-                <SelectTrigger className="bg-[#121214] border-white/10 text-white">
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
                   <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
                 </SelectContent>
@@ -443,18 +443,18 @@ export default function CategoriesPage() {
 
             {/* List of custom columns */}
             {customKpiColumns.length > 0 && (
-              <div className="border-t border-white/10 pt-4">
-                <Label className="text-white/60 text-xs uppercase tracking-wider mb-2 block">Colonnes personnalisées</Label>
+              <div className="border-t border-[var(--color-border)] pt-4">
+                <Label className="text-white/60 tf-label inline mb-2 block">Colonnes personnalisées</Label>
                 <div className="space-y-2">
                   {customKpiColumns.map((col) => (
-                    <div key={col.value} className="flex items-center justify-between bg-[#121214] rounded px-3 py-2">
+                    <div key={col.value} className="flex items-center justify-between bg-[var(--color-bg-secondary)] rounded px-3 py-2">
                       <div>
                         <span className="text-white text-sm">{col.label}</span>
-                        <span className="text-white/40 text-xs ml-2 font-mono">{col.value}</span>
+                        <span className="text-[var(--color-text-secondary)] text-xs ml-2 font-mono">{col.value}</span>
                       </div>
                       <button
                         onClick={() => handleDeleteKpiColumn(col.value)}
-                        className="text-white/30 hover:text-red-400 transition-colors"
+                        className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -469,7 +469,7 @@ export default function CategoriesPage() {
             <Button
               variant="outline"
               onClick={() => setShowKpiModal(false)}
-              className="border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+              className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
             >
               {t("cancel")}
             </Button>

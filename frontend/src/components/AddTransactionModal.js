@@ -73,9 +73,9 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
+      <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading text-xl font-extrabold uppercase tracking-tight">
+          <DialogTitle className="font-display text-xl font-extrabold uppercase tracking-tight">
             {t("addTransaction")}
           </DialogTitle>
         </DialogHeader>
@@ -91,12 +91,12 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 onValueChange={(v) => handleChange("type", v)}
               >
                 <SelectTrigger
-                  className="bg-[#121214] border-white/10 text-white"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
                   data-testid="tx-type-select"
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   <SelectItem value="expense" className="text-white focus:bg-white/10">
                     {t("expense")}
                   </SelectItem>
@@ -115,7 +115,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 type="date"
                 value={form.date}
                 onChange={(e) => handleChange("date", e.target.value)}
-                className="bg-[#121214] border-white/10 text-white"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
                 data-testid="tx-date-input"
               />
             </div>
@@ -129,7 +129,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
               placeholder="Ex: Loyer janvier"
-              className="bg-[#121214] border-white/10 text-white placeholder:text-white/20"
+              className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white placeholder:text-[var(--color-text-tertiary)]"
               data-testid="tx-description-input"
             />
           </div>
@@ -144,7 +144,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 value={form.amount}
                 onChange={(e) => handleChange("amount", e.target.value)}
                 placeholder="0.00"
-                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20 font-mono"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white placeholder:text-[var(--color-text-tertiary)] font-mono"
                 data-testid="tx-amount-input"
               />
             </div>
@@ -158,12 +158,12 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 onValueChange={(v) => handleChange("category", v)}
               >
                 <SelectTrigger
-                  className="bg-[#121214] border-white/10 text-white"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
                   data-testid="tx-category-select"
                 >
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   {filteredCategories.map((cat) => (
                     <SelectItem
                       key={cat.id}
@@ -194,12 +194,12 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 onValueChange={(v) => handleChange("sub_type", v)}
               >
                 <SelectTrigger
-                  className="bg-[#121214] border-white/10 text-white"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
                   data-testid="tx-subtype-select"
                 >
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   <SelectItem value="members" className="text-white focus:bg-white/10">
                     {t("membersType")}
                   </SelectItem>
@@ -212,7 +212,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
           )}
 
           {error && (
-            <p className="text-red-400 text-sm font-mono" data-testid="tx-error">
+            <p className="text-[var(--color-danger)] text-sm font-mono" data-testid="tx-error">
               {error}
             </p>
           )}
@@ -222,7 +222,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
           <Button
             variant="outline"
             onClick={onClose}
-            className="border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
             data-testid="tx-cancel-btn"
           >
             {t("cancel")}
@@ -230,7 +230,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
           <Button
             onClick={handleSubmit}
             disabled={saving}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider"
+            className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider"
             data-testid="tx-save-btn"
           >
             {saving ? t("saving") || "..." : t("save")}

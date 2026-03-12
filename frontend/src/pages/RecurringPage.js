@@ -182,14 +182,14 @@ export default function RecurringPage() {
       
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+        <h1 className="tf-page-header">
           {t("recurringTransactions")}
         </h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setShowGenerateModal(true)}
-            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="generate-month-btn"
           >
             <Calendar size={12} className="mr-1.5" />
@@ -197,7 +197,7 @@ export default function RecurringPage() {
           </Button>
           <Button
             onClick={openAdd}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider text-xs"
+            className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider text-xs"
             data-testid="add-recurring-btn"
           >
             <Plus size={14} className="mr-1.5" />
@@ -208,40 +208,40 @@ export default function RecurringPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#121214] border border-white/10 p-4 rounded-sm">
-          <p className="text-xs text-white/40 uppercase tracking-wider">Total</p>
-          <p className="text-xl font-heading font-extrabold text-white mt-1">{recurring.length}</p>
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
+          <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">Total</p>
+          <p className="text-xl font-display font-extrabold text-white mt-1">{recurring.length}</p>
         </div>
-        <div className="bg-[#121214] border border-white/10 p-4 rounded-sm">
-          <p className="text-xs text-white/40 uppercase tracking-wider">{t("active")}</p>
-          <p className="text-xl font-heading font-extrabold text-green-400 mt-1">
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
+          <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{t("active")}</p>
+          <p className="text-xl font-display font-extrabold text-[var(--color-success)] mt-1">
             {recurring.filter(r => r.is_active).length}
           </p>
         </div>
-        <div className="bg-[#121214] border border-white/10 p-4 rounded-sm">
-          <p className="text-xs text-white/40 uppercase tracking-wider">{t("inactive")}</p>
-          <p className="text-xl font-heading font-extrabold text-white/30 mt-1">
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
+          <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{t("inactive")}</p>
+          <p className="text-xl font-display font-extrabold text-[var(--color-text-tertiary)] mt-1">
             {recurring.filter(r => !r.is_active).length}
           </p>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-40">
-            <Loader2 className="animate-spin text-rose-500" size={24} />
+            <Loader2 className="animate-spin text-[var(--color-accent)]" size={24} />
           </div>
         ) : recurring.length === 0 ? (
           <div className="flex items-center justify-center h-40">
-            <p className="text-white/30 font-body text-sm">{t("noRecurring")}</p>
+            <p className="text-[var(--color-text-tertiary)] font-text text-sm">{t("noRecurring")}</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
+              <TableRow className="border-[var(--color-border)] hover:bg-transparent">
                 {[t("description"), t("category"), t("type"), t("recurrenceDay"), t("amount"), "Status", t("actions")].map((h) => (
-                  <TableHead key={h} className="text-white/40 uppercase tracking-wider text-xs font-body">
+                  <TableHead key={h} className="text-[var(--color-text-secondary)] uppercase tracking-wider text-xs font-text">
                     {h}
                   </TableHead>
                 ))}
@@ -255,7 +255,7 @@ export default function RecurringPage() {
                   data-testid={`recurring-row-${item.id}`}
                 >
                   <TableCell 
-                    className="text-white text-sm cursor-pointer hover:text-rose-400"
+                    className="text-white text-sm cursor-pointer hover:text-[var(--color-accent)]"
                     onClick={() => openEdit(item)}
                   >
                     {item.description}
@@ -265,8 +265,8 @@ export default function RecurringPage() {
                     <Badge
                       className={
                         item.type === "revenue"
-                          ? "bg-green-500/10 text-green-400 border-green-500/20 text-xs"
-                          : "bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs"
+                          ? "bg-green-500/10 text-[var(--color-success)] border-green-500/20 text-xs"
+                          : "bg-blue-500/10 text-[var(--color-accent)] border-blue-500/20 text-xs"
                       }
                     >
                       {item.type === "revenue" ? t("revenueType") : t("expense")}
@@ -275,13 +275,13 @@ export default function RecurringPage() {
                   <TableCell className="font-mono text-sm text-white/60">
                     {item.recurrence_day || 1}
                   </TableCell>
-                  <TableCell className={`font-mono text-sm font-bold ${item.type === "revenue" ? "text-green-400" : "text-white/80"}`}>
+                  <TableCell className={`font-mono text-sm font-bold ${item.type === "revenue" ? "text-[var(--color-success)]" : "text-white/80"}`}>
                     {item.type === "revenue" ? "+" : "-"} {formatCHF(item.amount)}
                   </TableCell>
                   <TableCell>
                     <button
                       onClick={() => handleToggleActive(item)}
-                      className={`p-1 rounded transition-colors ${item.is_active ? 'text-green-400 hover:text-green-300' : 'text-white/20 hover:text-white/40'}`}
+                      className={`p-1 rounded transition-colors ${item.is_active ? 'text-[var(--color-success)] hover:text-green-300' : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'}`}
                       title={t("toggleStatus")}
                       data-testid={`toggle-${item.id}`}
                     >
@@ -291,7 +291,7 @@ export default function RecurringPage() {
                   <TableCell>
                     <button
                       onClick={() => setDeleteId(item.id)}
-                      className="text-white/20 hover:text-red-400 transition-colors p-1"
+                      className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors p-1"
                       data-testid={`delete-recurring-${item.id}`}
                     >
                       <Trash2 size={14} />
@@ -306,9 +306,9 @@ export default function RecurringPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading text-xl font-extrabold uppercase">
+            <DialogTitle className="font-display text-xl font-extrabold uppercase">
               {editItem ? (lang === "fr" ? "Modifier" : "Edit") : t("addRecurring")}
             </DialogTitle>
           </DialogHeader>
@@ -317,10 +317,10 @@ export default function RecurringPage() {
             <div className="space-y-1.5">
               <Label className="text-white/60 text-xs uppercase">{t("type")}</Label>
               <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v, category: "" })}>
-                <SelectTrigger className="bg-[#121214] border-white/10 text-white">
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
                   <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
                 </SelectContent>
@@ -330,10 +330,10 @@ export default function RecurringPage() {
             <div className="space-y-1.5">
               <Label className="text-white/60 text-xs uppercase">{t("category")}</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                <SelectTrigger className="bg-[#121214] border-white/10 text-white">
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                   <SelectValue placeholder={lang === "fr" ? "Sélectionner" : "Select"} />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   {filteredCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.name} className="text-white focus:bg-white/10">
                       {cat.name}
@@ -348,7 +348,7 @@ export default function RecurringPage() {
               <Input
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="bg-[#121214] border-white/10 text-white"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
                 placeholder={lang === "fr" ? "Ex: Loyer mensuel" : "Ex: Monthly rent"}
               />
             </div>
@@ -360,17 +360,17 @@ export default function RecurringPage() {
                   type="number"
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
                   step="0.01"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{t("recurrenceDay")}</Label>
                 <Select value={form.recurrence_day.toString()} onValueChange={(v) => setForm({ ...form, recurrence_day: parseInt(v) })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10 max-h-48">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-48">
                     {DAYS.map((d) => (
                       <SelectItem key={d} value={d.toString()} className="text-white focus:bg-white/10">
                         {d}
@@ -385,10 +385,10 @@ export default function RecurringPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{t("subType")}</Label>
                 <Select value={form.sub_type || "none"} onValueChange={(v) => setForm({ ...form, sub_type: v === "none" ? "" : v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     <SelectItem value="none" className="text-white focus:bg-white/10">-</SelectItem>
                     <SelectItem value="members" className="text-white focus:bg-white/10">{t("membersType")}</SelectItem>
                     <SelectItem value="coaching" className="text-white focus:bg-white/10">{t("coachingType")}</SelectItem>
@@ -402,13 +402,13 @@ export default function RecurringPage() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
-              className="border-white/10 text-white/60"
+              className="border-[var(--color-border)] text-white/60"
             >
               {t("cancel")}
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+              className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold"
             >
               {t("save")}
             </Button>
@@ -418,15 +418,15 @@ export default function RecurringPage() {
 
       {/* Generate Modal */}
       <Dialog open={showGenerateModal} onOpenChange={setShowGenerateModal}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-sm">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-heading text-xl font-extrabold uppercase">
+            <DialogTitle className="font-display text-xl font-extrabold uppercase">
               {t("generateMonthly")}
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <p className="text-white/50 text-sm">
+            <p className="text-[var(--color-text-secondary)] text-sm">
               {lang === "fr" 
                 ? "Générer automatiquement les transactions du mois sélectionné à partir des modèles récurrents actifs."
                 : "Automatically generate transactions for the selected month from active recurring templates."}
@@ -436,10 +436,10 @@ export default function RecurringPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{lang === "fr" ? "Année" : "Year"}</Label>
                 <Select value={generateYear.toString()} onValueChange={(v) => setGenerateYear(parseInt(v))}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {[2023, 2024, 2025, 2026].map((y) => (
                       <SelectItem key={y} value={y.toString()} className="text-white focus:bg-white/10">
                         {y}
@@ -451,10 +451,10 @@ export default function RecurringPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{t("month")}</Label>
                 <Select value={generateMonth.toString()} onValueChange={(v) => setGenerateMonth(parseInt(v))}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {MONTHS_OPTIONS.map((m) => (
                       <SelectItem key={m.value} value={m.value.toString()} className="text-white focus:bg-white/10">
                         {m.label}
@@ -470,14 +470,14 @@ export default function RecurringPage() {
             <Button
               variant="outline"
               onClick={() => setShowGenerateModal(false)}
-              className="border-white/10 text-white/60"
+              className="border-[var(--color-border)] text-white/60"
             >
               {t("cancel")}
             </Button>
             <Button
               onClick={handleGenerate}
               disabled={generating}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+              className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold"
             >
               {generating ? (
                 <>
@@ -497,19 +497,19 @@ export default function RecurringPage() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
-        <AlertDialogContent className="bg-[#121214] border-white/10 text-white">
+        <AlertDialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-heading text-xl font-extrabold uppercase">
+            <AlertDialogTitle className="font-display text-xl font-extrabold uppercase">
               {t("confirmDelete")}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
+            <AlertDialogDescription className="text-[var(--color-text-secondary)]">
               {lang === "fr" 
                 ? "Cette action supprimera définitivement ce modèle récurrent."
                 : "This action will permanently delete this recurring template."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-white/60 hover:text-white hover:bg-white/5">
+            <AlertDialogCancel className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]">
               {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction

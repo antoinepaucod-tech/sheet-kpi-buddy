@@ -240,10 +240,10 @@ export default function ChallengePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "Challenge 6 Semaines" : "6 Weeks Challenge"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {lang === "fr" ? "Suivi des participants et progression" : "Track participants and progress"}
           </p>
         </div>
@@ -258,32 +258,32 @@ export default function ChallengePage() {
         <div className="space-y-3">
           <h2 className="text-white/70 text-sm font-medium uppercase tracking-wide">Challenges</h2>
           {isLoading ? (
-            <p className="text-white/50">Chargement...</p>
+            <p className="text-[var(--color-text-secondary)]">Chargement...</p>
           ) : challenges.length === 0 ? (
-            <div className="bg-[#121214] rounded-sm p-6 border border-white/10 text-center">
-              <Trophy size={32} className="mx-auto text-white/20 mb-2" />
-              <p className="text-white/50">Aucun challenge</p>
+            <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border border-[var(--color-border)] text-center">
+              <Trophy size={32} className="mx-auto text-[var(--color-text-tertiary)] mb-2" />
+              <p className="text-[var(--color-text-secondary)]">Aucun challenge</p>
             </div>
           ) : (
             challenges.map((challenge) => (
               <div
                 key={challenge.id}
                 onClick={() => setSelectedChallenge(challenge.id)}
-                className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-all ${
+                className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-all ${
                   selectedChallenge === challenge.id
                     ? "border-amber-500 bg-amber-500/5"
-                    : "border-white/10 hover:border-white/20"
+                    : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
                 }`}
                 data-testid={`challenge-${challenge.id}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-sm ${challenge.is_active ? "bg-amber-500/20" : "bg-white/10"}`}>
-                      <Trophy size={18} className={challenge.is_active ? "text-amber-500" : "text-white/40"} />
+                    <div className={`p-2 rounded-[var(--radius-lg)] ${challenge.is_active ? "bg-amber-500/20" : "bg-white/10"}`}>
+                      <Trophy size={18} className={challenge.is_active ? "text-amber-500" : "text-[var(--color-text-secondary)]"} />
                     </div>
                     <div>
                       <p className="text-white font-medium">{challenge.name}</p>
-                      <p className="text-white/40 text-xs flex items-center gap-1">
+                      <p className="text-[var(--color-text-secondary)] text-xs flex items-center gap-1">
                         <Calendar size={10} />
                         {challenge.challenge_type === "personal" 
                           ? "Dates personnalisées"
@@ -295,13 +295,13 @@ export default function ChallengePage() {
                       </p>
                     </div>
                   </div>
-                  <ChevronRight size={16} className="text-white/30" />
+                  <ChevronRight size={16} className="text-[var(--color-text-tertiary)]" />
                 </div>
                 <div className="flex gap-2 mt-2">
                   {challenge.is_active && (
                     <Badge className="bg-amber-500/20 text-amber-400 border-0">Actif</Badge>
                   )}
-                  <Badge className={`border-0 ${challenge.challenge_type === "personal" ? "bg-blue-500/20 text-blue-400" : "bg-white/10 text-white/50"}`}>
+                  <Badge className={`border-0 ${challenge.challenge_type === "personal" ? "bg-blue-500/20 text-[var(--color-accent)]" : "bg-white/10 text-[var(--color-text-secondary)]"}`}>
                     {challenge.challenge_type === "personal" ? "Personnel" : "Date fixe"}
                   </Badge>
                 </div>
@@ -313,33 +313,33 @@ export default function ChallengePage() {
         {/* Challenge Detail */}
         <div className="lg:col-span-2">
           {!selectedChallenge ? (
-            <div className="bg-[#121214] rounded-sm p-12 border border-white/10 text-center">
+            <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-12 border border-[var(--color-border)] text-center">
               <Target size={48} className="mx-auto text-white/10 mb-4" />
-              <p className="text-white/50">Sélectionnez un challenge pour voir les détails</p>
+              <p className="text-[var(--color-text-secondary)]">Sélectionnez un challenge pour voir les détails</p>
             </div>
           ) : !challengeDetail ? (
-            <div className="bg-[#121214] rounded-sm p-12 border border-white/10 text-center">
-              <p className="text-white/50">Chargement...</p>
+            <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-12 border border-[var(--color-border)] text-center">
+              <p className="text-[var(--color-text-secondary)]">Chargement...</p>
             </div>
           ) : (
             <div className="space-y-6">
               {/* Challenge Header */}
-              <div className="bg-[#121214] rounded-sm p-6 border border-white/10">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border border-[var(--color-border)]">
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-white">{challengeDetail.name}</h2>
                     <div className="flex items-center gap-2 mt-1">
                       {challengeDetail.challenge_type === "personal" ? (
-                        <span className="text-white/50 text-sm">Dates personnalisées par participant</span>
+                        <span className="text-[var(--color-text-secondary)] text-sm">Dates personnalisées par participant</span>
                       ) : (
-                        <span className="text-white/50 text-sm">
+                        <span className="text-[var(--color-text-secondary)] text-sm">
                           {challengeDetail.start_date && format(parseISO(challengeDetail.start_date), "dd MMMM yyyy", { locale: fr })}
                           {challengeDetail.end_date && ` - ${format(parseISO(challengeDetail.end_date), "dd MMMM yyyy", { locale: fr })}`}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge className={`border-0 ${challengeDetail.challenge_type === "personal" ? "bg-blue-500/20 text-blue-400" : "bg-white/10 text-white/50"}`}>
+                      <Badge className={`border-0 ${challengeDetail.challenge_type === "personal" ? "bg-blue-500/20 text-[var(--color-accent)]" : "bg-white/10 text-[var(--color-text-secondary)]"}`}>
                         {challengeDetail.challenge_type === "personal" ? "Personnel" : "Date fixe"}
                       </Badge>
                       <Badge className="bg-amber-500/10 text-amber-400 border-0">
@@ -352,7 +352,7 @@ export default function ChallengePage() {
                       size="sm"
                       variant="ghost"
                       onClick={() => openEditModal(challengeDetail)}
-                      className="text-white/50 hover:text-white"
+                      className="text-[var(--color-text-secondary)] hover:text-white"
                     >
                       <Edit size={16} />
                     </Button>
@@ -360,7 +360,7 @@ export default function ChallengePage() {
                       size="sm"
                       variant="ghost"
                       onClick={() => deleteMutation.mutate(challengeDetail.id)}
-                      className="text-red-400 hover:text-red-300"
+                      className="text-[var(--color-danger)] hover:text-red-300"
                     >
                       <Trash2 size={16} />
                     </Button>
@@ -370,21 +370,21 @@ export default function ChallengePage() {
                 {/* Stats */}
                 {stats && (
                   <div className="grid grid-cols-4 gap-4 mt-6">
-                    <div className="bg-[#121214] rounded-sm p-3">
-                      <p className="text-white/40 text-xs uppercase">Participants</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-text-secondary)] text-xs uppercase">Participants</p>
                       <p className="text-2xl font-mono font-bold text-white">{stats.totalParticipants}</p>
                     </div>
-                    <div className="bg-[#121214] rounded-sm p-3">
-                      <p className="text-white/40 text-xs uppercase">Complétion moy.</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-text-secondary)] text-xs uppercase">Complétion moy.</p>
                       <p className="text-2xl font-mono font-bold text-amber-400">{stats.avgCompletion}%</p>
                     </div>
-                    <div className="bg-[#121214] rounded-sm p-3">
-                      <p className="text-white/40 text-xs uppercase">100% complété</p>
-                      <p className="text-2xl font-mono font-bold text-emerald-400">{stats.fullyCompleted}</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-text-secondary)] text-xs uppercase">100% complété</p>
+                      <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.fullyCompleted}</p>
                     </div>
-                    <div className="bg-[#121214] rounded-sm p-3">
-                      <p className="text-white/40 text-xs uppercase">Statut</p>
-                      <Badge className={challengeDetail.is_active ? "bg-emerald-500/20 text-emerald-400" : "bg-white/10 text-white/50"}>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-text-secondary)] text-xs uppercase">Statut</p>
+                      <Badge className={challengeDetail.is_active ? "bg-emerald-500/20 text-[var(--color-success)]" : "bg-white/10 text-[var(--color-text-secondary)]"}>
                         {challengeDetail.is_active ? "Actif" : "Terminé"}
                       </Badge>
                     </div>
@@ -394,16 +394,16 @@ export default function ChallengePage() {
 
               {/* Weekly Progress */}
               {stats && (
-                <div className="bg-[#121214] rounded-sm p-6 border border-white/10">
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border border-[var(--color-border)]">
                   <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-                    <Flame className="text-orange-400" size={18} />
+                    <Flame className="text-[var(--color-warning)]" size={18} />
                     Progression par semaine
                   </h3>
                   <div className="grid grid-cols-6 gap-3">
                     {stats.weeklyStats.map((week) => (
                       <div key={week.week} className="text-center">
-                        <div className="bg-[#121214] rounded-sm p-3">
-                          <p className="text-white/40 text-xs mb-1">S{week.week}</p>
+                        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                          <p className="text-[var(--color-text-secondary)] text-xs mb-1">S{week.week}</p>
                           <p className="text-lg font-bold text-white">{week.completed}</p>
                           <p className="text-xs text-amber-400">{week.percentage}%</p>
                         </div>
@@ -415,10 +415,10 @@ export default function ChallengePage() {
               )}
 
               {/* Participants */}
-              <div className="bg-[#121214] rounded-sm p-6 border border-white/10">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border border-[var(--color-border)]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white font-medium flex items-center gap-2">
-                    <Users size={18} className="text-white/50" />
+                    <Users size={18} className="text-[var(--color-text-secondary)]" />
                     Participants
                   </h3>
                   <Button
@@ -433,26 +433,26 @@ export default function ChallengePage() {
                 </div>
 
                 {challengeDetail.participants?.length === 0 ? (
-                  <p className="text-white/50 text-center py-8">Aucun participant</p>
+                  <p className="text-[var(--color-text-secondary)] text-center py-8">Aucun participant</p>
                 ) : (
                   <div className="space-y-2">
                     {stats?.completionByParticipant.map((participant) => (
                       <div
                         key={participant.id}
-                        className="flex items-center gap-4 bg-[#121214] rounded-sm p-3"
+                        className="flex items-center gap-4 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3"
                         data-testid={`participant-${participant.id}`}
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-white font-medium">{participant.member_name}</p>
                           {challengeDetail?.challenge_type === "personal" && participant.personal_start_date && (
-                            <p className="text-white/30 text-xs mt-0.5">
+                            <p className="text-[var(--color-text-tertiary)] text-xs mt-0.5">
                               {format(parseISO(participant.personal_start_date), "dd MMM", { locale: fr })}
                               {participant.personal_end_date && ` → ${format(parseISO(participant.personal_end_date), "dd MMM", { locale: fr })}`}
                             </p>
                           )}
                           <div className="flex items-center gap-1 mt-1">
                             <Progress value={participant.completionRate} className="w-24 h-1.5 bg-white/10" />
-                            <span className="text-xs text-white/50">{participant.completionRate}%</span>
+                            <span className="text-xs text-[var(--color-text-secondary)]">{participant.completionRate}%</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
@@ -462,8 +462,8 @@ export default function ChallengePage() {
                               onClick={() => toggleWeekCheckin(participant, week)}
                               className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
                                 participant[`week${week}`]
-                                  ? "bg-emerald-500/20 text-emerald-400"
-                                  : "bg-white/5 text-white/20 hover:bg-white/10"
+                                  ? "bg-emerald-500/20 text-[var(--color-success)]"
+                                  : "bg-white/5 text-[var(--color-text-tertiary)] hover:bg-white/10"
                               }`}
                               data-testid={`check-w${week}-${participant.id}`}
                             >
@@ -485,7 +485,7 @@ export default function ChallengePage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => removeParticipantMutation.mutate(participant.id)}
-                          className="text-red-400 hover:text-red-300"
+                          className="text-[var(--color-danger)] hover:text-red-300"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -504,7 +504,7 @@ export default function ChallengePage() {
 
       {/* Add/Edit Challenge Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <DialogHeader>
             <DialogTitle>
               {formData.id ? "Modifier le challenge" : "Nouveau challenge"}
@@ -512,32 +512,32 @@ export default function ChallengePage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Nom du challenge *</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom du challenge *</label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ex: Challenge Hiver 2024"
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 data-testid="challenge-name-input"
               />
             </div>
             
             {/* Challenge Type */}
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Type de challenge</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Type de challenge</label>
               <Select 
                 value={formData.challenge_type} 
                 onValueChange={(v) => setFormData({ ...formData, challenge_type: v })}
               >
-                <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   {CHALLENGE_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value} className="text-white">
                       <div>
                         <p className="font-medium">{type.label}</p>
-                        <p className="text-xs text-white/50">{type.description}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{type.description}</p>
                       </div>
                     </SelectItem>
                   ))}
@@ -548,28 +548,28 @@ export default function ChallengePage() {
             {formData.challenge_type === "fixed" && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-white/40 text-xs uppercase tracking-wider">Date de début</label>
+                  <label className="text-[var(--color-text-secondary)] tf-label inline">Date de début</label>
                   <Input
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="bg-[#121214] border-white/10 text-white mt-1"
+                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   />
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs uppercase tracking-wider">Date de fin</label>
+                  <label className="text-[var(--color-text-secondary)] tf-label inline">Date de fin</label>
                   <Input
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    className="bg-[#121214] border-white/10 text-white mt-1"
+                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   />
                 </div>
               </div>
             )}
             
             {formData.challenge_type === "personal" && (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-sm p-3">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-[var(--radius-lg)] p-3">
                 <p className="text-amber-400 text-sm">
                   Les dates seront définies individuellement pour chaque participant lors de l'inscription.
                 </p>
@@ -578,7 +578,7 @@ export default function ChallengePage() {
 
             {/* Check-ins goal */}
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Objectif check-ins par semaine</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Objectif check-ins par semaine</label>
               <div className="flex items-center gap-4 mt-1">
                 <Input
                   type="number"
@@ -586,11 +586,11 @@ export default function ChallengePage() {
                   max={7}
                   value={formData.checkins_goal}
                   onChange={(e) => setFormData({ ...formData, checkins_goal: parseInt(e.target.value) || 3 })}
-                  className="bg-[#121214] border-white/10 text-white w-20"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white w-20"
                 />
-                <span className="text-white/50 text-sm">séances / semaine</span>
+                <span className="text-[var(--color-text-secondary)] text-sm">séances / semaine</span>
               </div>
-              <p className="text-white/30 text-xs mt-1">
+              <p className="text-[var(--color-text-tertiary)] text-xs mt-1">
                 Les participants doivent venir {formData.checkins_goal || 3}x par semaine pendant 6 semaines
               </p>
             </div>
@@ -619,13 +619,13 @@ export default function ChallengePage() {
 
       {/* Add Participant Modal */}
       <Dialog open={addParticipantOpen} onOpenChange={setAddParticipantOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <DialogHeader>
             <DialogTitle>Ajouter un participant</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Sélectionner un membre</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Sélectionner un membre</label>
               <Select
                 value={participantData.member_id}
                 onValueChange={(v) => {
@@ -637,10 +637,10 @@ export default function ChallengePage() {
                   });
                 }}
               >
-                <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1" data-testid="select-member">
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1" data-testid="select-member">
                   <SelectValue placeholder="Choisir un membre..." />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   {members.map((member) => (
                     <SelectItem key={member.id} value={member.id} className="text-white">
                       {member.name}
@@ -654,21 +654,21 @@ export default function ChallengePage() {
             {challengeDetail?.challenge_type === "personal" && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-white/40 text-xs uppercase tracking-wider">Début personnel</label>
+                  <label className="text-[var(--color-text-secondary)] tf-label inline">Début personnel</label>
                   <Input
                     type="date"
                     value={participantData.personal_start_date}
                     onChange={(e) => setParticipantData({ ...participantData, personal_start_date: e.target.value })}
-                    className="bg-[#121214] border-white/10 text-white mt-1"
+                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   />
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs uppercase tracking-wider">Fin personnel</label>
+                  <label className="text-[var(--color-text-secondary)] tf-label inline">Fin personnel</label>
                   <Input
                     type="date"
                     value={participantData.personal_end_date}
                     onChange={(e) => setParticipantData({ ...participantData, personal_end_date: e.target.value })}
-                    className="bg-[#121214] border-white/10 text-white mt-1"
+                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   />
                 </div>
               </div>
@@ -695,7 +695,7 @@ export default function ChallengePage() {
 
       {/* Weekly Check-ins Modal */}
       <Dialog open={checkinModalOpen} onOpenChange={setCheckinModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-lg">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Target className="text-amber-400" size={20} />
@@ -704,7 +704,7 @@ export default function ChallengePage() {
           </DialogHeader>
           {selectedParticipant && (
             <div className="space-y-4 py-4">
-              <p className="text-white/50 text-sm">
+              <p className="text-[var(--color-text-secondary)] text-sm">
                 Objectif : {challengeDetail?.checkins_goal || 3} check-ins par semaine
               </p>
               <div className="grid grid-cols-3 gap-3">
@@ -715,11 +715,11 @@ export default function ChallengePage() {
                   return (
                     <div 
                       key={week} 
-                      className={`bg-[#121214] rounded-sm p-4 border ${
-                        isComplete ? "border-emerald-500/30" : "border-white/10"
+                      className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border ${
+                        isComplete ? "border-emerald-500/30" : "border-[var(--color-border)]"
                       }`}
                     >
-                      <p className="text-white/40 text-xs uppercase mb-2">Semaine {week}</p>
+                      <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-2">Semaine {week}</p>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.max(0, checkins - 1))}
@@ -727,7 +727,7 @@ export default function ChallengePage() {
                         >
                           -
                         </button>
-                        <span className={`text-2xl font-bold flex-1 text-center ${isComplete ? "text-emerald-400" : "text-white"}`}>
+                        <span className={`text-2xl font-bold flex-1 text-center ${isComplete ? "text-[var(--color-success)]" : "text-white"}`}>
                           {checkins}
                         </span>
                         <button
@@ -739,16 +739,16 @@ export default function ChallengePage() {
                       </div>
                       <p className="text-center text-xs mt-1">
                         {isComplete ? (
-                          <span className="text-emerald-400">✓ Objectif atteint</span>
+                          <span className="text-[var(--color-success)]">✓ Objectif atteint</span>
                         ) : (
-                          <span className="text-white/30">{checkins}/{goal}</span>
+                          <span className="text-[var(--color-text-tertiary)]">{checkins}/{goal}</span>
                         )}
                       </p>
                     </div>
                   );
                 })}
               </div>
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-sm p-3 mt-4">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-[var(--radius-lg)] p-3 mt-4">
                 <p className="text-amber-400 text-sm">
                   Total : {WEEKS.reduce((sum, w) => sum + getWeeklyCheckins(selectedParticipant, w), 0)} check-ins 
                   / {(challengeDetail?.checkins_goal || 3) * 6} objectif

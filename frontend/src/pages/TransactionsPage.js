@@ -101,14 +101,14 @@ export default function TransactionsPage({ selectedMonth }) {
       <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+        <h1 className="tf-page-header">
           {t("transactions")}
         </h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setShowImport(true)}
-            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="import-csv-btn"
           >
             <Upload size={12} className="mr-1.5" />
@@ -117,7 +117,7 @@ export default function TransactionsPage({ selectedMonth }) {
           <Button
             variant="outline"
             onClick={exportCSV}
-            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs"
             data-testid="export-csv-btn"
           >
             <Download size={12} className="mr-1.5" />
@@ -125,7 +125,7 @@ export default function TransactionsPage({ selectedMonth }) {
           </Button>
           <Button
             onClick={() => setShowModal(true)}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider text-xs"
+            className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider text-xs"
             data-testid="add-transaction-btn"
           >
             <Plus size={14} className="mr-1.5" />
@@ -137,22 +137,22 @@ export default function TransactionsPage({ selectedMonth }) {
       {/* Revenue split */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: t("revenueMembers"), value: formatCHF(memberRevenue), color: "text-green-400" },
-          { label: t("revenueCoaching"), value: formatCHF(coachRevenue), color: "text-emerald-400" },
+          { label: t("revenueMembers"), value: formatCHF(memberRevenue), color: "text-[var(--color-success)]" },
+          { label: t("revenueCoaching"), value: formatCHF(coachRevenue), color: "text-[var(--color-success)]" },
           {
             label: t("expenses"),
             value: formatCHF(transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0)),
-            color: "text-blue-400",
+            color: "text-[var(--color-accent)]",
           },
           {
             label: t("totalRevenue"),
             value: formatCHF(transactions.filter((t) => t.type === "revenue").reduce((s, t) => s + t.amount, 0)),
-            color: "text-rose-400",
+            color: "text-[var(--color-accent)]",
           },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-[#121214] border border-white/10 p-4 rounded-sm">
-            <p className="text-xs text-white/40 uppercase tracking-wider">{label}</p>
-            <p className={`text-xl font-heading font-extrabold mt-1 ${color}`}>{value}</p>
+          <div key={label} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
+            <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</p>
+            <p className={`text-xl font-display font-extrabold mt-1 ${color}`}>{value}</p>
           </div>
         ))}
       </div>
@@ -160,52 +160,52 @@ export default function TransactionsPage({ selectedMonth }) {
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
           <input
             type="text"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder={lang === "fr" ? "Rechercher..." : "Search..."}
-            className="w-full bg-[#121214] border border-white/10 text-white text-sm rounded-sm pl-8 pr-3 py-2 focus:outline-none focus:border-white/20 placeholder:text-white/20"
+            className="w-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-white text-sm rounded-[var(--radius-lg)] pl-8 pr-3 py-2 focus:outline-none focus:border-[var(--color-border-strong)] placeholder:text-[var(--color-text-tertiary)]"
             data-testid="tx-search-input"
           />
         </div>
         <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger
-            className="w-40 bg-[#121214] border-white/10 text-white text-sm h-9"
+            className="w-40 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white text-sm h-9"
             data-testid="filter-type-select"
           >
             <SelectValue placeholder="Tous types" />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             <SelectItem value="all" className="text-white focus:bg-white/10">Tous types</SelectItem>
             <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
             <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
           </SelectContent>
         </Select>
 
-        <p className="text-xs text-white/30 font-mono ml-auto">
+        <p className="text-xs text-[var(--color-text-tertiary)] font-mono ml-auto">
           {filtered.length} transaction{filtered.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-40" data-testid="transactions-loading">
-            <Loader2 className="animate-spin text-rose-500" size={24} />
+            <Loader2 className="animate-spin text-[var(--color-accent)]" size={24} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center h-40" data-testid="transactions-empty">
-            <p className="text-white/30 font-body text-sm">{t("noData")}</p>
+            <p className="text-[var(--color-text-tertiary)] font-text text-sm">{t("noData")}</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
+              <TableRow className="border-[var(--color-border)] hover:bg-transparent">
                 {[t("date"), t("description"), t("category"), t("type"), t("amount"), t("actions")].map(
                   (h) => (
-                    <TableHead key={h} className="text-white/40 uppercase tracking-wider text-xs font-body">
+                    <TableHead key={h} className="text-[var(--color-text-secondary)] uppercase tracking-wider text-xs font-text">
                       {h}
                     </TableHead>
                   )
@@ -223,7 +223,7 @@ export default function TransactionsPage({ selectedMonth }) {
                   <TableCell className="text-white text-sm">{tx.description}</TableCell>
                   <TableCell>
                     <span
-                      className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded-sm border border-white/10"
+                      className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded-[var(--radius-lg)] border border-[var(--color-border)]"
                       style={{ color: getCategoryColor(tx.category) }}
                     >
                       <span
@@ -237,8 +237,8 @@ export default function TransactionsPage({ selectedMonth }) {
                     <Badge
                       className={
                         tx.type === "revenue"
-                          ? "bg-green-500/10 text-green-400 border-green-500/20 text-xs"
-                          : "bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs"
+                          ? "bg-green-500/10 text-[var(--color-success)] border-green-500/20 text-xs"
+                          : "bg-blue-500/10 text-[var(--color-accent)] border-blue-500/20 text-xs"
                       }
                     >
                       {tx.type === "revenue" ? t("revenueType") : t("expense")}
@@ -247,7 +247,7 @@ export default function TransactionsPage({ selectedMonth }) {
                   </TableCell>
                   <TableCell
                     className={`font-mono text-sm font-bold ${
-                      tx.type === "revenue" ? "text-green-400" : "text-white/80"
+                      tx.type === "revenue" ? "text-[var(--color-success)]" : "text-white/80"
                     }`}
                   >
                     {tx.type === "revenue" ? "+" : "-"} {formatCHF(tx.amount)}
@@ -255,7 +255,7 @@ export default function TransactionsPage({ selectedMonth }) {
                   <TableCell>
                     <button
                       onClick={() => setDeleteId(tx.id)}
-                      className="text-white/20 hover:text-red-400 transition-colors p-1"
+                      className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors p-1"
                       data-testid={`delete-tx-${tx.id}`}
                     >
                       <Trash2 size={14} />
@@ -270,29 +270,29 @@ export default function TransactionsPage({ selectedMonth }) {
 
       {/* Excluded transactions */}
       {excluded.length > 0 && (
-        <div className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden">
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
           <button
             className="w-full flex items-center justify-between px-5 py-3 text-left"
             onClick={() => setShowExcluded(!showExcluded)}
             data-testid="toggle-excluded-btn"
           >
-            <span className="text-xs font-body text-white/40 uppercase tracking-wider">
+            <span className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
               {t("excludedTransactions")} ({excluded.length})
             </span>
             {showExcluded ? (
-              <ChevronUp size={14} className="text-white/30" />
+              <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" />
             ) : (
-              <ChevronDown size={14} className="text-white/30" />
+              <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />
             )}
           </button>
 
           {showExcluded && (
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
+                <TableRow className="border-[var(--color-border)] hover:bg-transparent">
                   {[t("description"), t("category"), t("type"), t("amount"), "Exclue le", t("actions")].map(
                     (h) => (
-                      <TableHead key={h} className="text-white/30 uppercase tracking-wider text-xs font-body">
+                      <TableHead key={h} className="text-[var(--color-text-tertiary)] uppercase tracking-wider text-xs font-text">
                         {h}
                       </TableHead>
                     )
@@ -307,27 +307,27 @@ export default function TransactionsPage({ selectedMonth }) {
                     data-testid={`excluded-row-${ex.id}`}
                   >
                     <TableCell className="text-white/60 text-sm line-through">{ex.description}</TableCell>
-                    <TableCell className="text-white/40 text-xs font-mono">{ex.category}</TableCell>
+                    <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{ex.category}</TableCell>
                     <TableCell>
                       <Badge
                         className={
                           ex.type === "revenue"
-                            ? "bg-green-500/10 text-green-400 border-green-500/20 text-xs"
-                            : "bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs"
+                            ? "bg-green-500/10 text-[var(--color-success)] border-green-500/20 text-xs"
+                            : "bg-blue-500/10 text-[var(--color-accent)] border-blue-500/20 text-xs"
                         }
                       >
                         {ex.type === "revenue" ? t("revenueType") : t("expense")}
                         {ex.sub_type && ` · ${ex.sub_type}`}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-sm text-white/40">{formatCHF(ex.amount)}</TableCell>
-                    <TableCell className="text-white/30 text-xs font-mono">
+                    <TableCell className="font-mono text-sm text-[var(--color-text-secondary)]">{formatCHF(ex.amount)}</TableCell>
+                    <TableCell className="text-[var(--color-text-tertiary)] text-xs font-mono">
                       {new Date(ex.excluded_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <button
                         onClick={() => removeFromExclusions(ex.id)}
-                        className="text-white/20 hover:text-green-400 transition-colors p-1"
+                        className="text-[var(--color-text-tertiary)] hover:text-[var(--color-success)] transition-colors p-1"
                         title="Restaurer"
                         data-testid={`restore-excluded-${ex.id}`}
                       >
@@ -344,18 +344,18 @@ export default function TransactionsPage({ selectedMonth }) {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
-        <AlertDialogContent className="bg-[#121214] border-white/10 text-white">
+        <AlertDialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-heading text-xl font-extrabold uppercase">
+            <AlertDialogTitle className="font-display text-xl font-extrabold uppercase">
               {t("confirmDelete")}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
+            <AlertDialogDescription className="text-[var(--color-text-secondary)]">
               {t("deleteWarning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+              className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)]"
               data-testid="delete-cancel-btn"
             >
               {t("cancel")}

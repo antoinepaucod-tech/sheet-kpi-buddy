@@ -72,10 +72,10 @@ const FOLLOWUP_TYPES = [
 ];
 
 const STATUS_CONFIG = {
-  scheduled: { label: "Planifié", color: "bg-blue-500/20 text-blue-400" },
-  completed: { label: "Complété", color: "bg-emerald-500/20 text-emerald-400" },
-  missed: { label: "Manqué", color: "bg-red-500/20 text-red-400" },
-  rescheduled: { label: "Reporté", color: "bg-orange-500/20 text-orange-400" },
+  scheduled: { label: "Planifié", color: "bg-blue-500/20 text-[var(--color-accent)]" },
+  completed: { label: "Complété", color: "bg-emerald-500/20 text-[var(--color-success)]" },
+  missed: { label: "Manqué", color: "bg-red-500/20 text-[var(--color-danger)]" },
+  rescheduled: { label: "Reporté", color: "bg-orange-500/20 text-[var(--color-warning)]" },
 };
 
 export default function OnboardingPage() {
@@ -257,10 +257,10 @@ export default function OnboardingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "Onboarding & Suivi" : "Onboarding & Follow-up"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {lang === "fr" ? "Intégration des membres et suivis mensuels" : "Member integration and monthly follow-ups"}
           </p>
         </div>
@@ -272,11 +272,11 @@ export default function OnboardingPage() {
 
       {/* Alerts Banner */}
       {alerts && (alerts.late_payments > 0 || alerts.missed_followups > 0) && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-sm p-4 flex items-center justify-between">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-[var(--radius-lg)] p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="text-red-400" size={24} />
+            <AlertTriangle className="text-[var(--color-danger)]" size={24} />
             <div>
-              <p className="text-red-400 font-medium">Actions requises</p>
+              <p className="text-[var(--color-danger)] font-medium">Actions requises</p>
               <p className="text-white/70 text-sm">
                 {alerts.late_payments > 0 && `${alerts.late_payments} paiements en retard`}
                 {alerts.late_payments > 0 && alerts.missed_followups > 0 && " • "}
@@ -286,12 +286,12 @@ export default function OnboardingPage() {
           </div>
           <div className="flex gap-2">
             {alerts.late_payments > 0 && (
-              <Badge className="bg-red-500/20 text-red-400 border-0">
+              <Badge className="bg-red-500/20 text-[var(--color-danger)] border-0">
                 <Bell size={12} className="mr-1" /> {alerts.late_payments} paiements
               </Badge>
             )}
             {alerts.missed_followups > 0 && (
-              <Badge className="bg-orange-500/20 text-orange-400 border-0">
+              <Badge className="bg-orange-500/20 text-[var(--color-warning)] border-0">
                 <Calendar size={12} className="mr-1" /> {alerts.missed_followups} suivis
               </Badge>
             )}
@@ -301,34 +301,34 @@ export default function OnboardingPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#121214] rounded-sm p-4 border border-indigo-500/30 cursor-pointer" onClick={() => setActiveTab("onboarding")}>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-indigo-500/30 cursor-pointer" onClick={() => setActiveTab("onboarding")}>
           <p className="text-indigo-400 text-xs uppercase flex items-center gap-1">
             <ClipboardCheck size={12} /> Onboarding en cours
           </p>
           <p className="text-2xl font-mono font-bold text-indigo-400">{stats.pendingOnboarding}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-blue-500/30 cursor-pointer" onClick={() => setActiveTab("upcoming")}>
-          <p className="text-blue-400 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-blue-500/30 cursor-pointer" onClick={() => setActiveTab("upcoming")}>
+          <p className="text-[var(--color-accent)] text-xs uppercase flex items-center gap-1">
             <Calendar size={12} /> Suivis à venir
           </p>
-          <p className="text-2xl font-mono font-bold text-blue-400">{stats.upcomingFollowups}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.upcomingFollowups}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-red-500/30 cursor-pointer" onClick={() => setActiveTab("missed")}>
-          <p className="text-red-400 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-red-500/30 cursor-pointer" onClick={() => setActiveTab("missed")}>
+          <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} /> Suivis manqués
           </p>
-          <p className="text-2xl font-mono font-bold text-red-400">{stats.missedFollowups}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-danger)]">{stats.missedFollowups}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-emerald-500/30">
-          <p className="text-emerald-400 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-emerald-500/30">
+          <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
             <CheckCircle2 size={12} /> Complétés ce mois
           </p>
-          <p className="text-2xl font-mono font-bold text-emerald-400">{stats.completedThisMonth}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.completedThisMonth}</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-[#121214] border border-white/10">
+        <TabsList className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
           <TabsTrigger value="onboarding" className="data-[state=active]:bg-indigo-600">Onboarding ({stats.pendingOnboarding})</TabsTrigger>
           <TabsTrigger value="upcoming" className="data-[state=active]:bg-blue-600">À venir ({stats.upcomingFollowups})</TabsTrigger>
           <TabsTrigger value="missed" className="data-[state=active]:bg-red-600">Manqués ({stats.missedFollowups})</TabsTrigger>
@@ -339,15 +339,15 @@ export default function OnboardingPage() {
         <TabsContent value="onboarding" className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher un membre..."
-                className="pl-10 bg-[#121214] border-white/10 text-white"
+                className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
               />
             </div>
-            <div className="flex items-center gap-3 bg-[#121214] rounded-sm px-4 py-2 border border-white/10">
+            <div className="flex items-center gap-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] px-4 py-2 border border-[var(--color-border)]">
               <label className="text-white/70 text-sm">Afficher les complétés</label>
               <Switch
                 checked={showCompleted}
@@ -355,7 +355,7 @@ export default function OnboardingPage() {
                 data-testid="show-completed-toggle"
               />
               {showCompleted && (
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-0">
+                <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">
                   +{stats.completedOnboarding}
                 </Badge>
               )}
@@ -364,11 +364,11 @@ export default function OnboardingPage() {
 
           <div className="grid gap-4">
             {loadingOnboarding ? (
-              <div className="text-center text-white/50 py-8">Chargement...</div>
+              <div className="text-center text-[var(--color-text-secondary)] py-8">Chargement...</div>
             ) : filteredOnboarding.length === 0 ? (
-              <div className="bg-[#121214] rounded-sm p-8 border border-emerald-500/30 text-center">
-                <CheckCircle2 size={48} className="mx-auto text-emerald-400 mb-4" />
-                <p className="text-emerald-400 font-medium">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-8 border border-emerald-500/30 text-center">
+                <CheckCircle2 size={48} className="mx-auto text-[var(--color-success)] mb-4" />
+                <p className="text-[var(--color-success)] font-medium">
                   {showCompleted ? "Aucun membre trouvé" : "Tous les onboardings sont complétés !"}
                 </p>
                 {!showCompleted && stats.completedOnboarding > 0 && (
@@ -389,12 +389,12 @@ export default function OnboardingPage() {
                 return (
                   <div
                     key={member.id}
-                    className={`bg-[#121214] rounded-sm p-6 border transition-all duration-300 ${
+                    className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border transition-all duration-300 ${
                       isCompleted 
                         ? "border-emerald-500/30 bg-emerald-500/5" 
                         : isEditing 
                           ? "border-indigo-500/50 ring-2 ring-indigo-500/20" 
-                          : "border-white/10"
+                          : "border-[var(--color-border)]"
                     }`}
                     data-testid={`onboarding-${member.id}`}
                   >
@@ -404,7 +404,7 @@ export default function OnboardingPage() {
                           isCompleted ? "bg-emerald-500/20" : "bg-indigo-500/20"
                         }`}>
                           {isCompleted ? (
-                            <CheckCircle2 className="text-emerald-400" size={24} />
+                            <CheckCircle2 className="text-[var(--color-success)]" size={24} />
                           ) : (
                             <User className="text-indigo-400" size={24} />
                           )}
@@ -413,12 +413,12 @@ export default function OnboardingPage() {
                           <p className="text-white font-medium text-lg flex items-center gap-2">
                             {member.name}
                             {isCompleted && (
-                              <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
+                              <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0 text-xs">
                                 Complété
                               </Badge>
                             )}
                           </p>
-                          <div className="flex items-center gap-4 text-white/50 text-sm">
+                          <div className="flex items-center gap-4 text-[var(--color-text-secondary)] text-sm">
                             {member.email && (
                               <span className="flex items-center gap-1">
                                 <Mail size={12} /> {member.email}
@@ -430,20 +430,20 @@ export default function OnboardingPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-white/40 text-xs mt-1">
+                          <p className="text-[var(--color-text-secondary)] text-xs mt-1">
                             Inscrit le {member.contract_signed_date ? format(parseISO(member.contract_signed_date), "dd MMM yyyy", { locale: fr }) : "-"}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-white/50 text-xs uppercase mb-1">Progression</p>
+                        <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Progression</p>
                         <div className="flex items-center gap-2">
                           <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-white/10" />
-                          <span className={`font-bold ${isCompleted ? 'text-emerald-400' : 'text-indigo-400'}`}>
+                          <span className={`font-bold ${isCompleted ? 'text-[var(--color-success)]' : 'text-indigo-400'}`}>
                             {member.onboarding_percentage}%
                           </span>
                         </div>
-                        <p className="text-white/30 text-xs">{member.onboarding_progress}/5 étapes</p>
+                        <p className="text-[var(--color-text-tertiary)] text-xs">{member.onboarding_progress}/5 étapes</p>
                       </div>
                     </div>
 
@@ -454,24 +454,24 @@ export default function OnboardingPage() {
                           <div
                             key={step.key}
                             onClick={() => !isCompleted && toggleOnboardingStep(member.id, step.key, isStepCompleted)}
-                            className={`p-3 rounded-sm border transition-all ${
+                            className={`p-3 rounded-[var(--radius-lg)] border transition-all ${
                               isStepCompleted
                                 ? "bg-emerald-500/10 border-emerald-500/30"
                                 : isCompleted 
-                                  ? "bg-white/5 border-white/10 opacity-50"
-                                  : "bg-white/5 border-white/10 hover:border-indigo-500/50 cursor-pointer"
+                                  ? "bg-white/5 border-[var(--color-border)] opacity-50"
+                                  : "bg-white/5 border-[var(--color-border)] hover:border-indigo-500/50 cursor-pointer"
                             }`}
                             data-testid={`step-${step.key}-${member.id}`}
                           >
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xl">{step.icon}</span>
                               {isStepCompleted ? (
-                                <CheckCircle2 size={16} className="text-emerald-400" />
+                                <CheckCircle2 size={16} className="text-[var(--color-success)]" />
                               ) : (
-                                <Circle size={16} className="text-white/30" />
+                                <Circle size={16} className="text-[var(--color-text-tertiary)]" />
                               )}
                             </div>
-                            <p className={`text-xs ${isStepCompleted ? "text-emerald-400" : "text-white/70"}`}>
+                            <p className={`text-xs ${isStepCompleted ? "text-[var(--color-success)]" : "text-white/70"}`}>
                               {step.label}
                             </p>
                           </div>
@@ -487,28 +487,28 @@ export default function OnboardingPage() {
 
         {/* Upcoming Follow-ups Tab */}
         <TabsContent value="upcoming" className="space-y-4">
-          <div className="bg-[#121214] rounded-sm border border-blue-500/30 overflow-hidden">
-            <div className="p-4 border-b border-white/10 bg-blue-500/10">
-              <h3 className="text-blue-400 font-medium flex items-center gap-2">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-blue-500/30 overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-blue-500/10">
+              <h3 className="text-[var(--color-accent)] font-medium flex items-center gap-2">
                 <Calendar size={18} />
                 Suivis à venir (14 jours)
               </h3>
             </div>
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/50">Membre</TableHead>
-                  <TableHead className="text-white/50">Contact</TableHead>
-                  <TableHead className="text-white/50">Date prévue</TableHead>
-                  <TableHead className="text-white/50">Dans</TableHead>
-                  <TableHead className="text-white/50">Type</TableHead>
-                  <TableHead className="text-white/50 text-right">Actions</TableHead>
+                <TableRow className="border-[var(--color-border)]">
+                  <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Contact</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Date prévue</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Dans</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {upcomingFollowups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-white/50 py-8">
+                    <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
                       Aucun suivi planifié
                     </TableCell>
                   </TableRow>
@@ -516,7 +516,7 @@ export default function OnboardingPage() {
                   upcomingFollowups.map((followup) => {
                     const daysUntil = differenceInDays(parseISO(followup.followup_date), new Date());
                     return (
-                      <TableRow key={followup.id} className="border-white/10 hover:bg-white/5">
+                      <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                         <TableCell className="text-white font-medium">{followup.member_name}</TableCell>
                         <TableCell>
                           <div className="text-white/70 text-sm">
@@ -528,12 +528,12 @@ export default function OnboardingPage() {
                           {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
-                          <Badge className={daysUntil <= 3 ? "bg-orange-500/20 text-orange-400" : "bg-blue-500/20 text-blue-400"}>
+                          <Badge className={daysUntil <= 3 ? "bg-orange-500/20 text-[var(--color-warning)]" : "bg-blue-500/20 text-[var(--color-accent)]"}>
                             {daysUntil === 0 ? "Aujourd'hui" : daysUntil === 1 ? "Demain" : `${daysUntil} jours`}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-white/20 text-white/70">
+                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
                             {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
                           </Badge>
                         </TableCell>
@@ -557,28 +557,28 @@ export default function OnboardingPage() {
 
         {/* Missed Follow-ups Tab */}
         <TabsContent value="missed" className="space-y-4">
-          <div className="bg-[#121214] rounded-sm border border-red-500/30 overflow-hidden">
-            <div className="p-4 border-b border-white/10 bg-red-500/10">
-              <h3 className="text-red-400 font-medium flex items-center gap-2">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-red-500/30 overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-red-500/10">
+              <h3 className="text-[var(--color-danger)] font-medium flex items-center gap-2">
                 <AlertTriangle size={18} />
                 Suivis manqués - Action requise
               </h3>
             </div>
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/50">Membre</TableHead>
-                  <TableHead className="text-white/50">Contact</TableHead>
-                  <TableHead className="text-white/50">Date prévue</TableHead>
-                  <TableHead className="text-white/50">Retard</TableHead>
-                  <TableHead className="text-white/50">Type</TableHead>
-                  <TableHead className="text-white/50 text-right">Actions</TableHead>
+                <TableRow className="border-[var(--color-border)]">
+                  <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Contact</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Date prévue</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Retard</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {missedFollowups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-emerald-400 py-8">
+                    <TableCell colSpan={6} className="text-center text-[var(--color-success)] py-8">
                       <CheckCircle2 size={24} className="mx-auto mb-2" />
                       Aucun suivi manqué
                     </TableCell>
@@ -587,7 +587,7 @@ export default function OnboardingPage() {
                   missedFollowups.map((followup) => {
                     const daysLate = differenceInDays(new Date(), parseISO(followup.followup_date));
                     return (
-                      <TableRow key={followup.id} className="border-white/10 hover:bg-white/5">
+                      <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                         <TableCell className="text-white font-medium">{followup.member_name}</TableCell>
                         <TableCell>
                           <div className="text-white/70 text-sm">
@@ -598,12 +598,12 @@ export default function OnboardingPage() {
                           {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell>
-                          <Badge className="bg-red-500/20 text-red-400 border-0">
+                          <Badge className="bg-red-500/20 text-[var(--color-danger)] border-0">
                             {daysLate} jours
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-white/20 text-white/70">
+                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
                             {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
                           </Badge>
                         </TableCell>
@@ -619,7 +619,7 @@ export default function OnboardingPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-white/20 text-white"
+                              className="border-[var(--color-border-strong)] text-white"
                               onClick={() => {
                                 setFollowupForm({
                                   member_id: followup.member_id,
@@ -645,33 +645,33 @@ export default function OnboardingPage() {
 
         {/* History Tab */}
         <TabsContent value="history" className="space-y-4">
-          <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/50">Membre</TableHead>
-                  <TableHead className="text-white/50">Date</TableHead>
-                  <TableHead className="text-white/50">Type</TableHead>
-                  <TableHead className="text-white/50">Statut</TableHead>
-                  <TableHead className="text-white/50">Notes</TableHead>
+                <TableRow className="border-[var(--color-border)]">
+                  <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Date</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {allFollowups.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-white/50 py-8">
+                    <TableCell colSpan={5} className="text-center text-[var(--color-text-secondary)] py-8">
                       Aucun historique
                     </TableCell>
                   </TableRow>
                 ) : (
                   allFollowups.slice(0, 50).map((followup) => (
-                    <TableRow key={followup.id} className="border-white/10 hover:bg-white/5">
+                    <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
                       <TableCell className="text-white font-medium">{getMemberName(followup.member_id)}</TableCell>
                       <TableCell className="text-white/70">
                         {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="border-white/20 text-white/70">
+                        <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
                           {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
                         </Badge>
                       </TableCell>
@@ -680,7 +680,7 @@ export default function OnboardingPage() {
                           {STATUS_CONFIG[followup.status]?.label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-white/50 text-sm max-w-[200px] truncate">
+                      <TableCell className="text-[var(--color-text-secondary)] text-sm max-w-[200px] truncate">
                         {followup.notes || "-"}
                       </TableCell>
                     </TableRow>
@@ -694,18 +694,18 @@ export default function OnboardingPage() {
 
       {/* Create Follow-up Modal */}
       <Dialog open={followupModalOpen} onOpenChange={setFollowupModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <DialogHeader>
             <DialogTitle>Planifier un suivi</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Membre *</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Membre *</label>
               <Select value={followupForm.member_id} onValueChange={(v) => setFollowupForm({ ...followupForm, member_id: v })}>
-                <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1" data-testid="followup-member-select">
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1" data-testid="followup-member-select">
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
                   ))}
@@ -714,21 +714,21 @@ export default function OnboardingPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Date du suivi</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Date du suivi</label>
                 <Input
                   type="date"
                   value={followupForm.followup_date}
                   onChange={(e) => setFollowupForm({ ...followupForm, followup_date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Type de suivi</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Type de suivi</label>
                 <Select value={followupForm.followup_type} onValueChange={(v) => setFollowupForm({ ...followupForm, followup_type: v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {FOLLOWUP_TYPES.map((t) => (
                       <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
                     ))}
@@ -737,12 +737,12 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Notes (optionnel)</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Notes (optionnel)</label>
               <Input
                 value={followupForm.notes}
                 onChange={(e) => setFollowupForm({ ...followupForm, notes: e.target.value })}
                 placeholder="Notes pour ce suivi..."
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
               />
             </div>
           </div>
@@ -761,38 +761,38 @@ export default function OnboardingPage() {
 
       {/* Complete Follow-up Modal */}
       <Dialog open={completeModalOpen} onOpenChange={setCompleteModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="text-emerald-400" />
+              <CheckCircle2 className="text-[var(--color-success)]" />
               Compléter le suivi
             </DialogTitle>
           </DialogHeader>
           {selectedFollowup && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-sm p-4">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                 <p className="text-white font-medium">{getMemberName(selectedFollowup.member_id)}</p>
-                <p className="text-white/50 text-sm">
+                <p className="text-[var(--color-text-secondary)] text-sm">
                   Prévu le {format(parseISO(selectedFollowup.followup_date), "dd MMMM yyyy", { locale: fr })}
                 </p>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Notes du suivi</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Notes du suivi</label>
                 <Input
                   placeholder="Résumé de l'entretien..."
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   id="complete-notes-input"
                 />
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Prochain suivi (optionnel)</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Prochain suivi (optionnel)</label>
                 <Input
                   type="date"
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   id="next-followup-input"
                   defaultValue={format(addDays(new Date(), 30), "yyyy-MM-dd")}
                 />
-                <p className="text-white/40 text-xs mt-1">Laissez vide pour ne pas planifier de prochain suivi</p>
+                <p className="text-[var(--color-text-secondary)] text-xs mt-1">Laissez vide pour ne pas planifier de prochain suivi</p>
               </div>
             </div>
           )}

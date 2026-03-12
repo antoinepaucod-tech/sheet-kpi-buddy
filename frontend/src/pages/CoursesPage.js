@@ -229,9 +229,9 @@ export default function CoursesPage() {
   };
 
   const getAttendanceColor = (rate) => {
-    if (rate >= 80) return "text-emerald-400";
+    if (rate >= 80) return "text-[var(--color-success)]";
     if (rate >= 60) return "text-amber-400";
-    return "text-red-400";
+    return "text-[var(--color-danger)]";
   };
 
   return (
@@ -239,10 +239,10 @@ export default function CoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "KPIs des Cours" : "Course KPIs"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {lang === "fr" ? "Fréquentation et statistiques par cours" : "Attendance and statistics per course"}
           </p>
         </div>
@@ -251,7 +251,7 @@ export default function CoursesPage() {
             onClick={() => copyPlanningMutation.mutate()}
             disabled={copyPlanningMutation.isPending || courses.length > 0}
             variant="outline"
-            className="border-white/20 text-white hover:bg-white/10"
+            className="border-[var(--color-border-strong)] text-white hover:bg-white/10"
             data-testid="copy-planning-btn"
           >
             <Copy size={16} className="mr-2" />
@@ -266,8 +266,8 @@ export default function CoursesPage() {
 
       {/* Info banner if no courses */}
       {courses.length === 0 && !isLoading && (
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-sm p-4">
-          <p className="text-blue-400 text-sm">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-[var(--radius-lg)] p-4">
+          <p className="text-[var(--color-accent)] text-sm">
             Aucun cours pour {MONTHS_FR[selectedMonth - 1]} {selectedYear}. 
             <button 
               onClick={() => copyPlanningMutation.mutate()}
@@ -282,10 +282,10 @@ export default function CoursesPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-          <SelectTrigger className="w-[120px] bg-[#121214] border-white/10 text-white" data-testid="year-filter">
+          <SelectTrigger className="w-[120px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="year-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             {[2023, 2024, 2025].map((y) => (
               <SelectItem key={y} value={y.toString()} className="text-white">{y}</SelectItem>
             ))}
@@ -293,10 +293,10 @@ export default function CoursesPage() {
         </Select>
         
         <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-          <SelectTrigger className="w-[150px] bg-[#121214] border-white/10 text-white" data-testid="month-filter">
+          <SelectTrigger className="w-[150px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="month-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             {MONTHS_FR.map((m, i) => (
               <SelectItem key={i} value={(i + 1).toString()} className="text-white">{m}</SelectItem>
             ))}
@@ -304,10 +304,10 @@ export default function CoursesPage() {
         </Select>
 
         <Select value={selectedDay} onValueChange={setSelectedDay}>
-          <SelectTrigger className="w-[150px] bg-[#121214] border-white/10 text-white" data-testid="day-filter">
+          <SelectTrigger className="w-[150px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="day-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             <SelectItem value="all" className="text-white">Tous les jours</SelectItem>
             {DAYS_FR.map((d) => (
               <SelectItem key={d} value={d} className="text-white">{d}</SelectItem>
@@ -319,31 +319,31 @@ export default function CoursesPage() {
       {/* Summary Stats */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-            <p className="text-white/50 text-xs uppercase flex items-center gap-1">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+            <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <CalendarDays size={12} /> Total Cours
             </p>
             <p className="text-2xl font-mono font-bold text-white">{summary.total_courses}</p>
           </div>
-          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-            <p className="text-white/50 text-xs uppercase flex items-center gap-1">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+            <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <TrendingUp size={12} /> Taux moyen
             </p>
             <p className={`text-2xl font-bold ${getAttendanceColor(summary.avg_attendance_rate)}`}>
               {summary.avg_attendance_rate}%
             </p>
           </div>
-          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-            <p className="text-white/50 text-xs uppercase flex items-center gap-1">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+            <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <DollarSign size={12} /> Dépenses
             </p>
             <p className="text-2xl font-mono font-bold text-white">
               {summary.total_expenses?.toLocaleString("fr-CH")} CHF
             </p>
           </div>
-          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-            <p className="text-white/40 text-xs uppercase tracking-wider">Mois</p>
-            <p className="text-xl font-bold text-blue-400">{summary.month_name} {selectedYear}</p>
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+            <p className="text-[var(--color-text-secondary)] tf-label inline">Mois</p>
+            <p className="text-xl font-bold text-[var(--color-accent)]">{summary.month_name} {selectedYear}</p>
           </div>
         </div>
       )}
@@ -366,34 +366,34 @@ export default function CoursesPage() {
       )}
 
       {/* Courses Table */}
-      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
+      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-white/50">Jour</TableHead>
-              <TableHead className="text-white/50">Horaire</TableHead>
-              <TableHead className="text-white/50">Cours</TableHead>
-              <TableHead className="text-white/50">Coach</TableHead>
-              <TableHead className="text-white/50">Cap.</TableHead>
-              <TableHead className="text-white/50 text-center">S1</TableHead>
-              <TableHead className="text-white/50 text-center">S2</TableHead>
-              <TableHead className="text-white/50 text-center">S3</TableHead>
-              <TableHead className="text-white/50 text-center">S4</TableHead>
-              <TableHead className="text-white/50 text-center">S5</TableHead>
-              <TableHead className="text-white/50">Taux</TableHead>
-              <TableHead className="text-white/50 text-right">Actions</TableHead>
+            <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+              <TableHead className="text-[var(--color-text-secondary)]">Jour</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Horaire</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Cours</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Coach</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Cap.</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-center">S1</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-center">S2</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-center">S3</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-center">S4</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-center">S5</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Taux</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center text-white/50 py-8">
+                <TableCell colSpan={12} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredCourses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center text-white/50 py-8">
+                <TableCell colSpan={12} className="text-center text-[var(--color-text-secondary)] py-8">
                   Aucun cours pour cette période
                 </TableCell>
               </TableRow>
@@ -401,25 +401,25 @@ export default function CoursesPage() {
               filteredCourses.map((course) => (
                 <TableRow
                   key={course.id}
-                  className="border-white/10 hover:bg-white/5"
+                  className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]"
                   data-testid={`course-row-${course.id}`}
                 >
                   <TableCell>
-                    <Badge variant="outline" className="border-white/20 text-white/70">
+                    <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
                       {course.day_of_week}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-white flex items-center gap-1">
-                    <Clock size={12} className="text-white/40" />
+                    <Clock size={12} className="text-[var(--color-text-secondary)]" />
                     {course.time_slot}
                   </TableCell>
                   <TableCell className="text-white font-medium">{course.course_name}</TableCell>
                   <TableCell className="text-white/70 flex items-center gap-1">
-                    <User size={12} className="text-white/40" />
+                    <User size={12} className="text-[var(--color-text-secondary)]" />
                     {course.instructor || "-"}
                   </TableCell>
                   <TableCell>
-                    <Badge className="bg-blue-500/20 text-blue-400 border-0">
+                    <Badge className="bg-blue-500/20 text-[var(--color-accent)] border-0">
                       <Users size={10} className="mr-1" />
                       {course.max_capacity}
                     </Badge>
@@ -432,7 +432,7 @@ export default function CoursesPage() {
                         max={course.max_capacity}
                         value={course[`week${week}_attendance`] || 0}
                         onChange={(e) => handleAttendanceChange(course, week, e.target.value)}
-                        className="w-12 h-8 text-center bg-[#121214] border-white/10 text-white p-1"
+                        className="w-12 h-8 text-center bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white p-1"
                         data-testid={`attendance-w${week}-${course.id}`}
                       />
                     </TableCell>
@@ -451,7 +451,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => openReplaceModal(course)}
-                        className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                        className="text-[var(--color-warning)] hover:text-orange-300 hover:bg-orange-500/10"
                         title="Remplacer le coach"
                       >
                         <UserCog size={14} />
@@ -460,7 +460,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => openEditModal(course)}
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                        className="text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
                       >
                         <Edit size={14} />
                       </Button>
@@ -468,7 +468,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => deleteMutation.mutate(course.id)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        className="text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -487,12 +487,12 @@ export default function CoursesPage() {
           {DAYS_FR.map((day) => (
             <div
               key={day}
-              className="bg-[#121214] rounded-sm p-4 border border-white/10 cursor-pointer hover:border-blue-500/50 transition-colors"
+              className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-blue-500/50 transition-colors"
               onClick={() => setSelectedDay(day)}
             >
-              <p className="text-white/40 text-xs uppercase tracking-wider">{day}</p>
+              <p className="text-[var(--color-text-secondary)] tf-label inline">{day}</p>
               <p className="text-xl font-bold text-white">{coursesByDay[day]?.length || 0}</p>
-              <p className="text-white/40 text-xs">cours</p>
+              <p className="text-[var(--color-text-secondary)] text-xs">cours</p>
             </div>
           ))}
         </div>
@@ -500,29 +500,29 @@ export default function CoursesPage() {
 
       {/* Add Course Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <DialogHeader>
             <DialogTitle>Ajouter un cours</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Nom du cours *</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom du cours *</label>
               <Input
                 value={formData.course_name}
                 onChange={(e) => setFormData({ ...formData, course_name: e.target.value })}
                 placeholder="Ex: CrossFit Morning"
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 data-testid="course-name-input"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Jour</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Jour</label>
                 <Select value={formData.day_of_week} onValueChange={(v) => setFormData({ ...formData, day_of_week: v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {DAYS_FR.map((d) => (
                       <SelectItem key={d} value={d} className="text-white">{d}</SelectItem>
                     ))}
@@ -530,12 +530,12 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Horaire</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Horaire</label>
                 <Select value={formData.time_slot} onValueChange={(v) => setFormData({ ...formData, time_slot: v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {TIME_SLOTS.map((t) => (
                       <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>
                     ))}
@@ -545,7 +545,7 @@ export default function CoursesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Coach *</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Coach *</label>
                 <Select 
                   value={formData.coach_id} 
                   onValueChange={(v) => {
@@ -557,10 +557,10 @@ export default function CoursesPage() {
                     });
                   }}
                 >
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue placeholder="Sélectionner un coach..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {coaches.map((c) => (
                       <SelectItem key={c.id} value={c.id} className="text-white">
                         {c.name} ({c.hourly_rate} CHF/h)
@@ -573,14 +573,14 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Capacité max</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Capacité max</label>
                 <Input
                   type="number"
                   min="1"
                   max="50"
                   value={formData.max_capacity}
                   onChange={(e) => setFormData({ ...formData, max_capacity: parseInt(e.target.value) || 12 })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
             </div>
@@ -601,30 +601,30 @@ export default function CoursesPage() {
 
       {/* Edit Course Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-2xl">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle>Modifier le cours</DialogTitle>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-sm p-4">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                 <div className="flex items-center gap-4">
-                  <Badge className="bg-blue-500/20 text-blue-400 border-0">{selectedCourse.day_of_week}</Badge>
+                  <Badge className="bg-blue-500/20 text-[var(--color-accent)] border-0">{selectedCourse.day_of_week}</Badge>
                   <span className="text-white">{selectedCourse.time_slot}</span>
                   <span className="text-white font-medium">{selectedCourse.course_name}</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-white/40 text-xs uppercase tracking-wider">Instructeur</label>
+                  <label className="text-[var(--color-text-secondary)] tf-label inline">Instructeur</label>
                   <Select
                     value={selectedCourse.instructor || ""}
                     onValueChange={(v) => updateMutation.mutate({ id: selectedCourse.id, data: { instructor: v } })}
                   >
-                    <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                    <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                       <SelectValue placeholder="Sélectionner..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#121214] border-white/10">
+                    <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                       {instructors.map((i) => (
                         <SelectItem key={i.id} value={i.name} className="text-white">{i.name}</SelectItem>
                       ))}
@@ -632,40 +632,40 @@ export default function CoursesPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs uppercase tracking-wider">Capacité max</label>
+                  <label className="text-[var(--color-text-secondary)] tf-label inline">Capacité max</label>
                   <Input
                     type="number"
                     min="1"
                     max="50"
                     defaultValue={selectedCourse.max_capacity}
                     onBlur={(e) => updateMutation.mutate({ id: selectedCourse.id, data: { max_capacity: parseInt(e.target.value) || 12 } })}
-                    className="bg-[#121214] border-white/10 text-white mt-1"
+                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Dépenses mensuelles (CHF)</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Dépenses mensuelles (CHF)</label>
                 <Input
                   type="number"
                   min="0"
                   defaultValue={selectedCourse.monthly_expenses || 0}
                   onBlur={(e) => updateMutation.mutate({ id: selectedCourse.id, data: { monthly_expenses: parseFloat(e.target.value) || 0 } })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase mb-2 block">Fréquentation par semaine</label>
+                <label className="text-[var(--color-text-secondary)] text-xs uppercase mb-2 block">Fréquentation par semaine</label>
                 <div className="grid grid-cols-5 gap-3">
                   {[1, 2, 3, 4, 5].map((week) => (
                     <div key={week} className="text-center">
-                      <p className="text-white/40 text-xs mb-1">Semaine {week}</p>
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-1">Semaine {week}</p>
                       <Input
                         type="number"
                         min="0"
                         max={selectedCourse.max_capacity}
                         defaultValue={selectedCourse[`week${week}_attendance`] || 0}
                         onBlur={(e) => handleAttendanceChange(selectedCourse, week, e.target.value)}
-                        className="bg-[#121214] border-white/10 text-white text-center"
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white text-center"
                       />
                     </div>
                   ))}
@@ -681,34 +681,34 @@ export default function CoursesPage() {
 
       {/* Replace Coach Modal */}
       <Dialog open={replaceModalOpen} onOpenChange={setReplaceModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserCog className="text-orange-400" size={20} />
+              <UserCog className="text-[var(--color-warning)]" size={20} />
               Remplacer le coach
             </DialogTitle>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-sm p-3">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                 <p className="text-white font-medium">{selectedCourse.course_name}</p>
-                <p className="text-white/50 text-sm">
+                <p className="text-[var(--color-text-secondary)] text-sm">
                   {selectedCourse.day_of_week} à {selectedCourse.time_slot}
                 </p>
-                <p className="text-white/40 text-sm mt-1">
+                <p className="text-[var(--color-text-secondary)] text-sm mt-1">
                   Coach actuel : {selectedCourse.instructor || selectedCourse.instructor_name || getCoachName(selectedCourse.coach_id) || "-"}
                 </p>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Coach de remplacement *</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Coach de remplacement *</label>
                 <Select 
                   value={replaceData.replacement_coach_id} 
                   onValueChange={(v) => setReplaceData({ ...replaceData, replacement_coach_id: v })}
                 >
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {coaches.filter(c => c.id !== selectedCourse.coach_id).map((c) => (
                       <SelectItem key={c.id} value={c.id} className="text-white">
                         {c.name} ({c.hourly_rate} CHF/h)
@@ -718,24 +718,24 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Date du remplacement *</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Date du remplacement *</label>
                 <Input
                   type="date"
                   value={replaceData.date}
                   onChange={(e) => setReplaceData({ ...replaceData, date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Raison</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Raison</label>
                 <Select 
                   value={replaceData.reason} 
                   onValueChange={(v) => setReplaceData({ ...replaceData, reason: v })}
                 >
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     <SelectItem value="maladie" className="text-white">Maladie</SelectItem>
                     <SelectItem value="absence" className="text-white">Absence</SelectItem>
                     <SelectItem value="conge" className="text-white">Congé</SelectItem>

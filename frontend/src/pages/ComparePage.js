@@ -37,8 +37,8 @@ const CHART_COLORS = {
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="bg-[#0D0D0F] border border-white/10 p-3 rounded-sm text-xs font-mono shadow-xl">
-      <p className="text-white/50 mb-2 uppercase tracking-wider">{label}</p>
+    <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)] text-xs font-mono shadow-xl">
+      <p className="text-[var(--color-text-secondary)] mb-2 uppercase tracking-wider">{label}</p>
       {payload.map((item, i) => (
         <div key={i} className="flex justify-between gap-6" style={{ color: item.color }}>
           <span className="text-white/70">{item.name}</span>
@@ -51,21 +51,21 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 const MetricCard = ({ label, value, trend, icon: Icon, variant = "default" }) => {
   const variants = {
-    default: "border-white/10",
+    default: "border-[var(--color-border)]",
     success: "border-green-500/30 bg-green-500/5",
     warning: "border-yellow-500/30 bg-yellow-500/5",
     danger: "border-red-500/30 bg-red-500/5",
   };
   
   return (
-    <div className={`bg-[#121214] border ${variants[variant]} rounded-sm p-4`}>
+    <div className={`bg-[var(--color-bg-secondary)] border ${variants[variant]} rounded-[var(--radius-lg)] p-4`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-white/40 uppercase tracking-wider">{label}</span>
-        {Icon && <Icon size={14} className="text-white/20" />}
+        <span className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</span>
+        {Icon && <Icon size={14} className="text-[var(--color-text-tertiary)]" />}
       </div>
-      <p className="text-xl font-heading font-extrabold text-white">{value}</p>
+      <p className="text-xl font-display font-extrabold text-white">{value}</p>
       {trend !== undefined && (
-        <div className={`flex items-center gap-1 mt-1 text-xs ${trend >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+        <div className={`flex items-center gap-1 mt-1 text-xs ${trend >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
           {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
           <span>{trend >= 0 ? '+' : ''}{trend.toFixed(1)}%</span>
         </div>
@@ -178,7 +178,7 @@ export default function ComparePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-white/40">{t("loading")}</div>
+        <div className="animate-pulse text-[var(--color-text-secondary)]">{t("loading")}</div>
       </div>
     );
   }
@@ -188,10 +188,10 @@ export default function ComparePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="font-display text-3xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "Analyse Multi-Mois" : "Multi-Month Analysis"}
           </h1>
-          <p className="text-white/40 text-sm mt-1">
+          <p className="text-[var(--color-text-secondary)] text-sm mt-1">
             {summary ? `${summary.months} ${lang === "fr" ? "mois sélectionnés" : "months selected"}` : ""}
           </p>
         </div>
@@ -199,7 +199,7 @@ export default function ComparePage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5"
+            className="border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)]"
           >
             <ArrowLeft size={14} className="mr-1.5" />
             {lang === "fr" ? "Retour" : "Back"}
@@ -208,19 +208,19 @@ export default function ComparePage() {
       </div>
 
       {/* Date Range Selector */}
-      <div className="bg-[#121214] border border-white/10 rounded-sm p-4">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <Calendar size={14} className="text-white/40" />
-            <span className="text-xs text-white/40 uppercase">{lang === "fr" ? "Période" : "Period"}</span>
+            <Calendar size={14} className="text-[var(--color-text-secondary)]" />
+            <span className="text-xs text-[var(--color-text-secondary)] uppercase">{lang === "fr" ? "Période" : "Period"}</span>
           </div>
           
           <div className="flex items-center gap-2">
             <Select value={startMonth} onValueChange={setStartMonth}>
-              <SelectTrigger className="w-40 bg-[#121214] border-white/10 text-white text-sm h-9">
+              <SelectTrigger className="w-40 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white text-sm h-9">
                 <SelectValue placeholder={lang === "fr" ? "Début" : "Start"} />
               </SelectTrigger>
-              <SelectContent className="bg-[#121214] border-white/10">
+              <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                 {availableMonths.map(m => (
                   <SelectItem key={m.value} value={m.value} className="text-white focus:bg-white/10">
                     {m.label}
@@ -229,13 +229,13 @@ export default function ComparePage() {
               </SelectContent>
             </Select>
             
-            <span className="text-white/30">→</span>
+            <span className="text-[var(--color-text-tertiary)]">→</span>
             
             <Select value={endMonth} onValueChange={setEndMonth}>
-              <SelectTrigger className="w-40 bg-[#121214] border-white/10 text-white text-sm h-9">
+              <SelectTrigger className="w-40 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white text-sm h-9">
                 <SelectValue placeholder={lang === "fr" ? "Fin" : "End"} />
               </SelectTrigger>
-              <SelectContent className="bg-[#121214] border-white/10">
+              <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                 {availableMonths.map(m => (
                   <SelectItem key={m.value} value={m.value} className="text-white focus:bg-white/10">
                     {m.label}
@@ -247,14 +247,14 @@ export default function ComparePage() {
           
           {/* Quick presets */}
           <div className="flex items-center gap-1 ml-auto">
-            <span className="text-xs text-white/30 mr-2">{lang === "fr" ? "Raccourcis:" : "Quick:"}</span>
+            <span className="text-xs text-[var(--color-text-tertiary)] mr-2">{lang === "fr" ? "Raccourcis:" : "Quick:"}</span>
             {[3, 6, 12].map(m => (
               <Button
                 key={m}
                 variant="ghost"
                 size="sm"
                 onClick={() => setQuickRange(m)}
-                className="text-white/40 hover:text-white hover:bg-white/5 text-xs px-2 h-7"
+                className="text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs px-2 h-7"
               >
                 {m}M
               </Button>
@@ -263,7 +263,7 @@ export default function ComparePage() {
               variant="ghost"
               size="sm"
               onClick={() => { setStartMonth(kpis[0]?.month || ""); setEndMonth(kpis[kpis.length-1]?.month || ""); }}
-              className="text-white/40 hover:text-white hover:bg-white/5 text-xs px-2 h-7"
+              className="text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs px-2 h-7"
             >
               {lang === "fr" ? "Tout" : "All"}
             </Button>
@@ -315,22 +315,22 @@ export default function ComparePage() {
       {/* Best/Worst Months */}
       {summary && (
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#121214] border border-green-500/20 rounded-sm p-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-green-500/20 rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp size={14} className="text-green-400" />
-              <span className="text-xs text-white/40 uppercase">{lang === "fr" ? "Meilleur Mois" : "Best Month"}</span>
+              <TrendingUp size={14} className="text-[var(--color-success)]" />
+              <span className="text-xs text-[var(--color-text-secondary)] uppercase">{lang === "fr" ? "Meilleur Mois" : "Best Month"}</span>
             </div>
-            <p className="text-lg font-heading font-extrabold text-green-400">
+            <p className="text-lg font-display font-extrabold text-[var(--color-success)]">
               {formatMonthLabel(summary.best.month, lang)}
             </p>
             <p className="text-sm text-white/60">{formatCHF(summary.best.total_revenue)}</p>
           </div>
-          <div className="bg-[#121214] border border-red-500/20 rounded-sm p-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-red-500/20 rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingDown size={14} className="text-red-400" />
-              <span className="text-xs text-white/40 uppercase">{lang === "fr" ? "Mois le Plus Faible" : "Weakest Month"}</span>
+              <TrendingDown size={14} className="text-[var(--color-danger)]" />
+              <span className="text-xs text-[var(--color-text-secondary)] uppercase">{lang === "fr" ? "Mois le Plus Faible" : "Weakest Month"}</span>
             </div>
-            <p className="text-lg font-heading font-extrabold text-red-400">
+            <p className="text-lg font-display font-extrabold text-[var(--color-danger)]">
               {formatMonthLabel(summary.worst.month, lang)}
             </p>
             <p className="text-sm text-white/60">{formatCHF(summary.worst.total_revenue)}</p>
@@ -340,25 +340,25 @@ export default function ComparePage() {
 
       {/* Charts */}
       <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList className="bg-[#121214] border border-white/10 p-1">
-          <TabsTrigger value="revenue" className="text-xs uppercase data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+        <TabsList className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-1">
+          <TabsTrigger value="revenue" className="text-xs uppercase data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-white">
             {lang === "fr" ? "Revenus" : "Revenue"}
           </TabsTrigger>
-          <TabsTrigger value="members" className="text-xs uppercase data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+          <TabsTrigger value="members" className="text-xs uppercase data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-white">
             {lang === "fr" ? "Membres" : "Members"}
           </TabsTrigger>
-          <TabsTrigger value="expenses" className="text-xs uppercase data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+          <TabsTrigger value="expenses" className="text-xs uppercase data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-white">
             {lang === "fr" ? "Dépenses" : "Expenses"}
           </TabsTrigger>
-          <TabsTrigger value="metrics" className="text-xs uppercase data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+          <TabsTrigger value="metrics" className="text-xs uppercase data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-white">
             KPIs
           </TabsTrigger>
         </TabsList>
 
         {/* Revenue Tab */}
         <TabsContent value="revenue">
-          <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
-            <p className="text-xs font-body text-white/50 uppercase tracking-wider mb-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+            <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
               {lang === "fr" ? "Évolution Revenus / Profit / Dépenses" : "Revenue / Profit / Expenses Evolution"}
             </p>
             <ResponsiveContainer width="100%" height={350}>
@@ -378,8 +378,8 @@ export default function ComparePage() {
 
         {/* Members Tab */}
         <TabsContent value="members">
-          <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
-            <p className="text-xs font-body text-white/50 uppercase tracking-wider mb-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+            <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
               {lang === "fr" ? "Évolution des Membres" : "Members Evolution"}
             </p>
             <ResponsiveContainer width="100%" height={350}>
@@ -399,8 +399,8 @@ export default function ComparePage() {
 
         {/* Expenses Tab */}
         <TabsContent value="expenses">
-          <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
-            <p className="text-xs font-body text-white/50 uppercase tracking-wider mb-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+            <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
               {lang === "fr" ? "Répartition des Dépenses" : "Expenses Breakdown"}
             </p>
             <ResponsiveContainer width="100%" height={350}>
@@ -421,8 +421,8 @@ export default function ComparePage() {
         {/* KPIs Tab */}
         <TabsContent value="metrics">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
-              <p className="text-xs font-body text-white/50 uppercase tracking-wider mb-4">
+            <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+              <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
                 {lang === "fr" ? "Taux de Churn" : "Churn Rate"}
               </p>
               <ResponsiveContainer width="100%" height={200}>
@@ -435,8 +435,8 @@ export default function ComparePage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
-              <p className="text-xs font-body text-white/50 uppercase tracking-wider mb-4">
+            <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+              <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
                 CAC & ROAS
               </p>
               <ResponsiveContainer width="100%" height={200}>
@@ -457,23 +457,23 @@ export default function ComparePage() {
       </Tabs>
 
       {/* Monthly Data Table */}
-      <div className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden">
-        <div className="px-5 py-3 border-b border-white/10">
-          <p className="text-xs font-body text-white/50 uppercase tracking-wider">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="px-5 py-3 border-b border-[var(--color-border)]">
+          <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
             {lang === "fr" ? "Données Mensuelles Détaillées" : "Detailed Monthly Data"}
           </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left text-white/40 uppercase tracking-wider p-3">Mois</th>
-                <th className="text-right text-white/40 uppercase tracking-wider p-3">{lang === "fr" ? "Revenus" : "Revenue"}</th>
-                <th className="text-right text-white/40 uppercase tracking-wider p-3">{lang === "fr" ? "Dépenses" : "Expenses"}</th>
-                <th className="text-right text-white/40 uppercase tracking-wider p-3">{lang === "fr" ? "Profit" : "Profit"}</th>
-                <th className="text-right text-white/40 uppercase tracking-wider p-3">{lang === "fr" ? "Membres" : "Members"}</th>
-                <th className="text-right text-white/40 uppercase tracking-wider p-3">Churn</th>
-                <th className="text-right text-white/40 uppercase tracking-wider p-3">ROAS</th>
+              <tr className="border-b border-[var(--color-border)]">
+                <th className="text-left text-[var(--color-text-secondary)] uppercase tracking-wider p-3">Mois</th>
+                <th className="text-right text-[var(--color-text-secondary)] uppercase tracking-wider p-3">{lang === "fr" ? "Revenus" : "Revenue"}</th>
+                <th className="text-right text-[var(--color-text-secondary)] uppercase tracking-wider p-3">{lang === "fr" ? "Dépenses" : "Expenses"}</th>
+                <th className="text-right text-[var(--color-text-secondary)] uppercase tracking-wider p-3">{lang === "fr" ? "Profit" : "Profit"}</th>
+                <th className="text-right text-[var(--color-text-secondary)] uppercase tracking-wider p-3">{lang === "fr" ? "Membres" : "Members"}</th>
+                <th className="text-right text-[var(--color-text-secondary)] uppercase tracking-wider p-3">Churn</th>
+                <th className="text-right text-[var(--color-text-secondary)] uppercase tracking-wider p-3">ROAS</th>
               </tr>
             </thead>
             <tbody>
@@ -482,7 +482,7 @@ export default function ComparePage() {
                   <td className="p-3 text-white font-medium">{row.label}</td>
                   <td className="p-3 text-right text-white/80 font-mono">{formatCHF(row.revenue)}</td>
                   <td className="p-3 text-right text-white/60 font-mono">{formatCHF(row.expenses)}</td>
-                  <td className={`p-3 text-right font-mono font-bold ${row.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <td className={`p-3 text-right font-mono font-bold ${row.profit >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
                     {formatCHF(row.profit)}
                   </td>
                   <td className="p-3 text-right text-white/60 font-mono">{row.members}</td>
@@ -497,7 +497,7 @@ export default function ComparePage() {
                   <td className="p-3 text-white uppercase">Total / Moy.</td>
                   <td className="p-3 text-right text-white font-mono">{formatCHF(summary.total.revenue)}</td>
                   <td className="p-3 text-right text-white/80 font-mono">{formatCHF(summary.total.expenses)}</td>
-                  <td className={`p-3 text-right font-mono ${summary.total.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <td className={`p-3 text-right font-mono ${summary.total.profit >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
                     {formatCHF(summary.total.profit)}
                   </td>
                   <td className="p-3 text-right text-white/60 font-mono">-</td>

@@ -178,7 +178,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-rose-500" size={28} />
+        <Loader2 className="animate-spin text-[var(--color-accent)]" size={28} />
       </div>
     );
   }
@@ -187,13 +187,13 @@ export default function SettingsPage() {
     <div className="space-y-8 max-w-2xl" data-testid="settings-page">
       <Toaster />
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+        <h1 className="tf-page-header">
           {t("settings")}
         </h1>
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider text-xs"
+          className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider text-xs"
           data-testid="save-settings-btn"
         >
           {saving ? <Loader2 size={12} className="animate-spin mr-1.5" /> : <Save size={12} className="mr-1.5" />}
@@ -202,26 +202,26 @@ export default function SettingsPage() {
       </div>
 
       {/* Club Info */}
-      <div className="bg-[#121214] border border-white/10 rounded-sm p-6 space-y-4">
-        <p className="text-xs font-body text-white/40 uppercase tracking-wider mb-4">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-6 space-y-4">
+        <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
           {lang === "fr" ? "Informations du club" : "Club information"}
         </p>
         <div className="space-y-1.5">
-          <Label className="text-white/60 text-xs uppercase tracking-wider">
+          <Label className="text-white/60 tf-label inline">
             {lang === "fr" ? "Nom du club" : "Club name"}
           </Label>
           <Input
             value={settings.club_name}
             onChange={(e) => setSettings({ ...settings, club_name: e.target.value })}
-            className="bg-[#121214] border-white/10 text-white max-w-sm"
+            className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-sm"
             data-testid="club-name-input"
           />
         </div>
       </div>
 
       {/* KPI Targets */}
-      <div className="bg-[#121214] border border-white/10 rounded-sm p-6 space-y-5">
-        <p className="text-xs font-body text-white/40 uppercase tracking-wider">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-6 space-y-5">
+        <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
           {lang === "fr" ? "Objectifs KPI" : "KPI Targets"}
         </p>
 
@@ -239,18 +239,18 @@ export default function SettingsPage() {
                     {lang === "fr" ? field.labelFr : field.labelEn}
                   </Label>
                 </div>
-                <p className="text-xs text-white/30 ml-4">{field.description}</p>
+                <p className="text-xs text-[var(--color-text-tertiary)] ml-4">{field.description}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Input
                   type="number"
                   value={settings.targets[field.key] ?? 0}
                   onChange={(e) => updateTarget(field.key, e.target.value)}
-                  className="bg-[#121214] border-white/10 text-white font-mono w-28 text-right"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white font-mono w-28 text-right"
                   step={field.type === "percent" || field.type === "multiplier" ? 0.1 : 1}
                   data-testid={`target-${field.key}`}
                 />
-                <span className="text-white/30 text-xs font-mono w-8">
+                <span className="text-[var(--color-text-tertiary)] text-xs font-mono w-8">
                   {field.type === "percent" ? "%" : field.type === "multiplier" ? "x" : field.type === "currency" ? "CHF" : ""}
                 </span>
               </div>
@@ -260,8 +260,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Recalculate */}
-      <div className="bg-[#121214] border border-white/10 rounded-sm p-6">
-        <p className="text-xs font-body text-white/40 uppercase tracking-wider mb-3">
+      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-6">
+        <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
           {lang === "fr" ? "Outils de maintenance" : "Maintenance tools"}
         </p>
         <div className="flex items-center justify-between">
@@ -269,7 +269,7 @@ export default function SettingsPage() {
             <p className="text-sm text-white font-medium">
               {lang === "fr" ? "Recalculer les KPIs" : "Recalculate KPIs"}
             </p>
-            <p className="text-xs text-white/30 mt-0.5">
+            <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
               {lang === "fr"
                 ? "Recalcule les revenus/dépenses de chaque mois depuis les transactions"
                 : "Recomputes revenues/expenses for each month from actual transactions"}
@@ -279,7 +279,7 @@ export default function SettingsPage() {
             variant="outline"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-xs flex-shrink-0"
+            className="border-[var(--color-border)] text-white/60 hover:text-white hover:bg-[var(--color-bg-tertiary)] text-xs flex-shrink-0"
             data-testid="recalculate-all-btn"
           >
             {recalculating ? (
@@ -293,8 +293,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Reset Data */}
-      <div className="bg-[#121214] border border-red-500/20 rounded-sm p-6">
-        <p className="text-xs font-body text-red-400/60 uppercase tracking-wider mb-3">
+      <div className="bg-[var(--color-bg-secondary)] border border-red-500/20 rounded-[var(--radius-lg)] p-6">
+        <p className="text-xs font-text text-[var(--color-danger)]/60 uppercase tracking-wider mb-3">
           {lang === "fr" ? "Zone dangereuse" : "Danger zone"}
         </p>
         <div className="flex items-center justify-between">
@@ -302,7 +302,7 @@ export default function SettingsPage() {
             <p className="text-sm text-white font-medium">
               {lang === "fr" ? "Réinitialiser les données" : "Reset data"}
             </p>
-            <p className="text-xs text-white/30 mt-0.5">
+            <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
               {lang === "fr"
                 ? "Supprime toutes les données transactionnelles (membres, paiements, KPIs, challenges, cours) tout en conservant votre compte et votre configuration"
                 : "Deletes all transactional data (members, payments, KPIs, challenges, courses) while keeping your account and configuration"}
@@ -311,7 +311,7 @@ export default function SettingsPage() {
           <Button
             variant="outline"
             onClick={() => setResetModalOpen(true)}
-            className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs flex-shrink-0"
+            className="border-red-500/30 text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10 text-xs flex-shrink-0"
             data-testid="reset-data-btn"
           >
             <Trash2 size={12} className="mr-1.5" />
@@ -322,20 +322,20 @@ export default function SettingsPage() {
 
       {/* Reset Confirmation Modal */}
       <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-400">
+            <DialogTitle className="flex items-center gap-2 text-[var(--color-danger)]">
               <AlertTriangle size={20} />
               {lang === "fr" ? "Réinitialisation des données" : "Data reset"}
             </DialogTitle>
-            <DialogDescription className="text-white/50">
+            <DialogDescription className="text-[var(--color-text-secondary)]">
               {lang === "fr"
                 ? "Cette action est irréversible. Toutes les données suivantes seront supprimées :"
                 : "This action is irreversible. All following data will be deleted:"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-red-500/10 border border-red-500/20 rounded-sm p-3">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-[var(--radius-lg)] p-3">
               <ul className="text-red-300 text-sm space-y-1">
                 <li>- Membres et historique de renouvellements</li>
                 <li>- Paiements et plannings de paiement</li>
@@ -347,8 +347,8 @@ export default function SettingsPage() {
                 <li>- Coachs</li>
               </ul>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-sm p-3">
-              <p className="text-emerald-400 text-sm font-medium mb-1">Données conservées :</p>
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[var(--radius-lg)] p-3">
+              <p className="text-[var(--color-success)] text-sm font-medium mb-1">Données conservées :</p>
               <ul className="text-emerald-300 text-sm space-y-1">
                 <li>- Votre compte utilisateur</li>
                 <li>- Paramètres du club et objectifs KPI</li>
@@ -358,14 +358,14 @@ export default function SettingsPage() {
               </ul>
             </div>
             <div>
-              <label className="text-white/50 text-xs">
-                Tapez <span className="text-red-400 font-mono font-bold">RESET</span> pour confirmer
+              <label className="text-[var(--color-text-secondary)] text-xs">
+                Tapez <span className="text-[var(--color-danger)] font-mono font-bold">RESET</span> pour confirmer
               </label>
               <Input
                 value={resetConfirm}
                 onChange={(e) => setResetConfirm(e.target.value)}
                 placeholder="RESET"
-                className="bg-[#121214] border-white/10 text-white mt-1 font-mono"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 font-mono"
                 data-testid="reset-confirm-input"
               />
             </div>

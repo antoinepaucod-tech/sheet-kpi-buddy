@@ -99,23 +99,24 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const sections = NAV_SECTIONS(lang);
 
   return (
-    <div className="flex min-h-screen bg-[#09090B]">
+    <div className="flex min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
       {/* Sidebar */}
       <aside
         className={cn(
-          "flex flex-col bg-[#121214] border-r border-white/10 transition-all duration-300 flex-shrink-0",
+          "tf-sidebar flex flex-col transition-all duration-300 flex-shrink-0",
           collapsed ? "w-16" : "w-60"
         )}
       >
-        <div className="flex items-center justify-between p-4 h-16 border-b border-white/10">
+        <div className="flex items-center justify-between p-4 h-16" style={{ borderBottom: '1px solid var(--color-border)' }}>
           {!collapsed && (
-            <span className="font-heading text-lg font-extrabold tracking-tight text-white uppercase">
+            <span className="font-display" style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
               Transform
             </span>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-white/40 hover:text-white transition-colors ml-auto"
+            className="ml-auto"
+            style={{ color: 'var(--color-text-tertiary)', transition: 'var(--transition-fast)' }}
             data-testid="sidebar-toggle"
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -126,54 +127,52 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
           {sections.map((section) => (
             <div key={section.label} className="mb-1">
               {!collapsed && (
-                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-white/25">
+                <p className="tf-label px-4 pt-3 pb-1">
                   {section.label}
                 </p>
               )}
-              {collapsed && <div className="my-1 mx-3 border-t border-white/5" />}
+              {collapsed && <div className="my-1 mx-3" style={{ borderTop: '1px solid var(--color-border)' }} />}
               <div className="space-y-0.5 px-2">
-                {section.items.map(({ path, icon: Icon, label }) => (
-                  <Link
-                    key={path}
-                    to={path}
-                    data-testid={`nav-${path === "/" ? "dashboard" : path.replace(/\//g, "").replace("settings-types", "settings/types")}`}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-sm transition-colors",
-                      location.pathname === path
-                        ? "bg-rose-600/20 text-rose-500 border-l-2 border-rose-600"
-                        : "text-white/50 hover:text-white hover:bg-white/5"
-                    )}
-                  >
-                    <Icon size={16} strokeWidth={1.5} />
-                    {!collapsed && (
-                      <span className="text-[13px] font-medium">{label}</span>
-                    )}
-                  </Link>
-                ))}
+                {section.items.map(({ path, icon: Icon, label }) => {
+                  const isActive = location.pathname === path;
+                  return (
+                    <Link
+                      key={path}
+                      to={path}
+                      data-testid={`nav-${path === "/" ? "dashboard" : path.replace(/\//g, "").replace("settings-types", "settings/types")}`}
+                      className={cn("tf-sidebar-item flex items-center gap-3", isActive && "active")}
+                    >
+                      <Icon size={16} strokeWidth={1.5} />
+                      {!collapsed && (
+                        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>{label}</span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
         </nav>
 
         {/* User section */}
-        <div className="p-3 border-t border-white/10">
+        <div className="p-3" style={{ borderTop: '1px solid var(--color-border)' }}>
           {!collapsed && user && (
             <div className="mb-3 px-2">
-              <p className="text-xs text-white/40 truncate">{user.email}</p>
-              <p className="text-sm text-white font-medium truncate">{user.club_name}</p>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }} className="truncate">{user.email}</p>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-medium)' }} className="truncate">{user.club_name}</p>
             </div>
           )}
           <button
             onClick={logout}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-sm transition-colors w-full",
-              "text-white/40 hover:text-red-400 hover:bg-red-500/10"
-            )}
+            className="flex items-center gap-3 px-3 py-2 w-full tf-sidebar-item"
+            style={{ color: 'var(--color-text-tertiary)' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-danger)'; e.currentTarget.style.background = 'rgba(255,69,58,0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-tertiary)'; e.currentTarget.style.background = 'transparent'; }}
             data-testid="logout-btn"
           >
             <LogOut size={16} />
             {!collapsed && (
-              <span className="text-sm">{lang === "fr" ? "Déconnexion" : "Logout"}</span>
+              <span style={{ fontSize: 'var(--text-sm)' }}>{lang === "fr" ? "Deconnexion" : "Logout"}</span>
             )}
           </button>
         </div>
@@ -182,23 +181,23 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#09090B]/80 backdrop-blur-sm sticky top-0 z-10">
+        <header className="h-16 flex items-center justify-between px-6 sticky top-0 z-10" style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           <div className="flex items-center gap-4">
             {user && (
-              <div className="flex items-center gap-2 text-white/60">
+              <div className="flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
                 <User size={14} />
-                <span className="text-sm font-medium">{user.club_name}</span>
+                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>{user.club_name}</span>
               </div>
             )}
             {availableMonths && availableMonths.length > 0 && (
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger
-                  className="w-48 bg-[#121214] border-white/10 text-white text-sm h-9 focus:ring-rose-500"
+                  className="w-48 h-9 tf-input"
                   data-testid="month-selector"
                 >
                   <SelectValue placeholder={t("selectMonth")} />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10">
+                <SelectContent style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
                   {availableMonths.map((m) => (
                     <SelectItem
                       key={m.value}
@@ -214,18 +213,22 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
           </div>
 
           <div className="flex items-center gap-2">
-            <Globe size={15} className="text-white/30" />
+            <Globe size={15} style={{ color: 'var(--color-text-tertiary)' }} />
             {["fr", "en"].map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
                 data-testid={`lang-btn-${l}`}
-                className={cn(
-                  "text-xs font-bold uppercase px-2.5 py-1 rounded-sm transition-colors",
-                  lang === l
-                    ? "text-rose-500 bg-rose-600/10"
-                    : "text-white/40 hover:text-white"
-                )}
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  fontWeight: 'var(--font-bold)',
+                  textTransform: 'uppercase',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  transition: 'var(--transition-fast)',
+                  color: lang === l ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
+                  background: lang === l ? 'var(--color-accent-subtle)' : 'transparent',
+                }}
               >
                 {l}
               </button>

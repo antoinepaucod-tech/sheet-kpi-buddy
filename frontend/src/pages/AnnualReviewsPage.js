@@ -67,9 +67,9 @@ const REVIEW_TYPES = [
 
 const TYPE_COLORS = {
   monthly: "bg-cyan-500/20 text-cyan-400",
-  quarterly: "bg-blue-500/20 text-blue-400",
+  quarterly: "bg-blue-500/20 text-[var(--color-accent)]",
   "semi-annually": "bg-violet-500/20 text-violet-400",
-  annually: "bg-purple-500/20 text-purple-400",
+  annually: "bg-purple-500/20 text-[var(--color-info)]",
 };
 
 const TYPE_LABELS = {
@@ -255,7 +255,7 @@ export default function AnnualReviewsPage() {
 
     if (review.status === "completed") {
       return (
-        <Badge className="bg-emerald-500/20 text-emerald-400 border-0">
+        <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">
           <CheckCircle2 size={12} className="mr-1" />
           Complété
         </Badge>
@@ -273,7 +273,7 @@ export default function AnnualReviewsPage() {
 
     if (days <= 7) {
       return (
-        <Badge className="bg-orange-500/20 text-orange-400 border-0">
+        <Badge className="bg-orange-500/20 text-[var(--color-warning)] border-0">
           <Clock size={12} className="mr-1" />
           Dans {days}j
         </Badge>
@@ -282,7 +282,7 @@ export default function AnnualReviewsPage() {
 
     if (days <= 30) {
       return (
-        <Badge className="bg-blue-500/20 text-blue-400 border-0">
+        <Badge className="bg-blue-500/20 text-[var(--color-accent)] border-0">
           <Calendar size={12} className="mr-1" />
           Dans {days}j
         </Badge>
@@ -301,10 +301,10 @@ export default function AnnualReviewsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "Bilans / Suivis" : "Reviews"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {lang === "fr"
               ? "Suivi poids, nutrition et programme - mensuel, trimestriel, semestriel, annuel"
               : "Weight, nutrition and training tracking - monthly, quarterly, semi-annual, annual"}
@@ -315,88 +315,88 @@ export default function AnnualReviewsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${
-            filterPeriod === "upcoming" ? "border-purple-500" : "border-white/10 hover:border-purple-500/50"
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
+            filterPeriod === "upcoming" ? "border-purple-500" : "border-[var(--color-border)] hover:border-purple-500/50"
           }`}
           onClick={() => setFilterPeriod("upcoming")}
           data-testid="filter-upcoming"
         >
-          <p className="text-purple-400 text-xs uppercase flex items-center gap-1">
+          <p className="text-[var(--color-info)] text-xs uppercase flex items-center gap-1">
             <Clock size={12} />
             À venir (60j)
           </p>
-          <p className="text-2xl font-mono font-bold text-purple-400">{stats.next30Days}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-info)]">{stats.next30Days}</p>
         </div>
         <div
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${
-            filterPeriod === "all" && filterStatus === "all" ? "border-white/30" : "border-white/10 hover:border-white/30"
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
+            filterPeriod === "all" && filterStatus === "all" ? "border-white/30" : "border-[var(--color-border)] hover:border-white/30"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("all"); }}
         >
-          <p className="text-white/40 text-xs uppercase tracking-wider">Total</p>
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Total</p>
           <p className="text-2xl font-mono font-bold text-white">{stats.total}</p>
         </div>
         <div
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${
-            filterStatus === "scheduled" ? "border-blue-500" : "border-white/10 hover:border-blue-500/50"
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
+            filterStatus === "scheduled" ? "border-blue-500" : "border-[var(--color-border)] hover:border-blue-500/50"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("scheduled"); }}
         >
-          <p className="text-blue-400 text-xs uppercase">Planifiés</p>
-          <p className="text-2xl font-mono font-bold text-blue-400">{stats.scheduled}</p>
+          <p className="text-[var(--color-accent)] text-xs uppercase">Planifiés</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.scheduled}</p>
         </div>
         <div
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${
-            filterStatus === "completed" ? "border-emerald-500" : "border-white/10 hover:border-emerald-500/50"
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
+            filterStatus === "completed" ? "border-emerald-500" : "border-[var(--color-border)] hover:border-emerald-500/50"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("completed"); }}
         >
-          <p className="text-emerald-400 text-xs uppercase">Complétés</p>
-          <p className="text-2xl font-mono font-bold text-emerald-400">{stats.completed}</p>
+          <p className="text-[var(--color-success)] text-xs uppercase">Complétés</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.completed}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-orange-500/30">
-          <p className="text-orange-400 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-orange-500/30">
+          <p className="text-[var(--color-warning)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             Cette semaine
           </p>
-          <p className="text-2xl font-mono font-bold text-orange-400">{stats.next7Days}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-warning)]">{stats.next7Days}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-red-500/30">
-          <p className="text-red-400 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-red-500/30">
+          <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             En retard
           </p>
-          <p className="text-2xl font-mono font-bold text-red-400">{stats.missed}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-danger)]">{stats.missed}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={lang === "fr" ? "Rechercher un membre..." : "Search member..."}
-            className="pl-10 bg-[#121214] border-white/10 text-white"
+            className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
             data-testid="review-search"
           />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[180px] bg-[#121214] border-white/10 text-white" data-testid="status-filter">
+          <SelectTrigger className="w-[180px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="status-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             <SelectItem value="all" className="text-white">Tous les statuts</SelectItem>
             <SelectItem value="scheduled" className="text-white">Planifiés</SelectItem>
             <SelectItem value="completed" className="text-white">Complétés</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[180px] bg-[#121214] border-white/10 text-white" data-testid="type-filter">
+          <SelectTrigger className="w-[180px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="type-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             {REVIEW_TYPES.map((t) => (
               <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
             ))}
@@ -405,28 +405,28 @@ export default function AnnualReviewsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
+      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-white/50">Membre</TableHead>
-              <TableHead className="text-white/50">Type</TableHead>
-              <TableHead className="text-white/50">Date du bilan</TableHead>
-              <TableHead className="text-white/50">Statut</TableHead>
-              <TableHead className="text-white/50">Évolution poids</TableHead>
-              <TableHead className="text-white/50 text-right">Actions</TableHead>
+            <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+              <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Date du bilan</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Évolution poids</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-white/50 py-8">
+                <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredReviews.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-white/50 py-8">
+                <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
                   Aucun bilan trouvé
                 </TableCell>
               </TableRow>
@@ -434,17 +434,17 @@ export default function AnnualReviewsPage() {
               filteredReviews.map((review) => (
                 <TableRow
                   key={review.id}
-                  className="border-white/10 hover:bg-white/5"
+                  className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]"
                   data-testid={`review-row-${review.id}`}
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                        <User size={14} className="text-purple-400" />
+                        <User size={14} className="text-[var(--color-info)]" />
                       </div>
                       <div>
                         <p className="text-white font-medium">{review.member_name}</p>
-                        <p className="text-white/40 text-xs">{review.member_email}</p>
+                        <p className="text-[var(--color-text-secondary)] text-xs">{review.member_email}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -459,11 +459,11 @@ export default function AnnualReviewsPage() {
                   <TableCell>{getStatusBadge(review)}</TableCell>
                   <TableCell>
                     {review.status === "completed" && review.weight_change != null ? (
-                      <span className={review.weight_change > 0 ? "text-red-400" : "text-emerald-400"}>
+                      <span className={review.weight_change > 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}>
                         {review.weight_change > 0 ? "+" : ""}{review.weight_change} kg
                       </span>
                     ) : (
-                      <span className="text-white/30">-</span>
+                      <span className="text-[var(--color-text-tertiary)]">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -472,7 +472,7 @@ export default function AnnualReviewsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                          className="text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
                           onClick={() => openDetailModal(review)}
                           data-testid={`view-${review.id}`}
                         >
@@ -493,7 +493,7 @@ export default function AnnualReviewsPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-[var(--color-accent)] hover:text-blue-300"
                         onClick={() => {
                           setHistoryMemberId(review.member_id);
                           setHistoryModalOpen(true);
@@ -527,19 +527,19 @@ export default function AnnualReviewsPage() {
 
       {/* Complete Review Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ClipboardCheck className="text-purple-400" size={20} />
+              <ClipboardCheck className="text-[var(--color-info)]" size={20} />
               Compléter le bilan
             </DialogTitle>
           </DialogHeader>
           {selectedReview && (
             <div className="space-y-6 py-4">
               {/* Member info */}
-              <div className="bg-[#121214] rounded-sm p-4">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                 <p className="text-white font-medium">{selectedReview.member_name}</p>
-                <p className="text-white/50 text-sm">
+                <p className="text-[var(--color-text-secondary)] text-sm">
                   Bilan prévu le: {format(parseISO(selectedReview.review_date), "dd MMMM yyyy", { locale: fr })}
                 </p>
               </div>
@@ -547,63 +547,63 @@ export default function AnnualReviewsPage() {
               {/* Weight Section */}
               <div>
                 <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
-                  <Weight size={16} className="text-blue-400" />
+                  <Weight size={16} className="text-[var(--color-accent)]" />
                   Suivi du poids
                 </h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="text-white/40 text-xs">Poids début (kg)</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Poids début (kg)</label>
                     <Input
                       type="number"
                       step="0.1"
                       value={formData.weight_start}
                       onChange={(e) => setFormData({ ...formData, weight_start: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                       data-testid="weight-start"
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Poids actuel (kg)</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Poids actuel (kg)</label>
                     <Input
                       type="number"
                       step="0.1"
                       value={formData.weight_current}
                       onChange={(e) => setFormData({ ...formData, weight_current: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                       data-testid="weight-current"
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Objectif (kg)</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Objectif (kg)</label>
                     <Input
                       type="number"
                       step="0.1"
                       value={formData.weight_goal}
                       onChange={(e) => setFormData({ ...formData, weight_goal: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                       data-testid="weight-goal"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-3">
                   <div>
-                    <label className="text-white/40 text-xs">% masse grasse</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">% masse grasse</label>
                     <Input
                       type="number"
                       step="0.1"
                       value={formData.body_fat_percentage}
                       onChange={(e) => setFormData({ ...formData, body_fat_percentage: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Masse musculaire (kg)</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Masse musculaire (kg)</label>
                     <Input
                       type="number"
                       step="0.1"
                       value={formData.muscle_mass}
                       onChange={(e) => setFormData({ ...formData, muscle_mass: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                     />
                   </div>
                 </div>
@@ -612,45 +612,45 @@ export default function AnnualReviewsPage() {
               {/* Nutrition Section */}
               <div>
                 <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
-                  <Utensils size={16} className="text-emerald-400" />
+                  <Utensils size={16} className="text-[var(--color-success)]" />
                   Nutrition
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-white/40 text-xs">Régime actuel</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Régime actuel</label>
                     <Textarea
                       value={formData.nutrition_current}
                       onChange={(e) => setFormData({ ...formData, nutrition_current: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                       placeholder="Décrivez le régime alimentaire actuel..."
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Ajustements recommandés</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Ajustements recommandés</label>
                     <Textarea
                       value={formData.nutrition_adjustments}
                       onChange={(e) => setFormData({ ...formData, nutrition_adjustments: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                       placeholder="Modifications à apporter..."
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-white/40 text-xs">Objectif calories/jour</label>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Objectif calories/jour</label>
                       <Input
                         type="number"
                         value={formData.calories_target}
                         onChange={(e) => setFormData({ ...formData, calories_target: e.target.value })}
-                        className="bg-[#121214] border-white/10 text-white mt-1"
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                       />
                     </div>
                     <div>
-                      <label className="text-white/40 text-xs">Objectif protéines (g/jour)</label>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Objectif protéines (g/jour)</label>
                       <Input
                         type="number"
                         value={formData.protein_target}
                         onChange={(e) => setFormData({ ...formData, protein_target: e.target.value })}
-                        className="bg-[#121214] border-white/10 text-white mt-1"
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                       />
                     </div>
                   </div>
@@ -660,35 +660,35 @@ export default function AnnualReviewsPage() {
               {/* Program Section */}
               <div>
                 <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
-                  <Dumbbell size={16} className="text-orange-400" />
+                  <Dumbbell size={16} className="text-[var(--color-warning)]" />
                   Programme d'entraînement
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-white/40 text-xs">Programme actuel</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Programme actuel</label>
                     <Textarea
                       value={formData.current_program}
                       onChange={(e) => setFormData({ ...formData, current_program: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                       placeholder="Décrivez le programme actuel..."
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Modifications du programme</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Modifications du programme</label>
                     <Textarea
                       value={formData.program_adjustments}
                       onChange={(e) => setFormData({ ...formData, program_adjustments: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                       placeholder="Ajustements à apporter..."
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Fréquence recommandée (séances/semaine)</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Fréquence recommandée (séances/semaine)</label>
                     <Input
                       type="number"
                       value={formData.training_frequency}
                       onChange={(e) => setFormData({ ...formData, training_frequency: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 w-32"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 w-32"
                     />
                   </div>
                 </div>
@@ -697,25 +697,25 @@ export default function AnnualReviewsPage() {
               {/* Goals Section */}
               <div>
                 <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
-                  <Target size={16} className="text-purple-400" />
+                  <Target size={16} className="text-[var(--color-info)]" />
                   Objectifs
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-white/40 text-xs">Objectifs atteints</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Objectifs atteints</label>
                     <Textarea
                       value={formData.goals_achieved}
                       onChange={(e) => setFormData({ ...formData, goals_achieved: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                       placeholder="Quels objectifs ont été atteints..."
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Nouveaux objectifs</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Nouveaux objectifs</label>
                     <Textarea
                       value={formData.new_goals}
                       onChange={(e) => setFormData({ ...formData, new_goals: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                       placeholder="Objectifs pour la prochaine année..."
                     />
                   </div>
@@ -727,34 +727,34 @@ export default function AnnualReviewsPage() {
                 <h3 className="text-white/70 text-sm font-medium mb-3">Notes</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-white/40 text-xs">Notes du coach</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Notes du coach</label>
                     <Textarea
                       value={formData.coach_notes}
                       onChange={(e) => setFormData({ ...formData, coach_notes: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                     />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs">Retour du membre</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Retour du membre</label>
                     <Textarea
                       value={formData.member_feedback}
                       onChange={(e) => setFormData({ ...formData, member_feedback: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white mt-1 min-h-[60px]"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 min-h-[60px]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Next Review */}
-              <div className="border-t border-white/10 pt-4">
-                <label className="text-white/40 text-xs">Prochain bilan (optionnel)</label>
+              <div className="border-t border-[var(--color-border)] pt-4">
+                <label className="text-[var(--color-text-secondary)] text-xs">Prochain bilan (optionnel)</label>
                 <Input
                   type="date"
                   value={formData.next_review_date}
                   onChange={(e) => setFormData({ ...formData, next_review_date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1 w-48"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 w-48"
                 />
-                <p className="text-white/30 text-xs mt-1">
+                <p className="text-[var(--color-text-tertiary)] text-xs mt-1">
                   Si renseigné, un nouveau bilan sera planifié automatiquement
                 </p>
               </div>
@@ -792,24 +792,24 @@ export default function AnnualReviewsPage() {
 
       {/* Detail View Modal */}
       <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ClipboardCheck className="text-emerald-400" size={20} />
+              <ClipboardCheck className="text-[var(--color-success)]" size={20} />
               Détail du bilan
             </DialogTitle>
           </DialogHeader>
           {selectedReview && (
             <div className="space-y-6 py-4">
               {/* Member info */}
-              <div className="bg-[#121214] rounded-sm p-4 flex items-center justify-between">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 flex items-center justify-between">
                 <div>
                   <p className="text-white font-medium">{selectedReview.member_name}</p>
-                  <p className="text-white/50 text-sm">
+                  <p className="text-[var(--color-text-secondary)] text-sm">
                     Complété le: {selectedReview.completed_date && format(parseISO(selectedReview.completed_date), "dd MMMM yyyy", { locale: fr })}
                   </p>
                 </div>
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-0">
+                <Badge className="bg-emerald-500/20 text-[var(--color-success)] border-0">
                   <CheckCircle2 size={12} className="mr-1" />
                   Complété
                 </Badge>
@@ -817,27 +817,27 @@ export default function AnnualReviewsPage() {
 
               {/* Weight Summary */}
               {(selectedReview.weight_start || selectedReview.weight_current) && (
-                <div className="bg-[#121214] rounded-sm p-4">
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                   <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-3">
-                    <Weight size={16} className="text-blue-400" />
+                    <Weight size={16} className="text-[var(--color-accent)]" />
                     Évolution du poids
                   </h3>
                   <div className="grid grid-cols-4 gap-4 text-center">
                     <div>
-                      <p className="text-white/40 text-xs">Début</p>
+                      <p className="text-[var(--color-text-secondary)] text-xs">Début</p>
                       <p className="text-xl font-bold text-white">{selectedReview.weight_start || "-"} kg</p>
                     </div>
                     <div>
-                      <p className="text-white/40 text-xs">Actuel</p>
+                      <p className="text-[var(--color-text-secondary)] text-xs">Actuel</p>
                       <p className="text-xl font-bold text-white">{selectedReview.weight_current || "-"} kg</p>
                     </div>
                     <div>
-                      <p className="text-white/40 text-xs">Objectif</p>
+                      <p className="text-[var(--color-text-secondary)] text-xs">Objectif</p>
                       <p className="text-xl font-bold text-white">{selectedReview.weight_goal || "-"} kg</p>
                     </div>
                     <div>
-                      <p className="text-white/40 text-xs">Variation</p>
-                      <p className={`text-xl font-bold ${selectedReview.weight_change > 0 ? "text-red-400" : "text-emerald-400"}`}>
+                      <p className="text-[var(--color-text-secondary)] text-xs">Variation</p>
+                      <p className={`text-xl font-bold ${selectedReview.weight_change > 0 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>
                         {selectedReview.weight_change > 0 ? "+" : ""}{selectedReview.weight_change || 0} kg
                       </p>
                     </div>
@@ -849,18 +849,18 @@ export default function AnnualReviewsPage() {
               {(selectedReview.nutrition_current || selectedReview.nutrition_adjustments) && (
                 <div>
                   <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-2">
-                    <Utensils size={16} className="text-emerald-400" />
+                    <Utensils size={16} className="text-[var(--color-success)]" />
                     Nutrition
                   </h3>
                   {selectedReview.nutrition_current && (
-                    <div className="bg-[#121214] rounded-sm p-3 mb-2">
-                      <p className="text-white/40 text-xs mb-1">Régime actuel</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3 mb-2">
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-1">Régime actuel</p>
                       <p className="text-white/80 text-sm">{selectedReview.nutrition_current}</p>
                     </div>
                   )}
                   {selectedReview.nutrition_adjustments && (
-                    <div className="bg-[#121214] rounded-sm p-3">
-                      <p className="text-white/40 text-xs mb-1">Ajustements</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-1">Ajustements</p>
                       <p className="text-white/80 text-sm">{selectedReview.nutrition_adjustments}</p>
                     </div>
                   )}
@@ -871,18 +871,18 @@ export default function AnnualReviewsPage() {
               {(selectedReview.current_program || selectedReview.program_adjustments) && (
                 <div>
                   <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-2">
-                    <Dumbbell size={16} className="text-orange-400" />
+                    <Dumbbell size={16} className="text-[var(--color-warning)]" />
                     Programme
                   </h3>
                   {selectedReview.current_program && (
-                    <div className="bg-[#121214] rounded-sm p-3 mb-2">
-                      <p className="text-white/40 text-xs mb-1">Programme</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3 mb-2">
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-1">Programme</p>
                       <p className="text-white/80 text-sm">{selectedReview.current_program}</p>
                     </div>
                   )}
                   {selectedReview.program_adjustments && (
-                    <div className="bg-[#121214] rounded-sm p-3">
-                      <p className="text-white/40 text-xs mb-1">Modifications</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-1">Modifications</p>
                       <p className="text-white/80 text-sm">{selectedReview.program_adjustments}</p>
                     </div>
                   )}
@@ -893,18 +893,18 @@ export default function AnnualReviewsPage() {
               {(selectedReview.goals_achieved || selectedReview.new_goals) && (
                 <div>
                   <h3 className="text-white/70 text-sm font-medium flex items-center gap-2 mb-2">
-                    <Target size={16} className="text-purple-400" />
+                    <Target size={16} className="text-[var(--color-info)]" />
                     Objectifs
                   </h3>
                   {selectedReview.goals_achieved && (
-                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-sm p-3 mb-2">
-                      <p className="text-emerald-400 text-xs mb-1">Objectifs atteints</p>
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[var(--radius-lg)] p-3 mb-2">
+                      <p className="text-[var(--color-success)] text-xs mb-1">Objectifs atteints</p>
                       <p className="text-white/80 text-sm">{selectedReview.goals_achieved}</p>
                     </div>
                   )}
                   {selectedReview.new_goals && (
-                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-sm p-3">
-                      <p className="text-purple-400 text-xs mb-1">Nouveaux objectifs</p>
+                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-info)] text-xs mb-1">Nouveaux objectifs</p>
                       <p className="text-white/80 text-sm">{selectedReview.new_goals}</p>
                     </div>
                   )}
@@ -916,14 +916,14 @@ export default function AnnualReviewsPage() {
                 <div>
                   <h3 className="text-white/70 text-sm font-medium mb-2">Notes</h3>
                   {selectedReview.coach_notes && (
-                    <div className="bg-[#121214] rounded-sm p-3 mb-2">
-                      <p className="text-white/40 text-xs mb-1">Notes du coach</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3 mb-2">
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-1">Notes du coach</p>
                       <p className="text-white/80 text-sm">{selectedReview.coach_notes}</p>
                     </div>
                   )}
                   {selectedReview.member_feedback && (
-                    <div className="bg-[#121214] rounded-sm p-3">
-                      <p className="text-white/40 text-xs mb-1">Retour du membre</p>
+                    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                      <p className="text-[var(--color-text-secondary)] text-xs mb-1">Retour du membre</p>
                       <p className="text-white/80 text-sm">{selectedReview.member_feedback}</p>
                     </div>
                   )}
@@ -941,17 +941,17 @@ export default function AnnualReviewsPage() {
 
       {/* History Chart Modal */}
       <Dialog open={historyModalOpen} onOpenChange={(open) => { setHistoryModalOpen(open); if (!open) setHistoryMemberId(null); }}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <BarChart3 className="text-blue-400" size={20} />
+              <BarChart3 className="text-[var(--color-accent)]" size={20} />
               Historique des bilans - {historyData?.member_name}
             </DialogTitle>
           </DialogHeader>
           {historyData?.reviews?.length > 0 ? (
             <div className="space-y-6 py-4">
               {/* Weight Chart */}
-              <div className="bg-[#121214] rounded-sm p-4">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                 <h3 className="text-white/70 text-sm font-medium mb-3">Evolution du poids (kg)</h3>
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={historyData.reviews.filter(r => r.weight_current).map(r => ({
@@ -972,7 +972,7 @@ export default function AnnualReviewsPage() {
 
               {/* Body Composition Chart */}
               {historyData.reviews.some(r => r.body_fat_percentage || r.muscle_mass) && (
-                <div className="bg-[#121214] rounded-sm p-4">
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                   <h3 className="text-white/70 text-sm font-medium mb-3">Composition corporelle</h3>
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={historyData.reviews.filter(r => r.body_fat_percentage || r.muscle_mass).map(r => ({
@@ -994,7 +994,7 @@ export default function AnnualReviewsPage() {
 
               {/* Training Frequency */}
               {historyData.reviews.some(r => r.training_frequency) && (
-                <div className="bg-[#121214] rounded-sm p-4">
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                   <h3 className="text-white/70 text-sm font-medium mb-3">Fréquence d'entraînement (séances/semaine)</h3>
                   <ResponsiveContainer width="100%" height={180}>
                     <LineChart data={historyData.reviews.filter(r => r.training_frequency).map(r => ({
@@ -1012,15 +1012,15 @@ export default function AnnualReviewsPage() {
               )}
 
               {/* Summary Table */}
-              <div className="bg-[#121214] rounded-sm p-4">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                 <h3 className="text-white/70 text-sm font-medium mb-3">Résumé des bilans</h3>
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-white/10">
-                      <TableHead className="text-white/50">Date</TableHead>
-                      <TableHead className="text-white/50">Poids</TableHead>
-                      <TableHead className="text-white/50">Variation</TableHead>
-                      <TableHead className="text-white/50">Objectif</TableHead>
+                    <TableRow className="border-[var(--color-border)]">
+                      <TableHead className="text-[var(--color-text-secondary)]">Date</TableHead>
+                      <TableHead className="text-[var(--color-text-secondary)]">Poids</TableHead>
+                      <TableHead className="text-[var(--color-text-secondary)]">Variation</TableHead>
+                      <TableHead className="text-[var(--color-text-secondary)]">Objectif</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1030,10 +1030,10 @@ export default function AnnualReviewsPage() {
                           {r.review_date ? format(parseISO(r.review_date), "dd MMM yyyy", { locale: fr }) : "-"}
                         </TableCell>
                         <TableCell className="text-white font-medium">{r.weight_current || "-"} kg</TableCell>
-                        <TableCell className={`text-sm ${r.weight_change < 0 ? "text-emerald-400" : r.weight_change > 0 ? "text-red-400" : "text-white/50"}`}>
+                        <TableCell className={`text-sm ${r.weight_change < 0 ? "text-[var(--color-success)]" : r.weight_change > 0 ? "text-[var(--color-danger)]" : "text-[var(--color-text-secondary)]"}`}>
                           {r.weight_change ? `${r.weight_change > 0 ? "+" : ""}${r.weight_change} kg` : "-"}
                         </TableCell>
-                        <TableCell className="text-white/50 text-sm">{r.weight_goal || "-"} kg</TableCell>
+                        <TableCell className="text-[var(--color-text-secondary)] text-sm">{r.weight_goal || "-"} kg</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1041,7 +1041,7 @@ export default function AnnualReviewsPage() {
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-white/40">
+            <div className="py-8 text-center text-[var(--color-text-secondary)]">
               Aucun bilan complété trouvé pour ce membre.
             </div>
           )}

@@ -6,20 +6,20 @@ import {
 } from "lucide-react";
 
 const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue }) => (
-  <div className="bg-[#121214] border border-white/5 p-3 rounded-sm">
+  <div className="bg-[var(--color-bg-secondary)] border border-white/5 p-3 rounded-[var(--radius-lg)]">
     <div className="flex items-center gap-2 mb-1">
-      {Icon && <Icon size={12} className="text-white/30" />}
-      <span className="text-[10px] text-white/40 uppercase tracking-wider">{label}</span>
+      {Icon && <Icon size={12} className="text-[var(--color-text-tertiary)]" />}
+      <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</span>
     </div>
-    <p className={`text-lg font-heading font-bold ${color}`}>{value}</p>
-    {subValue && <p className="text-[10px] text-white/30 mt-0.5">{subValue}</p>}
+    <p className={`text-lg font-display font-bold ${color}`}>{value}</p>
+    {subValue && <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5">{subValue}</p>}
   </div>
 );
 
 const SectionTitle = ({ children }) => (
   <div className="flex items-center gap-2 mb-3 mt-5">
     <div className="w-1 h-4 bg-rose-500 rounded-full" />
-    <h3 className="text-xs font-heading font-bold text-white/60 uppercase tracking-wider">{children}</h3>
+    <h3 className="text-xs font-display font-bold text-white/60 uppercase tracking-wider">{children}</h3>
   </div>
 );
 
@@ -38,7 +38,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label="Leads" 
           value={formatNum(kpi.leads)} 
           icon={UserPlus}
-          color="text-blue-400"
+          color="text-[var(--color-accent)]"
         />
         <StatBox 
           label={lang === "fr" ? "Appels" : "Calls"} 
@@ -62,14 +62,14 @@ export function KPIDetailedView({ kpi, lang }) {
           label="Close" 
           value={formatNum(kpi.close)} 
           icon={Target}
-          color="text-green-400"
+          color="text-[var(--color-success)]"
           subValue={kpi.close_percentage > 0 ? `${kpi.close_percentage.toFixed(1)}%` : null}
         />
         <StatBox 
           label={lang === "fr" ? "Cash Collecté" : "Cash Collected"} 
           value={formatCHF(kpi.cash_collected)} 
           icon={Wallet}
-          color="text-green-400"
+          color="text-[var(--color-success)]"
           subValue={kpi.avg_per_sale > 0 ? `Moy: ${formatCHF(kpi.avg_per_sale)}` : null}
         />
       </div>
@@ -83,7 +83,7 @@ export function KPIDetailedView({ kpi, lang }) {
               label="Leads" 
               value={formatNum(kpi.organic_leads)} 
               icon={UserPlus}
-              color="text-emerald-400"
+              color="text-[var(--color-success)]"
             />
             <StatBox 
               label="Close" 
@@ -95,7 +95,7 @@ export function KPIDetailedView({ kpi, lang }) {
               label="Cash" 
               value={formatCHF(kpi.organic_cash_collected)} 
               icon={Wallet}
-              color="text-emerald-400"
+              color="text-[var(--color-success)]"
             />
           </div>
         </div>
@@ -118,13 +118,13 @@ export function KPIDetailedView({ kpi, lang }) {
               label={lang === "fr" ? "Convertis" : "Converted"} 
               value={formatNum(kpi.converted)} 
               icon={Target}
-              color="text-green-400"
+              color="text-[var(--color-success)]"
             />
             <StatBox 
               label={lang === "fr" ? "Taux Conv." : "Conv. Rate"} 
               value={`${(kpi.conversion_percentage || 0).toFixed(1)}%`} 
               icon={Percent}
-              color={kpi.conversion_percentage > 50 ? "text-green-400" : "text-amber-400"}
+              color={kpi.conversion_percentage > 50 ? "text-[var(--color-success)]" : "text-amber-400"}
             />
           </div>
         </div>
@@ -137,7 +137,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "Membres Actifs" : "Active Members"} 
           value={formatNum(kpi.total_active_members || kpi.total_members)} 
           icon={Users}
-          color="text-blue-400"
+          color="text-[var(--color-accent)]"
         />
         <StatBox 
           label="PIF Members" 
@@ -149,7 +149,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "PIF Churn" : "PIF Churn"} 
           value={`${(kpi.pif_churn || 0).toFixed(2)}%`} 
           icon={TrendingDown}
-          color={kpi.pif_churn < 3 ? "text-green-400" : "text-red-400"}
+          color={kpi.pif_churn < 3 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}
         />
         <StatBox 
           label={lang === "fr" ? "Récurrents" : "Recurring"} 
@@ -161,7 +161,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "Général Churn" : "General Churn"} 
           value={`${(kpi.general_churn || 0).toFixed(2)}%`} 
           icon={TrendingDown}
-          color={kpi.general_churn < 5 ? "text-green-400" : "text-red-400"}
+          color={kpi.general_churn < 5 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}
         />
         <StatBox 
           label="Pauses" 
@@ -177,7 +177,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "Membres PT" : "PT Members"} 
           value={formatNum(kpi.pt_members)} 
           icon={Users}
-          color="text-purple-400"
+          color="text-[var(--color-info)]"
         />
         <StatBox 
           label={lang === "fr" ? "PT Exits" : "PT Exits"} 
@@ -188,13 +188,13 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "PT Churn" : "PT Churn"} 
           value={`${(kpi.pt_churn || 0).toFixed(2)}%`} 
           icon={TrendingDown}
-          color={kpi.pt_churn < 5 ? "text-green-400" : "text-red-400"}
+          color={kpi.pt_churn < 5 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}
         />
         <StatBox 
           label={lang === "fr" ? "Revenu PT" : "PT Revenue"} 
           value={formatCHF(kpi.pt_revenue)} 
           icon={DollarSign}
-          color="text-purple-400"
+          color="text-[var(--color-info)]"
         />
       </div>
 
@@ -205,13 +205,13 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "EFT Général" : "General EFT"} 
           value={formatCHF(kpi.general_eft_revenue)} 
           icon={CreditCard}
-          color="text-green-400"
+          color="text-[var(--color-success)]"
         />
         <StatBox 
           label={lang === "fr" ? "Revenu PT" : "PT Revenue"} 
           value={formatCHF(kpi.pt_revenue)} 
           icon={DollarSign}
-          color="text-purple-400"
+          color="text-[var(--color-info)]"
         />
         <StatBox 
           label="Retail" 
@@ -228,7 +228,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "Total Revenus" : "Total Revenue"} 
           value={formatCHF(kpi.total_revenue)} 
           icon={DollarSign}
-          color="text-green-400"
+          color="text-[var(--color-success)]"
         />
       </div>
 
@@ -239,13 +239,13 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "Loyer" : "Rent"} 
           value={formatCHF(kpi.loyer || kpi.rent)} 
           icon={DollarSign}
-          color="text-blue-400"
+          color="text-[var(--color-accent)]"
         />
         <StatBox 
           label={lang === "fr" ? "Salaires" : "Salaries"} 
           value={formatCHF(kpi.salaires)} 
           icon={Users}
-          color="text-purple-400"
+          color="text-[var(--color-info)]"
         />
         <StatBox 
           label={lang === "fr" ? "Salaires Coach" : "Coach Salaries"} 
@@ -261,7 +261,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label="Marketing" 
           value={formatCHF(kpi.marketing_spend)} 
           icon={BarChart3}
-          color="text-rose-400"
+          color="text-[var(--color-accent)]"
         />
       </div>
 
@@ -317,13 +317,13 @@ export function KPIDetailedView({ kpi, lang }) {
           label="PT ACRM" 
           value={formatCHF(kpi.pt_acrm)} 
           icon={DollarSign}
-          color="text-purple-400"
+          color="text-[var(--color-info)]"
         />
         <StatBox 
           label="PT LTV" 
           value={formatCHF(kpi.pt_ltv)} 
           icon={TrendingUp}
-          color="text-purple-400"
+          color="text-[var(--color-info)]"
         />
         <StatBox 
           label="CPL" 
@@ -344,7 +344,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label="RoAds" 
           value={`${(kpi.ro_ads || kpi.roas || 0).toFixed(2)}x`} 
           icon={BarChart3}
-          color={kpi.ro_ads > 3 ? "text-green-400" : "text-amber-400"}
+          color={kpi.ro_ads > 3 ? "text-[var(--color-success)]" : "text-amber-400"}
         />
         <StatBox 
           label={lang === "fr" ? "Surface Gym (sqft)" : "Gym Floor (sqft)"} 
@@ -355,7 +355,7 @@ export function KPIDetailedView({ kpi, lang }) {
           label={lang === "fr" ? "Total Cours" : "Total Classes"} 
           value={formatNum(kpi.total_classes)} 
           icon={Calendar}
-          color="text-blue-400"
+          color="text-[var(--color-accent)]"
         />
       </div>
     </div>

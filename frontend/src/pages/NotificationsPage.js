@@ -42,10 +42,10 @@ import { useTranslations } from "../hooks/useTranslations";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const TYPE_CONFIG = {
-  payment_reminder: { label: "Rappel paiement", icon: CreditCard, color: "bg-red-500/20 text-red-400" },
-  review_reminder: { label: "Rappel bilan", icon: ClipboardList, color: "bg-purple-500/20 text-purple-400" },
-  followup_reminder: { label: "Rappel suivi", icon: UserCheck, color: "bg-emerald-500/20 text-emerald-400" },
-  custom: { label: "Personnalisé", icon: Mail, color: "bg-blue-500/20 text-blue-400" },
+  payment_reminder: { label: "Rappel paiement", icon: CreditCard, color: "bg-red-500/20 text-[var(--color-danger)]" },
+  review_reminder: { label: "Rappel bilan", icon: ClipboardList, color: "bg-purple-500/20 text-[var(--color-info)]" },
+  followup_reminder: { label: "Rappel suivi", icon: UserCheck, color: "bg-emerald-500/20 text-[var(--color-success)]" },
+  custom: { label: "Personnalisé", icon: Mail, color: "bg-blue-500/20 text-[var(--color-accent)]" },
 };
 
 export default function NotificationsPage() {
@@ -142,10 +142,10 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "Messagerie & Notifications" : "Messaging & Notifications"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             Historique des emails envoyés et envoi de notifications
           </p>
         </div>
@@ -154,7 +154,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => sendBulkMutation.mutate({ notification_type: "payment_reminder" })}
             disabled={sendBulkMutation.isPending}
-            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+            className="border-red-500/30 text-[var(--color-danger)] hover:bg-red-500/10"
             data-testid="bulk-payment-btn"
           >
             <CreditCard size={14} className="mr-1.5" />
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => sendBulkMutation.mutate({ notification_type: "review_reminder" })}
             disabled={sendBulkMutation.isPending}
-            className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+            className="border-purple-500/30 text-[var(--color-info)] hover:bg-purple-500/10"
             data-testid="bulk-review-btn"
           >
             <ClipboardList size={14} className="mr-1.5" />
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
           </Button>
           <Button
             onClick={() => setComposeOpen(true)}
-            className="bg-rose-600 hover:bg-rose-700"
+            className="bg-[var(--color-accent)] hover:opacity-85"
             data-testid="compose-btn"
           >
             <Send size={14} className="mr-1.5" />
@@ -183,38 +183,38 @@ export default function NotificationsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-          <p className="text-white/40 text-xs uppercase tracking-wider">Total envoyés</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Total envoyés</p>
           <p className="text-2xl font-mono font-bold text-white">{stats.total}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-          <p className="text-white/40 text-xs uppercase tracking-wider">Réussis</p>
-          <p className="text-2xl font-mono font-bold text-emerald-400">{stats.sent}</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Réussis</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-success)]">{stats.sent}</p>
         </div>
-        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-          <p className="text-white/40 text-xs uppercase tracking-wider">Aujourd'hui</p>
-          <p className="text-2xl font-mono font-bold text-rose-400">{stats.todayCount}</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Aujourd'hui</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-accent)]">{stats.todayCount}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par email ou sujet..."
-            className="pl-10 bg-[#121214] border-white/10 text-white"
+            className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
             data-testid="notif-search"
           />
         </div>
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[200px] bg-[#121214] border-white/10 text-white" data-testid="notif-type-filter">
-            <Filter size={14} className="mr-2 text-white/40" />
+          <SelectTrigger className="w-[200px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="notif-type-filter">
+            <Filter size={14} className="mr-2 text-[var(--color-text-secondary)]" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             <SelectItem value="all" className="text-white">Tous les types</SelectItem>
             <SelectItem value="payment_reminder" className="text-white">Rappels paiement</SelectItem>
             <SelectItem value="review_reminder" className="text-white">Rappels bilan</SelectItem>
@@ -227,9 +227,9 @@ export default function NotificationsPage() {
       {/* Email List */}
       <div className="space-y-2">
         {isLoading ? (
-          <div className="text-center text-white/50 py-12">Chargement...</div>
+          <div className="text-center text-[var(--color-text-secondary)] py-12">Chargement...</div>
         ) : filteredLogs.length === 0 ? (
-          <div className="text-center text-white/40 py-12">
+          <div className="text-center text-[var(--color-text-secondary)] py-12">
             <Mail className="mx-auto mb-3 opacity-30" size={40} />
             <p>Aucun email envoyé</p>
           </div>
@@ -242,7 +242,7 @@ export default function NotificationsPage() {
             return (
               <div
                 key={log.sent_at + log.recipient}
-                className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden"
+                className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden"
                 data-testid={`notif-log-${log.type}`}
               >
                 <div
@@ -257,46 +257,46 @@ export default function NotificationsPage() {
                       <p className="text-white font-medium text-sm truncate">{log.subject}</p>
                       <Badge className={`border-0 text-[10px] ${config.color}`}>{config.label}</Badge>
                     </div>
-                    <p className="text-white/40 text-xs truncate">{log.recipient}</p>
+                    <p className="text-[var(--color-text-secondary)] text-xs truncate">{log.recipient}</p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     {log.status === "sent" ? (
-                      <CheckCircle2 size={14} className="text-emerald-400" />
+                      <CheckCircle2 size={14} className="text-[var(--color-success)]" />
                     ) : (
-                      <AlertTriangle size={14} className="text-red-400" />
+                      <AlertTriangle size={14} className="text-[var(--color-danger)]" />
                     )}
-                    <span className="text-white/30 text-xs">
+                    <span className="text-[var(--color-text-tertiary)] text-xs">
                       {log.sent_at ? format(parseISO(log.sent_at), "dd MMM HH:mm", { locale: fr }) : "-"}
                     </span>
-                    {isExpanded ? <ChevronUp size={14} className="text-white/30" /> : <ChevronDown size={14} className="text-white/30" />}
+                    {isExpanded ? <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" /> : <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />}
                   </div>
                 </div>
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-white/5 pt-3">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-white/40 text-xs">Destinataire</p>
+                        <p className="text-[var(--color-text-secondary)] text-xs">Destinataire</p>
                         <p className="text-white">{log.recipient}</p>
                       </div>
                       <div>
-                        <p className="text-white/40 text-xs">Statut</p>
-                        <p className={log.status === "sent" ? "text-emerald-400" : "text-red-400"}>
+                        <p className="text-[var(--color-text-secondary)] text-xs">Statut</p>
+                        <p className={log.status === "sent" ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}>
                           {log.status === "sent" ? "Envoyé" : "Échec"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-white/40 text-xs">Type</p>
+                        <p className="text-[var(--color-text-secondary)] text-xs">Type</p>
                         <p className="text-white">{config.label}</p>
                       </div>
                       <div>
-                        <p className="text-white/40 text-xs">Date</p>
+                        <p className="text-[var(--color-text-secondary)] text-xs">Date</p>
                         <p className="text-white">
                           {log.sent_at ? format(parseISO(log.sent_at), "dd MMMM yyyy à HH:mm", { locale: fr }) : "-"}
                         </p>
                       </div>
                       {log.reference_id && (
                         <div className="col-span-2">
-                          <p className="text-white/40 text-xs">Référence</p>
+                          <p className="text-[var(--color-text-secondary)] text-xs">Référence</p>
                           <p className="text-white/60 text-xs font-mono">{log.reference_id}</p>
                         </div>
                       )}
@@ -311,24 +311,24 @@ export default function NotificationsPage() {
 
       {/* Compose Modal */}
       <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Send size={18} className="text-rose-500" />
+              <Send size={18} className="text-[var(--color-accent)]" />
               Nouveau message
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label className="text-white/50 text-xs">Destinataire</Label>
+              <Label className="text-[var(--color-text-secondary)] text-xs">Destinataire</Label>
               <Select
                 value={composeData.recipient_email}
                 onValueChange={(v) => setComposeData({ ...composeData, recipient_email: v })}
               >
-                <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1" data-testid="compose-recipient">
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1" data-testid="compose-recipient">
                   <SelectValue placeholder="Sélectionner un membre..." />
                 </SelectTrigger>
-                <SelectContent className="bg-[#121214] border-white/10 max-h-[200px]">
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-[200px]">
                   {members.filter((m) => m.email).map((m) => (
                     <SelectItem key={m.id} value={m.email} className="text-white">
                       {m.name} ({m.email})
@@ -340,32 +340,32 @@ export default function NotificationsPage() {
                 placeholder="ou saisir un email directement..."
                 value={composeData.recipient_email}
                 onChange={(e) => setComposeData({ ...composeData, recipient_email: e.target.value })}
-                className="bg-[#121214] border-white/10 text-white mt-2"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-2"
                 data-testid="compose-email-input"
               />
             </div>
             <div>
-              <Label className="text-white/50 text-xs">Sujet</Label>
+              <Label className="text-[var(--color-text-secondary)] text-xs">Sujet</Label>
               <Input
                 value={composeData.subject}
                 onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
                 placeholder="Objet du message"
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 data-testid="compose-subject"
               />
             </div>
             <div>
-              <Label className="text-white/50 text-xs">Message</Label>
+              <Label className="text-[var(--color-text-secondary)] text-xs">Message</Label>
               <Textarea
                 value={composeData.message}
                 onChange={(e) => setComposeData({ ...composeData, message: e.target.value })}
                 placeholder="Votre message..."
                 rows={6}
-                className="bg-[#121214] border-white/10 text-white mt-1 resize-none"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 resize-none"
                 data-testid="compose-message"
               />
             </div>
-            <p className="text-white/30 text-xs">
+            <p className="text-[var(--color-text-tertiary)] text-xs">
               Expéditeur : contact@thecoachswitzerland.ch
             </p>
           </div>
@@ -374,7 +374,7 @@ export default function NotificationsPage() {
             <Button
               onClick={handleCompose}
               disabled={sendEmailMutation.isPending}
-              className="bg-rose-600 hover:bg-rose-700"
+              className="bg-[var(--color-accent)] hover:opacity-85"
               data-testid="send-compose-btn"
             >
               <Send size={14} className="mr-1.5" />

@@ -24,30 +24,30 @@ import { useState } from "react";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CHART_COLORS = {
-  revenue: "#E11D48",
-  members: "#22C55E",
-  coaching: "#10B981",
-  expenses: "#3B82F6",
-  profit: "#22C55E",
-  churn: "#F97316",
-  cac: "#8B5CF6",
-  roas: "#FACC15",
-  loyer: "#3B82F6",
-  salaires: "#8B5CF6",
-  utilities: "#F59E0B",
-  marketing: "#E11D48",
-  other: "#6B7280",
+  revenue: "#0A84FF",
+  members: "#30D158",
+  coaching: "#30D158",
+  expenses: "#FF453A",
+  profit: "#30D158",
+  churn: "#FF453A",
+  cac: "#64D2FF",
+  roas: "#FFD60A",
+  loyer: "#0A84FF",
+  salaires: "#64D2FF",
+  utilities: "#FFD60A",
+  marketing: "#FF453A",
+  other: "#3A3A3C",
 };
 
 const ChartTooltip = ({ active, payload, label, isCurrency = true }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="bg-[#0D0D0F] border border-white/10 p-3 rounded-sm text-xs font-mono shadow-xl">
-      <p className="text-white/50 mb-2 uppercase tracking-wider">{label}</p>
+    <div style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)' }} className="text-xs font-mono shadow-xl">
+      <p className="tf-label mb-2">{label}</p>
       {payload.map((item, i) => (
         <div key={i} className="flex justify-between gap-6" style={{ color: item.color }}>
-          <span className="text-white/70">{item.name}</span>
-          <span className="font-bold">
+          <span style={{ color: 'var(--color-text-secondary)' }}>{item.name}</span>
+          <span style={{ fontWeight: 'var(--font-bold)' }}>
             {isCurrency ? formatCHF(item.value) : item.value}
           </span>
         </div>
@@ -57,8 +57,8 @@ const ChartTooltip = ({ active, payload, label, isCurrency = true }) => {
 };
 
 const ChartCard = ({ title, children }) => (
-  <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
-    <p className="text-xs font-body text-white/50 uppercase tracking-wider mb-4">{title}</p>
+  <div className="tf-card">
+    <p className="tf-label" style={{ marginBottom: 'var(--space-4)' }}>{title}</p>
     {children}
   </div>
 );
@@ -180,7 +180,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="dashboard-loading">
-        <Loader2 className="animate-spin text-rose-500" size={32} />
+        <Loader2 className="animate-spin" size={32} style={{ color: 'var(--color-accent)' }} />
       </div>
     );
   }
@@ -188,20 +188,20 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   if (kpis.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4" data-testid="dashboard-empty">
-        <p className="text-white/40 font-body">{t("noData")}</p>
-        <Button
+        <p style={{ color: 'var(--color-text-secondary)' }}>{t("noData")}</p>
+        <button
           onClick={handleSeed}
           disabled={seeding}
-          className="bg-rose-600 hover:bg-rose-700 text-white font-bold uppercase tracking-wider"
+          className="tf-btn-primary flex items-center gap-2"
           data-testid="seed-btn"
         >
           {seeding ? (
-            <Loader2 size={14} className="animate-spin mr-2" />
+            <Loader2 size={14} className="animate-spin" />
           ) : (
-            <RotateCcw size={14} className="mr-2" />
+            <RotateCcw size={14} />
           )}
           {seeding ? t("seeding") : t("seedData")}
-        </Button>
+        </button>
       </div>
     );
   }
@@ -212,11 +212,11 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {settings?.club_name || t("dashboard")}
           </h1>
           {selectedLabel && (
-            <p className="text-white/40 text-sm font-body mt-1">{selectedLabel}</p>
+            <p className="tf-page-subtitle">{selectedLabel}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -224,7 +224,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           <button
             onClick={() => navigateMonth(-1)}
             disabled={!canGoBack}
-            className="p-1.5 text-white/30 hover:text-white disabled:opacity-20 transition-colors"
+            style={{ color: 'var(--color-text-tertiary)', transition: 'var(--transition-fast)' }}
+            className="p-1.5 disabled:opacity-20"
             data-testid="prev-month-btn"
           >
             <ChevronLeft size={16} />
@@ -232,53 +233,51 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           <button
             onClick={() => navigateMonth(1)}
             disabled={!canGoForward}
-            className="p-1.5 text-white/30 hover:text-white disabled:opacity-20 transition-colors"
+            style={{ color: 'var(--color-text-tertiary)', transition: 'var(--transition-fast)' }}
+            className="p-1.5 disabled:opacity-20"
             data-testid="next-month-btn"
           >
             <ChevronRight size={16} />
           </button>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={() => setEditKpiOpen(true)}
-            className="text-white/30 hover:text-white hover:bg-white/5 text-xs"
+            className="tf-btn-secondary flex items-center gap-1.5"
+            style={{ padding: '6px 12px', fontSize: 'var(--text-xs)' }}
             data-testid="edit-kpi-btn"
             title={lang === "fr" ? "Modifier les KPIs" : "Edit KPIs"}
           >
-            <Pencil size={12} className="mr-1.5" />
+            <Pencil size={12} />
             {lang === "fr" ? "Modifier" : "Edit"}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          </button>
+          <button
             onClick={() => {
               if (selectedMonth) {
                 window.open(`${API}/report/pdf/${selectedMonth}`, '_blank');
               }
             }}
             disabled={!selectedMonth}
-            className="text-white/30 hover:text-white hover:bg-white/5 text-xs"
+            className="tf-btn-secondary flex items-center gap-1.5"
+            style={{ padding: '6px 12px', fontSize: 'var(--text-xs)' }}
             data-testid="export-pdf-btn"
-            title={lang === "fr" ? "Télécharger le rapport PDF" : "Download PDF report"}
+            title={lang === "fr" ? "Telecharger le rapport PDF" : "Download PDF report"}
           >
-            <FileDown size={12} className="mr-1.5" />
+            <FileDown size={12} />
             PDF
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+          </button>
+          <button
             onClick={handleSeed}
             disabled={seeding}
-            className="border-white/10 text-white/50 hover:text-white hover:bg-white/5 text-xs"
+            className="tf-btn-secondary flex items-center gap-1.5"
+            style={{ padding: '6px 12px', fontSize: 'var(--text-xs)' }}
             data-testid="reseed-btn"
           >
             {seeding ? (
-              <Loader2 size={12} className="animate-spin mr-1.5" />
+              <Loader2 size={12} className="animate-spin" />
             ) : (
-              <RotateCcw size={12} className="mr-1.5" />
+              <RotateCcw size={12} />
             )}
             {t("seedData")}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -345,8 +344,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
       {/* KPI vs Targets */}
       {settings?.targets && current && (
-        <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
-          <p className="text-xs font-body text-white/40 uppercase tracking-wider mb-4">
+        <div className="tf-card">
+          <p className="tf-label" style={{ marginBottom: 'var(--space-4)' }}>
             {lang === "fr" ? "Objectifs du mois" : "Monthly targets"}
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
@@ -357,7 +356,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 target: settings.targets.churn_rate,
                 format: (v) => `${v?.toFixed(1)}%`,
                 lower_is_better: true,
-                color: "bg-orange-500",
               },
               {
                 label: t("cac"),
@@ -365,7 +363,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 target: settings.targets.cac,
                 format: formatCHF,
                 lower_is_better: true,
-                color: "bg-purple-500",
               },
               {
                 label: t("roas"),
@@ -373,7 +370,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 target: settings.targets.roas,
                 format: (v) => `${v?.toFixed(1)}x`,
                 lower_is_better: false,
-                color: "bg-yellow-400",
               },
               {
                 label: t("newMembers"),
@@ -381,7 +377,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 target: settings.targets.new_members,
                 format: (v) => `${v}`,
                 lower_is_better: false,
-                color: "bg-green-500",
               },
               {
                 label: t("profitMargin"),
@@ -389,7 +384,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 target: settings.targets.profit_margin,
                 format: (v) => `${v?.toFixed(1)}%`,
                 lower_is_better: false,
-                color: "bg-green-500",
               },
               {
                 label: t("totalRevenue"),
@@ -397,29 +391,30 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 target: current.total_revenue * (1 + (settings.targets.revenue_growth || 5) / 100),
                 format: formatCHF,
                 lower_is_better: false,
-                color: "bg-rose-500",
               },
-            ].map(({ label, actual, target, format, lower_is_better, color }) => {
+            ].map(({ label, actual, target, format, lower_is_better }) => {
               const pct = target > 0 ? Math.min((actual / target) * 100, 100) : 0;
               const good = lower_is_better ? actual <= target : actual >= target;
               return (
                 <div key={label} className="space-y-1.5">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-xs text-white/50 uppercase tracking-wider">{label}</span>
-                    <span className={`text-xs font-mono font-bold ${good ? "text-green-400" : "text-orange-400"}`}>
+                    <span className="tf-label">{label}</span>
+                    <span className="font-mono" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: good ? 'var(--color-success)' : 'var(--color-warning)' }}>
                       {format(actual)}
                     </span>
                   </div>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div style={{ height: '6px', background: 'var(--color-bg-tertiary)', borderRadius: '3px', overflow: 'hidden' }}>
                     <div
-                      className="h-full transition-all duration-500 rounded-full"
                       style={{
+                        height: '100%',
                         width: `${pct}%`,
-                        backgroundColor: good ? "#22C55E" : "#F97316",
+                        backgroundColor: good ? 'var(--color-success)' : 'var(--color-warning)',
+                        transition: 'width 0.5s ease',
+                        borderRadius: '3px',
                       }}
                     />
                   </div>
-                  <p className="text-xs text-white/20 font-mono">
+                  <p className="font-mono" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
                     {lang === "fr" ? "Obj." : "Target"}: {format(target)}
                   </p>
                 </div>
@@ -431,18 +426,18 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
       {/* Tabs */}
       <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList className="bg-[#121214] border border-white/10 rounded-sm p-1">
+        <TabsList className="tf-tabs-list" style={{ border: '1px solid var(--color-border)' }}>
           {["revenue", "details", "funnel", "members", "metrics", "annual"].map((tab) => (
             <TabsTrigger
               key={tab}
               value={tab}
               data-testid={`tab-${tab}`}
-              className="rounded-sm text-white/50 data-[state=active]:bg-rose-600 data-[state=active]:text-white font-body text-sm uppercase tracking-wider"
+              className="tf-tabs-trigger"
             >
               {tab === "annual" 
                 ? (lang === "fr" ? "Annuel" : "Annual") 
                 : tab === "details" 
-                ? (lang === "fr" ? "Détails" : "Details")
+                ? (lang === "fr" ? "Details" : "Details")
                 : t(tab)}
             </TabsTrigger>
           ))}
@@ -452,25 +447,34 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         <TabsContent value="revenue" className="space-y-4" data-testid="tab-revenue-content">
           {/* N-1 Toggle */}
           <div className="flex items-center justify-between">
-            <p className="text-xs text-white/30 font-mono">
-              {showN1 && n1Kpis.length > 0 ? `↗ comparaison ${n1Year}` : ""}
+            <p className="font-mono" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
+              {showN1 && n1Kpis.length > 0 ? `comparaison ${n1Year}` : ""}
             </p>
             {n1Kpis.length > 0 && (
               <button
                 onClick={() => setShowN1(!showN1)}
-                className={`text-xs font-mono px-3 py-1 rounded-sm border transition-colors ${showN1 ? "border-rose-500/50 text-rose-400 bg-rose-500/10" : "border-white/10 text-white/30 hover:text-white/60"}`}
+                className="font-mono"
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  padding: '4px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: showN1 ? '1px solid rgba(10,132,255,0.5)' : '1px solid var(--color-border)',
+                  color: showN1 ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
+                  background: showN1 ? 'var(--color-accent-subtle)' : 'transparent',
+                  transition: 'var(--transition-fast)',
+                }}
                 data-testid="n1-toggle-btn"
               >
-                {showN1 ? "✓ " : ""} N-1 ({n1Year})
+                {showN1 ? "N-1 " : "N-1 "} ({n1Year})
               </button>
             )}
           </div>
 
           {/* Monthly note */}
           {current?.note && (
-            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-sm px-4 py-2.5 flex items-start gap-2">
-              <span className="text-yellow-400/60 text-xs mt-0.5">📝</span>
-              <p className="text-yellow-300/80 text-sm font-body">{current.note}</p>
+            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-[var(--radius-lg)] px-4 py-2.5 flex items-start gap-2">
+              <span className="text-[var(--color-warning)]/60 text-xs mt-0.5">📝</span>
+              <p className="text-[var(--color-warning)] text-sm font-text">{current.note}</p>
             </div>
           )}
 
@@ -557,12 +561,12 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
         {/* Details Tab - All detailed KPI fields */}
         <TabsContent value="details" className="space-y-4" data-testid="tab-details-content">
-          <div className="bg-[#121214] border border-white/10 rounded-sm p-5">
+          <div className="tf-card">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-body text-white/50 uppercase tracking-wider">
-                {lang === "fr" ? "Données Détaillées du Mois" : "Detailed Monthly Data"}
+              <p className="tf-label">
+                {lang === "fr" ? "Donnees Detaillees du Mois" : "Detailed Monthly Data"}
               </p>
-              <span className="text-xs font-mono text-white/30">
+              <span className="font-mono" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
                 {current?.month ? formatMonthFull(current.month, lang) : ""}
               </span>
             </div>
@@ -576,14 +580,14 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
             {/* Acquisition stats */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: t("newMembers"), value: formatNum(current?.new_members), color: "text-green-400" },
-                { label: t("lostMembers"), value: formatNum(current?.lost_members), color: "text-red-400" },
-                { label: t("marketingSpend"), value: formatCHF(current?.marketing_spend), color: "text-rose-400" },
-                { label: t("cac"), value: formatCHF(current?.cac), color: "text-purple-400" },
+                { label: t("newMembers"), value: formatNum(current?.new_members), color: "var(--color-success)" },
+                { label: t("lostMembers"), value: formatNum(current?.lost_members), color: "var(--color-danger)" },
+                { label: t("marketingSpend"), value: formatCHF(current?.marketing_spend), color: "var(--color-accent)" },
+                { label: t("cac"), value: formatCHF(current?.cac), color: "var(--color-info)" },
               ].map(({ label, value, color }) => (
-                <div key={label} className="bg-[#121214] border border-white/10 p-5 rounded-sm">
-                  <p className="text-xs text-white/50 uppercase tracking-wider">{label}</p>
-                  <p className={`text-2xl font-heading font-extrabold mt-2 ${color}`}>{value}</p>
+                <div key={label} className="tf-stat">
+                  <p className="tf-stat-label">{label}</p>
+                  <p className="font-mono" style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color, marginTop: 'var(--space-2)' }}>{value}</p>
                 </div>
               ))}
             </div>
@@ -702,9 +706,9 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               { label: t("totalExpenses"), value: formatCHF(current?.total_expenses) },
               { label: t("adSpend"), value: formatCHF(current?.ad_spend) },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-[#121214] border border-white/10 p-4 rounded-sm">
-                <p className="text-xs text-white/40 uppercase tracking-wider">{label}</p>
-                <p className="text-xl font-heading font-extrabold text-white mt-1">{value}</p>
+              <div key={label} className="tf-stat">
+                <p className="tf-stat-label">{label}</p>
+                <p className="tf-stat-value">{value}</p>
               </div>
             ))}
           </div>
@@ -715,60 +719,60 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           {annualData && (
             <>
               <div className="flex items-baseline gap-2">
-                <h2 className="font-heading text-2xl font-extrabold text-white uppercase">
+                <h2 className="font-display" style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
                   {lang === "fr" ? `Bilan ${currentYear}` : `${currentYear} Summary`}
                 </h2>
-                <span className="text-white/30 text-sm font-mono">{annualData.months} {lang === "fr" ? "mois" : "months"}</span>
+                <span className="font-mono" style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>{annualData.months} {lang === "fr" ? "mois" : "months"}</span>
               </div>
 
               {/* Annual KPI cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: lang === "fr" ? "CA Annuel" : "Annual Revenue", value: formatCHF(annualData.totalRevenue), color: "text-rose-500" },
-                  { label: lang === "fr" ? "Bénéfice Annuel" : "Annual Profit", value: formatCHF(annualData.totalProfit), color: annualData.totalProfit >= 0 ? "text-green-400" : "text-red-400" },
-                  { label: lang === "fr" ? "Dépenses Annuelles" : "Annual Expenses", value: formatCHF(annualData.totalExpenses), color: "text-blue-400" },
-                  { label: lang === "fr" ? "Nouveaux Membres" : "New Members", value: formatNum(annualData.totalNewMembers), color: "text-emerald-400" },
+                  { label: lang === "fr" ? "CA ANNUEL" : "ANNUAL REVENUE", value: formatCHF(annualData.totalRevenue), color: "var(--color-accent)" },
+                  { label: lang === "fr" ? "BENEFICE ANNUEL" : "ANNUAL PROFIT", value: formatCHF(annualData.totalProfit), color: annualData.totalProfit >= 0 ? "var(--color-success)" : "var(--color-danger)" },
+                  { label: lang === "fr" ? "DEPENSES ANNUELLES" : "ANNUAL EXPENSES", value: formatCHF(annualData.totalExpenses), color: "var(--color-danger)" },
+                  { label: lang === "fr" ? "NOUVEAUX MEMBRES" : "NEW MEMBERS", value: formatNum(annualData.totalNewMembers), color: "var(--color-success)" },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="bg-[#121214] border border-white/10 p-5 rounded-sm">
-                    <p className="text-xs text-white/40 uppercase tracking-wider">{label}</p>
-                    <p className={`text-2xl font-heading font-extrabold mt-2 ${color}`}>{value}</p>
+                  <div key={label} className="tf-stat">
+                    <p className="tf-stat-label">{label}</p>
+                    <p className="font-mono" style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color, marginTop: 'var(--space-2)' }}>{value}</p>
                   </div>
                 ))}
               </div>
 
               {/* Best / Worst / Avg */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#121214] border border-green-500/20 p-5 rounded-sm">
-                  <p className="text-xs text-green-400/60 uppercase tracking-wider mb-2">
-                    {lang === "fr" ? "Meilleur mois" : "Best month"}
+                <div className="tf-card" style={{ borderColor: 'rgba(48, 209, 88, 0.2)' }}>
+                  <p className="tf-label" style={{ color: 'var(--color-success)', marginBottom: 'var(--space-2)' }}>
+                    {lang === "fr" ? "MEILLEUR MOIS" : "BEST MONTH"}
                   </p>
-                  <p className="font-heading text-xl font-extrabold text-white uppercase">
+                  <p className="font-display" style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: 'var(--color-text-primary)' }}>
                     {formatMonthFull(annualData.bestMonth.month, lang)}
                   </p>
-                  <p className="text-green-400 font-mono text-sm mt-1">
+                  <p className="font-mono" style={{ color: 'var(--color-success)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-1)' }}>
                     {formatCHF(annualData.bestMonth.total_revenue)}
                   </p>
                 </div>
-                <div className="bg-[#121214] border border-orange-500/20 p-5 rounded-sm">
-                  <p className="text-xs text-orange-400/60 uppercase tracking-wider mb-2">
-                    {lang === "fr" ? "Mois le plus faible" : "Worst month"}
+                <div className="tf-card" style={{ borderColor: 'rgba(255, 214, 10, 0.2)' }}>
+                  <p className="tf-label" style={{ color: 'var(--color-warning)', marginBottom: 'var(--space-2)' }}>
+                    {lang === "fr" ? "MOIS LE PLUS FAIBLE" : "WORST MONTH"}
                   </p>
-                  <p className="font-heading text-xl font-extrabold text-white uppercase">
+                  <p className="font-display" style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: 'var(--color-text-primary)' }}>
                     {formatMonthFull(annualData.worstMonth.month, lang)}
                   </p>
-                  <p className="text-orange-400 font-mono text-sm mt-1">
+                  <p className="font-mono" style={{ color: 'var(--color-warning)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-1)' }}>
                     {formatCHF(annualData.worstMonth.total_revenue)}
                   </p>
                 </div>
-                <div className="bg-[#121214] border border-white/10 p-5 rounded-sm">
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-2">
-                    {lang === "fr" ? "Moyennes annuelles" : "Annual averages"}
+                <div className="tf-card">
+                  <p className="tf-label" style={{ marginBottom: 'var(--space-2)' }}>
+                    {lang === "fr" ? "MOYENNES ANNUELLES" : "ANNUAL AVERAGES"}
                   </p>
-                  <div className="space-y-1 text-sm font-mono">
-                    <p className="text-white/70">ROAS: <span className="text-yellow-400 font-bold">{annualData.avgRoas.toFixed(1)}x</span></p>
-                    <p className="text-white/70">Churn: <span className="text-orange-400 font-bold">{annualData.avgChurn.toFixed(1)}%</span></p>
-                    <p className="text-white/70">
-                      {lang === "fr" ? "Marge" : "Margin"}: <span className="text-green-400 font-bold">
+                  <div className="space-y-1 font-mono" style={{ fontSize: 'var(--text-sm)' }}>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>ROAS: <span style={{ color: 'var(--color-warning)', fontWeight: 'var(--font-bold)' }}>{annualData.avgRoas.toFixed(1)}x</span></p>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>Churn: <span style={{ color: 'var(--color-danger)', fontWeight: 'var(--font-bold)' }}>{annualData.avgChurn.toFixed(1)}%</span></p>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>
+                      {lang === "fr" ? "Marge" : "Margin"}: <span style={{ color: 'var(--color-success)', fontWeight: 'var(--font-bold)' }}>
                         {((annualData.totalProfit / annualData.totalRevenue) * 100).toFixed(1)}%
                       </span>
                     </p>

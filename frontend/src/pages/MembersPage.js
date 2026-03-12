@@ -323,9 +323,9 @@ export default function MembersPage() {
     } else if (days <= 7) {
       return <Badge variant="destructive">Expire dans {days}j</Badge>;
     } else if (days <= 30) {
-      return <Badge variant="warning" className="bg-orange-500/20 text-orange-400">Expire dans {days}j</Badge>;
+      return <Badge variant="warning" className="bg-orange-500/20 text-[var(--color-warning)]">Expire dans {days}j</Badge>;
     }
-    return <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">Actif</Badge>;
+    return <Badge variant="secondary" className="bg-emerald-500/20 text-[var(--color-success)]">Actif</Badge>;
   };
 
   return (
@@ -333,14 +333,14 @@ export default function MembersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
+          <h1 className="tf-page-header">
             {lang === "fr" ? "Gestion des Membres" : "Members Management"}
           </h1>
-          <p className="text-white/40 text-sm font-body mt-1">
+          <p className="tf-page-subtitle">
             {lang === "fr" ? "Abonnements et échéances" : "Subscriptions and expirations"}
           </p>
         </div>
-        <Button onClick={openAddModal} className="bg-rose-600 hover:bg-rose-700 font-bold uppercase tracking-wider text-xs" data-testid="add-member-btn">
+        <Button onClick={openAddModal} className="bg-[var(--color-accent)] hover:opacity-85 font-bold uppercase tracking-wider text-xs" data-testid="add-member-btn">
           <Plus size={16} className="mr-2" />
           {lang === "fr" ? "Ajouter un membre" : "Add member"}
         </Button>
@@ -348,24 +348,24 @@ export default function MembersPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
-          <p className="text-white/40 text-xs uppercase tracking-wider">Total</p>
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <p className="text-[var(--color-text-secondary)] tf-label inline">Total</p>
           <p className="text-2xl font-mono font-bold text-white mt-1">{stats.total}</p>
         </div>
         <div 
-          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-orange-500' : 'border-white/10 hover:border-orange-500/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-orange-500' : 'border-[var(--color-border)] hover:border-orange-500/50'}`}
           onClick={() => setShowExpiring(!showExpiring)}
           data-testid="expiring-filter"
         >
-          <p className="text-orange-400 text-xs uppercase tracking-wider flex items-center gap-1">
+          <p className="text-[var(--color-warning)] tf-label inline flex items-center gap-1">
             <AlertTriangle size={12} />
             Expirant (30j)
           </p>
-          <p className="text-2xl font-mono font-bold text-orange-400 mt-1">{stats.expiring}</p>
+          <p className="text-2xl font-mono font-bold text-[var(--color-warning)] mt-1">{stats.expiring}</p>
         </div>
         {MEMBER_TYPES.map((type) => (
-          <div key={type} className="bg-[#121214] rounded-sm p-4 border border-white/10">
-            <p className="text-white/40 text-xs uppercase tracking-wider truncate">{type.replace("Membres ", "")}</p>
+          <div key={type} className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+            <p className="text-[var(--color-text-secondary)] tf-label inline truncate">{type.replace("Membres ", "")}</p>
             <p className="text-2xl font-mono font-bold text-white mt-1">{stats.byType[type]}</p>
           </div>
         ))}
@@ -374,20 +374,20 @@ export default function MembersPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={lang === "fr" ? "Rechercher..." : "Search..."}
-            className="pl-10 bg-[#121214] border-white/10 text-white"
+            className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
             data-testid="member-search"
           />
         </div>
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[220px] bg-[#121214] border-white/10 text-white" data-testid="type-filter">
+          <SelectTrigger className="w-[220px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="type-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#121214] border-white/10">
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
             <SelectItem value="all" className="text-white">Tous les types</SelectItem>
             {MEMBER_TYPES.map((type) => (
               <SelectItem key={type} value={type} className="text-white">{type}</SelectItem>
@@ -397,29 +397,29 @@ export default function MembersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
+      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-white/50">Membre</TableHead>
-              <TableHead className="text-white/50">Type</TableHead>
-              <TableHead className="text-white/50">Abonnement</TableHead>
-              <TableHead className="text-white/50">Date signature</TableHead>
-              <TableHead className="text-white/50">Expiration</TableHead>
-              <TableHead className="text-white/50">Statut</TableHead>
-              <TableHead className="text-white/50 text-right">Actions</TableHead>
+            <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+              <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Abonnement</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Date signature</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Expiration</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-white/50 py-8">
+                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredMembers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-white/50 py-8">
+                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
                   Aucun membre trouvé
                 </TableCell>
               </TableRow>
@@ -428,21 +428,21 @@ export default function MembersPage() {
                 <>
                   <TableRow
                     key={member.id}
-                    className="border-white/10 hover:bg-white/5 cursor-pointer"
+                    className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer"
                     onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
                     data-testid={`member-row-${member.id}`}
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        {expandedMember === member.id ? <ChevronUp size={14} className="text-white/30" /> : <ChevronDown size={14} className="text-white/30" />}
+                        {expandedMember === member.id ? <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" /> : <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />}
                         <div>
                           <p className="text-white font-medium">{member.name}</p>
-                          <p className="text-white/40 text-xs">{member.email}</p>
+                          <p className="text-[var(--color-text-secondary)] text-xs">{member.email}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-white/20 text-white/70">
+                      <Badge variant="outline" className="border-[var(--color-border-strong)] text-white/70">
                         {member.member_type?.replace("Membres ", "")}
                       </Badge>
                     </TableCell>
@@ -470,7 +470,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                          className="text-[var(--color-success)] hover:text-emerald-300 hover:bg-emerald-500/10"
                           onClick={() => openRenewModal(member)}
                           data-testid={`renew-${member.id}`}
                         >
@@ -479,7 +479,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                          className="text-[var(--color-accent)] hover:text-blue-300 hover:bg-blue-500/10"
                           onClick={() => openEditModal(member)}
                           data-testid={`edit-${member.id}`}
                         >
@@ -488,7 +488,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          className="text-[var(--color-danger)] hover:text-red-300 hover:bg-red-500/10"
                           onClick={() => deleteMutation.mutate(member.id)}
                           data-testid={`delete-${member.id}`}
                         >
@@ -498,43 +498,43 @@ export default function MembersPage() {
                     </TableCell>
                   </TableRow>
                   {expandedMember === member.id && (
-                    <TableRow className="bg-[#121214]">
+                    <TableRow className="bg-[var(--color-bg-secondary)]">
                       <TableCell colSpan={7}>
                         <div className="py-4 px-6 space-y-4">
                           <div className="grid grid-cols-3 gap-6">
                             <div>
-                              <p className="text-white/40 text-xs uppercase mb-1">Contact</p>
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Contact</p>
                               <p className="text-white flex items-center gap-2">
-                                <Mail size={14} className="text-white/40" />
+                                <Mail size={14} className="text-[var(--color-text-secondary)]" />
                                 {member.email || "-"}
                               </p>
                               <p className="text-white flex items-center gap-2 mt-1">
-                                <Phone size={14} className="text-white/40" />
+                                <Phone size={14} className="text-[var(--color-text-secondary)]" />
                                 {member.phone || "-"}
                               </p>
                             </div>
                             <div>
-                              <p className="text-white/40 text-xs uppercase mb-1">Cash collecté</p>
-                              <p className="text-2xl font-mono font-bold text-emerald-400">
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Cash collecté</p>
+                              <p className="text-2xl font-mono font-bold text-[var(--color-success)]">
                                 {member.cash_collected?.toLocaleString("fr-CH")} CHF
                               </p>
                             </div>
                             <div>
-                              <p className="text-white/40 text-xs uppercase mb-1">Notes</p>
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Notes</p>
                               <p className="text-white/70 text-sm">{member.notes || "Aucune note"}</p>
                             </div>
                           </div>
                           {renewals.length > 0 && (
                             <div>
-                              <p className="text-white/40 text-xs uppercase mb-2">Historique des renouvellements</p>
+                              <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-2">Historique des renouvellements</p>
                               <div className="space-y-2">
                                 {renewals.map((r) => (
                                   <div key={r.id} className="flex items-center gap-4 text-sm">
-                                    <CheckCircle2 size={14} className="text-emerald-400" />
+                                    <CheckCircle2 size={14} className="text-[var(--color-success)]" />
                                     <span className="text-white/70">{r.renewal_duration}</span>
-                                    <span className="text-white/40">→</span>
+                                    <span className="text-[var(--color-text-secondary)]">→</span>
                                     <span className="text-white">{r.new_end_date}</span>
-                                    <span className="text-white/30 text-xs">
+                                    <span className="text-[var(--color-text-tertiary)] text-xs">
                                       {format(parseISO(r.created_at), "dd/MM/yyyy")}
                                     </span>
                                   </div>
@@ -555,7 +555,7 @@ export default function MembersPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-lg">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {selectedMember ? "Modifier le membre" : "Ajouter un membre"}
@@ -564,41 +564,41 @@ export default function MembersPage() {
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Nom *</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   data-testid="member-name-input"
                 />
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Email</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Email</label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   data-testid="member-email-input"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Téléphone</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Téléphone</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Type de membre</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Type de membre</label>
                 <Select value={formData.member_type} onValueChange={(v) => setFormData({ ...formData, member_type: v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {MEMBER_TYPES.map((type) => (
                       <SelectItem key={type} value={type} className="text-white">{type}</SelectItem>
                     ))}
@@ -608,7 +608,7 @@ export default function MembersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Abonnement</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Abonnement</label>
                 <Select 
                   value={formData.membership} 
                   onValueChange={(v) => {
@@ -631,10 +631,10 @@ export default function MembersPage() {
                     setFormData(newData);
                   }}
                 >
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     {MEMBERSHIP_OPTIONS.map((opt) => (
                       <SelectItem key={opt} value={opt} className="text-white">{opt}</SelectItem>
                     ))}
@@ -642,55 +642,55 @@ export default function MembersPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Cash collecté (CHF)</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Cash collecté (CHF)</label>
                 <Input
                   type="number"
                   value={formData.cash_collected}
                   onChange={(e) => setFormData({ ...formData, cash_collected: parseFloat(e.target.value) || 0 })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase flex items-center gap-1">
+                <label className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
                   <Calendar size={12} /> Date de signature
                 </label>
                 <Input
                   type="date"
                   value={formData.contract_signed_date}
                   onChange={(e) => setFormData({ ...formData, contract_signed_date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   data-testid="contract-date-input"
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase flex items-center gap-1">
+                <label className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
                   <Clock size={12} /> Date d'expiration
                 </label>
                 <Input
                   type="date"
                   value={formData.subscription_end_date}
                   onChange={(e) => setFormData({ ...formData, subscription_end_date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   data-testid="expiration-date-input"
                 />
               </div>
             </div>
             <div>
-              <label className="text-white/40 text-xs uppercase tracking-wider">Notes</label>
+              <label className="text-[var(--color-text-secondary)] tf-label inline">Notes</label>
               <Input
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="bg-[#121214] border-white/10 text-white mt-1"
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
               />
             </div>
 
             {/* Billing Section - Read-only when membership type is selected */}
-            <div className="border-t border-white/10 pt-4 mt-4">
+            <div className="border-t border-[var(--color-border)] pt-4 mt-4">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-white/70 text-sm flex items-center gap-2">
-                  <CreditCard size={14} className="text-green-400" />
+                  <CreditCard size={14} className="text-[var(--color-success)]" />
                   Facturation récurrente
                 </label>
                 <Switch
@@ -701,39 +701,39 @@ export default function MembersPage() {
               </div>
               
               {formData.billing_enabled && (
-                <div className="space-y-3 bg-[#121214] rounded-sm p-3">
+                <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                   {/* Info banner when values come from membership type */}
                   {membershipTypes.find(t => t.name === formData.membership) && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2 mb-2">
-                      <p className="text-blue-400 text-xs">
+                      <p className="text-[var(--color-accent)] text-xs">
                         Valeurs définies par le type d'abonnement "{formData.membership}" 
                         <br/>
-                        <span className="text-blue-400/70">Modifiables dans Config. Types</span>
+                        <span className="text-[var(--color-accent)]/70">Modifiables dans Config. Types</span>
                       </p>
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-white/40 text-xs">Montant (CHF)</label>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Montant (CHF)</label>
                       <Input
                         type="number"
                         value={formData.billing_amount}
                         onChange={(e) => setFormData({ ...formData, billing_amount: parseFloat(e.target.value) || 0 })}
-                        className="bg-[#121214] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         data-testid="billing-amount-input"
                         disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
                     </div>
                     <div>
-                      <label className="text-white/40 text-xs">Méthode</label>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Méthode</label>
                       <Select 
                         value={formData.billing_payment_method} 
                         onValueChange={(v) => setFormData({ ...formData, billing_payment_method: v })}
                       >
-                        <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
+                        <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#121214] border-white/10">
+                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                           {PAYMENT_METHODS.map((m) => (
                             <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
                           ))}
@@ -743,16 +743,16 @@ export default function MembersPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-white/40 text-xs">Cycle de facturation</label>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Cycle de facturation</label>
                       <Select 
                         value={formData.billing_cycle_type} 
                         onValueChange={(v) => setFormData({ ...formData, billing_cycle_type: v })}
                         disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       >
-                        <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#121214] border-white/10">
+                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                           {BILLING_CYCLE_TYPES.map((t) => (
                             <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
                           ))}
@@ -760,7 +760,7 @@ export default function MembersPage() {
                       </Select>
                     </div>
                     <div>
-                      <label className="text-white/40 text-xs">
+                      <label className="text-[var(--color-text-secondary)] text-xs">
                         {formData.billing_cycle_type === "monthly_day" ? "Jour du mois (1-28)" : "Intervalle (jours)"}
                       </label>
                       <Input
@@ -769,13 +769,13 @@ export default function MembersPage() {
                         max={formData.billing_cycle_type === "monthly_day" ? 28 : 365}
                         value={formData.billing_cycle_value}
                         onChange={(e) => setFormData({ ...formData, billing_cycle_value: parseInt(e.target.value) || 1 })}
-                        className="bg-[#121214] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         data-testid="billing-cycle-value-input"
                         disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
                     </div>
                   </div>
-                  <p className="text-white/30 text-xs">
+                  <p className="text-[var(--color-text-tertiary)] text-xs">
                     {formData.billing_cycle_type === "monthly_day"
                       ? `Facturé le ${formData.billing_cycle_value} de chaque mois`
                       : `Facturé tous les ${formData.billing_cycle_value} jours`}
@@ -785,10 +785,10 @@ export default function MembersPage() {
             </div>
 
             {/* Review Section - Choose frequency */}
-            <div className="border-t border-white/10 pt-4">
+            <div className="border-t border-[var(--color-border)] pt-4">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-white/70 text-sm flex items-center gap-2">
-                  <ClipboardCheck size={14} className="text-purple-400" />
+                  <ClipboardCheck size={14} className="text-[var(--color-info)]" />
                   Suivi / Bilan (poids, nutrition, programme)
                 </label>
                 <Switch
@@ -798,17 +798,17 @@ export default function MembersPage() {
                 />
               </div>
               {formData.review_enabled && (
-                <div className="space-y-3 bg-[#121214] rounded-sm p-3">
+                <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                   <div>
-                    <label className="text-white/40 text-xs">Fréquence du bilan</label>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Fréquence du bilan</label>
                     <Select 
                       value={formData.review_frequency || "annually"} 
                       onValueChange={(v) => setFormData({ ...formData, review_frequency: v, annual_review_enabled: true })}
                     >
-                      <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
+                      <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#121214] border-white/10">
+                      <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                         <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
                         <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
                         <SelectItem value="semi-annually" className="text-white">Semestriel</SelectItem>
@@ -816,7 +816,7 @@ export default function MembersPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <p className="text-white/30 text-xs">
+                  <p className="text-[var(--color-text-tertiary)] text-xs">
                     {formData.review_frequency === "monthly" && "Un bilan sera planifié chaque mois"}
                     {formData.review_frequency === "quarterly" && "Un bilan sera planifié tous les 3 mois"}
                     {formData.review_frequency === "semi-annually" && "Un bilan sera planifié tous les 6 mois"}
@@ -828,7 +828,7 @@ export default function MembersPage() {
           </div>
 
           {/* Duo Subscription */}
-          <div className="border-t border-white/10 pt-4">
+          <div className="border-t border-[var(--color-border)] pt-4">
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -840,14 +840,14 @@ export default function MembersPage() {
               <label className="text-white text-sm">Abonnement Duo (2 personnes, 1 prix)</label>
             </div>
             {formData.is_duo && (
-              <div className="mt-3 space-y-3 bg-[#121214] rounded-sm p-3">
-                <p className="text-xs text-white/40 uppercase tracking-wider">Partenaire Duo</p>
+              <div className="mt-3 space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">Partenaire Duo</p>
                 <div className="grid grid-cols-1 gap-2">
                   <Input
                     placeholder="Nom du partenaire *"
                     value={formData.duo_partner_name || ""}
                     onChange={(e) => setFormData({ ...formData, duo_partner_name: e.target.value })}
-                    className="bg-[#121214] border-white/10 text-white h-8 text-sm"
+                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
                     data-testid="duo-partner-name"
                   />
                   <div className="grid grid-cols-2 gap-2">
@@ -855,19 +855,19 @@ export default function MembersPage() {
                       placeholder="Email"
                       value={formData.duo_partner_email || ""}
                       onChange={(e) => setFormData({ ...formData, duo_partner_email: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white h-8 text-sm"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
                       data-testid="duo-partner-email"
                     />
                     <Input
                       placeholder="Téléphone"
                       value={formData.duo_partner_phone || ""}
                       onChange={(e) => setFormData({ ...formData, duo_partner_phone: e.target.value })}
-                      className="bg-[#121214] border-white/10 text-white h-8 text-sm"
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
                       data-testid="duo-partner-phone"
                     />
                   </div>
                 </div>
-                <p className="text-xs text-white/30">Le partenaire sera créé automatiquement comme un membre distinct lié à celui-ci.</p>
+                <p className="text-xs text-[var(--color-text-tertiary)]">Le partenaire sera créé automatiquement comme un membre distinct lié à celui-ci.</p>
               </div>
             )}
           </div>
@@ -876,7 +876,7 @@ export default function MembersPage() {
             <Button
               onClick={() => saveMutation.mutate(formData)}
               disabled={!formData.name || saveMutation.isPending}
-              className="bg-rose-600 hover:bg-rose-700"
+              className="bg-[var(--color-accent)] hover:opacity-85"
               data-testid="save-member-btn"
             >
               {saveMutation.isPending ? "..." : selectedMember ? "Mettre à jour" : "Ajouter"}
@@ -887,30 +887,30 @@ export default function MembersPage() {
 
       {/* Renew Modal */}
       <Dialog open={renewModalOpen} onOpenChange={setRenewModalOpen}>
-        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <RefreshCw className="text-emerald-400" size={20} />
+              <RefreshCw className="text-[var(--color-success)]" size={20} />
               Renouveler l'abonnement
             </DialogTitle>
           </DialogHeader>
           {selectedMember && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-sm p-4">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
                 <p className="text-white font-medium">{selectedMember.name}</p>
-                <p className="text-white/50 text-sm">
+                <p className="text-[var(--color-text-secondary)] text-sm">
                   Expire le: {selectedMember.subscription_end_date
                     ? format(parseISO(selectedMember.subscription_end_date), "dd MMMM yyyy", { locale: fr })
                     : "Non défini"}
                 </p>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Durée du renouvellement</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Durée du renouvellement</label>
                 <Select value={renewData.renewal_duration} onValueChange={(v) => setRenewData({ ...renewData, renewal_duration: v })}>
-                  <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#121214] border-white/10">
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                     <SelectItem value="1 mois" className="text-white">1 mois</SelectItem>
                     <SelectItem value="3 mois" className="text-white">3 mois</SelectItem>
                     <SelectItem value="6 mois" className="text-white">6 mois</SelectItem>
@@ -920,30 +920,30 @@ export default function MembersPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Nouvelle date d'expiration</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Nouvelle date d'expiration</label>
                 <Input
                   type="date"
                   value={renewData.new_end_date}
                   onChange={(e) => setRenewData({ ...renewData, new_end_date: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   data-testid="new-end-date-input"
                 />
               </div>
               <div>
-                <label className="text-white/40 text-xs uppercase tracking-wider">Notes</label>
+                <label className="text-[var(--color-text-secondary)] tf-label inline">Notes</label>
                 <Input
                   value={renewData.notes}
                   onChange={(e) => setRenewData({ ...renewData, notes: e.target.value })}
-                  className="bg-[#121214] border-white/10 text-white mt-1"
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   placeholder="Optionnel"
                 />
               </div>
 
               {/* Billing cycle update option */}
-              <div className="border-t border-white/10 pt-4">
+              <div className="border-t border-[var(--color-border)] pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-white/70 text-sm flex items-center gap-2">
-                    <CreditCard size={14} className="text-green-400" />
+                    <CreditCard size={14} className="text-[var(--color-success)]" />
                     Modifier le cycle de facturation
                   </label>
                   <Switch
@@ -954,25 +954,25 @@ export default function MembersPage() {
                 </div>
                 
                 {renewData.update_billing && (
-                  <div className="space-y-3 bg-[#121214] rounded-sm p-3">
+                  <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-white/40 text-xs">Montant (CHF)</label>
+                        <label className="text-[var(--color-text-secondary)] text-xs">Montant (CHF)</label>
                         <Input
                           type="number"
                           value={renewData.billing_amount}
                           onChange={(e) => setRenewData({ ...renewData, billing_amount: parseFloat(e.target.value) || 0 })}
-                          className="bg-[#121214] border-white/10 text-white mt-1 h-8"
+                          className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8"
                           data-testid="renew-billing-amount"
                         />
                       </div>
                       <div>
-                        <label className="text-white/40 text-xs">Méthode</label>
+                        <label className="text-[var(--color-text-secondary)] text-xs">Méthode</label>
                         <Select value={renewData.billing_payment_method} onValueChange={(v) => setRenewData({ ...renewData, billing_payment_method: v })}>
-                          <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
+                          <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#121214] border-white/10">
+                          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                             {PAYMENT_METHODS.map((m) => (
                               <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
                             ))}
@@ -982,12 +982,12 @@ export default function MembersPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-white/40 text-xs">Cycle de facturation</label>
+                        <label className="text-[var(--color-text-secondary)] text-xs">Cycle de facturation</label>
                         <Select value={renewData.billing_cycle_type} onValueChange={(v) => setRenewData({ ...renewData, billing_cycle_type: v })}>
-                          <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
+                          <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#121214] border-white/10">
+                          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                             {BILLING_CYCLE_TYPES.map((t) => (
                               <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
                             ))}
@@ -995,7 +995,7 @@ export default function MembersPage() {
                         </Select>
                       </div>
                       <div>
-                        <label className="text-white/40 text-xs">
+                        <label className="text-[var(--color-text-secondary)] text-xs">
                           {renewData.billing_cycle_type === "monthly_day" ? "Jour du mois (1-28)" : "Intervalle (jours)"}
                         </label>
                         <Input
@@ -1004,12 +1004,12 @@ export default function MembersPage() {
                           max={renewData.billing_cycle_type === "monthly_day" ? 28 : 365}
                           value={renewData.billing_cycle_value}
                           onChange={(e) => setRenewData({ ...renewData, billing_cycle_value: parseInt(e.target.value) || 1 })}
-                          className="bg-[#121214] border-white/10 text-white mt-1 h-8"
+                          className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8"
                           data-testid="renew-billing-cycle-value"
                         />
                       </div>
                     </div>
-                    <p className="text-white/30 text-xs">
+                    <p className="text-[var(--color-text-tertiary)] text-xs">
                       {renewData.billing_cycle_type === "monthly_day"
                         ? `Facturé le ${renewData.billing_cycle_value} de chaque mois`
                         : `Facturé tous les ${renewData.billing_cycle_value} jours`}
