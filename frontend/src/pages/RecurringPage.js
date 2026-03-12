@@ -209,17 +209,17 @@ export default function RecurringPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
-          <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">Total</p>
+          <p className="tf-stat-label">Total</p>
           <p className="text-xl font-display font-extrabold text-white mt-1">{recurring.length}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
-          <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{t("active")}</p>
+          <p className="tf-stat-label">{t("active")}</p>
           <p className="text-xl font-display font-extrabold text-[var(--color-success)] mt-1">
             {recurring.filter(r => r.is_active).length}
           </p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
-          <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{t("inactive")}</p>
+          <p className="tf-stat-label">{t("inactive")}</p>
           <p className="text-xl font-display font-extrabold text-[var(--color-text-tertiary)] mt-1">
             {recurring.filter(r => !r.is_active).length}
           </p>
@@ -227,7 +227,7 @@ export default function RecurringPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         {loading ? (
           <div className="flex items-center justify-center h-40">
             <Loader2 className="animate-spin text-[var(--color-accent)]" size={24} />

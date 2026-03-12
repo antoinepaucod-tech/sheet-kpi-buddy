@@ -632,55 +632,55 @@ button:active:not(:disabled) {
    APPLE TYPOGRAPHY — TABULAR NUMBERS & HARMONIZATION
    ================================================================ */
 
-/* --- TABULAR NUMBERS (aligned columns like Apple Finance) --- */
+/* --- TABULAR NUMBERS (Apple Finance style using Inter, NOT monospace) --- */
 .font-mono,
 .tf-stat-value,
 [class*="font-mono"] {
-  font-family: var(--font-mono) !important;
-  font-feature-settings: "tnum" 1, "zero" 1 !important;
-  -webkit-font-feature-settings: "tnum" 1, "zero" 1 !important;
-  font-variant-numeric: tabular-nums slashed-zero !important;
+  font-family: var(--font-display) !important;
+  font-feature-settings: "tnum" 1, "cv02" 1, "cv03" 1, "cv04" 1 !important;
+  -webkit-font-feature-settings: "tnum" 1, "cv02" 1, "cv03" 1, "cv04" 1 !important;
+  font-variant-numeric: tabular-nums !important;
 }
 
-/* --- NUMBER DISPLAY (Hero KPI numbers) --- */
+/* --- NUMBER DISPLAY (Hero KPI numbers — Inter, not mono) --- */
 .tf-number-hero {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-weight: var(--font-bold);
   font-size: var(--text-3xl);
   letter-spacing: -0.03em;
   line-height: 1;
-  font-feature-settings: "tnum" 1, "zero" 1;
-  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
 }
 
 .tf-number-large {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-weight: var(--font-bold);
-  font-size: var(--text-2xl);
+  font-size: var(--text-lg);
   letter-spacing: -0.02em;
   line-height: 1.1;
-  font-feature-settings: "tnum" 1, "zero" 1;
-  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
 }
 
 .tf-number-medium {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-weight: var(--font-semibold);
   font-size: var(--text-lg);
   letter-spacing: -0.01em;
   line-height: 1.2;
-  font-feature-settings: "tnum" 1, "zero" 1;
-  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .tf-number-small {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-weight: var(--font-bold);
   font-size: var(--text-sm);
-  font-feature-settings: "tnum" 1, "zero" 1;
-  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
 }
 
 /* --- PAGE TITLE (SF Pro Display style) --- */
@@ -718,7 +718,7 @@ button:active:not(:disabled) {
   color: var(--color-text-secondary);
 }
 
-/* --- TABLE DATA (mono for alignment) --- */
+/* --- TABLE DATA (Inter tabular for alignment) --- */
 table tbody td {
   font-family: var(--font-text) !important;
   font-feature-settings: "tnum" 1 !important;
@@ -731,15 +731,15 @@ table tbody td {
   font-variant-numeric: tabular-nums !important;
 }
 
-/* --- KPI CARD STAT VALUE (enforce mono+tnum) --- */
+/* --- KPI CARD STAT VALUE (Inter bold with tnum) --- */
 .tf-stat-value {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-weight: var(--font-bold);
   font-size: var(--text-2xl);
   color: var(--color-text-primary);
   margin-top: var(--space-1);
   letter-spacing: -0.02em;
   line-height: 1.1;
-  font-feature-settings: "tnum" 1, "zero" 1;
-  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
 }

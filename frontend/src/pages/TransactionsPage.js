@@ -137,22 +137,21 @@ export default function TransactionsPage({ selectedMonth }) {
       {/* Revenue split */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
         {[
-          { label: t("revenueMembers"), value: formatCHF(memberRevenue), color: "text-[var(--color-success)]" },
-          { label: t("revenueCoaching"), value: formatCHF(coachRevenue), color: "text-[var(--color-success)]" },
+          { label: t("revenueMembers"), value: formatCHF(memberRevenue) },
+          { label: t("revenueCoaching"), value: formatCHF(coachRevenue) },
           {
             label: t("expenses"),
             value: formatCHF(transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0)),
-            color: "text-[var(--color-accent)]",
+            isDanger: true,
           },
           {
             label: t("totalRevenue"),
             value: formatCHF(transactions.filter((t) => t.type === "revenue").reduce((s, t) => s + t.amount, 0)),
-            color: "text-[var(--color-accent)]",
           },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
-            <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</p>
-            <p className={`text-xl font-display font-extrabold mt-1 ${color}`}>{value}</p>
+        ].map(({ label, value, isDanger }) => (
+          <div key={label} className="tf-stat">
+            <p className="tf-stat-label">{label}</p>
+            <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: isDanger ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>{value}</p>
           </div>
         ))}
       </div>
@@ -190,7 +189,7 @@ export default function TransactionsPage({ selectedMonth }) {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         {loading ? (
           <div className="flex items-center justify-center h-40" data-testid="transactions-loading">
             <Loader2 className="animate-spin text-[var(--color-accent)]" size={24} />
@@ -270,7 +269,7 @@ export default function TransactionsPage({ selectedMonth }) {
 
       {/* Excluded transactions */}
       {excluded.length > 0 && (
-        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="tf-card overflow-hidden p-0">
           <button
             className="w-full flex items-center justify-between px-5 py-3 text-left"
             onClick={() => setShowExcluded(!showExcluded)}

@@ -225,12 +225,12 @@ export default function ClientKPIPage() {
 
       {/* Global Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Total Membres</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Total Membres</p>
           <p className="tf-number-large">{globalStats.totalMembers}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Moy. / Semaine</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Moy. / Semaine</p>
           <p className="tf-number-large" style={{color:"var(--color-info)"}}>{globalStats.avgPerWeek}</p>
         </div>
         <div 
@@ -336,7 +336,7 @@ export default function ClientKPIPage() {
       </div>
 
       {/* Members Table */}
-      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         <Table>
           <TableHeader>
             <TableRow className="border-[var(--color-border)] hover:bg-transparent">

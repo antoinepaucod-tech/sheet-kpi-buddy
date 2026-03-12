@@ -319,13 +319,13 @@ export default function CoursesPage() {
       {/* Summary Stats */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <div className="tf-stat">
             <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <CalendarDays size={12} /> Total Cours
             </p>
             <p className="tf-number-large">{summary.total_courses}</p>
           </div>
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <div className="tf-stat">
             <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <TrendingUp size={12} /> Taux moyen
             </p>
@@ -333,7 +333,7 @@ export default function CoursesPage() {
               {summary.avg_attendance_rate}%
             </p>
           </div>
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+          <div className="tf-stat">
             <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
               <DollarSign size={12} /> Dépenses
             </p>
@@ -341,8 +341,8 @@ export default function CoursesPage() {
               {summary.total_expenses?.toLocaleString("fr-CH")} CHF
             </p>
           </div>
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-            <p className="text-[var(--color-text-secondary)] tf-label inline">Mois</p>
+          <div className="tf-stat">
+            <p className="tf-stat-label">Mois</p>
             <p className="text-xl font-bold text-[var(--color-accent)]">{summary.month_name} {selectedYear}</p>
           </div>
         </div>
@@ -366,7 +366,7 @@ export default function CoursesPage() {
       )}
 
       {/* Courses Table */}
-      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         <Table>
           <TableHeader>
             <TableRow className="border-[var(--color-border)] hover:bg-transparent">
@@ -487,10 +487,10 @@ export default function CoursesPage() {
           {DAYS_FR.map((day) => (
             <div
               key={day}
-              className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-accent)]/50 transition-colors"
+              className="tf-stat cursor-pointer hover:border-[var(--color-accent)]/50 transition-colors"
               onClick={() => setSelectedDay(day)}
             >
-              <p className="text-[var(--color-text-secondary)] tf-label inline">{day}</p>
+              <p className="tf-stat-label">{day}</p>
               <p className="text-xl font-bold text-white">{coursesByDay[day]?.length || 0}</p>
               <p className="text-[var(--color-text-secondary)] text-xs">cours</p>
             </div>
@@ -506,7 +506,7 @@ export default function CoursesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom du cours *</label>
+              <label className="tf-stat-label">Nom du cours *</label>
               <Input
                 value={formData.course_name}
                 onChange={(e) => setFormData({ ...formData, course_name: e.target.value })}
@@ -517,7 +517,7 @@ export default function CoursesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Jour</label>
+                <label className="tf-stat-label">Jour</label>
                 <Select value={formData.day_of_week} onValueChange={(v) => setFormData({ ...formData, day_of_week: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
@@ -530,7 +530,7 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Horaire</label>
+                <label className="tf-stat-label">Horaire</label>
                 <Select value={formData.time_slot} onValueChange={(v) => setFormData({ ...formData, time_slot: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
@@ -545,7 +545,7 @@ export default function CoursesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Coach *</label>
+                <label className="tf-stat-label">Coach *</label>
                 <Select 
                   value={formData.coach_id} 
                   onValueChange={(v) => {
@@ -573,7 +573,7 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Capacité max</label>
+                <label className="tf-stat-label">Capacité max</label>
                 <Input
                   type="number"
                   min="1"
@@ -616,7 +616,7 @@ export default function CoursesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[var(--color-text-secondary)] tf-label inline">Instructeur</label>
+                  <label className="tf-stat-label">Instructeur</label>
                   <Select
                     value={selectedCourse.instructor || ""}
                     onValueChange={(v) => updateMutation.mutate({ id: selectedCourse.id, data: { instructor: v } })}
@@ -632,7 +632,7 @@ export default function CoursesPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-[var(--color-text-secondary)] tf-label inline">Capacité max</label>
+                  <label className="tf-stat-label">Capacité max</label>
                   <Input
                     type="number"
                     min="1"
@@ -644,7 +644,7 @@ export default function CoursesPage() {
                 </div>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Dépenses mensuelles (CHF)</label>
+                <label className="tf-stat-label">Dépenses mensuelles (CHF)</label>
                 <Input
                   type="number"
                   min="0"
@@ -700,7 +700,7 @@ export default function CoursesPage() {
                 </p>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Coach de remplacement *</label>
+                <label className="tf-stat-label">Coach de remplacement *</label>
                 <Select 
                   value={replaceData.replacement_coach_id} 
                   onValueChange={(v) => setReplaceData({ ...replaceData, replacement_coach_id: v })}
@@ -718,7 +718,7 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Date du remplacement *</label>
+                <label className="tf-stat-label">Date du remplacement *</label>
                 <Input
                   type="date"
                   value={replaceData.date}
@@ -727,7 +727,7 @@ export default function CoursesPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Raison</label>
+                <label className="tf-stat-label">Raison</label>
                 <Select 
                   value={replaceData.reason} 
                   onValueChange={(v) => setReplaceData({ ...replaceData, reason: v })}

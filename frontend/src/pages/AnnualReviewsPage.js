@@ -333,7 +333,7 @@ export default function AnnualReviewsPage() {
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("all"); }}
         >
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Total</p>
+          <p className="tf-stat-label">Total</p>
           <p className="tf-number-large">{stats.total}</p>
         </div>
         <div
@@ -405,7 +405,7 @@ export default function AnnualReviewsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         <Table>
           <TableHeader>
             <TableRow className="border-[var(--color-border)] hover:bg-transparent">

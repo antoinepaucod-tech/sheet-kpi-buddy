@@ -198,8 +198,8 @@ export default function CoachesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Total Coachs</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Total Coachs</p>
           <p className="tf-number-large">{coaches.length}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-success)]/30">
@@ -225,7 +225,7 @@ export default function CoachesPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         <Table>
           <TableHeader>
             <TableRow className="border-[var(--color-border)] hover:bg-transparent">
@@ -351,7 +351,7 @@ export default function CoachesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</label>
+              <label className="tf-stat-label">Nom *</label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -362,7 +362,7 @@ export default function CoachesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Email</label>
+                <label className="tf-stat-label">Email</label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -371,7 +371,7 @@ export default function CoachesPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Téléphone</label>
+                <label className="tf-stat-label">Téléphone</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -380,7 +380,7 @@ export default function CoachesPage() {
               </div>
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Taux horaire (CHF/h) *</label>
+              <label className="tf-stat-label">Taux horaire (CHF/h) *</label>
               <Input
                 type="number"
                 min={0}
@@ -426,7 +426,7 @@ export default function CoachesPage() {
               </div>
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Notes</label>
+              <label className="tf-stat-label">Notes</label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -469,17 +469,17 @@ export default function CoachesPage() {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
-                  <p className="text-[var(--color-text-secondary)] tf-label inline">Cours donnés</p>
+                  <p className="tf-stat-label">Cours donnés</p>
                   <p className="tf-number-large">{coachStats.total_courses}</p>
                 </div>
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
-                  <p className="text-[var(--color-text-secondary)] tf-label inline">Heures travaillées</p>
+                  <p className="tf-stat-label">Heures travaillées</p>
                   <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{coachStats.total_hours}h</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 text-center">
-                  <p className="text-[var(--color-text-secondary)] tf-label inline">Participants</p>
+                  <p className="tf-stat-label">Participants</p>
                   <p className="tf-number-large" style={{color:"var(--color-success)"}}>{coachStats.total_participants}</p>
                 </div>
                 <div className="bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-lg)] p-4 text-center">

@@ -202,13 +202,13 @@ export default function AttendancePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+        <div className="tf-stat">
           <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
             <Users size={10} /> Membres
           </p>
           <p className="tf-number-large">{members.length}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
+        <div className="tf-stat">
           <p className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
             <Activity size={10} /> Séances (période)
           </p>
@@ -216,8 +216,8 @@ export default function AttendancePage() {
             {Object.values(weekTotals).reduce((a, b) => a + b, 0)}
           </p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Semaines affichées</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Semaines affichées</p>
           <p className="tf-number-large">S{weeks[0]} → S{weeks[weeks.length - 1]}</p>
         </div>
       </div>

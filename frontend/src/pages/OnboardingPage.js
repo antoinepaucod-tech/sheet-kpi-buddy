@@ -645,7 +645,7 @@ export default function OnboardingPage() {
 
         {/* History Tab */}
         <TabsContent value="history" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+          <div className="tf-card overflow-hidden p-0">
             <Table>
               <TableHeader>
                 <TableRow className="border-[var(--color-border)]">
@@ -700,7 +700,7 @@ export default function OnboardingPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Membre *</label>
+              <label className="tf-stat-label">Membre *</label>
               <Select value={followupForm.member_id} onValueChange={(v) => setFollowupForm({ ...followupForm, member_id: v })}>
                 <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1" data-testid="followup-member-select">
                   <SelectValue placeholder="Sélectionner..." />
@@ -714,7 +714,7 @@ export default function OnboardingPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Date du suivi</label>
+                <label className="tf-stat-label">Date du suivi</label>
                 <Input
                   type="date"
                   value={followupForm.followup_date}
@@ -723,7 +723,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Type de suivi</label>
+                <label className="tf-stat-label">Type de suivi</label>
                 <Select value={followupForm.followup_type} onValueChange={(v) => setFollowupForm({ ...followupForm, followup_type: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
@@ -737,7 +737,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Notes (optionnel)</label>
+              <label className="tf-stat-label">Notes (optionnel)</label>
               <Input
                 value={followupForm.notes}
                 onChange={(e) => setFollowupForm({ ...followupForm, notes: e.target.value })}
@@ -777,7 +777,7 @@ export default function OnboardingPage() {
                 </p>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Notes du suivi</label>
+                <label className="tf-stat-label">Notes du suivi</label>
                 <Input
                   placeholder="Résumé de l'entretien..."
                   className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
@@ -785,7 +785,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Prochain suivi (optionnel)</label>
+                <label className="tf-stat-label">Prochain suivi (optionnel)</label>
                 <Input
                   type="date"
                   className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"

@@ -42,7 +42,7 @@ const CHART_COLORS = {
 const ChartTooltip = ({ active, payload, label, isCurrency = true }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)' }} className="text-xs font-mono shadow-xl">
+    <div style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', fontFamily: 'var(--font-display)', fontFeatureSettings: '"tnum" 1' }} className="text-xs shadow-xl">
       <p className="tf-label mb-2">{label}</p>
       {payload.map((item, i) => (
         <div key={i} className="flex justify-between gap-6" style={{ color: item.color }}>
@@ -416,25 +416,25 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               const pct = target > 0 ? Math.min((actual / target) * 100, 100) : 0;
               const good = lower_is_better ? actual <= target : actual >= target;
               return (
-                <div key={label} className="space-y-1.5">
-                  <div className="flex justify-between items-baseline">
-                    <span className="tf-label">{label}</span>
-                    <span className="font-mono" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: good ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                <div key={label} className="space-y-1.5 overflow-hidden">
+                  <div className="flex justify-between items-baseline gap-2">
+                    <span className="tf-label truncate">{label}</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', fontFeatureSettings: '"tnum" 1', whiteSpace: 'nowrap', color: good ? 'var(--color-success)' : 'var(--color-warning)' }}>
                       {format(actual)}
                     </span>
                   </div>
-                  <div style={{ height: '6px', background: 'var(--color-bg-tertiary)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '4px', background: 'var(--color-bg-tertiary)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div
                       style={{
                         height: '100%',
                         width: `${pct}%`,
                         backgroundColor: good ? 'var(--color-success)' : 'var(--color-warning)',
-                        transition: 'width 0.5s ease',
-                        borderRadius: '3px',
+                        transition: 'width 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                        borderRadius: '2px',
                       }}
                     />
                   </div>
-                  <p className="font-mono" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-xs)', fontFeatureSettings: '"tnum" 1', color: 'var(--color-text-tertiary)' }}>
                     {lang === "fr" ? "Obj." : "Target"}: {format(target)}
                   </p>
                 </div>

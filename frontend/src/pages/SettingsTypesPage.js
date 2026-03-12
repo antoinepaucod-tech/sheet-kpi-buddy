@@ -520,7 +520,7 @@ export default function SettingsTypesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</label>
+              <label className="tf-stat-label">Nom *</label>
               <Input
                 value={membershipForm.name}
                 onChange={(e) => setMembershipForm({ ...membershipForm, name: e.target.value })}
@@ -531,7 +531,7 @@ export default function SettingsTypesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Durée (mois)</label>
+                <label className="tf-stat-label">Durée (mois)</label>
                 <Input
                   type="number"
                   min={0}
@@ -542,7 +542,7 @@ export default function SettingsTypesPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Ou durée (jours)</label>
+                <label className="tf-stat-label">Ou durée (jours)</label>
                 <Input
                   type="number"
                   min={0}
@@ -555,7 +555,7 @@ export default function SettingsTypesPage() {
               </div>
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Prix (CHF)</label>
+              <label className="tf-stat-label">Prix (CHF)</label>
               <Input
                 type="number"
                 min={0}
@@ -566,7 +566,7 @@ export default function SettingsTypesPage() {
               />
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Description</label>
+              <label className="tf-stat-label">Description</label>
               <Input
                 value={membershipForm.description}
                 onChange={(e) => setMembershipForm({ ...membershipForm, description: e.target.value })}
@@ -675,7 +675,7 @@ export default function SettingsTypesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</label>
+              <label className="tf-stat-label">Nom *</label>
               <Input
                 value={memberTypeForm.name}
                 onChange={(e) => setMemberTypeForm({ ...memberTypeForm, name: e.target.value })}
@@ -685,7 +685,7 @@ export default function SettingsTypesPage() {
               />
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Code *</label>
+              <label className="tf-stat-label">Code *</label>
               <Input
                 value={memberTypeForm.code}
                 onChange={(e) => setMemberTypeForm({ ...memberTypeForm, code: e.target.value.toLowerCase().replace(/\s/g, "_") })}
@@ -695,7 +695,7 @@ export default function SettingsTypesPage() {
               />
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Description</label>
+              <label className="tf-stat-label">Description</label>
               <Input
                 value={memberTypeForm.description}
                 onChange={(e) => setMemberTypeForm({ ...memberTypeForm, description: e.target.value })}

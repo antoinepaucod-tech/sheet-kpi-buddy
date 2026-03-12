@@ -269,35 +269,35 @@ export default function PaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 tf-stagger">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Total paiements</p>
-          <p className="tf-number-large mt-1">{stats.total}</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Total paiements</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.total}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)] cursor-pointer hover:border-[var(--color-danger)]" onClick={() => setFilterStatus(filterStatus === 'late' ? 'all' : 'late')}>
-          <p className="text-[var(--color-danger)] tf-label inline flex items-center gap-1">
+        <div className="tf-stat cursor-pointer" style={{ borderColor: 'rgba(255,69,58,0.3)' }} onClick={() => setFilterStatus(filterStatus === 'late' ? 'all' : 'late')}>
+          <p className="tf-stat-label flex items-center gap-1" style={{ color: 'var(--color-danger)' }}>
             <AlertTriangle size={12} /> En retard
           </p>
-          <p className="tf-number-large mt-1" style={{color:"var(--color-danger)"}}>{stats.late}</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-danger)' }}>{stats.late}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-accent)]/50" onClick={() => setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending')}>
-          <p className="text-[var(--color-accent)] tf-label inline">En attente</p>
-          <p className="tf-number-large mt-1" style={{color:"var(--color-accent)"}}>{stats.pending}</p>
+        <div className="tf-stat cursor-pointer" onClick={() => setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending')}>
+          <p className="tf-stat-label" style={{ color: 'var(--color-accent)' }}>En attente</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-accent)' }}>{stats.pending}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-success)] tf-label inline">Payés</p>
-          <p className="tf-number-large mt-1" style={{color:"var(--color-success)"}}>{stats.paid}</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label" style={{ color: 'var(--color-success)' }}>Payes</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-success)' }}>{stats.paid}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline flex items-center gap-1">
+        <div className="tf-stat">
+          <p className="tf-stat-label flex items-center gap-1">
             <DollarSign size={12} /> Montant en retard
           </p>
-          <p className="tf-number-large mt-1" style={{color:"var(--color-danger)"}}>{stats.lateAmount.toLocaleString("fr-CH")} CHF</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-danger)' }}>{stats.lateAmount.toLocaleString("fr-CH")} CHF</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-          <TabsTrigger value="payments" className="data-[state=active]:bg-[var(--color-success)]">Paiements</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="payments">Paiements</TabsTrigger>
           <TabsTrigger value="late" className="data-[state=active]:bg-[var(--color-danger)]">En retard ({stats.late})</TabsTrigger>
           <TabsTrigger value="upcoming" className="data-[state=active]:bg-[var(--color-accent)]">À venir ({upcomingPayments.length})</TabsTrigger>
           <TabsTrigger value="schedules" className="data-[state=active]:bg-[var(--color-info)]">Plannings ({schedules.length})</TabsTrigger>
@@ -343,7 +343,7 @@ export default function PaymentsPage() {
           </div>
 
           {/* Payments Table */}
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+          <div className="tf-card overflow-hidden p-0">
             <Table>
               <TableHeader>
                 <TableRow className="border-[var(--color-border)] hover:bg-transparent">
@@ -556,7 +556,7 @@ export default function PaymentsPage() {
 
         {/* Schedules Tab */}
         <TabsContent value="schedules" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+          <div className="tf-card overflow-hidden p-0">
             <Table>
               <TableHeader>
                 <TableRow className="border-[var(--color-border)]">
@@ -624,7 +624,7 @@ export default function PaymentsPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Membre *</label>
+              <label className="tf-stat-label">Membre *</label>
               <Select value={scheduleForm.member_id} onValueChange={(v) => setScheduleForm({ ...scheduleForm, member_id: v })}>
                 <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1" data-testid="schedule-member-select">
                   <SelectValue placeholder="Sélectionner..." />
@@ -638,7 +638,7 @@ export default function PaymentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Montant (CHF) *</label>
+                <label className="tf-stat-label">Montant (CHF) *</label>
                 <Input
                   type="number"
                   value={scheduleForm.amount}
@@ -647,7 +647,7 @@ export default function PaymentsPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Méthode</label>
+                <label className="tf-stat-label">Méthode</label>
                 <Select value={scheduleForm.payment_method} onValueChange={(v) => setScheduleForm({ ...scheduleForm, payment_method: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
@@ -662,7 +662,7 @@ export default function PaymentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Type de récurrence</label>
+                <label className="tf-stat-label">Type de récurrence</label>
                 <Select value={scheduleForm.recurrence_type} onValueChange={(v) => setScheduleForm({ ...scheduleForm, recurrence_type: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
@@ -675,7 +675,7 @@ export default function PaymentsPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">
+                <label className="tf-stat-label">
                   {scheduleForm.recurrence_type === "monthly_day" ? "Jour du mois (1-28)" : "Intervalle (jours)"}
                 </label>
                 <Input
@@ -689,7 +689,7 @@ export default function PaymentsPage() {
               </div>
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Date de début</label>
+              <label className="tf-stat-label">Date de début</label>
               <Input
                 type="date"
                 value={scheduleForm.start_date}
@@ -728,7 +728,7 @@ export default function PaymentsPage() {
                 <p className="text-[var(--color-text-secondary)] text-sm">Échéance: {format(parseISO(selectedPayment.due_date), "dd/MM/yyyy")}</p>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Date de paiement</label>
+                <label className="tf-stat-label">Date de paiement</label>
                 <Input
                   type="date"
                   defaultValue={format(new Date(), "yyyy-MM-dd")}
@@ -737,7 +737,7 @@ export default function PaymentsPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Référence (optionnel)</label>
+                <label className="tf-stat-label">Référence (optionnel)</label>
                 <Input
                   placeholder="N° de transaction..."
                   className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
@@ -774,7 +774,7 @@ export default function PaymentsPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Membre *</label>
+              <label className="tf-stat-label">Membre *</label>
               <Select value={paymentForm.member_id} onValueChange={(v) => setPaymentForm({ ...paymentForm, member_id: v })}>
                 <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                   <SelectValue placeholder="Sélectionner..." />
@@ -788,7 +788,7 @@ export default function PaymentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Montant (CHF) *</label>
+                <label className="tf-stat-label">Montant (CHF) *</label>
                 <Input
                   type="number"
                   value={paymentForm.amount}
@@ -797,7 +797,7 @@ export default function PaymentsPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Date d'échéance</label>
+                <label className="tf-stat-label">Date d'échéance</label>
                 <Input
                   type="date"
                   value={paymentForm.due_date}

@@ -348,25 +348,26 @@ export default function MembersPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 tf-stagger">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Total</p>
-          <p className="tf-number-large mt-1">{stats.total}</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Total</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.total}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-[var(--color-warning)]' : 'border-[var(--color-border)] hover:border-[var(--color-warning)]/50'}`}
+          className="tf-stat cursor-pointer"
+          style={{ borderColor: showExpiring ? 'var(--color-warning)' : undefined }}
           onClick={() => setShowExpiring(!showExpiring)}
           data-testid="expiring-filter"
         >
-          <p className="text-[var(--color-warning)] tf-label inline flex items-center gap-1">
+          <p className="tf-stat-label flex items-center gap-1" style={{ color: 'var(--color-warning)' }}>
             <AlertTriangle size={12} />
             Expirant (30j)
           </p>
-          <p className="tf-number-large mt-1" style={{color:"var(--color-warning)"}}>{stats.expiring}</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-warning)' }}>{stats.expiring}</p>
         </div>
         {MEMBER_TYPES.map((type) => (
-          <div key={type} className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-            <p className="text-[var(--color-text-secondary)] tf-label inline truncate">{type.replace("Membres ", "")}</p>
-            <p className="tf-number-large mt-1">{stats.byType[type]}</p>
+          <div key={type} className="tf-stat">
+            <p className="tf-stat-label truncate">{type.replace("Membres ", "")}</p>
+            <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.byType[type]}</p>
           </div>
         ))}
       </div>
@@ -397,7 +398,7 @@ export default function MembersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         <Table>
           <TableHeader>
             <TableRow className="border-[var(--color-border)] hover:bg-transparent">
@@ -564,7 +565,7 @@ export default function MembersPage() {
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</label>
+                <label className="tf-stat-label">Nom *</label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -573,7 +574,7 @@ export default function MembersPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Email</label>
+                <label className="tf-stat-label">Email</label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -585,7 +586,7 @@ export default function MembersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Téléphone</label>
+                <label className="tf-stat-label">Téléphone</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -593,7 +594,7 @@ export default function MembersPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Type de membre</label>
+                <label className="tf-stat-label">Type de membre</label>
                 <Select value={formData.member_type} onValueChange={(v) => setFormData({ ...formData, member_type: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
@@ -608,7 +609,7 @@ export default function MembersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Abonnement</label>
+                <label className="tf-stat-label">Abonnement</label>
                 <Select 
                   value={formData.membership} 
                   onValueChange={(v) => {
@@ -642,7 +643,7 @@ export default function MembersPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Cash collecté (CHF)</label>
+                <label className="tf-stat-label">Cash collecté (CHF)</label>
                 <Input
                   type="number"
                   value={formData.cash_collected}
@@ -678,7 +679,7 @@ export default function MembersPage() {
               </div>
             </div>
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Notes</label>
+              <label className="tf-stat-label">Notes</label>
               <Input
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -841,7 +842,7 @@ export default function MembersPage() {
             </div>
             {formData.is_duo && (
               <div className="mt-3 space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
-                <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">Partenaire Duo</p>
+                <p className="tf-stat-label">Partenaire Duo</p>
                 <div className="grid grid-cols-1 gap-2">
                   <Input
                     placeholder="Nom du partenaire *"
@@ -905,7 +906,7 @@ export default function MembersPage() {
                 </p>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Durée du renouvellement</label>
+                <label className="tf-stat-label">Durée du renouvellement</label>
                 <Select value={renewData.renewal_duration} onValueChange={(v) => setRenewData({ ...renewData, renewal_duration: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
@@ -920,7 +921,7 @@ export default function MembersPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Nouvelle date d'expiration</label>
+                <label className="tf-stat-label">Nouvelle date d'expiration</label>
                 <Input
                   type="date"
                   value={renewData.new_end_date}
@@ -930,7 +931,7 @@ export default function MembersPage() {
                 />
               </div>
               <div>
-                <label className="text-[var(--color-text-secondary)] tf-label inline">Notes</label>
+                <label className="tf-stat-label">Notes</label>
                 <Input
                   value={renewData.notes}
                   onChange={(e) => setRenewData({ ...renewData, notes: e.target.value })}

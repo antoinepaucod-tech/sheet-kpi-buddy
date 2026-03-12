@@ -512,7 +512,7 @@ export default function ChallengePage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Nom du challenge *</label>
+              <label className="tf-stat-label">Nom du challenge *</label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -524,7 +524,7 @@ export default function ChallengePage() {
             
             {/* Challenge Type */}
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Type de challenge</label>
+              <label className="tf-stat-label">Type de challenge</label>
               <Select 
                 value={formData.challenge_type} 
                 onValueChange={(v) => setFormData({ ...formData, challenge_type: v })}
@@ -548,7 +548,7 @@ export default function ChallengePage() {
             {formData.challenge_type === "fixed" && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[var(--color-text-secondary)] tf-label inline">Date de début</label>
+                  <label className="tf-stat-label">Date de début</label>
                   <Input
                     type="date"
                     value={formData.start_date}
@@ -557,7 +557,7 @@ export default function ChallengePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[var(--color-text-secondary)] tf-label inline">Date de fin</label>
+                  <label className="tf-stat-label">Date de fin</label>
                   <Input
                     type="date"
                     value={formData.end_date}
@@ -578,7 +578,7 @@ export default function ChallengePage() {
 
             {/* Check-ins goal */}
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Objectif check-ins par semaine</label>
+              <label className="tf-stat-label">Objectif check-ins par semaine</label>
               <div className="flex items-center gap-4 mt-1">
                 <Input
                   type="number"
@@ -625,7 +625,7 @@ export default function ChallengePage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-[var(--color-text-secondary)] tf-label inline">Sélectionner un membre</label>
+              <label className="tf-stat-label">Sélectionner un membre</label>
               <Select
                 value={participantData.member_id}
                 onValueChange={(v) => {
@@ -654,7 +654,7 @@ export default function ChallengePage() {
             {challengeDetail?.challenge_type === "personal" && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[var(--color-text-secondary)] tf-label inline">Début personnel</label>
+                  <label className="tf-stat-label">Début personnel</label>
                   <Input
                     type="date"
                     value={participantData.personal_start_date}
@@ -663,7 +663,7 @@ export default function ChallengePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[var(--color-text-secondary)] tf-label inline">Fin personnel</label>
+                  <label className="tf-stat-label">Fin personnel</label>
                   <Input
                     type="date"
                     value={participantData.personal_end_date}

@@ -207,7 +207,7 @@ export default function SettingsPage() {
           {lang === "fr" ? "Informations du club" : "Club information"}
         </p>
         <div className="space-y-1.5">
-          <Label className="text-[var(--color-text-secondary)] tf-label inline">
+          <Label className="tf-stat-label">
             {lang === "fr" ? "Nom du club" : "Club name"}
           </Label>
           <Input

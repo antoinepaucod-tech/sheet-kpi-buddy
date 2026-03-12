@@ -183,16 +183,16 @@ export default function NotificationsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Total envoyés</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Total envoyés</p>
           <p className="tf-number-large">{stats.total}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Réussis</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Réussis</p>
           <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.sent}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-border)]">
-          <p className="text-[var(--color-text-secondary)] tf-label inline">Aujourd'hui</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Aujourd'hui</p>
           <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.todayCount}</p>
         </div>
       </div>
@@ -242,7 +242,7 @@ export default function NotificationsPage() {
             return (
               <div
                 key={log.sent_at + log.recipient}
-                className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden"
+                className="tf-card overflow-hidden p-0"
                 data-testid={`notif-log-${log.type}`}
               >
                 <div

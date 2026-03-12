@@ -193,7 +193,7 @@ export default function CategoriesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Expense categories */}
-        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="tf-card overflow-hidden p-0">
           <div className="px-5 py-3 border-b border-[var(--color-border)]">
             <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
               Dépenses · {expenseCategories.length}
@@ -233,7 +233,7 @@ export default function CategoriesPage() {
         </div>
 
         {/* Revenue categories */}
-        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="tf-card overflow-hidden p-0">
           <div className="px-5 py-3 border-b border-[var(--color-border)]">
             <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
               Revenus · {revenueCategories.length}
@@ -283,7 +283,7 @@ export default function CategoriesPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label className="text-[var(--color-text-secondary)] tf-label inline">Nom *</Label>
+              <Label className="tf-stat-label">Nom *</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })}
@@ -295,7 +295,7 @@ export default function CategoriesPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-[var(--color-text-secondary)] tf-label inline">Type *</Label>
+                <Label className="tf-stat-label">Type *</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-type-select">
                     <SelectValue />
@@ -308,7 +308,7 @@ export default function CategoriesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-[var(--color-text-secondary)] tf-label inline">Colonne KPI *</Label>
+                <Label className="tf-stat-label">Colonne KPI *</Label>
                 <Select value={form.kpi_column} onValueChange={(v) => setForm({ ...form, kpi_column: v })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-kpi-select">
                     <SelectValue />
@@ -331,7 +331,7 @@ export default function CategoriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[var(--color-text-secondary)] tf-label inline">Couleur</Label>
+              <Label className="tf-stat-label">Couleur</Label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORY_COLORS.map((c) => (
                   <button
@@ -409,7 +409,7 @@ export default function CategoriesPage() {
               Créez une nouvelle colonne KPI pour regrouper vos catégories de dépenses ou revenus.
             </p>
             <div className="space-y-1.5">
-              <Label className="text-[var(--color-text-secondary)] tf-label inline">Nom affiché *</Label>
+              <Label className="tf-stat-label">Nom affiché *</Label>
               <Input
                 value={kpiForm.label}
                 onChange={(e) => setKpiForm({ ...kpiForm, label: e.target.value })}
@@ -419,7 +419,7 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[var(--color-text-secondary)] tf-label inline">Code technique *</Label>
+              <Label className="tf-stat-label">Code technique *</Label>
               <Input
                 value={kpiForm.value}
                 onChange={(e) => setKpiForm({ ...kpiForm, value: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
@@ -429,7 +429,7 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[var(--color-text-secondary)] tf-label inline">Type *</Label>
+              <Label className="tf-stat-label">Type *</Label>
               <Select value={kpiForm.type} onValueChange={(v) => setKpiForm({ ...kpiForm, type: v })}>
                 <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
                   <SelectValue />
@@ -444,7 +444,7 @@ export default function CategoriesPage() {
             {/* List of custom columns */}
             {customKpiColumns.length > 0 && (
               <div className="border-t border-[var(--color-border)] pt-4">
-                <Label className="text-[var(--color-text-secondary)] tf-label inline mb-2 block">Colonnes personnalisées</Label>
+                <Label className="tf-stat-label mb-2 block">Colonnes personnalisées</Label>
                 <div className="space-y-2">
                   {customKpiColumns.map((col) => (
                     <div key={col.value} className="flex items-center justify-between bg-[var(--color-bg-secondary)] rounded px-3 py-2">

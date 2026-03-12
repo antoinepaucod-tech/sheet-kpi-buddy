@@ -60,7 +60,7 @@ const MetricCard = ({ label, value, trend, icon: Icon, variant = "default" }) =>
   return (
     <div className={`bg-[var(--color-bg-secondary)] border ${variants[variant]} rounded-[var(--radius-lg)] p-4`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</span>
+        <span className="tf-stat-label">{label}</span>
         {Icon && <Icon size={14} className="text-[var(--color-text-tertiary)]" />}
       </div>
       <p className="text-xl font-display font-extrabold text-white">{value}</p>
@@ -208,7 +208,7 @@ export default function ComparePage() {
       </div>
 
       {/* Date Range Selector */}
-      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4">
+      <div className="tf-stat">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <Calendar size={14} className="text-[var(--color-text-secondary)]" />
@@ -357,7 +357,7 @@ export default function ComparePage() {
 
         {/* Revenue Tab */}
         <TabsContent value="revenue">
-          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+          <div className="tf-card">
             <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
               {lang === "fr" ? "Évolution Revenus / Profit / Dépenses" : "Revenue / Profit / Expenses Evolution"}
             </p>
@@ -378,7 +378,7 @@ export default function ComparePage() {
 
         {/* Members Tab */}
         <TabsContent value="members">
-          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+          <div className="tf-card">
             <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
               {lang === "fr" ? "Évolution des Membres" : "Members Evolution"}
             </p>
@@ -399,7 +399,7 @@ export default function ComparePage() {
 
         {/* Expenses Tab */}
         <TabsContent value="expenses">
-          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+          <div className="tf-card">
             <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
               {lang === "fr" ? "Répartition des Dépenses" : "Expenses Breakdown"}
             </p>
@@ -421,7 +421,7 @@ export default function ComparePage() {
         {/* KPIs Tab */}
         <TabsContent value="metrics">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+            <div className="tf-card">
               <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
                 {lang === "fr" ? "Taux de Churn" : "Churn Rate"}
               </p>
@@ -435,7 +435,7 @@ export default function ComparePage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+            <div className="tf-card">
               <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider mb-4">
                 CAC & ROAS
               </p>
@@ -457,7 +457,7 @@ export default function ComparePage() {
       </Tabs>
 
       {/* Monthly Data Table */}
-      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+      <div className="tf-card overflow-hidden p-0">
         <div className="px-5 py-3 border-b border-[var(--color-border)]">
           <p className="text-xs font-text text-[var(--color-text-secondary)] uppercase tracking-wider">
             {lang === "fr" ? "Données Mensuelles Détaillées" : "Detailed Monthly Data"}
