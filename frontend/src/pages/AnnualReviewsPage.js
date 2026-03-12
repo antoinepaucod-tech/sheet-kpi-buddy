@@ -66,9 +66,9 @@ const REVIEW_TYPES = [
 ];
 
 const TYPE_COLORS = {
-  monthly: "bg-[var(--color-info)]/20 text-[var(--color-info)]",
+  monthly: "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]",
   quarterly: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]",
-  "semi-annually": "bg-[var(--color-info)]/20 text-[var(--color-info)]",
+  "semi-annually": "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]",
   annually: "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]",
 };
 
@@ -316,7 +316,7 @@ export default function AnnualReviewsPage() {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
-            filterPeriod === "upcoming" ? "border-[var(--color-info)]" : "border-[var(--color-border)] hover:border-[var(--color-info)]/50"
+            filterPeriod === "upcoming" ? "border-[var(--color-info)]" : "border-[var(--color-border)] hover:border-[rgba(100,210,255,0.3)]"
           }`}
           onClick={() => setFilterPeriod("upcoming")}
           data-testid="filter-upcoming"
@@ -329,7 +329,7 @@ export default function AnnualReviewsPage() {
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
-            filterPeriod === "all" && filterStatus === "all" ? "border-white/30" : "border-[var(--color-border)] hover:border-white/30"
+            filterPeriod === "all" && filterStatus === "all" ? "border-[rgba(255,255,255,0.2)]" : "border-[var(--color-border)] hover:border-[rgba(255,255,255,0.2)]"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("all"); }}
         >
@@ -338,7 +338,7 @@ export default function AnnualReviewsPage() {
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
-            filterStatus === "scheduled" ? "border-[var(--color-accent)]" : "border-[var(--color-border)] hover:border-[var(--color-accent)]/50"
+            filterStatus === "scheduled" ? "border-[var(--color-accent)]" : "border-[var(--color-border)] hover:border-[rgba(10,132,255,0.3)]"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("scheduled"); }}
         >
@@ -347,14 +347,14 @@ export default function AnnualReviewsPage() {
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
-            filterStatus === "completed" ? "border-[var(--color-success)]" : "border-[var(--color-border)] hover:border-[var(--color-success)]/50"
+            filterStatus === "completed" ? "border-[var(--color-success)]" : "border-[var(--color-border)] hover:border-[rgba(48,209,88,0.3)]"
           }`}
           onClick={() => { setFilterPeriod("all"); setFilterStatus("completed"); }}
         >
           <p className="text-[var(--color-success)] text-xs uppercase">Complétés</p>
           <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.completed}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-warning)]/30">
+        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,214,10,0.2)]">
           <p className="text-[var(--color-warning)] text-xs uppercase flex items-center gap-1">
             <AlertTriangle size={12} />
             Cette semaine
@@ -472,7 +472,7 @@ export default function AnnualReviewsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
+                          className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
                           onClick={() => openDetailModal(review)}
                           data-testid={`view-${review.id}`}
                         >
@@ -897,13 +897,13 @@ export default function AnnualReviewsPage() {
                     Objectifs
                   </h3>
                   {selectedReview.goals_achieved && (
-                    <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-3 mb-2">
+                    <div className="bg-[rgba(48,209,88,0.08)] border border-[rgba(48,209,88,0.15)] rounded-[var(--radius-lg)] p-3 mb-2">
                       <p className="text-[var(--color-success)] text-xs mb-1">Objectifs atteints</p>
                       <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.goals_achieved}</p>
                     </div>
                   )}
                   {selectedReview.new_goals && (
-                    <div className="bg-[var(--color-info)]/10 border border-[var(--color-info)]/20 rounded-[var(--radius-lg)] p-3">
+                    <div className="bg-[rgba(100,210,255,0.08)] border border-[rgba(100,210,255,0.15)] rounded-[var(--radius-lg)] p-3">
                       <p className="text-[var(--color-info)] text-xs mb-1">Nouveaux objectifs</p>
                       <p className="text-[var(--color-text-primary)] text-sm">{selectedReview.new_goals}</p>
                     </div>

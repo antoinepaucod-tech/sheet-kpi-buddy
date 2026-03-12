@@ -154,7 +154,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => sendBulkMutation.mutate({ notification_type: "payment_reminder" })}
             disabled={sendBulkMutation.isPending}
-            className="border-[rgba(255,69,58,0.3)] text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+            className="border-[rgba(255,69,58,0.3)] text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
             data-testid="bulk-payment-btn"
           >
             <CreditCard size={14} className="mr-1.5" />
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => sendBulkMutation.mutate({ notification_type: "review_reminder" })}
             disabled={sendBulkMutation.isPending}
-            className="border-[var(--color-info)]/30 text-[var(--color-info)] hover:bg-[var(--color-info)]/10"
+            className="border-[rgba(100,210,255,0.2)] text-[var(--color-info)] hover:bg-[rgba(100,210,255,0.08)]"
             data-testid="bulk-review-btn"
           >
             <ClipboardList size={14} className="mr-1.5" />

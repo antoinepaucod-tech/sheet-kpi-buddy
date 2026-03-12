@@ -188,7 +188,7 @@ export default function CoachesPage() {
         </div>
         <Button
           onClick={() => { resetForm(); setModalOpen(true); }}
-          className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85"
+          className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
           data-testid="add-coach-btn"
         >
           <Plus size={16} className="mr-2" />
@@ -202,13 +202,13 @@ export default function CoachesPage() {
           <p className="tf-stat-label">Total Coachs</p>
           <p className="tf-number-large">{coaches.length}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-success)]/30">
-          <p className="text-[var(--color-success)] text-xs uppercase">Actifs</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label" style={{color:"var(--color-success)"}}>Actifs</p>
           <p className="tf-number-large" style={{color:"var(--color-success)"}}>{activeCoaches}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-warning)]/30">
-          <p className="text-[var(--color-warning)] text-xs uppercase">Taux horaire moyen</p>
-          <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{avgHourlyRate} CHF</p>
+        <div className="tf-stat">
+          <p className="tf-stat-label">Taux horaire moyen</p>
+          <p className="tf-number-large">{avgHourlyRate} CHF</p>
         </div>
       </div>
 
@@ -304,7 +304,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
+                        className="h-8 w-8 text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
                         onClick={() => openStatsModal(coach)}
                         data-testid={`stats-${coach.id}`}
                       >
@@ -322,7 +322,7 @@ export default function CoachesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                        className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
                         onClick={() => {
                           if (window.confirm("Supprimer ce coach ?")) {
                             deleteMutation.mutate(coach.id);
@@ -400,7 +400,7 @@ export default function CoachesPage() {
                     onClick={() => toggleSpecialty(specialty)}
                     className={`px-3 py-1 rounded-full text-sm transition-all ${
                       (formData.specialties || []).includes(specialty)
-                        ? "bg-[var(--color-warning)] text-white"
+                        ? "bg-[var(--color-accent)] text-white"
                         : "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)]"
                     }`}
                   >
@@ -447,7 +447,7 @@ export default function CoachesPage() {
             <Button
               onClick={() => saveMutation.mutate(formData)}
               disabled={!formData.name || saveMutation.isPending}
-              className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
               data-testid="save-coach-btn"
             >
               {saveMutation.isPending ? "..." : "Enregistrer"}
@@ -482,9 +482,9 @@ export default function CoachesPage() {
                   <p className="tf-stat-label">Participants</p>
                   <p className="tf-number-large" style={{color:"var(--color-success)"}}>{coachStats.total_participants}</p>
                 </div>
-                <div className="bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-[var(--radius-lg)] p-4 text-center">
-                  <p className="text-[var(--color-warning)] text-xs uppercase">Gains estimés</p>
-                  <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{coachStats.earnings} CHF</p>
+                <div className="tf-stat" style={{ textAlign: 'center' }}>
+                  <p className="tf-stat-label" style={{color:"var(--color-accent)"}}>Gains estimés</p>
+                  <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{coachStats.earnings} CHF</p>
                 </div>
               </div>
               <p className="text-[var(--color-text-tertiary)] text-xs text-center">

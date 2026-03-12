@@ -451,7 +451,7 @@ export default function MembersPage() {
                       <div className="flex items-center gap-1.5">
                         {member.membership}
                         {member.is_duo && (
-                          <Badge className="bg-[var(--color-accent)]/20 text-[var(--color-accent)] border-0 text-[10px] px-1.5">DUO</Badge>
+                          <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0 text-[10px] px-1.5">DUO</Badge>
                         )}
                       </div>
                     </TableCell>
@@ -471,7 +471,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-success)] hover:text-[var(--color-success)] hover:bg-[var(--color-success)]/10"
+                          className="text-[var(--color-success)] hover:text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.08)]"
                           onClick={() => openRenewModal(member)}
                           data-testid={`renew-${member.id}`}
                         >
@@ -480,7 +480,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
+                          className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
                           onClick={() => openEditModal(member)}
                           data-testid={`edit-${member.id}`}
                         >
@@ -489,7 +489,7 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                          className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
                           onClick={() => deleteMutation.mutate(member.id)}
                           data-testid={`delete-${member.id}`}
                         >
@@ -705,11 +705,11 @@ export default function MembersPage() {
                 <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                   {/* Info banner when values come from membership type */}
                   {membershipTypes.find(t => t.name === formData.membership) && (
-                    <div className="bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20 rounded p-2 mb-2">
+                    <div className="bg-[rgba(10,132,255,0.08)] border border-[rgba(10,132,255,0.15)] rounded p-2 mb-2">
                       <p className="text-[var(--color-accent)] text-xs">
                         Valeurs définies par le type d'abonnement "{formData.membership}" 
                         <br/>
-                        <span className="text-[var(--color-accent)]/70">Modifiables dans Config. Types</span>
+                        <span className="text-[var(--color-accent)] opacity-70">Modifiables dans Config. Types</span>
                       </p>
                     </div>
                   )}

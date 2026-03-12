@@ -397,7 +397,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                            className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
                             onClick={() => {
                               if (window.confirm("Supprimer ce type d'abonnement ?")) {
                                 deleteMembershipMutation.mutate(item.id);
@@ -489,7 +489,7 @@ export default function SettingsTypesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                            className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
                             onClick={() => {
                               if (window.confirm("Supprimer ce type de membre ?")) {
                                 deleteMemberTypeMutation.mutate(item.id);

@@ -266,7 +266,7 @@ export default function CoursesPage() {
 
       {/* Info banner if no courses */}
       {courses.length === 0 && !isLoading && (
-        <div className="bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/30 rounded-[var(--radius-lg)] p-4">
+        <div className="bg-[rgba(10,132,255,0.08)] border border-[rgba(10,132,255,0.2)] rounded-[var(--radius-lg)] p-4">
           <p className="text-[var(--color-accent)] text-sm">
             Aucun cours pour {MONTHS_FR[selectedMonth - 1]} {selectedYear}. 
             <button 
@@ -356,7 +356,7 @@ export default function CoursesPage() {
             variant="outline"
             onClick={() => generateSalaryMutation.mutate()}
             disabled={generateSalaryMutation.isPending}
-            className="border-[var(--color-info)]/30 text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[var(--color-info)]/10"
+            className="border-[rgba(100,210,255,0.2)] text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[rgba(100,210,255,0.08)]"
             data-testid="generate-salary-btn"
           >
             <DollarSign size={14} className="mr-1.5" />
@@ -451,7 +451,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => openReplaceModal(course)}
-                        className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[var(--color-warning)]/10"
+                        className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
                         title="Remplacer le coach"
                       >
                         <UserCog size={14} />
@@ -460,7 +460,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => openEditModal(course)}
-                        className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10"
+                        className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
                       >
                         <Edit size={14} />
                       </Button>
@@ -468,7 +468,7 @@ export default function CoursesPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => deleteMutation.mutate(course.id)}
-                        className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                        className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -487,7 +487,7 @@ export default function CoursesPage() {
           {DAYS_FR.map((day) => (
             <div
               key={day}
-              className="tf-stat cursor-pointer hover:border-[var(--color-accent)]/50 transition-colors"
+              className="tf-stat cursor-pointer hover:border-[rgba(10,132,255,0.3)] transition-colors"
               onClick={() => setSelectedDay(day)}
             >
               <p className="tf-stat-label">{day}</p>
@@ -758,7 +758,7 @@ export default function CoursesPage() {
                 });
               }}
               disabled={!replaceData.replacement_coach_id || !replaceData.date || replaceMutation.isPending}
-              className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
             >
               {replaceMutation.isPending ? "..." : "Confirmer le remplacement"}
             </Button>

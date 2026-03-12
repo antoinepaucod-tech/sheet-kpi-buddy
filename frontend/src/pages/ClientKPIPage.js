@@ -58,7 +58,7 @@ const ENGAGEMENT_COLORS = {
 const ENGAGEMENT_BG = {
   Excellent: "bg-[rgba(48,209,88,0.15)]",
   Bon: "bg-[rgba(10,132,255,0.15)]",
-  Moyen: "bg-[var(--color-warning)]/20",
+  Moyen: "bg-[rgba(255,214,10,0.15)]",
   Faible: "bg-[rgba(255,69,58,0.15)]",
 };
 
@@ -234,7 +234,7 @@ export default function ClientKPIPage() {
           <p className="tf-number-large" style={{color:"var(--color-info)"}}>{globalStats.avgPerWeek}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-[var(--color-success)]' : 'border-[var(--color-border)] hover:border-[var(--color-success)]/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-[var(--color-success)]' : 'border-[var(--color-border)] hover:border-[rgba(48,209,88,0.3)]'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Excellent' ? 'all' : 'Excellent')}
         >
           <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
@@ -243,21 +243,21 @@ export default function ClientKPIPage() {
           <p className="tf-number-large" style={{color:"var(--color-success)"}}>{globalStats.excellent}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-[var(--color-accent)]' : 'border-[var(--color-border)] hover:border-[var(--color-accent)]/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-[var(--color-accent)]' : 'border-[var(--color-border)] hover:border-[rgba(10,132,255,0.3)]'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Bon' ? 'all' : 'Bon')}
         >
           <p className="text-[var(--color-accent)] text-xs uppercase">Bon</p>
           <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{globalStats.bon}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-[var(--color-warning)]' : 'border-[var(--color-border)] hover:border-[var(--color-warning)]/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-[var(--color-warning)]' : 'border-[var(--color-border)] hover:border-[rgba(255,214,10,0.3)]'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Moyen' ? 'all' : 'Moyen')}
         >
           <p className="text-[var(--color-warning)] text-xs uppercase">Moyen</p>
           <p className="tf-number-large" style={{color:"var(--color-warning)"}}>{globalStats.moyen}</p>
         </div>
         <div 
-          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-[var(--color-danger)]' : 'border-[var(--color-border)] hover:border-[var(--color-danger)]/50'}`}
+          className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-[var(--color-danger)]' : 'border-[var(--color-border)] hover:border-[rgba(255,69,58,0.3)]'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Faible' ? 'all' : 'Faible')}
         >
           <p className="text-[var(--color-danger)] text-xs uppercase">Faible</p>

@@ -293,8 +293,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Reset Data */}
-      <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-6">
-        <p className="text-xs font-text text-[var(--color-danger)]/60 uppercase tracking-wider mb-3">
+      <div className="bg-[var(--color-bg-secondary)] border border-[rgba(255,69,58,0.15)] rounded-[var(--radius-lg)] p-6">
+        <p className="text-xs font-text text-[var(--color-danger)] opacity-60 uppercase tracking-wider mb-3">
           {lang === "fr" ? "Zone dangereuse" : "Danger zone"}
         </p>
         <div className="flex items-center justify-between">
@@ -311,7 +311,7 @@ export default function SettingsPage() {
           <Button
             variant="outline"
             onClick={() => setResetModalOpen(true)}
-            className="border-[rgba(255,69,58,0.3)] text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 text-xs flex-shrink-0"
+            className="border-[rgba(255,69,58,0.3)] text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)] text-xs flex-shrink-0"
             data-testid="reset-data-btn"
           >
             <Trash2 size={12} className="mr-1.5" />
@@ -335,7 +335,7 @@ export default function SettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-3">
+            <div className="bg-[rgba(255,69,58,0.08)] border border-[rgba(255,69,58,0.15)] rounded-[var(--radius-lg)] p-3">
               <ul className="text-[var(--color-danger)] text-sm space-y-1">
                 <li>- Membres et historique de renouvellements</li>
                 <li>- Paiements et plannings de paiement</li>
@@ -347,7 +347,7 @@ export default function SettingsPage() {
                 <li>- Coachs</li>
               </ul>
             </div>
-            <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-3">
+            <div className="bg-[rgba(48,209,88,0.08)] border border-[rgba(48,209,88,0.15)] rounded-[var(--radius-lg)] p-3">
               <p className="text-[var(--color-success)] text-sm font-medium mb-1">Données conservées :</p>
               <ul className="text-[var(--color-success)] text-sm space-y-1">
                 <li>- Votre compte utilisateur</li>

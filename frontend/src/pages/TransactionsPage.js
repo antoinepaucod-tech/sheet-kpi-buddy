@@ -236,8 +236,8 @@ export default function TransactionsPage({ selectedMonth }) {
                     <Badge
                       className={
                         tx.type === "revenue"
-                          ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 text-xs"
-                          : "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/20 text-xs"
+                          ? "bg-[rgba(48,209,88,0.12)] text-[var(--color-success)] border-0 text-xs"
+                          : "bg-[rgba(10,132,255,0.12)] text-[var(--color-accent)] border-0 text-xs"
                       }
                     >
                       {tx.type === "revenue" ? t("revenueType") : t("expense")}
@@ -311,8 +311,8 @@ export default function TransactionsPage({ selectedMonth }) {
                       <Badge
                         className={
                           ex.type === "revenue"
-                            ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20 text-xs"
-                            : "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/20 text-xs"
+                            ? "bg-[rgba(48,209,88,0.12)] text-[var(--color-success)] border-0 text-xs"
+                            : "bg-[rgba(10,132,255,0.12)] text-[var(--color-accent)] border-0 text-xs"
                         }
                       >
                         {ex.type === "revenue" ? t("revenueType") : t("expense")}

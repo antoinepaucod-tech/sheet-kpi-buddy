@@ -62,10 +62,10 @@ function getCellColor(val) {
 
 function getCellBg(val) {
   if (!val || val <= 0) return "bg-white/[0.02]";
-  if (val === 1) return "bg-[var(--color-danger)]/10";
-  if (val === 2) return "bg-[var(--color-warning)]/10";
-  if (val === 3) return "bg-[var(--color-warning)]/10";
-  return "bg-[var(--color-success)]/10";
+  if (val === 1) return "bg-[rgba(255,69,58,0.08)]";
+  if (val === 2) return "bg-[rgba(255,214,10,0.08)]";
+  if (val === 3) return "bg-[rgba(255,214,10,0.08)]";
+  return "bg-[rgba(48,209,88,0.08)]";
 }
 
 export default function AttendancePage() {
@@ -319,7 +319,7 @@ export default function AttendancePage() {
                     );
                   })}
                   <td className="py-2 px-3 text-center">
-                    <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-[var(--color-accent)]/20 text-[var(--color-info)]" : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)]"}`}>
+                    <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-info)]" : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)]"}`}>
                       {memberTotals[member.id] || 0}
                     </Badge>
                   </td>
@@ -354,7 +354,7 @@ export default function AttendancePage() {
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 text-xs text-[var(--color-text-secondary)]">
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[rgba(255,69,58,0.15)]" /> 1 séance</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[var(--color-warning)]/20" /> 2 séances</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[rgba(255,214,10,0.15)]" /> 2 séances</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[rgba(255,214,10,0.15)]" /> 3 séances</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[rgba(48,209,88,0.15)]" /> 4+ séances</span>
       </div>

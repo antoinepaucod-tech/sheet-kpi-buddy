@@ -272,7 +272,7 @@ export default function OnboardingPage() {
 
       {/* Alerts Banner */}
       {alerts && (alerts.late_payments > 0 || alerts.missed_followups > 0) && (
-        <div className="bg-[var(--color-danger)]/10 border border-[rgba(255,69,58,0.3)] rounded-[var(--radius-lg)] p-4 flex items-center justify-between">
+        <div className="bg-[rgba(255,69,58,0.08)] border border-[rgba(255,69,58,0.2)] rounded-[var(--radius-lg)] p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle className="text-[var(--color-danger)]" size={24} />
             <div>
@@ -301,27 +301,27 @@ export default function OnboardingPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-accent)]/30 cursor-pointer" onClick={() => setActiveTab("onboarding")}>
-          <p className="text-[var(--color-accent)] text-xs uppercase flex items-center gap-1">
-            <ClipboardCheck size={12} /> Onboarding en cours
+        <div className="tf-stat cursor-pointer" onClick={() => setActiveTab("onboarding")}>
+          <p className="tf-stat-label" style={{color:"var(--color-accent)"}}>
+            <ClipboardCheck size={12} style={{display:'inline',marginRight:'4px'}} /> Onboarding en cours
           </p>
           <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.pendingOnboarding}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-accent)]/30 cursor-pointer" onClick={() => setActiveTab("upcoming")}>
-          <p className="text-[var(--color-accent)] text-xs uppercase flex items-center gap-1">
-            <Calendar size={12} /> Suivis à venir
+        <div className="tf-stat cursor-pointer" onClick={() => setActiveTab("upcoming")}>
+          <p className="tf-stat-label" style={{color:"var(--color-accent)"}}>
+            <Calendar size={12} style={{display:'inline',marginRight:'4px'}} /> Suivis à venir
           </p>
           <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.upcomingFollowups}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[rgba(255,69,58,0.3)] cursor-pointer" onClick={() => setActiveTab("missed")}>
-          <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">
-            <AlertTriangle size={12} /> Suivis manqués
+        <div className="tf-stat cursor-pointer" onClick={() => setActiveTab("missed")}>
+          <p className="tf-stat-label" style={{color:"var(--color-danger)"}}>
+            <AlertTriangle size={12} style={{display:'inline',marginRight:'4px'}} /> Suivis manqués
           </p>
           <p className="tf-number-large" style={{color:"var(--color-danger)"}}>{stats.missedFollowups}</p>
         </div>
-        <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border border-[var(--color-success)]/30">
-          <p className="text-[var(--color-success)] text-xs uppercase flex items-center gap-1">
-            <CheckCircle2 size={12} /> Complétés ce mois
+        <div className="tf-stat">
+          <p className="tf-stat-label" style={{color:"var(--color-success)"}}>
+            <CheckCircle2 size={12} style={{display:'inline',marginRight:'4px'}} /> Complétés ce mois
           </p>
           <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.completedThisMonth}</p>
         </div>
@@ -366,7 +366,7 @@ export default function OnboardingPage() {
             {loadingOnboarding ? (
               <div className="text-center text-[var(--color-text-secondary)] py-8">Chargement...</div>
             ) : filteredOnboarding.length === 0 ? (
-              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-8 border border-[var(--color-success)]/30 text-center">
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-8 border border-[rgba(48,209,88,0.2)] text-center">
                 <CheckCircle2 size={48} className="mx-auto text-[var(--color-success)] mb-4" />
                 <p className="text-[var(--color-success)] font-medium">
                   {showCompleted ? "Aucun membre trouvé" : "Tous les onboardings sont complétés !"}
@@ -391,9 +391,9 @@ export default function OnboardingPage() {
                     key={member.id}
                     className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border transition-all duration-300 ${
                       isCompleted 
-                        ? "border-[var(--color-success)]/30 bg-[var(--color-success)]/5" 
+                        ? "border-[rgba(48,209,88,0.2)] bg-[rgba(48,209,88,0.05)]" 
                         : isEditing 
-                          ? "border-[var(--color-accent)]/50 ring-2 ring-indigo-500/20" 
+                          ? "border-[rgba(10,132,255,0.3)] ring-2 ring-[rgba(10,132,255,0.1)]" 
                           : "border-[var(--color-border)]"
                     }`}
                     data-testid={`onboarding-${member.id}`}
@@ -401,7 +401,7 @@ export default function OnboardingPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          isCompleted ? "bg-[rgba(48,209,88,0.15)]" : "bg-[var(--color-accent)]/20"
+                          isCompleted ? "bg-[rgba(48,209,88,0.15)]" : "bg-[rgba(10,132,255,0.15)]"
                         }`}>
                           {isCompleted ? (
                             <CheckCircle2 className="text-[var(--color-success)]" size={24} />
@@ -456,10 +456,10 @@ export default function OnboardingPage() {
                             onClick={() => !isCompleted && toggleOnboardingStep(member.id, step.key, isStepCompleted)}
                             className={`p-3 rounded-[var(--radius-lg)] border transition-all ${
                               isStepCompleted
-                                ? "bg-[var(--color-success)]/10 border-[var(--color-success)]/30"
+                                ? "bg-[rgba(48,209,88,0.08)] border-[rgba(48,209,88,0.2)]"
                                 : isCompleted 
                                   ? "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] opacity-50"
-                                  : "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] hover:border-[var(--color-accent)]/50 cursor-pointer"
+                                  : "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] hover:border-[rgba(10,132,255,0.3)] cursor-pointer"
                             }`}
                             data-testid={`step-${step.key}-${member.id}`}
                           >
@@ -487,8 +487,8 @@ export default function OnboardingPage() {
 
         {/* Upcoming Follow-ups Tab */}
         <TabsContent value="upcoming" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-accent)]/30 overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-accent)]/10">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(10,132,255,0.2)] overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[rgba(10,132,255,0.08)]">
               <h3 className="text-[var(--color-accent)] font-medium flex items-center gap-2">
                 <Calendar size={18} />
                 Suivis à venir (14 jours)
@@ -557,8 +557,8 @@ export default function OnboardingPage() {
 
         {/* Missed Follow-ups Tab */}
         <TabsContent value="missed" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(255,69,58,0.3)] overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-danger)]/10">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(255,69,58,0.2)] overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[rgba(255,69,58,0.08)]">
               <h3 className="text-[var(--color-danger)] font-medium flex items-center gap-2">
                 <AlertTriangle size={18} />
                 Suivis manqués - Action requise

@@ -315,7 +315,7 @@ export default function ComparePage() {
       {/* Best/Worst Months */}
       {summary && (
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-success)]/20 rounded-[var(--radius-lg)] p-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-[rgba(48,209,88,0.15)] rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp size={14} className="text-[var(--color-success)]" />
               <span className="text-xs text-[var(--color-text-secondary)] uppercase">{lang === "fr" ? "Meilleur Mois" : "Best Month"}</span>
@@ -325,7 +325,7 @@ export default function ComparePage() {
             </p>
             <p className="text-sm text-[var(--color-text-secondary)]">{formatCHF(summary.best.total_revenue)}</p>
           </div>
-          <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-danger)]/20 rounded-[var(--radius-lg)] p-4">
+          <div className="bg-[var(--color-bg-secondary)] border border-[rgba(255,69,58,0.15)] rounded-[var(--radius-lg)] p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingDown size={14} className="text-[var(--color-danger)]" />
               <span className="text-xs text-[var(--color-text-secondary)] uppercase">{lang === "fr" ? "Mois le Plus Faible" : "Weakest Month"}</span>

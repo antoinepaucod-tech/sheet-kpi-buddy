@@ -424,7 +424,7 @@ export default function PaymentsPage() {
         {/* Late Payments Tab */}
         <TabsContent value="late" className="space-y-4">
           <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(255,69,58,0.3)] overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-danger)]/10">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[rgba(255,69,58,0.08)]">
               <h3 className="text-[var(--color-danger)] font-medium flex items-center gap-2">
                 <AlertTriangle size={18} />
                 Paiements en retard - Action requise
@@ -503,8 +503,8 @@ export default function PaymentsPage() {
 
         {/* Upcoming Payments Tab */}
         <TabsContent value="upcoming" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-accent)]/30 overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-accent)]/10">
+          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(10,132,255,0.2)] overflow-hidden">
+            <div className="p-4 border-b border-[var(--color-border)] bg-[rgba(10,132,255,0.08)]">
               <h3 className="text-[var(--color-accent)] font-medium flex items-center gap-2">
                 <Calendar size={18} />
                 Paiements à venir (14 jours)
