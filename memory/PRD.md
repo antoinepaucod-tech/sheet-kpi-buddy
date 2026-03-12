@@ -3,103 +3,47 @@
 ## Overview
 Application SaaS de pilotage financier pour clubs de sport.
 
-## Core Features
+## Core Features (18 modules)
 
-### 1. Authentication & Multi-tenancy
-- JWT-based authentication, data isolation by club_id
+1. **Authentication** - JWT, multi-tenancy
+2. **KPIs Dashboard** - Revenue/expense, advanced metrics, PDF, comparison
+3. **Transactions** - CRUD, categories, auto-recalc, bulk, recurring
+4. **Members** - CRUD, subscriptions, billing, **Duo**, review frequency
+5. **Payments** - Schedules, tracking, alerts, **email reminders**
+6. **Onboarding** - 5-step checklist, follow-ups
+7. **6 Weeks Challenge** - Fixed/Personal types, check-in goals
+8. **Bilans / Suivis** - Multi-frequency, **history charts**, email reminders
+9. **Course KPIs** - Attendance, instructors, **salary generation**
+10. **Client KPIs** - Weekly training, engagement
+11. **Global Attendance** - Grid view, editable, color-coded
+12. **Coach Management** - CRUD, hourly rates, replacements
+13. **Messagerie & Notifications** - Resend emails, templates, logs, compose, bulk
+14. **Data Reset** - Reset transactional data, keep config
+15. **Settings** - Club info, KPI targets, types, columns
+16. **Sidebar Navigation** - 7 grouped sections, collapsible
 
-### 2. Monthly KPIs Dashboard
-- Revenue/expense tracking, advanced metrics, PDF reports, multi-month comparison
+## Architecture
+- **Backend**: FastAPI, 16 router files, ~210 line server.py
+- **Frontend**: React, 18 pages, shadcn/ui, Recharts, TanStack Query
+- **Database**: MongoDB
+- **Email**: Resend (domain: thecoachswitzerland.ch, sender: contact@thecoachswitzerland.ch)
 
-### 3. Transaction Management
-- CRUD, categories, auto-recalculation, bulk import, recurring transactions
-
-### 4. Member Management
-- Full CRUD, subscription dates, member types, billing cycle, renewal workflow
-- **Duo Subscriptions**: 2 members linked, 1 price, auto-partner creation
-- Review frequency: monthly/quarterly/semi-annually/annually
-
-### 5. Payment System
-- Schedules, tracking, alerts, **email reminders via Resend**
-
-### 6. Onboarding & Follow-ups
-- 5-Step checklist, follow-up scheduling
-
-### 7. 6 Weeks Challenge
-- Fixed/Personal types, configurable check-in goals, dual tracking
-
-### 8. Bilans / Suivis
-- Multi-frequency reviews, type filtering, **history charts**, auto-scheduling
-- **Email reminders for upcoming reviews**
-
-### 9. Course KPIs
-- Course definition, instructor assignment, attendance, salary expense generation
-
-### 10. Client KPIs
-- Weekly training tracking, engagement levels
-
-### 11. Global Attendance
-- Grid view: members × weeks, editable session counts, color coding, totals
-
-### 12. Coach Management
-- Coach CRUD, replacement tracking
-
-### 13. Email Notifications (Resend)
-- Payment reminders, review reminders, follow-up reminders
-- Custom email sending, bulk notifications
-- Notification logs, HTML templates with club branding
-- Note: Requires verified domain for production use
-
-### 14. Data Reset
-- Reset transactional data, keep config
-
-### 15. Settings & Configuration
-- Club info, KPI targets, subscription/member types, custom KPI columns
-
-### 16. Sidebar Navigation
-- 6 grouped sections: Pilotage, Membres, Activité, Programmes, Comptabilité, Configuration
-- Collapsible sidebar
-
-## Technical Architecture
-
-### Backend (FastAPI) - 16 router files
-```
-/app/backend/routers/
-├── auth.py, members.py, payments.py, annual_reviews.py
-├── followups.py, onboarding.py, settings.py, coaches.py
-├── challenges.py, kpis.py, transactions.py, trainings.py
-├── courses.py, alerts.py, reports.py, notifications.py (NEW)
-```
-
-### Frontend (React) - 17 pages
-```
-/app/frontend/src/pages/
-├── Dashboard.js, ComparePage.js, MembersPage.js, PaymentsPage.js
-├── OnboardingPage.js, AnnualReviewsPage.js, ChallengePage.js
-├── CoursesPage.js, CoachesPage.js, ClientKPIPage.js, AttendancePage.js
-├── TransactionsPage.js, RecurringPage.js, CategoriesPage.js
-├── SettingsPage.js, SettingsTypesPage.js, AuthPage.js
-```
+## Sidebar Sections
+1. PILOTAGE: Dashboard, Analyse Multi-Mois
+2. MEMBRES: Membres, Paiements, Onboarding
+3. ACTIVITÉ: KPIs Cours, Saisie Séances, KPIs Clients, Coachs
+4. PROGRAMMES: Challenge 6 Sem., Bilans / Suivis
+5. COMPTABILITÉ: Transactions, Récurrentes, Catégories
+6. COMMUNICATION: Messagerie
+7. CONFIGURATION: Paramètres, Config. Types
 
 ## Backlog
+### P1
+- [ ] Intégration API Bsport (en attente agreement)
+- [ ] Export CSV membres
 
-### P1 - High Priority
-- [ ] Intégration API Bsport (en attente agreement formulaire utilisateur)
-- [ ] Export member data to CSV
-- [ ] Vérifier domaine Resend pour envoi en production
-
-### P2 - Medium Priority
-- [ ] Alertes WhatsApp via Twilio (en attente)
-- [ ] Interface de migration de données
-- [ ] WebSockets temps réel
-- [ ] Automatisation renouvellements
-
-### P3 - Low Priority
-- [ ] Mobile app / PWA
-- [ ] Multi-currency support
+### P2
+- [ ] WhatsApp (Twilio), WebSockets, auto-renouvellements
 - [ ] Dashboard coach personnel
 
-## Testing Status
-- Iteration 14: 20/20 backend + 100% frontend ✅ (sidebar + notifications)
-- Iteration 13: 11/11 backend + 100% frontend ✅ (attendance)
-- Iteration 12: 17/17 backend + 100% frontend ✅ (refactoring + duo + charts)
+## Testing: 5 iterations (11-15) all 100% ✅
