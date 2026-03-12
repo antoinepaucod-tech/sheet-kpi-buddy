@@ -19,6 +19,7 @@ import {
   Search,
   Plus,
   Eye,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -48,6 +49,10 @@ import {
 } from "../components/ui/table";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend,
+} from "recharts";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -83,6 +88,8 @@ export default function AnnualReviewsPage() {
   const [selectedReview, setSelectedReview] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyMemberId, setHistoryMemberId] = useState(null);
   const [formData, setFormData] = useState({
     weight_start: "",
     weight_current: "",
@@ -119,6 +126,13 @@ export default function AnnualReviewsPage() {
   const { data: members = [] } = useQuery({
     queryKey: ["members"],
     queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
+  });
+
+  // Fetch review history for chart
+  const { data: historyData } = useQuery({
+    queryKey: ["annual-reviews", "history", historyMemberId],
+    queryFn: () => historyMemberId ? axios.get(`${API}/annual-reviews/history/${historyMemberId}`).then((r) => r.data) : null,
+    enabled: !!historyMemberId,
   });
 
   // Complete review mutation
@@ -469,6 +483,19 @@ export default function AnnualReviewsPage() {
                           Compléter
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-blue-400 hover:text-blue-300"
+                        onClick={() => {
+                          setHistoryMemberId(review.member_id);
+                          setHistoryModalOpen(true);
+                        }}
+                        title="Historique"
+                        data-testid={`history-${review.id}`}
+                      >
+                        <BarChart3 size={14} />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -888,6 +915,118 @@ export default function AnnualReviewsPage() {
             <Button variant="ghost" onClick={() => setDetailModalOpen(false)}>
               Fermer
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* History Chart Modal */}
+      <Dialog open={historyModalOpen} onOpenChange={(open) => { setHistoryModalOpen(open); if (!open) setHistoryMemberId(null); }}>
+        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="text-blue-400" size={20} />
+              Historique des bilans - {historyData?.member_name}
+            </DialogTitle>
+          </DialogHeader>
+          {historyData?.reviews?.length > 0 ? (
+            <div className="space-y-6 py-4">
+              {/* Weight Chart */}
+              <div className="bg-[#121214] rounded-lg p-4">
+                <h3 className="text-white/70 text-sm font-medium mb-3">Evolution du poids (kg)</h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={historyData.reviews.filter(r => r.weight_current).map(r => ({
+                    date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
+                    poids: r.weight_current,
+                    objectif: r.weight_goal,
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="#666" tick={{ fontSize: 11 }} domain={["dataMin - 2", "dataMax + 2"]} />
+                    <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
+                    <Legend />
+                    <Line type="monotone" dataKey="poids" stroke="#8B5CF6" strokeWidth={2} dot={{ fill: "#8B5CF6", r: 4 }} name="Poids actuel" />
+                    <Line type="monotone" dataKey="objectif" stroke="#22C55E" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: "#22C55E", r: 3 }} name="Objectif" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Body Composition Chart */}
+              {historyData.reviews.some(r => r.body_fat_percentage || r.muscle_mass) && (
+                <div className="bg-[#121214] rounded-lg p-4">
+                  <h3 className="text-white/70 text-sm font-medium mb-3">Composition corporelle</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={historyData.reviews.filter(r => r.body_fat_percentage || r.muscle_mass).map(r => ({
+                      date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
+                      graisse: r.body_fat_percentage,
+                      muscle: r.muscle_mass,
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="#666" tick={{ fontSize: 11 }} />
+                      <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="graisse" stroke="#F59E0B" strokeWidth={2} dot={{ fill: "#F59E0B", r: 4 }} name="% Graisse" />
+                      <Line type="monotone" dataKey="muscle" stroke="#3B82F6" strokeWidth={2} dot={{ fill: "#3B82F6", r: 4 }} name="Masse musculaire" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Training Frequency */}
+              {historyData.reviews.some(r => r.training_frequency) && (
+                <div className="bg-[#121214] rounded-lg p-4">
+                  <h3 className="text-white/70 text-sm font-medium mb-3">Fréquence d'entraînement (séances/semaine)</h3>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <LineChart data={historyData.reviews.filter(r => r.training_frequency).map(r => ({
+                      date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
+                      freq: parseFloat(r.training_frequency) || 0,
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="#666" tick={{ fontSize: 11 }} />
+                      <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
+                      <Line type="monotone" dataKey="freq" stroke="#10B981" strokeWidth={2} dot={{ fill: "#10B981", r: 4 }} name="Séances/semaine" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Summary Table */}
+              <div className="bg-[#121214] rounded-lg p-4">
+                <h3 className="text-white/70 text-sm font-medium mb-3">Résumé des bilans</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10">
+                      <TableHead className="text-white/50">Date</TableHead>
+                      <TableHead className="text-white/50">Poids</TableHead>
+                      <TableHead className="text-white/50">Variation</TableHead>
+                      <TableHead className="text-white/50">Objectif</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {historyData.reviews.map((r) => (
+                      <TableRow key={r.id} className="border-white/5">
+                        <TableCell className="text-white/70 text-sm">
+                          {r.review_date ? format(parseISO(r.review_date), "dd MMM yyyy", { locale: fr }) : "-"}
+                        </TableCell>
+                        <TableCell className="text-white font-medium">{r.weight_current || "-"} kg</TableCell>
+                        <TableCell className={`text-sm ${r.weight_change < 0 ? "text-emerald-400" : r.weight_change > 0 ? "text-red-400" : "text-white/50"}`}>
+                          {r.weight_change ? `${r.weight_change > 0 ? "+" : ""}${r.weight_change} kg` : "-"}
+                        </TableCell>
+                        <TableCell className="text-white/50 text-sm">{r.weight_goal || "-"} kg</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-white/40">
+              Aucun bilan complété trouvé pour ce membre.
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setHistoryModalOpen(false)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

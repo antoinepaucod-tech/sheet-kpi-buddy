@@ -75,6 +75,13 @@ async def get_member(member_id: str):
     doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
+    # Enrich duo info
+    if doc.get("duo_partner_id"):
+        partner = await db.customer_members.find_one(
+            {"id": doc["duo_partner_id"]}, {"_id": 0, "id": 1, "name": 1, "email": 1, "phone": 1}
+        )
+        if partner:
+            doc["duo_partner_name"] = partner.get("name", "")
     return doc
 
 
@@ -117,7 +124,36 @@ async def create_member(data: CustomerMemberCreate):
             status="scheduled"
         )
         await db.annual_reviews.insert_one(annual_review.model_dump())
-    
+
+    # Create duo partner if duo subscription
+    if data.is_duo and data.duo_partner_name:
+        partner = CustomerMember(
+            name=data.duo_partner_name,
+            email=data.duo_partner_email or "",
+            phone=data.duo_partner_phone or "",
+            membership=data.membership,
+            member_type=data.member_type,
+            contract_signed_date=data.contract_signed_date,
+            subscription_end_date=data.subscription_end_date,
+            cash_collected=0,
+            is_duo=True,
+            duo_partner_id=doc["id"],
+            duo_primary=False,
+            notes=f"Partenaire duo de {data.name}",
+        )
+        partner_doc = partner.model_dump()
+        await db.customer_members.insert_one(partner_doc)
+        partner_doc.pop("_id", None)
+
+        # Link primary to partner
+        await db.customer_members.update_one(
+            {"id": doc["id"]},
+            {"$set": {"is_duo": True, "duo_partner_id": partner_doc["id"], "duo_primary": True}}
+        )
+        doc["is_duo"] = True
+        doc["duo_partner_id"] = partner_doc["id"]
+        doc["duo_primary"] = True
+
     return doc
 
 

@@ -99,6 +99,21 @@ async def get_review(review_id: str):
     return doc
 
 
+@router.get("/history/{member_id}")
+async def get_review_history(member_id: str):
+    """Get all completed reviews for a member, for charts"""
+    docs = await db.annual_reviews.find(
+        {"member_id": member_id, "status": "completed"},
+        {"_id": 0}
+    ).sort("review_date", 1).to_list(100)
+    member = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "name": 1})
+    return {
+        "member_id": member_id,
+        "member_name": member.get("name", "") if member else "",
+        "reviews": docs
+    }
+
+
 @router.post("")
 async def create_review(data: AnnualReviewCreate):
     review = AnnualReview(**data.model_dump())

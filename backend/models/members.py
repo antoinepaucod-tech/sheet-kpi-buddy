@@ -40,6 +40,10 @@ class CustomerMember(BaseModel):
     next_followup_date: Optional[str] = None
     followup_notes: Optional[str] = ""
     notes: Optional[str] = ""
+    # Duo subscription
+    is_duo: bool = False
+    duo_partner_id: Optional[str] = None
+    duo_primary: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -71,6 +75,11 @@ class CustomerMemberCreate(BaseModel):
     session_introduction: bool = False
     # Follow-up
     next_followup_date: Optional[str] = None
+    # Duo subscription
+    is_duo: bool = False
+    duo_partner_name: Optional[str] = None
+    duo_partner_email: Optional[str] = None
+    duo_partner_phone: Optional[str] = None
 
 
 class MemberRenewalHistory(BaseModel):

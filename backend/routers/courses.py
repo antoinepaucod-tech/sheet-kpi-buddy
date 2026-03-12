@@ -1,0 +1,263 @@
+"""Course, Instructor, and Salary Generation routes"""
+from fastapi import APIRouter, HTTPException
+from typing import Optional
+from datetime import datetime, timezone
+
+from core.config import db, MONTHS_FR
+from models.courses import Instructor, CourseKPI, CourseKPICreate
+from models.transactions import AccountingCategory, AccountingTransaction
+
+router = APIRouter(tags=["courses"])
+
+
+# ── Courses ───────────────────────────────────────────────────────────────────
+
+@router.get("/courses")
+async def get_courses(year: Optional[int] = None, month: Optional[int] = None):
+    query = {}
+    if year:
+        query["year"] = year
+    if month:
+        query["month"] = month
+    return await db.course_kpis.find(query, {"_id": 0}).sort([("day_of_week", 1), ("time_slot", 1)]).to_list(500)
+
+
+@router.get("/courses/{course_id}")
+async def get_course(course_id: str):
+    doc = await db.course_kpis.find_one({"id": course_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Cours introuvable")
+    return doc
+
+
+@router.post("/courses")
+async def create_course(data: CourseKPICreate):
+    month_name = MONTHS_FR[data.month - 1] if 1 <= data.month <= 12 else ""
+    course = CourseKPI(**data.model_dump(), month_name=month_name)
+    doc = course.model_dump()
+    await db.course_kpis.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@router.put("/courses/{course_id}")
+async def update_course(course_id: str, body: dict):
+    existing = await db.course_kpis.find_one({"id": course_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Cours introuvable")
+
+    attendance_fields = ["week1_attendance", "week2_attendance", "week3_attendance", "week4_attendance", "week5_attendance"]
+    total_attendance = sum(body.get(f, existing.get(f, 0)) for f in attendance_fields)
+    max_capacity = body.get("max_capacity", existing.get("max_capacity", 10))
+    weeks_with_data = sum(1 for f in attendance_fields if body.get(f, existing.get(f, 0)) > 0)
+
+    if weeks_with_data > 0 and max_capacity > 0:
+        attendance_rate = round((total_attendance / (weeks_with_data * max_capacity)) * 100, 1)
+    else:
+        attendance_rate = 0
+
+    body["attendance_rate"] = attendance_rate
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.course_kpis.update_one({"id": course_id}, {"$set": body})
+    return await db.course_kpis.find_one({"id": course_id}, {"_id": 0})
+
+
+@router.delete("/courses/{course_id}")
+async def delete_course(course_id: str):
+    result = await db.course_kpis.delete_one({"id": course_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Cours introuvable")
+    return {"message": "Cours supprimé"}
+
+
+@router.get("/courses/summary/{year}/{month}")
+async def get_courses_summary(year: int, month: int):
+    docs = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+    if not docs:
+        return {
+            "year": year, "month": month,
+            "month_name": MONTHS_FR[month - 1] if 1 <= month <= 12 else "",
+            "total_courses": 0, "avg_attendance_rate": 0, "total_expenses": 0, "by_day": {}
+        }
+    avg_attendance = round(sum(d.get("attendance_rate", 0) for d in docs) / len(docs), 1)
+    total_expenses = sum(d.get("monthly_expenses", 0) for d in docs)
+    by_day = {}
+    for d in docs:
+        day = d.get("day_of_week", "Autre")
+        if day not in by_day:
+            by_day[day] = {"count": 0, "courses": []}
+        by_day[day]["count"] += 1
+        by_day[day]["courses"].append(d.get("course_name", ""))
+    return {
+        "year": year, "month": month,
+        "month_name": MONTHS_FR[month - 1] if 1 <= month <= 12 else "",
+        "total_courses": len(docs),
+        "avg_attendance_rate": avg_attendance,
+        "total_expenses": total_expenses,
+        "by_day": by_day
+    }
+
+
+@router.post("/courses/copy-planning/{year}/{month}")
+async def copy_planning_from_previous_month(year: int, month: int):
+    if month == 1:
+        prev_month, prev_year = 12, year - 1
+    else:
+        prev_month, prev_year = month - 1, year
+
+    existing = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+    if existing:
+        return {
+            "message": f"Le mois {MONTHS_FR[month-1]} {year} contient déjà {len(existing)} cours.",
+            "existing_count": len(existing), "copied": 0
+        }
+
+    prev_courses = await db.course_kpis.find({"year": prev_year, "month": prev_month}, {"_id": 0}).to_list(500)
+    if not prev_courses:
+        return {"message": f"Aucun cours trouvé pour {MONTHS_FR[prev_month-1]} {prev_year}", "copied": 0}
+
+    copied = []
+    for course in prev_courses:
+        new_course = CourseKPI(
+            year=year, month=month, month_name=MONTHS_FR[month - 1],
+            course_name=course.get("course_name", ""),
+            day_of_week=course.get("day_of_week", ""),
+            time_slot=course.get("time_slot", ""),
+            instructor_id=course.get("instructor_id"),
+            instructor_name=course.get("instructor_name", ""),
+            coach_id=course.get("coach_id"),
+            max_capacity=course.get("max_capacity", 10),
+            week1_attendance=0, week2_attendance=0, week3_attendance=0,
+            week4_attendance=0, week5_attendance=0,
+            s1=0, s2=0, s3=0, s4=0, s5=0,
+            attendance_rate=0,
+            monthly_expenses=course.get("monthly_expenses", 0),
+            notes=""
+        )
+        doc = new_course.model_dump()
+        await db.course_kpis.insert_one(doc)
+        doc.pop('_id', None)
+        copied.append(doc)
+    return {
+        "message": f"{len(copied)} cours copiés de {MONTHS_FR[prev_month-1]} {prev_year} vers {MONTHS_FR[month-1]} {year}",
+        "source": f"{MONTHS_FR[prev_month-1]} {prev_year}",
+        "target": f"{MONTHS_FR[month-1]} {year}",
+        "copied": len(copied), "courses": copied
+    }
+
+
+# ── Instructors ───────────────────────────────────────────────────────────────
+
+@router.get("/instructors")
+async def get_instructors(active_only: Optional[bool] = None):
+    query = {"is_active": True} if active_only else {}
+    return await db.instructors.find(query, {"_id": 0}).sort("name", 1).to_list(100)
+
+
+@router.post("/instructors")
+async def create_instructor(body: dict):
+    instructor = Instructor(
+        name=body.get("name", ""),
+        email=body.get("email"),
+        hourly_rate=body.get("hourly_rate", 0),
+        is_active=body.get("is_active", True)
+    )
+    doc = instructor.model_dump()
+    await db.instructors.insert_one(doc)
+    doc.pop('_id', None)
+    return doc
+
+
+@router.put("/instructors/{instructor_id}")
+async def update_instructor(instructor_id: str, body: dict):
+    existing = await db.instructors.find_one({"id": instructor_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Instructeur introuvable")
+    await db.instructors.update_one({"id": instructor_id}, {"$set": body})
+    return await db.instructors.find_one({"id": instructor_id}, {"_id": 0})
+
+
+@router.delete("/instructors/{instructor_id}")
+async def delete_instructor(instructor_id: str):
+    result = await db.instructors.delete_one({"id": instructor_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Instructeur introuvable")
+    return {"message": "Instructeur supprimé"}
+
+
+# ── Salary Generation ─────────────────────────────────────────────────────────
+
+@router.post("/courses/generate-salary-expenses/{year}/{month}")
+async def generate_salary_expenses(year: int, month: int):
+    courses = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+    if not courses:
+        raise HTTPException(status_code=404, detail="Aucun cours trouvé pour ce mois")
+
+    instructors_map = {i["name"]: i for i in await db.instructors.find({}, {"_id": 0}).to_list(100)}
+    coaches_map = {c["name"]: c for c in await db.coaches.find({}, {"_id": 0}).to_list(100)}
+
+    salary_by_coach = {}
+    for course in courses:
+        main_instr = course.get("instructor", "")
+        if not main_instr:
+            continue
+        rate = 0
+        if main_instr in coaches_map:
+            rate = coaches_map[main_instr].get("hourly_rate", 0)
+        elif main_instr in instructors_map:
+            rate = instructors_map[main_instr].get("hourly_rate", 0)
+
+        for w in range(1, 6):
+            if course.get(f"week{w}_attendance", 0) == 0:
+                continue
+            override = course.get(f"week{w}_instructor")
+            instr_name = override if override else main_instr
+            r = rate
+            if override:
+                if override in coaches_map:
+                    r = coaches_map[override].get("hourly_rate", 0)
+                elif override in instructors_map:
+                    r = instructors_map[override].get("hourly_rate", 0)
+            if instr_name not in salary_by_coach:
+                salary_by_coach[instr_name] = {"hours": 0, "total": 0, "rate": r}
+            salary_by_coach[instr_name]["hours"] += 1
+            salary_by_coach[instr_name]["total"] += r
+
+    if not salary_by_coach:
+        return {"message": "Aucune rémunération à générer", "transactions": []}
+
+    salary_cat = await db.accounting_categories.find_one({"kpi_column": "salaires_coachs"})
+    if not salary_cat:
+        salary_cat = AccountingCategory(
+            name="SALAIRES COACHS", kpi_column="salaires_coachs",
+            type="expense", color="#8B5CF6"
+        ).model_dump()
+        await db.accounting_categories.insert_one(salary_cat)
+
+    month_str = f"{year}-{month:02d}"
+    await db.accounting_transactions.delete_many({
+        "category": "SALAIRES COACHS",
+        "date": {"$regex": f"^{month_str}"},
+        "description": {"$regex": "^\\[Auto\\]"}
+    })
+
+    transactions = []
+    for coach_name, info in salary_by_coach.items():
+        tx = AccountingTransaction(
+            date=f"{month_str}-28",
+            description=f"[Auto] Salaire {coach_name} - {info['hours']}h à {info['rate']} CHF/h",
+            amount=round(info["total"], 2),
+            type="expense",
+            category="SALAIRES COACHS"
+        )
+        doc = tx.model_dump()
+        await db.accounting_transactions.insert_one(doc)
+        doc.pop("_id", None)
+        transactions.append(doc)
+
+    total = sum(t["amount"] for t in transactions)
+    return {
+        "message": f"{len(transactions)} transactions de salaires générées pour {MONTHS_FR[month-1]} {year}",
+        "total": total, "by_coach": salary_by_coach, "transactions": transactions
+    }

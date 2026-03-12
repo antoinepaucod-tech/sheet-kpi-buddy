@@ -108,6 +108,11 @@ export default function MembersPage() {
     billing_payment_method: "prelevement",
     // Annual review
     annual_review_enabled: false,
+    // Duo
+    is_duo: false,
+    duo_partner_name: "",
+    duo_partner_email: "",
+    duo_partner_phone: "",
   });
   const [renewData, setRenewData] = useState({
     new_end_date: "",
@@ -276,6 +281,10 @@ export default function MembersPage() {
       review_enabled: member.annual_review_enabled || member.review_enabled || false,
       review_frequency: member.review_frequency || "annually",
       annual_review_enabled: member.annual_review_enabled || false,
+      is_duo: member.is_duo || false,
+      duo_partner_name: "",
+      duo_partner_email: "",
+      duo_partner_phone: "",
     });
     setModalOpen(true);
   };
@@ -438,7 +447,14 @@ export default function MembersPage() {
                         {member.member_type?.replace("Membres ", "")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white/70">{member.membership}</TableCell>
+                    <TableCell className="text-white/70">
+                      <div className="flex items-center gap-1.5">
+                        {member.membership}
+                        {member.is_duo && (
+                          <Badge className="bg-indigo-500/20 text-indigo-400 border-0 text-[10px] px-1.5">DUO</Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-white/70">
                       {member.contract_signed_date
                         ? format(parseISO(member.contract_signed_date), "dd MMM yyyy", { locale: fr })
@@ -810,6 +826,51 @@ export default function MembersPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Duo Subscription */}
+          <div className="border-t border-white/10 pt-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.is_duo || false}
+                onChange={(e) => setFormData({ ...formData, is_duo: e.target.checked })}
+                className="rounded"
+                data-testid="duo-checkbox"
+              />
+              <label className="text-white text-sm">Abonnement Duo (2 personnes, 1 prix)</label>
+            </div>
+            {formData.is_duo && (
+              <div className="mt-3 space-y-3 bg-[#121214] rounded-lg p-3">
+                <p className="text-xs text-white/40 uppercase tracking-wider">Partenaire Duo</p>
+                <div className="grid grid-cols-1 gap-2">
+                  <Input
+                    placeholder="Nom du partenaire *"
+                    value={formData.duo_partner_name || ""}
+                    onChange={(e) => setFormData({ ...formData, duo_partner_name: e.target.value })}
+                    className="bg-[#1C1C1E] border-white/10 text-white h-8 text-sm"
+                    data-testid="duo-partner-name"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Email"
+                      value={formData.duo_partner_email || ""}
+                      onChange={(e) => setFormData({ ...formData, duo_partner_email: e.target.value })}
+                      className="bg-[#1C1C1E] border-white/10 text-white h-8 text-sm"
+                      data-testid="duo-partner-email"
+                    />
+                    <Input
+                      placeholder="Téléphone"
+                      value={formData.duo_partner_phone || ""}
+                      onChange={(e) => setFormData({ ...formData, duo_partner_phone: e.target.value })}
+                      className="bg-[#1C1C1E] border-white/10 text-white h-8 text-sm"
+                      data-testid="duo-partner-phone"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-white/30">Le partenaire sera créé automatiquement comme un membre distinct lié à celui-ci.</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setModalOpen(false)}>Annuler</Button>
