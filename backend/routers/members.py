@@ -11,6 +11,7 @@ from models.members import (
     AnnualReview
 )
 from models.payments import PaymentSchedule
+from models.challenges import ChallengeParticipant
 
 router = APIRouter(prefix="/members", tags=["members"])
 
@@ -153,6 +154,23 @@ async def create_member(data: CustomerMemberCreate):
         doc["is_duo"] = True
         doc["duo_partner_id"] = partner_doc["id"]
         doc["duo_primary"] = True
+
+    # Auto-add to active challenge if membership is a challenge type
+    if doc.get("membership") and "challenge" in doc["membership"].lower():
+        active_challenge = await db.six_weeks_challenges.find_one({"is_active": True}, {"_id": 0})
+        if active_challenge:
+            # Check not already participant
+            existing_p = await db.challenge_participants.find_one({
+                "challenge_id": active_challenge["id"], "member_id": doc["id"]
+            })
+            if not existing_p:
+                participant = ChallengeParticipant(
+                    challenge_id=active_challenge["id"],
+                    member_id=doc["id"],
+                    member_name=doc["name"]
+                )
+                p_doc = participant.model_dump()
+                await db.challenge_participants.insert_one(p_doc)
 
     return doc
 

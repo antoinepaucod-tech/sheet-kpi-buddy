@@ -27,6 +27,44 @@ async def get_challenge(challenge_id: str):
     participants = await db.challenge_participants.find(
         {"challenge_id": challenge_id}, {"_id": 0}
     ).to_list(200)
+    
+    # Enrich participants with training data (attendance-based check-ins)
+    if doc.get("start_date"):
+        from datetime import datetime as dt
+        try:
+            start = dt.fromisoformat(doc["start_date"])
+            start_iso_week = start.isocalendar()[1]
+            start_year = start.isocalendar()[0]
+            
+            for p in participants:
+                member_id = p.get("member_id")
+                if not member_id:
+                    continue
+                
+                # Fetch all trainings for this member around the challenge period
+                trainings = await db.weekly_trainings.find(
+                    {"member_id": member_id}, {"_id": 0}
+                ).to_list(100)
+                
+                # Map challenge weeks to calendar weeks and look up training counts
+                for w in range(1, 7):
+                    target_week = start_iso_week + (w - 1)
+                    target_year = start_year
+                    if target_week > 52:
+                        target_week -= 52
+                        target_year += 1
+                    
+                    # Find matching training record
+                    training_count = 0
+                    for t in trainings:
+                        if t.get("calendar_week") == target_week and t.get("year", start_year) == target_year:
+                            training_count = t.get("trainings_count", 0)
+                            break
+                    
+                    p[f"week{w}_trainings"] = training_count
+        except Exception:
+            pass
+    
     doc["participants"] = participants
     doc["participant_count"] = len(participants)
     return doc

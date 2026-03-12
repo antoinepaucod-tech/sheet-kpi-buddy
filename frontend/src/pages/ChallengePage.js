@@ -179,8 +179,14 @@ export default function ChallengePage() {
     setCheckinModalOpen(true);
   };
 
-  // Calculate weekly check-ins from participant data
+  // Calculate weekly check-ins from training data (attendance) with fallback to manual
   const getWeeklyCheckins = (participant, week) => {
+    // Training-based check-ins from Saisie Séances (preferred)
+    const trainingKey = `week${week}_trainings`;
+    if (participant[trainingKey] !== undefined && participant[trainingKey] > 0) {
+      return participant[trainingKey];
+    }
+    // Fallback to manually entered check-ins
     const key = `week${week}_checkins`;
     return participant[key] || 0;
   };
@@ -199,19 +205,28 @@ export default function ChallengePage() {
     
     const participants = challengeDetail.participants;
     const totalParticipants = participants.length;
+    const goal = challengeDetail.checkins_goal || 3;
+    
+    // A week is "completed" if check-ins >= goal (from trainings or manual)
+    const isWeekComplete = (p, w) => {
+      const trainings = p[`week${w}_trainings`] || 0;
+      const manual = p[`week${w}_checkins`] || 0;
+      const checkins = Math.max(trainings, manual);
+      return checkins >= goal || p[`week${w}`];
+    };
     
     const weeklyStats = WEEKS.map((w) => ({
       week: w,
-      completed: participants.filter((p) => p[`week${w}`]).length,
+      completed: participants.filter((p) => isWeekComplete(p, w)).length,
       percentage: totalParticipants > 0
-        ? Math.round((participants.filter((p) => p[`week${w}`]).length / totalParticipants) * 100)
+        ? Math.round((participants.filter((p) => isWeekComplete(p, w)).length / totalParticipants) * 100)
         : 0,
     }));
     
     const completionByParticipant = participants.map((p) => ({
       ...p,
-      completedWeeks: WEEKS.filter((w) => p[`week${w}`]).length,
-      completionRate: Math.round((WEEKS.filter((w) => p[`week${w}`]).length / 6) * 100),
+      completedWeeks: WEEKS.filter((w) => isWeekComplete(p, w)).length,
+      completionRate: Math.round((WEEKS.filter((w) => isWeekComplete(p, w)).length / 6) * 100),
     }));
     
     const avgCompletion = totalParticipants > 0
@@ -456,20 +471,28 @@ export default function ChallengePage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
-                          {WEEKS.map((week) => (
-                            <button
-                              key={week}
-                              onClick={() => toggleWeekCheckin(participant, week)}
-                              className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-                                participant[`week${week}`]
-                                  ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
-                                  : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)] hover:bg-[rgba(255,255,255,0.1)]"
-                              }`}
-                              data-testid={`check-w${week}-${participant.id}`}
-                            >
-                              {participant[`week${week}`] ? <Check size={14} /> : <span className="text-xs">{week}</span>}
-                            </button>
-                          ))}
+                          {WEEKS.map((week) => {
+                            const checkins = getWeeklyCheckins(participant, week);
+                            const goal = challengeDetail.checkins_goal || 3;
+                            const isComplete = checkins >= goal || participant[`week${week}`];
+                            return (
+                              <button
+                                key={week}
+                                onClick={() => toggleWeekCheckin(participant, week)}
+                                className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
+                                  isComplete
+                                    ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
+                                    : checkins > 0
+                                      ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]"
+                                      : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)] hover:bg-[rgba(255,255,255,0.1)]"
+                                }`}
+                                title={`S${week}: ${checkins}/${goal} séances`}
+                                data-testid={`check-w${week}-${participant.id}`}
+                              >
+                                {isComplete ? <Check size={14} /> : checkins > 0 ? <span className="text-xs font-bold">{checkins}</span> : <span className="text-xs">{week}</span>}
+                              </button>
+                            );
+                          })}
                         </div>
                         <Button
                           size="sm"
@@ -579,16 +602,22 @@ export default function ChallengePage() {
             {/* Check-ins goal */}
             <div>
               <label className="tf-stat-label">Objectif check-ins par semaine</label>
-              <div className="flex items-center gap-4 mt-1">
-                <Input
-                  type="number"
-                  min={1}
-                  max={7}
-                  value={formData.checkins_goal}
-                  onChange={(e) => setFormData({ ...formData, checkins_goal: parseInt(e.target.value) || 3 })}
-                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white w-20"
-                />
-                <span className="text-[var(--color-text-secondary)] text-sm">séances / semaine</span>
+              <div className="flex gap-2 mt-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, checkins_goal: n })}
+                    className={`flex-1 py-2 rounded-[var(--radius-md)] text-sm font-medium transition-all ${
+                      formData.checkins_goal === n
+                        ? "bg-[var(--color-accent)] text-white"
+                        : "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)]"
+                    }`}
+                    data-testid={`checkin-goal-${n}`}
+                  >
+                    {n}x / sem.
+                  </button>
+                ))}
               </div>
               <p className="text-[var(--color-text-tertiary)] text-xs mt-1">
                 Les participants doivent venir {formData.checkins_goal || 3}x par semaine pendant 6 semaines
@@ -705,13 +734,15 @@ export default function ChallengePage() {
           {selectedParticipant && (
             <div className="space-y-4 py-4">
               <p className="text-[var(--color-text-secondary)] text-sm">
-                Objectif : {challengeDetail?.checkins_goal || 3} check-ins par semaine
+                Objectif : {challengeDetail?.checkins_goal || 3} séances par semaine — données issues de la Saisie Séances
               </p>
               <div className="grid grid-cols-3 gap-3">
                 {WEEKS.map((week) => {
-                  const checkins = getWeeklyCheckins(selectedParticipant, week);
+                  const trainings = selectedParticipant[`week${week}_trainings`] || 0;
+                  const manual = selectedParticipant[`week${week}_checkins`] || 0;
+                  const checkins = Math.max(trainings, manual);
                   const goal = challengeDetail?.checkins_goal || 3;
-                  const isComplete = checkins >= goal;
+                  const isComplete = checkins >= goal || selectedParticipant[`week${week}`];
                   return (
                     <div 
                       key={week} 
@@ -720,30 +751,19 @@ export default function ChallengePage() {
                       }`}
                     >
                       <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-2">Semaine {week}</p>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.max(0, checkins - 1))}
-                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-[var(--color-bg-tertiary)] flex items-center justify-center"
-                        >
-                          -
-                        </button>
-                        <span className={`tf-number-large flex-1 text-center ${isComplete ? "text-[var(--color-success)]" : "text-white"}`}>
-                          {checkins}
-                        </span>
-                        <button
-                          onClick={() => updateWeeklyCheckins(selectedParticipant, week, Math.min(7, checkins + 1))}
-                          className="w-8 h-8 rounded bg-[rgba(255,255,255,0.1)] text-white hover:bg-[var(--color-bg-tertiary)] flex items-center justify-center"
-                        >
-                          +
-                        </button>
-                      </div>
+                      <p className={`tf-number-large text-center ${isComplete ? "text-[var(--color-success)]" : trainings > 0 ? "text-[var(--color-accent)]" : "text-white"}`}>
+                        {checkins}
+                      </p>
                       <p className="text-center text-xs mt-1">
                         {isComplete ? (
-                          <span className="text-[var(--color-success)]">✓ Objectif atteint</span>
+                          <span className="text-[var(--color-success)]">Objectif atteint</span>
                         ) : (
-                          <span className="text-[var(--color-text-tertiary)]">{checkins}/{goal}</span>
+                          <span className="text-[var(--color-text-tertiary)]">{checkins}/{goal} séances</span>
                         )}
                       </p>
+                      {trainings > 0 && (
+                        <p className="text-center text-[10px] text-[var(--color-accent)] mt-0.5">via Saisie Séances</p>
+                      )}
                     </div>
                   );
                 })}

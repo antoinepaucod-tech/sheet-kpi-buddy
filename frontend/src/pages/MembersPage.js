@@ -453,6 +453,9 @@ export default function MembersPage() {
                         {member.is_duo && (
                           <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0 text-[10px] px-1.5">DUO</Badge>
                         )}
+                        {member.membership && member.membership.toLowerCase().includes("challenge") && (
+                          <span title="6 Weeks Challenge" className="text-sm">🔥</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-[var(--color-text-secondary)]">
