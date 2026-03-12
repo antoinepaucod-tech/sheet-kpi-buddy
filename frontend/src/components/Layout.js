@@ -21,6 +21,7 @@ import {
   ClipboardList,
   Sliders,
   UserCog,
+  ListChecks,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -50,6 +51,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
     { path: "/courses", icon: CalendarDays, label: lang === "fr" ? "KPIs Cours" : "Course KPIs" },
     { path: "/coaches", icon: UserCog, label: lang === "fr" ? "Coachs" : "Coaches" },
     { path: "/clients", icon: UserCheck, label: lang === "fr" ? "KPIs Clients" : "Client KPIs" },
+    { path: "/attendance", icon: ListChecks, label: lang === "fr" ? "Saisie Séances" : "Attendance" },
     { path: "/transactions", icon: ArrowLeftRight, label: t("transactions") },
     { path: "/recurring", icon: RefreshCw, label: t("recurringTransactions") },
     { path: "/categories", icon: Tag, label: t("categories") },
