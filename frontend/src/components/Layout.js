@@ -34,30 +34,62 @@ import {
 } from "./ui/select";
 import { cn } from "../lib/utils";
 
+const NAV_SECTIONS = (lang) => [
+  {
+    label: lang === "fr" ? "Pilotage" : "Analytics",
+    items: [
+      { path: "/", icon: LayoutDashboard, label: lang === "fr" ? "Tableau de bord" : "Dashboard" },
+      { path: "/compare", icon: BarChart3, label: lang === "fr" ? "Analyse Multi-Mois" : "Multi-Month" },
+    ],
+  },
+  {
+    label: lang === "fr" ? "Membres" : "Members",
+    items: [
+      { path: "/members", icon: Users, label: lang === "fr" ? "Membres" : "Members" },
+      { path: "/payments", icon: CreditCard, label: lang === "fr" ? "Paiements" : "Payments" },
+      { path: "/onboarding", icon: ClipboardCheck, label: "Onboarding" },
+    ],
+  },
+  {
+    label: lang === "fr" ? "Activité" : "Activity",
+    items: [
+      { path: "/courses", icon: CalendarDays, label: lang === "fr" ? "KPIs Cours" : "Course KPIs" },
+      { path: "/attendance", icon: ListChecks, label: lang === "fr" ? "Saisie Séances" : "Attendance" },
+      { path: "/clients", icon: UserCheck, label: lang === "fr" ? "KPIs Clients" : "Client KPIs" },
+      { path: "/coaches", icon: UserCog, label: lang === "fr" ? "Coachs" : "Coaches" },
+    ],
+  },
+  {
+    label: lang === "fr" ? "Programmes" : "Programs",
+    items: [
+      { path: "/challenge", icon: Trophy, label: lang === "fr" ? "Challenge 6 Sem." : "6 Weeks" },
+      { path: "/annual-reviews", icon: ClipboardList, label: lang === "fr" ? "Bilans / Suivis" : "Reviews" },
+    ],
+  },
+  {
+    label: lang === "fr" ? "Comptabilité" : "Accounting",
+    items: [
+      { path: "/transactions", icon: ArrowLeftRight, label: lang === "fr" ? "Transactions" : "Transactions" },
+      { path: "/recurring", icon: RefreshCw, label: lang === "fr" ? "Récurrentes" : "Recurring" },
+      { path: "/categories", icon: Tag, label: lang === "fr" ? "Catégories" : "Categories" },
+    ],
+  },
+  {
+    label: "Configuration",
+    items: [
+      { path: "/settings", icon: Settings, label: lang === "fr" ? "Paramètres" : "Settings" },
+      { path: "/settings/types", icon: Sliders, label: lang === "fr" ? "Config. Types" : "Types Config" },
+    ],
+  },
+];
+
 export function Layout({ children, selectedMonth, setSelectedMonth, availableMonths }) {
   const { t, lang, setLang } = useTranslations();
   const { user, logout } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
-  const navItems = [
-    { path: "/", icon: LayoutDashboard, label: t("dashboard") },
-    { path: "/compare", icon: BarChart3, label: lang === "fr" ? "Analyse Multi-Mois" : "Multi-Month" },
-    { path: "/members", icon: Users, label: lang === "fr" ? "Membres" : "Members" },
-    { path: "/payments", icon: CreditCard, label: lang === "fr" ? "Paiements" : "Payments" },
-    { path: "/onboarding", icon: ClipboardCheck, label: lang === "fr" ? "Onboarding" : "Onboarding" },
-    { path: "/annual-reviews", icon: ClipboardList, label: lang === "fr" ? "Bilans / Suivis" : "Reviews" },
-    { path: "/challenge", icon: Trophy, label: lang === "fr" ? "Challenge 6 Sem." : "6 Weeks Challenge" },
-    { path: "/courses", icon: CalendarDays, label: lang === "fr" ? "KPIs Cours" : "Course KPIs" },
-    { path: "/coaches", icon: UserCog, label: lang === "fr" ? "Coachs" : "Coaches" },
-    { path: "/clients", icon: UserCheck, label: lang === "fr" ? "KPIs Clients" : "Client KPIs" },
-    { path: "/attendance", icon: ListChecks, label: lang === "fr" ? "Saisie Séances" : "Attendance" },
-    { path: "/transactions", icon: ArrowLeftRight, label: t("transactions") },
-    { path: "/recurring", icon: RefreshCw, label: t("recurringTransactions") },
-    { path: "/categories", icon: Tag, label: t("categories") },
-    { path: "/settings", icon: Settings, label: t("settings") },
-    { path: "/settings/types", icon: Sliders, label: lang === "fr" ? "Config. Types" : "Types Config" },
-  ];
+  const sections = NAV_SECTIONS(lang);
 
   return (
     <div className="flex min-h-screen bg-[#09090B]">
@@ -83,24 +115,36 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
           </button>
         </div>
 
-        <nav className="flex-1 p-2 space-y-1">
-          {navItems.map(({ path, icon: Icon, label }) => (
-            <Link
-              key={path}
-              to={path}
-              data-testid={`nav-${path === "/" ? "dashboard" : path.replace("/", "")}`}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors",
-                location.pathname === path
-                  ? "bg-rose-600/20 text-rose-500 border-l-2 border-rose-600"
-                  : "text-white/50 hover:text-white hover:bg-white/5"
-              )}
-            >
-              <Icon size={18} strokeWidth={1.5} />
+        <nav className="flex-1 py-2 overflow-y-auto">
+          {sections.map((section) => (
+            <div key={section.label} className="mb-1">
               {!collapsed && (
-                <span className="text-sm font-medium">{label}</span>
+                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-white/25">
+                  {section.label}
+                </p>
               )}
-            </Link>
+              {collapsed && <div className="my-1 mx-3 border-t border-white/5" />}
+              <div className="space-y-0.5 px-2">
+                {section.items.map(({ path, icon: Icon, label }) => (
+                  <Link
+                    key={path}
+                    to={path}
+                    data-testid={`nav-${path === "/" ? "dashboard" : path.replace(/\//g, "").replace("settings-types", "settings/types")}`}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-sm transition-colors",
+                      location.pathname === path
+                        ? "bg-rose-600/20 text-rose-500 border-l-2 border-rose-600"
+                        : "text-white/50 hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    <Icon size={16} strokeWidth={1.5} />
+                    {!collapsed && (
+                      <span className="text-[13px] font-medium">{label}</span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 

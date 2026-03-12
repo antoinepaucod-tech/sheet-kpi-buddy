@@ -165,6 +165,15 @@ export default function PaymentsPage() {
     },
   });
 
+  const sendReminderMutation = useMutation({
+    mutationFn: (paymentId) => axios.post(`${API}/notifications/send-payment-reminder/${paymentId}`),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries(["payments"]);
+      toast.success(res.data.message);
+    },
+    onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
+  });
+
   const deletePaymentMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/payments/${id}`),
     onSuccess: () => {
@@ -464,8 +473,16 @@ export default function PaymentsPage() {
                         <TableCell className="text-red-400 font-bold">{payment.amount?.toLocaleString("fr-CH")} CHF</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="outline" className="border-white/20 text-white">
-                              <Mail size={14} className="mr-1" /> Relancer
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-white/20 text-white"
+                              onClick={() => sendReminderMutation.mutate(payment.id)}
+                              disabled={sendReminderMutation.isPending || payment.reminder_sent}
+                              data-testid={`reminder-${payment.id}`}
+                            >
+                              <Mail size={14} className="mr-1" />
+                              {payment.reminder_sent ? "Envoyé" : sendReminderMutation.isPending ? "..." : "Relancer"}
                             </Button>
                             <Button
                               size="sm"

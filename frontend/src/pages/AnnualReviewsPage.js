@@ -20,6 +20,7 @@ import {
   Plus,
   Eye,
   BarChart3,
+  Mail,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -156,6 +157,13 @@ export default function AnnualReviewsPage() {
       toast.success("Bilan planifié");
     },
     onError: () => toast.error("Erreur lors de la création"),
+  });
+
+  // Send review reminder
+  const sendReminderMutation = useMutation({
+    mutationFn: (reviewId) => axios.post(`${API}/notifications/send-review-reminder/${reviewId}`),
+    onSuccess: (res) => toast.success(res.data.message),
+    onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
   });
 
   // Filter reviews
@@ -496,6 +504,19 @@ export default function AnnualReviewsPage() {
                       >
                         <BarChart3 size={14} />
                       </Button>
+                      {review.status === "scheduled" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-amber-400 hover:text-amber-300"
+                          onClick={() => sendReminderMutation.mutate(review.id)}
+                          disabled={sendReminderMutation.isPending}
+                          title="Envoyer rappel"
+                          data-testid={`reminder-${review.id}`}
+                        >
+                          <Mail size={14} />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
