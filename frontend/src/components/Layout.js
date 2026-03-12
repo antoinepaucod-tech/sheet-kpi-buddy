@@ -22,6 +22,7 @@ import {
   Sliders,
   UserCog,
   ListChecks,
+  Mail,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -72,6 +73,12 @@ const NAV_SECTIONS = (lang) => [
       { path: "/transactions", icon: ArrowLeftRight, label: lang === "fr" ? "Transactions" : "Transactions" },
       { path: "/recurring", icon: RefreshCw, label: lang === "fr" ? "Récurrentes" : "Recurring" },
       { path: "/categories", icon: Tag, label: lang === "fr" ? "Catégories" : "Categories" },
+    ],
+  },
+  {
+    label: lang === "fr" ? "Communication" : "Communication",
+    items: [
+      { path: "/notifications", icon: Mail, label: lang === "fr" ? "Messagerie" : "Messaging" },
     ],
   },
   {

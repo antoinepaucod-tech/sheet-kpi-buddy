@@ -21,6 +21,7 @@ import AnnualReviewsPage from "./pages/AnnualReviewsPage";
 import SettingsTypesPage from "./pages/SettingsTypesPage";
 import CoachesPage from "./pages/CoachesPage";
 import AttendancePage from "./pages/AttendancePage";
+import NotificationsPage from "./pages/NotificationsPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -114,6 +115,7 @@ function AppInner() {
                   <Route path="/courses" element={<CoursesPage />} />
                   <Route path="/clients" element={<ClientKPIPage />} />
                   <Route path="/attendance" element={<AttendancePage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
                   <Route path="/payments" element={<PaymentsPage />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/annual-reviews" element={<AnnualReviewsPage />} />
