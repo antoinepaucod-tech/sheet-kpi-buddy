@@ -95,7 +95,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
                 type="number"
                 value={form[field.key] ?? 0}
                 onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                className="bg-[#1C1C1E] border-white/10 text-white font-mono w-28 text-right"
+                className="bg-[#121214] border-white/10 text-white font-mono w-28 text-right"
                 data-testid={`edit-kpi-${field.key}`}
               />
             </div>
@@ -113,7 +113,7 @@ export function EditKPIModal({ open, onClose, kpi, onSaved }) {
               onChange={(e) => setNote(e.target.value)}
               placeholder={lang === "fr" ? "Commentaires, événements du mois..." : "Comments, monthly events..."}
               rows={3}
-              className="w-full bg-[#1C1C1E] border border-white/10 text-white text-sm rounded-sm px-3 py-2 resize-none focus:outline-none focus:border-white/20 placeholder:text-white/20 font-body"
+              className="w-full bg-[#121214] border border-white/10 text-white text-sm rounded-sm px-3 py-2 resize-none focus:outline-none focus:border-white/20 placeholder:text-white/20 font-body"
               data-testid="edit-kpi-note"
             />
           </div>

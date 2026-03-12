@@ -166,18 +166,18 @@ export default function TransactionsPage({ selectedMonth }) {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder={lang === "fr" ? "Rechercher..." : "Search..."}
-            className="w-full bg-[#1C1C1E] border border-white/10 text-white text-sm rounded-sm pl-8 pr-3 py-2 focus:outline-none focus:border-white/20 placeholder:text-white/20"
+            className="w-full bg-[#121214] border border-white/10 text-white text-sm rounded-sm pl-8 pr-3 py-2 focus:outline-none focus:border-white/20 placeholder:text-white/20"
             data-testid="tx-search-input"
           />
         </div>
         <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger
-            className="w-40 bg-[#1C1C1E] border-white/10 text-white text-sm h-9"
+            className="w-40 bg-[#121214] border-white/10 text-white text-sm h-9"
             data-testid="filter-type-select"
           >
             <SelectValue placeholder="Tous types" />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             <SelectItem value="all" className="text-white focus:bg-white/10">Tous types</SelectItem>
             <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
             <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>

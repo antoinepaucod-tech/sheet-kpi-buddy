@@ -91,12 +91,12 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 onValueChange={(v) => handleChange("type", v)}
               >
                 <SelectTrigger
-                  className="bg-[#1C1C1E] border-white/10 text-white"
+                  className="bg-[#121214] border-white/10 text-white"
                   data-testid="tx-type-select"
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   <SelectItem value="expense" className="text-white focus:bg-white/10">
                     {t("expense")}
                   </SelectItem>
@@ -115,7 +115,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 type="date"
                 value={form.date}
                 onChange={(e) => handleChange("date", e.target.value)}
-                className="bg-[#1C1C1E] border-white/10 text-white"
+                className="bg-[#121214] border-white/10 text-white"
                 data-testid="tx-date-input"
               />
             </div>
@@ -129,7 +129,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
               placeholder="Ex: Loyer janvier"
-              className="bg-[#1C1C1E] border-white/10 text-white placeholder:text-white/20"
+              className="bg-[#121214] border-white/10 text-white placeholder:text-white/20"
               data-testid="tx-description-input"
             />
           </div>
@@ -144,7 +144,7 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 value={form.amount}
                 onChange={(e) => handleChange("amount", e.target.value)}
                 placeholder="0.00"
-                className="bg-[#1C1C1E] border-white/10 text-white placeholder:text-white/20 font-mono"
+                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20 font-mono"
                 data-testid="tx-amount-input"
               />
             </div>
@@ -158,12 +158,12 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 onValueChange={(v) => handleChange("category", v)}
               >
                 <SelectTrigger
-                  className="bg-[#1C1C1E] border-white/10 text-white"
+                  className="bg-[#121214] border-white/10 text-white"
                   data-testid="tx-category-select"
                 >
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   {filteredCategories.map((cat) => (
                     <SelectItem
                       key={cat.id}
@@ -194,12 +194,12 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                 onValueChange={(v) => handleChange("sub_type", v)}
               >
                 <SelectTrigger
-                  className="bg-[#1C1C1E] border-white/10 text-white"
+                  className="bg-[#121214] border-white/10 text-white"
                   data-testid="tx-subtype-select"
                 >
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   <SelectItem value="members" className="text-white focus:bg-white/10">
                     {t("membersType")}
                   </SelectItem>

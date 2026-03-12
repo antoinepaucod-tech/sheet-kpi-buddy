@@ -214,11 +214,10 @@ export default function ClientKPIPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <UserCheck className="text-purple-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "KPIs Clients" : "Client KPIs"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             {lang === "fr" ? "Engagement et séances hebdomadaires par membre" : "Engagement and weekly sessions per member"}
           </p>
         </div>
@@ -226,48 +225,48 @@ export default function ClientKPIPage() {
 
       {/* Global Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Total Membres</p>
-          <p className="text-2xl font-bold text-white">{globalStats.totalMembers}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Total Membres</p>
+          <p className="text-2xl font-mono font-bold text-white">{globalStats.totalMembers}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Moy. / Semaine</p>
-          <p className="text-2xl font-bold text-purple-400">{globalStats.avgPerWeek}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Moy. / Semaine</p>
+          <p className="text-2xl font-mono font-bold text-purple-400">{globalStats.avgPerWeek}</p>
         </div>
         <div 
-          className={`bg-[#1C1C1E] rounded-lg p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-emerald-500' : 'border-white/10 hover:border-emerald-500/50'}`}
+          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Excellent' ? 'border-emerald-500' : 'border-white/10 hover:border-emerald-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Excellent' ? 'all' : 'Excellent')}
         >
           <p className="text-emerald-400 text-xs uppercase flex items-center gap-1">
             <Flame size={10} /> Excellent
           </p>
-          <p className="text-2xl font-bold text-emerald-400">{globalStats.excellent}</p>
+          <p className="text-2xl font-mono font-bold text-emerald-400">{globalStats.excellent}</p>
         </div>
         <div 
-          className={`bg-[#1C1C1E] rounded-lg p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-blue-500' : 'border-white/10 hover:border-blue-500/50'}`}
+          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Bon' ? 'border-blue-500' : 'border-white/10 hover:border-blue-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Bon' ? 'all' : 'Bon')}
         >
           <p className="text-blue-400 text-xs uppercase">Bon</p>
-          <p className="text-2xl font-bold text-blue-400">{globalStats.bon}</p>
+          <p className="text-2xl font-mono font-bold text-blue-400">{globalStats.bon}</p>
         </div>
         <div 
-          className={`bg-[#1C1C1E] rounded-lg p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-amber-500' : 'border-white/10 hover:border-amber-500/50'}`}
+          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Moyen' ? 'border-amber-500' : 'border-white/10 hover:border-amber-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Moyen' ? 'all' : 'Moyen')}
         >
           <p className="text-amber-400 text-xs uppercase">Moyen</p>
-          <p className="text-2xl font-bold text-amber-400">{globalStats.moyen}</p>
+          <p className="text-2xl font-mono font-bold text-amber-400">{globalStats.moyen}</p>
         </div>
         <div 
-          className={`bg-[#1C1C1E] rounded-lg p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-red-500' : 'border-white/10 hover:border-red-500/50'}`}
+          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${filterEngagement === 'Faible' ? 'border-red-500' : 'border-white/10 hover:border-red-500/50'}`}
           onClick={() => setFilterEngagement(filterEngagement === 'Faible' ? 'all' : 'Faible')}
         >
           <p className="text-red-400 text-xs uppercase">Faible</p>
-          <p className="text-2xl font-bold text-red-400">{globalStats.faible}</p>
+          <p className="text-2xl font-mono font-bold text-red-400">{globalStats.faible}</p>
         </div>
       </div>
 
       {/* Weekly Chart */}
-      <div className="bg-[#1C1C1E] rounded-lg p-6 border border-white/10">
+      <div className="bg-[#121214] rounded-sm p-6 border border-white/10">
         <h3 className="text-white font-medium mb-4 flex items-center gap-2">
           <TrendingUp size={18} className="text-purple-400" />
           Moyenne d'entraînements par semaine ({selectedYear})
@@ -309,16 +308,16 @@ export default function ClientKPIPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={lang === "fr" ? "Rechercher un membre..." : "Search member..."}
-            className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
+            className="pl-10 bg-[#121214] border-white/10 text-white"
             data-testid="client-search"
           />
         </div>
         <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-          <SelectTrigger className="w-[120px] bg-[#1C1C1E] border-white/10 text-white" data-testid="year-filter">
+          <SelectTrigger className="w-[120px] bg-[#121214] border-white/10 text-white" data-testid="year-filter">
             <Calendar size={14} className="mr-2 text-white/40" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             {[2023, 2024, 2025].map((y) => (
               <SelectItem key={y} value={y.toString()} className="text-white">{y}</SelectItem>
             ))}
@@ -337,7 +336,7 @@ export default function ClientKPIPage() {
       </div>
 
       {/* Members Table */}
-      <div className="bg-[#1C1C1E] rounded-lg border border-white/10 overflow-hidden">
+      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
@@ -418,21 +417,21 @@ export default function ClientKPIPage() {
                         <div className="py-6 px-4 space-y-6">
                           {/* Summary stats */}
                           <div className="grid grid-cols-4 gap-4">
-                            <div className="bg-[#1C1C1E] rounded-lg p-4">
+                            <div className="bg-[#121214] rounded-sm p-4">
                               <p className="text-white/40 text-xs uppercase">Total séances</p>
-                              <p className="text-2xl font-bold text-white">{memberSummary.total_trainings}</p>
+                              <p className="text-2xl font-mono font-bold text-white">{memberSummary.total_trainings}</p>
                             </div>
-                            <div className="bg-[#1C1C1E] rounded-lg p-4">
+                            <div className="bg-[#121214] rounded-sm p-4">
                               <p className="text-white/40 text-xs uppercase">Semaines suivies</p>
-                              <p className="text-2xl font-bold text-white">{memberSummary.weeks_tracked}</p>
+                              <p className="text-2xl font-mono font-bold text-white">{memberSummary.weeks_tracked}</p>
                             </div>
-                            <div className="bg-[#1C1C1E] rounded-lg p-4">
+                            <div className="bg-[#121214] rounded-sm p-4">
                               <p className="text-white/40 text-xs uppercase">Moyenne / sem.</p>
                               <p className={`text-2xl font-bold ${ENGAGEMENT_COLORS[memberSummary.engagement_level]}`}>
                                 {memberSummary.avg_per_week}
                               </p>
                             </div>
-                            <div className="bg-[#1C1C1E] rounded-lg p-4">
+                            <div className="bg-[#121214] rounded-sm p-4">
                               <p className="text-white/40 text-xs uppercase">Engagement</p>
                               <Badge className={`${ENGAGEMENT_BG[memberSummary.engagement_level]} ${ENGAGEMENT_COLORS[memberSummary.engagement_level]} border-0 mt-1`}>
                                 {memberSummary.engagement_level}
@@ -478,7 +477,7 @@ export default function ClientKPIPage() {
                                       max="7"
                                       defaultValue={existing?.trainings_count || 0}
                                       onBlur={(e) => handleTrainingUpdate(member.id, targetWeek, e.target.value)}
-                                      className="w-14 h-8 text-center bg-[#1C1C1E] border-white/10 text-white"
+                                      className="w-14 h-8 text-center bg-[#121214] border-white/10 text-white"
                                       data-testid={`training-w${targetWeek}-${member.id}`}
                                     />
                                   </div>

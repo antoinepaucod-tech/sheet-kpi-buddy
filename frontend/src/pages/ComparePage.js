@@ -217,10 +217,10 @@ export default function ComparePage() {
           
           <div className="flex items-center gap-2">
             <Select value={startMonth} onValueChange={setStartMonth}>
-              <SelectTrigger className="w-40 bg-[#1C1C1E] border-white/10 text-white text-sm h-9">
+              <SelectTrigger className="w-40 bg-[#121214] border-white/10 text-white text-sm h-9">
                 <SelectValue placeholder={lang === "fr" ? "Début" : "Start"} />
               </SelectTrigger>
-              <SelectContent className="bg-[#1C1C1E] border-white/10">
+              <SelectContent className="bg-[#121214] border-white/10">
                 {availableMonths.map(m => (
                   <SelectItem key={m.value} value={m.value} className="text-white focus:bg-white/10">
                     {m.label}
@@ -232,10 +232,10 @@ export default function ComparePage() {
             <span className="text-white/30">→</span>
             
             <Select value={endMonth} onValueChange={setEndMonth}>
-              <SelectTrigger className="w-40 bg-[#1C1C1E] border-white/10 text-white text-sm h-9">
+              <SelectTrigger className="w-40 bg-[#121214] border-white/10 text-white text-sm h-9">
                 <SelectValue placeholder={lang === "fr" ? "Fin" : "End"} />
               </SelectTrigger>
-              <SelectContent className="bg-[#1C1C1E] border-white/10">
+              <SelectContent className="bg-[#121214] border-white/10">
                 {availableMonths.map(m => (
                   <SelectItem key={m.value} value={m.value} className="text-white focus:bg-white/10">
                     {m.label}
@@ -340,7 +340,7 @@ export default function ComparePage() {
 
       {/* Charts */}
       <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList className="bg-[#1C1C1E] border border-white/10 p-1">
+        <TabsList className="bg-[#121214] border border-white/10 p-1">
           <TabsTrigger value="revenue" className="text-xs uppercase data-[state=active]:bg-rose-600 data-[state=active]:text-white">
             {lang === "fr" ? "Revenus" : "Revenue"}
           </TabsTrigger>

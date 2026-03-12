@@ -124,13 +124,13 @@ export default function NotificationsPage() {
       subject: composeData.subject,
       html_content: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;background:#09090B;color:#fff;padding:0;">
         <div style="background:linear-gradient(135deg,#E11D48,#BE123C);padding:24px 32px;">
-          <h1 style="margin:0;font-size:20px;font-weight:700;color:#fff;">The Coach Switzerland</h1>
+          <h1 style="margin:0;font-size:20px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.05em;">TRANSFORM</h1>
         </div>
         <div style="padding:32px;">
           <p style="color:#ccc;line-height:1.8;white-space:pre-wrap;">${composeData.message}</p>
         </div>
         <div style="padding:16px 32px;border-top:1px solid #222;text-align:center;">
-          <p style="margin:0;font-size:12px;color:#666;">The Coach Switzerland</p>
+          <p style="margin:0;font-size:12px;color:#666;">TRANSFORM - Pilotage financier pour clubs de sport</p>
         </div>
       </div>`,
       reminder_type: "custom",
@@ -142,11 +142,10 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Mail className="text-rose-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "Messagerie & Notifications" : "Messaging & Notifications"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             Historique des emails envoyés et envoi de notifications
           </p>
         </div>
@@ -184,17 +183,17 @@ export default function NotificationsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Total envoyés</p>
-          <p className="text-2xl font-bold text-white">{stats.total}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Total envoyés</p>
+          <p className="text-2xl font-mono font-bold text-white">{stats.total}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Réussis</p>
-          <p className="text-2xl font-bold text-emerald-400">{stats.sent}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Réussis</p>
+          <p className="text-2xl font-mono font-bold text-emerald-400">{stats.sent}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Aujourd'hui</p>
-          <p className="text-2xl font-bold text-rose-400">{stats.todayCount}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Aujourd'hui</p>
+          <p className="text-2xl font-mono font-bold text-rose-400">{stats.todayCount}</p>
         </div>
       </div>
 
@@ -206,16 +205,16 @@ export default function NotificationsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par email ou sujet..."
-            className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
+            className="pl-10 bg-[#121214] border-white/10 text-white"
             data-testid="notif-search"
           />
         </div>
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[200px] bg-[#1C1C1E] border-white/10 text-white" data-testid="notif-type-filter">
+          <SelectTrigger className="w-[200px] bg-[#121214] border-white/10 text-white" data-testid="notif-type-filter">
             <Filter size={14} className="mr-2 text-white/40" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             <SelectItem value="all" className="text-white">Tous les types</SelectItem>
             <SelectItem value="payment_reminder" className="text-white">Rappels paiement</SelectItem>
             <SelectItem value="review_reminder" className="text-white">Rappels bilan</SelectItem>
@@ -243,7 +242,7 @@ export default function NotificationsPage() {
             return (
               <div
                 key={log.sent_at + log.recipient}
-                className="bg-[#1C1C1E] border border-white/10 rounded-lg overflow-hidden"
+                className="bg-[#121214] border border-white/10 rounded-sm overflow-hidden"
                 data-testid={`notif-log-${log.type}`}
               >
                 <div
@@ -312,7 +311,7 @@ export default function NotificationsPage() {
 
       {/* Compose Modal */}
       <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send size={18} className="text-rose-500" />
@@ -329,7 +328,7 @@ export default function NotificationsPage() {
                 <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1" data-testid="compose-recipient">
                   <SelectValue placeholder="Sélectionner un membre..." />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10 max-h-[200px]">
+                <SelectContent className="bg-[#121214] border-white/10 max-h-[200px]">
                   {members.filter((m) => m.email).map((m) => (
                     <SelectItem key={m.id} value={m.email} className="text-white">
                       {m.name} ({m.email})

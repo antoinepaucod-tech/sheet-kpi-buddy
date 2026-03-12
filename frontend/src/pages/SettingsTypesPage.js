@@ -267,11 +267,10 @@ export default function SettingsTypesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Settings className="text-blue-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "Configuration des Types" : "Types Configuration"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             {lang === "fr" 
               ? "Gérez les types d'abonnements et de membres"
               : "Manage membership and member types"}
@@ -291,7 +290,7 @@ export default function SettingsTypesPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-[#1C1C1E] border border-white/10">
+        <TabsList className="bg-[#121214] border border-white/10">
           <TabsTrigger 
             value="memberships" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
@@ -312,7 +311,7 @@ export default function SettingsTypesPage() {
 
         {/* Membership Types Tab */}
         <TabsContent value="memberships" className="mt-4">
-          <div className="bg-[#1C1C1E] rounded-lg border border-white/10">
+          <div className="bg-[#121214] rounded-sm border border-white/10">
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-white font-medium">Types d'abonnement</h2>
               <Button 
@@ -420,7 +419,7 @@ export default function SettingsTypesPage() {
 
         {/* Member Types Tab */}
         <TabsContent value="members" className="mt-4">
-          <div className="bg-[#1C1C1E] rounded-lg border border-white/10">
+          <div className="bg-[#121214] rounded-sm border border-white/10">
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-white font-medium">Types de membre</h2>
               <Button 
@@ -513,7 +512,7 @@ export default function SettingsTypesPage() {
 
       {/* Membership Type Modal */}
       <Dialog open={membershipModalOpen} onOpenChange={setMembershipModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingMembership ? "Modifier le type d'abonnement" : "Nouveau type d'abonnement"}
@@ -521,7 +520,7 @@ export default function SettingsTypesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/50 text-xs uppercase">Nom *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Nom *</label>
               <Input
                 value={membershipForm.name}
                 onChange={(e) => setMembershipForm({ ...membershipForm, name: e.target.value })}
@@ -532,7 +531,7 @@ export default function SettingsTypesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Durée (mois)</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Durée (mois)</label>
                 <Input
                   type="number"
                   min={0}
@@ -543,7 +542,7 @@ export default function SettingsTypesPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Ou durée (jours)</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Ou durée (jours)</label>
                 <Input
                   type="number"
                   min={0}
@@ -556,7 +555,7 @@ export default function SettingsTypesPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Prix (CHF)</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Prix (CHF)</label>
               <Input
                 type="number"
                 min={0}
@@ -567,7 +566,7 @@ export default function SettingsTypesPage() {
               />
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Description</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Description</label>
               <Input
                 value={membershipForm.description}
                 onChange={(e) => setMembershipForm({ ...membershipForm, description: e.target.value })}
@@ -602,7 +601,7 @@ export default function SettingsTypesPage() {
             
             {/* Default billing cycle settings */}
             {membershipForm.is_recurring && (
-              <div className="border border-white/10 rounded-lg p-4 space-y-3 bg-[#121214]">
+              <div className="border border-white/10 rounded-sm p-4 space-y-3 bg-[#121214]">
                 <label className="text-white/50 text-xs uppercase block">Cycle de facturation par défaut</label>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -611,10 +610,10 @@ export default function SettingsTypesPage() {
                       value={membershipForm.default_billing_cycle_type} 
                       onValueChange={(v) => setMembershipForm({ ...membershipForm, default_billing_cycle_type: v })}
                     >
-                      <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-9">
+                      <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-9">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1C1C1E] border-white/10">
+                      <SelectContent className="bg-[#121214] border-white/10">
                         <SelectItem value="monthly_day" className="text-white">Jour fixe du mois</SelectItem>
                         <SelectItem value="interval_days" className="text-white">Tous les X jours</SelectItem>
                       </SelectContent>
@@ -630,7 +629,7 @@ export default function SettingsTypesPage() {
                       max={membershipForm.default_billing_cycle_type === "monthly_day" ? 28 : 365}
                       value={membershipForm.default_billing_cycle_value}
                       onChange={(e) => setMembershipForm({ ...membershipForm, default_billing_cycle_value: parseInt(e.target.value) || 1 })}
-                      className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-9"
+                      className="bg-[#121214] border-white/10 text-white mt-1 h-9"
                       data-testid="membership-billing-value"
                     />
                   </div>
@@ -668,7 +667,7 @@ export default function SettingsTypesPage() {
 
       {/* Member Type Modal */}
       <Dialog open={memberTypeModalOpen} onOpenChange={setMemberTypeModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingMemberType ? "Modifier le type de membre" : "Nouveau type de membre"}
@@ -676,7 +675,7 @@ export default function SettingsTypesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/50 text-xs uppercase">Nom *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Nom *</label>
               <Input
                 value={memberTypeForm.name}
                 onChange={(e) => setMemberTypeForm({ ...memberTypeForm, name: e.target.value })}
@@ -686,7 +685,7 @@ export default function SettingsTypesPage() {
               />
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Code *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Code *</label>
               <Input
                 value={memberTypeForm.code}
                 onChange={(e) => setMemberTypeForm({ ...memberTypeForm, code: e.target.value.toLowerCase().replace(/\s/g, "_") })}
@@ -696,7 +695,7 @@ export default function SettingsTypesPage() {
               />
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Description</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Description</label>
               <Input
                 value={memberTypeForm.description}
                 onChange={(e) => setMemberTypeForm({ ...memberTypeForm, description: e.target.value })}

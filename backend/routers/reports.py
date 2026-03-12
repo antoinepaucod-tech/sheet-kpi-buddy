@@ -80,7 +80,7 @@ async def generate_pdf_report(month: str):
 
     elements.append(Spacer(1, 15*mm))
     footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=HexColor('#999999'))
-    elements.append(Paragraph(f"Généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} - Sheet KPI Buddy", footer_style))
+    elements.append(Paragraph(f"Généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} - TRANSFORM", footer_style))
 
     doc.build(elements)
     buffer.seek(0)

@@ -110,7 +110,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
         <div className="flex items-center justify-between p-4 h-16 border-b border-white/10">
           {!collapsed && (
             <span className="font-heading text-lg font-extrabold tracking-tight text-white uppercase">
-              KPI Buddy
+              Transform
             </span>
           )}
           <button
@@ -193,12 +193,12 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
             {availableMonths && availableMonths.length > 0 && (
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger
-                  className="w-48 bg-[#1C1C1E] border-white/10 text-white text-sm h-9 focus:ring-rose-500"
+                  className="w-48 bg-[#121214] border-white/10 text-white text-sm h-9 focus:ring-rose-500"
                   data-testid="month-selector"
                 >
                   <SelectValue placeholder={t("selectMonth")} />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   {availableMonths.map((m) => (
                     <SelectItem
                       key={m.value}

@@ -431,7 +431,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
       {/* Tabs */}
       <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList className="bg-[#1C1C1E] border border-white/10 rounded-sm p-1">
+        <TabsList className="bg-[#121214] border border-white/10 rounded-sm p-1">
           {["revenue", "details", "funnel", "members", "metrics", "annual"].map((tab) => (
             <TabsTrigger
               key={tab}

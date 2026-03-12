@@ -181,11 +181,10 @@ export default function AttendancePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <ListChecks className="text-teal-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "Saisie Globale des Séances" : "Global Attendance"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             {lang === "fr"
               ? "Saisissez le nombre de séances par membre et par semaine"
               : "Enter session count per member per week"}
@@ -203,23 +202,23 @@ export default function AttendancePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
           <p className="text-white/50 text-xs uppercase flex items-center gap-1">
             <Users size={10} /> Membres
           </p>
-          <p className="text-2xl font-bold text-white">{members.length}</p>
+          <p className="text-2xl font-mono font-bold text-white">{members.length}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
           <p className="text-white/50 text-xs uppercase flex items-center gap-1">
             <Activity size={10} /> Séances (période)
           </p>
-          <p className="text-2xl font-bold text-teal-400">
+          <p className="text-2xl font-mono font-bold text-teal-400">
             {Object.values(weekTotals).reduce((a, b) => a + b, 0)}
           </p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Semaines affichées</p>
-          <p className="text-2xl font-bold text-white">S{weeks[0]} → S{weeks[weeks.length - 1]}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Semaines affichées</p>
+          <p className="text-2xl font-mono font-bold text-white">S{weeks[0]} → S{weeks[weeks.length - 1]}</p>
         </div>
       </div>
 
@@ -231,16 +230,16 @@ export default function AttendancePage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un membre..."
-            className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
+            className="pl-10 bg-[#121214] border-white/10 text-white"
             data-testid="attendance-search"
           />
         </div>
         <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-          <SelectTrigger className="w-[120px] bg-[#1C1C1E] border-white/10 text-white" data-testid="attendance-year">
+          <SelectTrigger className="w-[120px] bg-[#121214] border-white/10 text-white" data-testid="attendance-year">
             <Calendar size={14} className="mr-2 text-white/40" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             {[2023, 2024, 2025, 2026].map((y) => (
               <SelectItem key={y} value={y.toString()} className="text-white">{y}</SelectItem>
             ))}
@@ -260,11 +259,11 @@ export default function AttendancePage() {
       </div>
 
       {/* Attendance Grid */}
-      <div className="bg-[#1C1C1E] rounded-lg border border-white/10 overflow-x-auto">
+      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-x-auto">
         <table className="w-full min-w-[700px]">
           <thead>
             <tr className="border-b border-white/10">
-              <th className="text-left text-white/50 text-xs uppercase py-3 px-4 sticky left-0 bg-[#1C1C1E] z-10 min-w-[200px]">
+              <th className="text-left text-white/50 text-xs uppercase py-3 px-4 sticky left-0 bg-[#121214] z-10 min-w-[200px]">
                 Membre
               </th>
               {weeks.map((w) => (
@@ -294,7 +293,7 @@ export default function AttendancePage() {
             ) : (
               filteredMembers.map((member) => (
                 <tr key={member.id} className="border-b border-white/5 hover:bg-white/[0.02]" data-testid={`attendance-row-${member.id}`}>
-                  <td className="py-2 px-4 sticky left-0 bg-[#1C1C1E] z-10">
+                  <td className="py-2 px-4 sticky left-0 bg-[#121214] z-10">
                     <div>
                       <p className="text-white text-sm font-medium">{member.name}</p>
                       <p className="text-white/30 text-xs">{member.membership}</p>
@@ -331,7 +330,7 @@ export default function AttendancePage() {
           {filteredMembers.length > 0 && (
             <tfoot>
               <tr className="border-t border-white/10">
-                <td className="py-3 px-4 sticky left-0 bg-[#1C1C1E] z-10">
+                <td className="py-3 px-4 sticky left-0 bg-[#121214] z-10">
                   <p className="text-white/50 text-sm font-medium">Total / semaine</p>
                 </td>
                 {weeks.map((w) => (

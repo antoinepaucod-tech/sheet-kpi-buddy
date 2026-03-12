@@ -333,15 +333,14 @@ export default function MembersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Users className="text-rose-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "Gestion des Membres" : "Members Management"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             {lang === "fr" ? "Abonnements et échéances" : "Subscriptions and expirations"}
           </p>
         </div>
-        <Button onClick={openAddModal} className="bg-rose-600 hover:bg-rose-700" data-testid="add-member-btn">
+        <Button onClick={openAddModal} className="bg-rose-600 hover:bg-rose-700 font-bold uppercase tracking-wider text-xs" data-testid="add-member-btn">
           <Plus size={16} className="mr-2" />
           {lang === "fr" ? "Ajouter un membre" : "Add member"}
         </Button>
@@ -349,25 +348,25 @@ export default function MembersPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Total</p>
-          <p className="text-2xl font-bold text-white">{stats.total}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Total</p>
+          <p className="text-2xl font-mono font-bold text-white mt-1">{stats.total}</p>
         </div>
         <div 
-          className={`bg-[#1C1C1E] rounded-lg p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-orange-500' : 'border-white/10 hover:border-orange-500/50'}`}
+          className={`bg-[#121214] rounded-sm p-4 border cursor-pointer transition-colors ${showExpiring ? 'border-orange-500' : 'border-white/10 hover:border-orange-500/50'}`}
           onClick={() => setShowExpiring(!showExpiring)}
           data-testid="expiring-filter"
         >
-          <p className="text-orange-400 text-xs uppercase flex items-center gap-1">
+          <p className="text-orange-400 text-xs uppercase tracking-wider flex items-center gap-1">
             <AlertTriangle size={12} />
             Expirant (30j)
           </p>
-          <p className="text-2xl font-bold text-orange-400">{stats.expiring}</p>
+          <p className="text-2xl font-mono font-bold text-orange-400 mt-1">{stats.expiring}</p>
         </div>
         {MEMBER_TYPES.map((type) => (
-          <div key={type} className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-            <p className="text-white/50 text-xs uppercase truncate">{type.replace("Membres ", "")}</p>
-            <p className="text-2xl font-bold text-white">{stats.byType[type]}</p>
+          <div key={type} className="bg-[#121214] rounded-sm p-4 border border-white/10">
+            <p className="text-white/40 text-xs uppercase tracking-wider truncate">{type.replace("Membres ", "")}</p>
+            <p className="text-2xl font-mono font-bold text-white mt-1">{stats.byType[type]}</p>
           </div>
         ))}
       </div>
@@ -380,15 +379,15 @@ export default function MembersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={lang === "fr" ? "Rechercher..." : "Search..."}
-            className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
+            className="pl-10 bg-[#121214] border-white/10 text-white"
             data-testid="member-search"
           />
         </div>
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[220px] bg-[#1C1C1E] border-white/10 text-white" data-testid="type-filter">
+          <SelectTrigger className="w-[220px] bg-[#121214] border-white/10 text-white" data-testid="type-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             <SelectItem value="all" className="text-white">Tous les types</SelectItem>
             {MEMBER_TYPES.map((type) => (
               <SelectItem key={type} value={type} className="text-white">{type}</SelectItem>
@@ -398,7 +397,7 @@ export default function MembersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#1C1C1E] rounded-lg border border-white/10 overflow-hidden">
+      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
@@ -516,7 +515,7 @@ export default function MembersPage() {
                             </div>
                             <div>
                               <p className="text-white/40 text-xs uppercase mb-1">Cash collecté</p>
-                              <p className="text-2xl font-bold text-emerald-400">
+                              <p className="text-2xl font-mono font-bold text-emerald-400">
                                 {member.cash_collected?.toLocaleString("fr-CH")} CHF
                               </p>
                             </div>
@@ -556,7 +555,7 @@ export default function MembersPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-lg">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {selectedMember ? "Modifier le membre" : "Ajouter un membre"}
@@ -565,7 +564,7 @@ export default function MembersPage() {
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Nom *</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Nom *</label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -574,7 +573,7 @@ export default function MembersPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Email</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Email</label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -586,7 +585,7 @@ export default function MembersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Téléphone</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Téléphone</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -594,12 +593,12 @@ export default function MembersPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Type de membre</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Type de membre</label>
                 <Select value={formData.member_type} onValueChange={(v) => setFormData({ ...formData, member_type: v })}>
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {MEMBER_TYPES.map((type) => (
                       <SelectItem key={type} value={type} className="text-white">{type}</SelectItem>
                     ))}
@@ -609,7 +608,7 @@ export default function MembersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Abonnement</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Abonnement</label>
                 <Select 
                   value={formData.membership} 
                   onValueChange={(v) => {
@@ -635,7 +634,7 @@ export default function MembersPage() {
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {MEMBERSHIP_OPTIONS.map((opt) => (
                       <SelectItem key={opt} value={opt} className="text-white">{opt}</SelectItem>
                     ))}
@@ -643,7 +642,7 @@ export default function MembersPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Cash collecté (CHF)</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Cash collecté (CHF)</label>
                 <Input
                   type="number"
                   value={formData.cash_collected}
@@ -679,7 +678,7 @@ export default function MembersPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Notes</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Notes</label>
               <Input
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -702,7 +701,7 @@ export default function MembersPage() {
               </div>
               
               {formData.billing_enabled && (
-                <div className="space-y-3 bg-[#121214] rounded-lg p-3">
+                <div className="space-y-3 bg-[#121214] rounded-sm p-3">
                   {/* Info banner when values come from membership type */}
                   {membershipTypes.find(t => t.name === formData.membership) && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2 mb-2">
@@ -720,7 +719,7 @@ export default function MembersPage() {
                         type="number"
                         value={formData.billing_amount}
                         onChange={(e) => setFormData({ ...formData, billing_amount: parseFloat(e.target.value) || 0 })}
-                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[#121214] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         data-testid="billing-amount-input"
                         disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
@@ -731,10 +730,10 @@ export default function MembersPage() {
                         value={formData.billing_payment_method} 
                         onValueChange={(v) => setFormData({ ...formData, billing_payment_method: v })}
                       >
-                        <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                        <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1C1C1E] border-white/10">
+                        <SelectContent className="bg-[#121214] border-white/10">
                           {PAYMENT_METHODS.map((m) => (
                             <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
                           ))}
@@ -750,10 +749,10 @@ export default function MembersPage() {
                         onValueChange={(v) => setFormData({ ...formData, billing_cycle_type: v })}
                         disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       >
-                        <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1C1C1E] border-white/10">
+                        <SelectContent className="bg-[#121214] border-white/10">
                           {BILLING_CYCLE_TYPES.map((t) => (
                             <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
                           ))}
@@ -770,7 +769,7 @@ export default function MembersPage() {
                         max={formData.billing_cycle_type === "monthly_day" ? 28 : 365}
                         value={formData.billing_cycle_value}
                         onChange={(e) => setFormData({ ...formData, billing_cycle_value: parseInt(e.target.value) || 1 })}
-                        className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[#121214] border-white/10 text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
                         data-testid="billing-cycle-value-input"
                         disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
@@ -799,17 +798,17 @@ export default function MembersPage() {
                 />
               </div>
               {formData.review_enabled && (
-                <div className="space-y-3 bg-[#121214] rounded-lg p-3">
+                <div className="space-y-3 bg-[#121214] rounded-sm p-3">
                   <div>
                     <label className="text-white/40 text-xs">Fréquence du bilan</label>
                     <Select 
                       value={formData.review_frequency || "annually"} 
                       onValueChange={(v) => setFormData({ ...formData, review_frequency: v, annual_review_enabled: true })}
                     >
-                      <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                      <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1C1C1E] border-white/10">
+                      <SelectContent className="bg-[#121214] border-white/10">
                         <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
                         <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
                         <SelectItem value="semi-annually" className="text-white">Semestriel</SelectItem>
@@ -841,14 +840,14 @@ export default function MembersPage() {
               <label className="text-white text-sm">Abonnement Duo (2 personnes, 1 prix)</label>
             </div>
             {formData.is_duo && (
-              <div className="mt-3 space-y-3 bg-[#121214] rounded-lg p-3">
+              <div className="mt-3 space-y-3 bg-[#121214] rounded-sm p-3">
                 <p className="text-xs text-white/40 uppercase tracking-wider">Partenaire Duo</p>
                 <div className="grid grid-cols-1 gap-2">
                   <Input
                     placeholder="Nom du partenaire *"
                     value={formData.duo_partner_name || ""}
                     onChange={(e) => setFormData({ ...formData, duo_partner_name: e.target.value })}
-                    className="bg-[#1C1C1E] border-white/10 text-white h-8 text-sm"
+                    className="bg-[#121214] border-white/10 text-white h-8 text-sm"
                     data-testid="duo-partner-name"
                   />
                   <div className="grid grid-cols-2 gap-2">
@@ -856,14 +855,14 @@ export default function MembersPage() {
                       placeholder="Email"
                       value={formData.duo_partner_email || ""}
                       onChange={(e) => setFormData({ ...formData, duo_partner_email: e.target.value })}
-                      className="bg-[#1C1C1E] border-white/10 text-white h-8 text-sm"
+                      className="bg-[#121214] border-white/10 text-white h-8 text-sm"
                       data-testid="duo-partner-email"
                     />
                     <Input
                       placeholder="Téléphone"
                       value={formData.duo_partner_phone || ""}
                       onChange={(e) => setFormData({ ...formData, duo_partner_phone: e.target.value })}
-                      className="bg-[#1C1C1E] border-white/10 text-white h-8 text-sm"
+                      className="bg-[#121214] border-white/10 text-white h-8 text-sm"
                       data-testid="duo-partner-phone"
                     />
                   </div>
@@ -888,7 +887,7 @@ export default function MembersPage() {
 
       {/* Renew Modal */}
       <Dialog open={renewModalOpen} onOpenChange={setRenewModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <RefreshCw className="text-emerald-400" size={20} />
@@ -897,7 +896,7 @@ export default function MembersPage() {
           </DialogHeader>
           {selectedMember && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-lg p-4">
+              <div className="bg-[#121214] rounded-sm p-4">
                 <p className="text-white font-medium">{selectedMember.name}</p>
                 <p className="text-white/50 text-sm">
                   Expire le: {selectedMember.subscription_end_date
@@ -906,12 +905,12 @@ export default function MembersPage() {
                 </p>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Durée du renouvellement</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Durée du renouvellement</label>
                 <Select value={renewData.renewal_duration} onValueChange={(v) => setRenewData({ ...renewData, renewal_duration: v })}>
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     <SelectItem value="1 mois" className="text-white">1 mois</SelectItem>
                     <SelectItem value="3 mois" className="text-white">3 mois</SelectItem>
                     <SelectItem value="6 mois" className="text-white">6 mois</SelectItem>
@@ -921,7 +920,7 @@ export default function MembersPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Nouvelle date d'expiration</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Nouvelle date d'expiration</label>
                 <Input
                   type="date"
                   value={renewData.new_end_date}
@@ -931,7 +930,7 @@ export default function MembersPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Notes</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Notes</label>
                 <Input
                   value={renewData.notes}
                   onChange={(e) => setRenewData({ ...renewData, notes: e.target.value })}
@@ -955,7 +954,7 @@ export default function MembersPage() {
                 </div>
                 
                 {renewData.update_billing && (
-                  <div className="space-y-3 bg-[#121214] rounded-lg p-3">
+                  <div className="space-y-3 bg-[#121214] rounded-sm p-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-white/40 text-xs">Montant (CHF)</label>
@@ -963,17 +962,17 @@ export default function MembersPage() {
                           type="number"
                           value={renewData.billing_amount}
                           onChange={(e) => setRenewData({ ...renewData, billing_amount: parseFloat(e.target.value) || 0 })}
-                          className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                          className="bg-[#121214] border-white/10 text-white mt-1 h-8"
                           data-testid="renew-billing-amount"
                         />
                       </div>
                       <div>
                         <label className="text-white/40 text-xs">Méthode</label>
                         <Select value={renewData.billing_payment_method} onValueChange={(v) => setRenewData({ ...renewData, billing_payment_method: v })}>
-                          <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                          <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#1C1C1E] border-white/10">
+                          <SelectContent className="bg-[#121214] border-white/10">
                             {PAYMENT_METHODS.map((m) => (
                               <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
                             ))}
@@ -985,10 +984,10 @@ export default function MembersPage() {
                       <div>
                         <label className="text-white/40 text-xs">Cycle de facturation</label>
                         <Select value={renewData.billing_cycle_type} onValueChange={(v) => setRenewData({ ...renewData, billing_cycle_type: v })}>
-                          <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8">
+                          <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#1C1C1E] border-white/10">
+                          <SelectContent className="bg-[#121214] border-white/10">
                             {BILLING_CYCLE_TYPES.map((t) => (
                               <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
                             ))}
@@ -1005,7 +1004,7 @@ export default function MembersPage() {
                           max={renewData.billing_cycle_type === "monthly_day" ? 28 : 365}
                           value={renewData.billing_cycle_value}
                           onChange={(e) => setRenewData({ ...renewData, billing_cycle_value: parseInt(e.target.value) || 1 })}
-                          className="bg-[#1C1C1E] border-white/10 text-white mt-1 h-8"
+                          className="bg-[#121214] border-white/10 text-white mt-1 h-8"
                           data-testid="renew-billing-cycle-value"
                         />
                       </div>

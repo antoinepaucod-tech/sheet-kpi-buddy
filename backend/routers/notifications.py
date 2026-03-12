@@ -47,7 +47,7 @@ def base_template(club_name, title, body_html):
         {body_html}
       </div>
       <div style="padding: 16px 32px; border-top: 1px solid #222; text-align: center;">
-        <p style="margin: 0; font-size: 12px; color: #666;">Sheet KPI Buddy - {club_name}</p>
+        <p style="margin: 0; font-size: 12px; color: #666;">TRANSFORM - {club_name}</p>
       </div>
     </div>
     """

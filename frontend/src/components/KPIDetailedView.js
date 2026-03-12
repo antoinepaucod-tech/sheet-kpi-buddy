@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 
 const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue }) => (
-  <div className="bg-[#1C1C1E] border border-white/5 p-3 rounded-sm">
+  <div className="bg-[#121214] border border-white/5 p-3 rounded-sm">
     <div className="flex items-center gap-2 mb-1">
       {Icon && <Icon size={12} className="text-white/30" />}
       <span className="text-[10px] text-white/40 uppercase tracking-wider">{label}</span>

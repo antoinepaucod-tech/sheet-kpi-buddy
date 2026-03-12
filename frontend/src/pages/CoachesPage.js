@@ -177,11 +177,10 @@ export default function CoachesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Users className="text-orange-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "Gestion des Coachs" : "Coach Management"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             {lang === "fr"
               ? "Gérez vos coachs et leurs taux horaires"
               : "Manage your coaches and their hourly rates"}
@@ -199,17 +198,17 @@ export default function CoachesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Total Coachs</p>
-          <p className="text-2xl font-bold text-white">{coaches.length}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Total Coachs</p>
+          <p className="text-2xl font-mono font-bold text-white">{coaches.length}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-emerald-500/30">
+        <div className="bg-[#121214] rounded-sm p-4 border border-emerald-500/30">
           <p className="text-emerald-400 text-xs uppercase">Actifs</p>
-          <p className="text-2xl font-bold text-emerald-400">{activeCoaches}</p>
+          <p className="text-2xl font-mono font-bold text-emerald-400">{activeCoaches}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-orange-500/30">
+        <div className="bg-[#121214] rounded-sm p-4 border border-orange-500/30">
           <p className="text-orange-400 text-xs uppercase">Taux horaire moyen</p>
-          <p className="text-2xl font-bold text-orange-400">{avgHourlyRate} CHF</p>
+          <p className="text-2xl font-mono font-bold text-orange-400">{avgHourlyRate} CHF</p>
         </div>
       </div>
 
@@ -220,13 +219,13 @@ export default function CoachesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={lang === "fr" ? "Rechercher un coach..." : "Search coach..."}
-          className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
+          className="pl-10 bg-[#121214] border-white/10 text-white"
           data-testid="coach-search"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-[#1C1C1E] rounded-lg border border-white/10 overflow-hidden">
+      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
@@ -344,7 +343,7 @@ export default function CoachesPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle>
               {selectedCoach ? "Modifier le coach" : "Nouveau coach"}
@@ -352,7 +351,7 @@ export default function CoachesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/50 text-xs uppercase">Nom *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Nom *</label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -363,7 +362,7 @@ export default function CoachesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Email</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Email</label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -372,7 +371,7 @@ export default function CoachesPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Téléphone</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Téléphone</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -381,7 +380,7 @@ export default function CoachesPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Taux horaire (CHF/h) *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Taux horaire (CHF/h) *</label>
               <Input
                 type="number"
                 min={0}
@@ -427,7 +426,7 @@ export default function CoachesPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Notes</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Notes</label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -459,7 +458,7 @@ export default function CoachesPage() {
 
       {/* Stats Modal */}
       <Dialog open={statsModalOpen} onOpenChange={setStatsModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BarChart3 className="text-blue-400" size={20} />
@@ -469,23 +468,23 @@ export default function CoachesPage() {
           {coachStats && (
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#121214] rounded-lg p-4 text-center">
-                  <p className="text-white/50 text-xs uppercase">Cours donnés</p>
-                  <p className="text-2xl font-bold text-white">{coachStats.total_courses}</p>
+                <div className="bg-[#121214] rounded-sm p-4 text-center">
+                  <p className="text-white/40 text-xs uppercase tracking-wider">Cours donnés</p>
+                  <p className="text-2xl font-mono font-bold text-white">{coachStats.total_courses}</p>
                 </div>
-                <div className="bg-[#121214] rounded-lg p-4 text-center">
-                  <p className="text-white/50 text-xs uppercase">Heures travaillées</p>
-                  <p className="text-2xl font-bold text-blue-400">{coachStats.total_hours}h</p>
+                <div className="bg-[#121214] rounded-sm p-4 text-center">
+                  <p className="text-white/40 text-xs uppercase tracking-wider">Heures travaillées</p>
+                  <p className="text-2xl font-mono font-bold text-blue-400">{coachStats.total_hours}h</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#121214] rounded-lg p-4 text-center">
-                  <p className="text-white/50 text-xs uppercase">Participants</p>
-                  <p className="text-2xl font-bold text-emerald-400">{coachStats.total_participants}</p>
+                <div className="bg-[#121214] rounded-sm p-4 text-center">
+                  <p className="text-white/40 text-xs uppercase tracking-wider">Participants</p>
+                  <p className="text-2xl font-mono font-bold text-emerald-400">{coachStats.total_participants}</p>
                 </div>
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center">
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-sm p-4 text-center">
                   <p className="text-orange-400 text-xs uppercase">Gains estimés</p>
-                  <p className="text-2xl font-bold text-orange-400">{coachStats.earnings} CHF</p>
+                  <p className="text-2xl font-mono font-bold text-orange-400">{coachStats.earnings} CHF</p>
                 </div>
               </div>
               <p className="text-white/30 text-xs text-center">

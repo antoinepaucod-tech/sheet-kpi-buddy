@@ -213,7 +213,7 @@ export default function SettingsPage() {
           <Input
             value={settings.club_name}
             onChange={(e) => setSettings({ ...settings, club_name: e.target.value })}
-            className="bg-[#1C1C1E] border-white/10 text-white max-w-sm"
+            className="bg-[#121214] border-white/10 text-white max-w-sm"
             data-testid="club-name-input"
           />
         </div>
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                   type="number"
                   value={settings.targets[field.key] ?? 0}
                   onChange={(e) => updateTarget(field.key, e.target.value)}
-                  className="bg-[#1C1C1E] border-white/10 text-white font-mono w-28 text-right"
+                  className="bg-[#121214] border-white/10 text-white font-mono w-28 text-right"
                   step={field.type === "percent" || field.type === "multiplier" ? 0.1 : 1}
                   data-testid={`target-${field.key}`}
                 />
@@ -322,7 +322,7 @@ export default function SettingsPage() {
 
       {/* Reset Confirmation Modal */}
       <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-400">
               <AlertTriangle size={20} />
@@ -335,7 +335,7 @@ export default function SettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-sm p-3">
               <ul className="text-red-300 text-sm space-y-1">
                 <li>- Membres et historique de renouvellements</li>
                 <li>- Paiements et plannings de paiement</li>
@@ -347,7 +347,7 @@ export default function SettingsPage() {
                 <li>- Coachs</li>
               </ul>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-sm p-3">
               <p className="text-emerald-400 text-sm font-medium mb-1">Données conservées :</p>
               <ul className="text-emerald-300 text-sm space-y-1">
                 <li>- Votre compte utilisateur</li>

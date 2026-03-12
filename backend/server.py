@@ -1,5 +1,5 @@
 """
-Sheet KPI Buddy - Refactored Server
+TRANSFORM - Financial Management Platform
 FastAPI backend with fully modular architecture
 """
 from fastapi import FastAPI, APIRouter
@@ -27,7 +27,7 @@ from routers import (
 )
 
 # App setup
-app = FastAPI(title="Sheet KPI Buddy API", version="3.0.0")
+app = FastAPI(title="TRANSFORM API", version="3.0.0")
 api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO)

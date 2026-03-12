@@ -239,11 +239,10 @@ export default function CoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <CalendarDays className="text-blue-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "KPIs des Cours" : "Course KPIs"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             {lang === "fr" ? "Fréquentation et statistiques par cours" : "Attendance and statistics per course"}
           </p>
         </div>
@@ -267,7 +266,7 @@ export default function CoursesPage() {
 
       {/* Info banner if no courses */}
       {courses.length === 0 && !isLoading && (
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-sm p-4">
           <p className="text-blue-400 text-sm">
             Aucun cours pour {MONTHS_FR[selectedMonth - 1]} {selectedYear}. 
             <button 
@@ -283,10 +282,10 @@ export default function CoursesPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-          <SelectTrigger className="w-[120px] bg-[#1C1C1E] border-white/10 text-white" data-testid="year-filter">
+          <SelectTrigger className="w-[120px] bg-[#121214] border-white/10 text-white" data-testid="year-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             {[2023, 2024, 2025].map((y) => (
               <SelectItem key={y} value={y.toString()} className="text-white">{y}</SelectItem>
             ))}
@@ -294,10 +293,10 @@ export default function CoursesPage() {
         </Select>
         
         <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-          <SelectTrigger className="w-[150px] bg-[#1C1C1E] border-white/10 text-white" data-testid="month-filter">
+          <SelectTrigger className="w-[150px] bg-[#121214] border-white/10 text-white" data-testid="month-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             {MONTHS_FR.map((m, i) => (
               <SelectItem key={i} value={(i + 1).toString()} className="text-white">{m}</SelectItem>
             ))}
@@ -305,10 +304,10 @@ export default function CoursesPage() {
         </Select>
 
         <Select value={selectedDay} onValueChange={setSelectedDay}>
-          <SelectTrigger className="w-[150px] bg-[#1C1C1E] border-white/10 text-white" data-testid="day-filter">
+          <SelectTrigger className="w-[150px] bg-[#121214] border-white/10 text-white" data-testid="day-filter">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#1C1C1E] border-white/10">
+          <SelectContent className="bg-[#121214] border-white/10">
             <SelectItem value="all" className="text-white">Tous les jours</SelectItem>
             {DAYS_FR.map((d) => (
               <SelectItem key={d} value={d} className="text-white">{d}</SelectItem>
@@ -320,13 +319,13 @@ export default function CoursesPage() {
       {/* Summary Stats */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
+          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
             <p className="text-white/50 text-xs uppercase flex items-center gap-1">
               <CalendarDays size={12} /> Total Cours
             </p>
-            <p className="text-2xl font-bold text-white">{summary.total_courses}</p>
+            <p className="text-2xl font-mono font-bold text-white">{summary.total_courses}</p>
           </div>
-          <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
+          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
             <p className="text-white/50 text-xs uppercase flex items-center gap-1">
               <TrendingUp size={12} /> Taux moyen
             </p>
@@ -334,16 +333,16 @@ export default function CoursesPage() {
               {summary.avg_attendance_rate}%
             </p>
           </div>
-          <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
+          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
             <p className="text-white/50 text-xs uppercase flex items-center gap-1">
               <DollarSign size={12} /> Dépenses
             </p>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-mono font-bold text-white">
               {summary.total_expenses?.toLocaleString("fr-CH")} CHF
             </p>
           </div>
-          <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-            <p className="text-white/50 text-xs uppercase">Mois</p>
+          <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+            <p className="text-white/40 text-xs uppercase tracking-wider">Mois</p>
             <p className="text-xl font-bold text-blue-400">{summary.month_name} {selectedYear}</p>
           </div>
         </div>
@@ -367,7 +366,7 @@ export default function CoursesPage() {
       )}
 
       {/* Courses Table */}
-      <div className="bg-[#1C1C1E] rounded-lg border border-white/10 overflow-hidden">
+      <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
@@ -488,10 +487,10 @@ export default function CoursesPage() {
           {DAYS_FR.map((day) => (
             <div
               key={day}
-              className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10 cursor-pointer hover:border-blue-500/50 transition-colors"
+              className="bg-[#121214] rounded-sm p-4 border border-white/10 cursor-pointer hover:border-blue-500/50 transition-colors"
               onClick={() => setSelectedDay(day)}
             >
-              <p className="text-white/50 text-xs uppercase">{day}</p>
+              <p className="text-white/40 text-xs uppercase tracking-wider">{day}</p>
               <p className="text-xl font-bold text-white">{coursesByDay[day]?.length || 0}</p>
               <p className="text-white/40 text-xs">cours</p>
             </div>
@@ -501,13 +500,13 @@ export default function CoursesPage() {
 
       {/* Add Course Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Ajouter un cours</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/50 text-xs uppercase">Nom du cours *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Nom du cours *</label>
               <Input
                 value={formData.course_name}
                 onChange={(e) => setFormData({ ...formData, course_name: e.target.value })}
@@ -518,12 +517,12 @@ export default function CoursesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Jour</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Jour</label>
                 <Select value={formData.day_of_week} onValueChange={(v) => setFormData({ ...formData, day_of_week: v })}>
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {DAYS_FR.map((d) => (
                       <SelectItem key={d} value={d} className="text-white">{d}</SelectItem>
                     ))}
@@ -531,12 +530,12 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Horaire</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Horaire</label>
                 <Select value={formData.time_slot} onValueChange={(v) => setFormData({ ...formData, time_slot: v })}>
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {TIME_SLOTS.map((t) => (
                       <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>
                     ))}
@@ -546,7 +545,7 @@ export default function CoursesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Coach *</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Coach *</label>
                 <Select 
                   value={formData.coach_id} 
                   onValueChange={(v) => {
@@ -561,7 +560,7 @@ export default function CoursesPage() {
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue placeholder="Sélectionner un coach..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {coaches.map((c) => (
                       <SelectItem key={c.id} value={c.id} className="text-white">
                         {c.name} ({c.hourly_rate} CHF/h)
@@ -574,7 +573,7 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Capacité max</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Capacité max</label>
                 <Input
                   type="number"
                   min="1"
@@ -602,13 +601,13 @@ export default function CoursesPage() {
 
       {/* Edit Course Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-2xl">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle>Modifier le cours</DialogTitle>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-lg p-4">
+              <div className="bg-[#121214] rounded-sm p-4">
                 <div className="flex items-center gap-4">
                   <Badge className="bg-blue-500/20 text-blue-400 border-0">{selectedCourse.day_of_week}</Badge>
                   <span className="text-white">{selectedCourse.time_slot}</span>
@@ -617,7 +616,7 @@ export default function CoursesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-white/50 text-xs uppercase">Instructeur</label>
+                  <label className="text-white/40 text-xs uppercase tracking-wider">Instructeur</label>
                   <Select
                     value={selectedCourse.instructor || ""}
                     onValueChange={(v) => updateMutation.mutate({ id: selectedCourse.id, data: { instructor: v } })}
@@ -625,7 +624,7 @@ export default function CoursesPage() {
                     <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                       <SelectValue placeholder="Sélectionner..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1C1C1E] border-white/10">
+                    <SelectContent className="bg-[#121214] border-white/10">
                       {instructors.map((i) => (
                         <SelectItem key={i.id} value={i.name} className="text-white">{i.name}</SelectItem>
                       ))}
@@ -633,7 +632,7 @@ export default function CoursesPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs uppercase">Capacité max</label>
+                  <label className="text-white/40 text-xs uppercase tracking-wider">Capacité max</label>
                   <Input
                     type="number"
                     min="1"
@@ -645,7 +644,7 @@ export default function CoursesPage() {
                 </div>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Dépenses mensuelles (CHF)</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Dépenses mensuelles (CHF)</label>
                 <Input
                   type="number"
                   min="0"
@@ -682,7 +681,7 @@ export default function CoursesPage() {
 
       {/* Replace Coach Modal */}
       <Dialog open={replaceModalOpen} onOpenChange={setReplaceModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-[#121214] border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCog className="text-orange-400" size={20} />
@@ -691,7 +690,7 @@ export default function CoursesPage() {
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-lg p-3">
+              <div className="bg-[#121214] rounded-sm p-3">
                 <p className="text-white font-medium">{selectedCourse.course_name}</p>
                 <p className="text-white/50 text-sm">
                   {selectedCourse.day_of_week} à {selectedCourse.time_slot}
@@ -701,7 +700,7 @@ export default function CoursesPage() {
                 </p>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Coach de remplacement *</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Coach de remplacement *</label>
                 <Select 
                   value={replaceData.replacement_coach_id} 
                   onValueChange={(v) => setReplaceData({ ...replaceData, replacement_coach_id: v })}
@@ -709,7 +708,7 @@ export default function CoursesPage() {
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {coaches.filter(c => c.id !== selectedCourse.coach_id).map((c) => (
                       <SelectItem key={c.id} value={c.id} className="text-white">
                         {c.name} ({c.hourly_rate} CHF/h)
@@ -719,7 +718,7 @@ export default function CoursesPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Date du remplacement *</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Date du remplacement *</label>
                 <Input
                   type="date"
                   value={replaceData.date}
@@ -728,7 +727,7 @@ export default function CoursesPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Raison</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Raison</label>
                 <Select 
                   value={replaceData.reason} 
                   onValueChange={(v) => setReplaceData({ ...replaceData, reason: v })}
@@ -736,7 +735,7 @@ export default function CoursesPage() {
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     <SelectItem value="maladie" className="text-white">Maladie</SelectItem>
                     <SelectItem value="absence" className="text-white">Absence</SelectItem>
                     <SelectItem value="conge" className="text-white">Congé</SelectItem>

@@ -248,11 +248,10 @@ export default function PaymentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <CreditCard className="text-green-500" />
+          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
             {lang === "fr" ? "Suivi des Paiements" : "Payment Tracking"}
           </h1>
-          <p className="text-white/50 text-sm mt-1">
+          <p className="text-white/40 text-sm font-body mt-1">
             {lang === "fr" ? "Gestion des paiements et alertes" : "Payment management and alerts"}
           </p>
         </div>
@@ -270,34 +269,34 @@ export default function PaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase">Total paiements</p>
-          <p className="text-2xl font-bold text-white">{stats.total}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider">Total paiements</p>
+          <p className="text-2xl font-mono font-bold text-white mt-1">{stats.total}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-red-500/30 cursor-pointer hover:border-red-500" onClick={() => setFilterStatus(filterStatus === 'late' ? 'all' : 'late')}>
-          <p className="text-red-400 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[#121214] rounded-sm p-4 border border-red-500/30 cursor-pointer hover:border-red-500" onClick={() => setFilterStatus(filterStatus === 'late' ? 'all' : 'late')}>
+          <p className="text-red-400 text-xs uppercase tracking-wider flex items-center gap-1">
             <AlertTriangle size={12} /> En retard
           </p>
-          <p className="text-2xl font-bold text-red-400">{stats.late}</p>
+          <p className="text-2xl font-mono font-bold text-red-400 mt-1">{stats.late}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10 cursor-pointer hover:border-blue-500/50" onClick={() => setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending')}>
-          <p className="text-blue-400 text-xs uppercase">En attente</p>
-          <p className="text-2xl font-bold text-blue-400">{stats.pending}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10 cursor-pointer hover:border-blue-500/50" onClick={() => setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending')}>
+          <p className="text-blue-400 text-xs uppercase tracking-wider">En attente</p>
+          <p className="text-2xl font-mono font-bold text-blue-400 mt-1">{stats.pending}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-emerald-400 text-xs uppercase">Payés</p>
-          <p className="text-2xl font-bold text-emerald-400">{stats.paid}</p>
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-emerald-400 text-xs uppercase tracking-wider">Payés</p>
+          <p className="text-2xl font-mono font-bold text-emerald-400 mt-1">{stats.paid}</p>
         </div>
-        <div className="bg-[#1C1C1E] rounded-lg p-4 border border-white/10">
-          <p className="text-white/50 text-xs uppercase flex items-center gap-1">
+        <div className="bg-[#121214] rounded-sm p-4 border border-white/10">
+          <p className="text-white/40 text-xs uppercase tracking-wider flex items-center gap-1">
             <DollarSign size={12} /> Montant en retard
           </p>
-          <p className="text-2xl font-bold text-red-400">{stats.lateAmount.toLocaleString("fr-CH")} CHF</p>
+          <p className="text-2xl font-mono font-bold text-red-400 mt-1">{stats.lateAmount.toLocaleString("fr-CH")} CHF</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-[#1C1C1E] border border-white/10">
+        <TabsList className="bg-[#121214] border border-white/10">
           <TabsTrigger value="payments" className="data-[state=active]:bg-green-600">Paiements</TabsTrigger>
           <TabsTrigger value="late" className="data-[state=active]:bg-red-600">En retard ({stats.late})</TabsTrigger>
           <TabsTrigger value="upcoming" className="data-[state=active]:bg-blue-600">À venir ({upcomingPayments.length})</TabsTrigger>
@@ -314,15 +313,15 @@ export default function PaymentsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher..."
-                className="pl-10 bg-[#1C1C1E] border-white/10 text-white"
+                className="pl-10 bg-[#121214] border-white/10 text-white"
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[160px] bg-[#1C1C1E] border-white/10 text-white">
+              <SelectTrigger className="w-[160px] bg-[#121214] border-white/10 text-white">
                 <Filter size={14} className="mr-2" />
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1C1C1E] border-white/10">
+              <SelectContent className="bg-[#121214] border-white/10">
                 <SelectItem value="all" className="text-white">Tous</SelectItem>
                 <SelectItem value="pending" className="text-white">En attente</SelectItem>
                 <SelectItem value="paid" className="text-white">Payés</SelectItem>
@@ -334,7 +333,7 @@ export default function PaymentsPage() {
                 type="month"
                 value={generateMonth}
                 onChange={(e) => setGenerateMonth(e.target.value)}
-                className="w-[160px] bg-[#1C1C1E] border-white/10 text-white"
+                className="w-[160px] bg-[#121214] border-white/10 text-white"
               />
               <Button onClick={handleGenerate} variant="outline" className="border-white/20 text-white" disabled={generatePaymentsMutation.isPending}>
                 <RefreshCw size={14} className={`mr-2 ${generatePaymentsMutation.isPending ? 'animate-spin' : ''}`} />
@@ -344,7 +343,7 @@ export default function PaymentsPage() {
           </div>
 
           {/* Payments Table */}
-          <div className="bg-[#1C1C1E] rounded-lg border border-white/10 overflow-hidden">
+          <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-transparent">
@@ -424,7 +423,7 @@ export default function PaymentsPage() {
 
         {/* Late Payments Tab */}
         <TabsContent value="late" className="space-y-4">
-          <div className="bg-[#1C1C1E] rounded-lg border border-red-500/30 overflow-hidden">
+          <div className="bg-[#121214] rounded-sm border border-red-500/30 overflow-hidden">
             <div className="p-4 border-b border-white/10 bg-red-500/10">
               <h3 className="text-red-400 font-medium flex items-center gap-2">
                 <AlertTriangle size={18} />
@@ -504,7 +503,7 @@ export default function PaymentsPage() {
 
         {/* Upcoming Payments Tab */}
         <TabsContent value="upcoming" className="space-y-4">
-          <div className="bg-[#1C1C1E] rounded-lg border border-blue-500/30 overflow-hidden">
+          <div className="bg-[#121214] rounded-sm border border-blue-500/30 overflow-hidden">
             <div className="p-4 border-b border-white/10 bg-blue-500/10">
               <h3 className="text-blue-400 font-medium flex items-center gap-2">
                 <Calendar size={18} />
@@ -557,7 +556,7 @@ export default function PaymentsPage() {
 
         {/* Schedules Tab */}
         <TabsContent value="schedules" className="space-y-4">
-          <div className="bg-[#1C1C1E] rounded-lg border border-white/10 overflow-hidden">
+          <div className="bg-[#121214] rounded-sm border border-white/10 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10">
@@ -619,18 +618,18 @@ export default function PaymentsPage() {
 
       {/* Create Schedule Modal */}
       <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Nouveau planning de paiement</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/50 text-xs uppercase">Membre *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Membre *</label>
               <Select value={scheduleForm.member_id} onValueChange={(v) => setScheduleForm({ ...scheduleForm, member_id: v })}>
                 <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1" data-testid="schedule-member-select">
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
                   ))}
@@ -639,7 +638,7 @@ export default function PaymentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Montant (CHF) *</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Montant (CHF) *</label>
                 <Input
                   type="number"
                   value={scheduleForm.amount}
@@ -648,12 +647,12 @@ export default function PaymentsPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Méthode</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Méthode</label>
                 <Select value={scheduleForm.payment_method} onValueChange={(v) => setScheduleForm({ ...scheduleForm, payment_method: v })}>
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {PAYMENT_METHODS.map((m) => (
                       <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
                     ))}
@@ -663,12 +662,12 @@ export default function PaymentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Type de récurrence</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Type de récurrence</label>
                 <Select value={scheduleForm.recurrence_type} onValueChange={(v) => setScheduleForm({ ...scheduleForm, recurrence_type: v })}>
                   <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {RECURRENCE_TYPES.map((t) => (
                       <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
                     ))}
@@ -676,7 +675,7 @@ export default function PaymentsPage() {
                 </Select>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">
+                <label className="text-white/40 text-xs uppercase tracking-wider">
                   {scheduleForm.recurrence_type === "monthly_day" ? "Jour du mois (1-28)" : "Intervalle (jours)"}
                 </label>
                 <Input
@@ -690,7 +689,7 @@ export default function PaymentsPage() {
               </div>
             </div>
             <div>
-              <label className="text-white/50 text-xs uppercase">Date de début</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Date de début</label>
               <Input
                 type="date"
                 value={scheduleForm.start_date}
@@ -714,7 +713,7 @@ export default function PaymentsPage() {
 
       {/* Mark Paid Modal */}
       <Dialog open={markPaidModalOpen} onOpenChange={setMarkPaidModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Check className="text-emerald-400" />
@@ -723,13 +722,13 @@ export default function PaymentsPage() {
           </DialogHeader>
           {selectedPayment && (
             <div className="space-y-4 py-4">
-              <div className="bg-[#121214] rounded-lg p-4">
+              <div className="bg-[#121214] rounded-sm p-4">
                 <p className="text-white font-medium">{getMemberName(selectedPayment.member_id)}</p>
                 <p className="text-white/50 text-sm">Montant: {selectedPayment.amount?.toLocaleString("fr-CH")} CHF</p>
                 <p className="text-white/50 text-sm">Échéance: {format(parseISO(selectedPayment.due_date), "dd/MM/yyyy")}</p>
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Date de paiement</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Date de paiement</label>
                 <Input
                   type="date"
                   defaultValue={format(new Date(), "yyyy-MM-dd")}
@@ -738,7 +737,7 @@ export default function PaymentsPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Référence (optionnel)</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Référence (optionnel)</label>
                 <Input
                   placeholder="N° de transaction..."
                   className="bg-[#121214] border-white/10 text-white mt-1"
@@ -769,18 +768,18 @@ export default function PaymentsPage() {
 
       {/* Create Payment Modal */}
       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-        <DialogContent className="bg-[#1C1C1E] border-white/10 text-white">
+        <DialogContent className="bg-[#121214] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Ajouter un paiement manuel</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-white/50 text-xs uppercase">Membre *</label>
+              <label className="text-white/40 text-xs uppercase tracking-wider">Membre *</label>
               <Select value={paymentForm.member_id} onValueChange={(v) => setPaymentForm({ ...paymentForm, member_id: v })}>
                 <SelectTrigger className="bg-[#121214] border-white/10 text-white mt-1">
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
                   ))}
@@ -789,7 +788,7 @@ export default function PaymentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-white/50 text-xs uppercase">Montant (CHF) *</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Montant (CHF) *</label>
                 <Input
                   type="number"
                   value={paymentForm.amount}
@@ -798,7 +797,7 @@ export default function PaymentsPage() {
                 />
               </div>
               <div>
-                <label className="text-white/50 text-xs uppercase">Date d'échéance</label>
+                <label className="text-white/40 text-xs uppercase tracking-wider">Date d'échéance</label>
                 <Input
                   type="date"
                   value={paymentForm.due_date}

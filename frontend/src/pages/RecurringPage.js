@@ -317,10 +317,10 @@ export default function RecurringPage() {
             <div className="space-y-1.5">
               <Label className="text-white/60 text-xs uppercase">{t("type")}</Label>
               <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v, category: "" })}>
-                <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                <SelectTrigger className="bg-[#121214] border-white/10 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
                   <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
                 </SelectContent>
@@ -330,10 +330,10 @@ export default function RecurringPage() {
             <div className="space-y-1.5">
               <Label className="text-white/60 text-xs uppercase">{t("category")}</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                <SelectTrigger className="bg-[#121214] border-white/10 text-white">
                   <SelectValue placeholder={lang === "fr" ? "Sélectionner" : "Select"} />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   {filteredCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.name} className="text-white focus:bg-white/10">
                       {cat.name}
@@ -348,7 +348,7 @@ export default function RecurringPage() {
               <Input
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="bg-[#1C1C1E] border-white/10 text-white"
+                className="bg-[#121214] border-white/10 text-white"
                 placeholder={lang === "fr" ? "Ex: Loyer mensuel" : "Ex: Monthly rent"}
               />
             </div>
@@ -360,17 +360,17 @@ export default function RecurringPage() {
                   type="number"
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="bg-[#1C1C1E] border-white/10 text-white"
+                  className="bg-[#121214] border-white/10 text-white"
                   step="0.01"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{t("recurrenceDay")}</Label>
                 <Select value={form.recurrence_day.toString()} onValueChange={(v) => setForm({ ...form, recurrence_day: parseInt(v) })}>
-                  <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10 max-h-48">
+                  <SelectContent className="bg-[#121214] border-white/10 max-h-48">
                     {DAYS.map((d) => (
                       <SelectItem key={d} value={d.toString()} className="text-white focus:bg-white/10">
                         {d}
@@ -385,10 +385,10 @@ export default function RecurringPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{t("subType")}</Label>
                 <Select value={form.sub_type || "none"} onValueChange={(v) => setForm({ ...form, sub_type: v === "none" ? "" : v })}>
-                  <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     <SelectItem value="none" className="text-white focus:bg-white/10">-</SelectItem>
                     <SelectItem value="members" className="text-white focus:bg-white/10">{t("membersType")}</SelectItem>
                     <SelectItem value="coaching" className="text-white focus:bg-white/10">{t("coachingType")}</SelectItem>
@@ -436,10 +436,10 @@ export default function RecurringPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{lang === "fr" ? "Année" : "Year"}</Label>
                 <Select value={generateYear.toString()} onValueChange={(v) => setGenerateYear(parseInt(v))}>
-                  <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {[2023, 2024, 2025, 2026].map((y) => (
                       <SelectItem key={y} value={y.toString()} className="text-white focus:bg-white/10">
                         {y}
@@ -451,10 +451,10 @@ export default function RecurringPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase">{t("month")}</Label>
                 <Select value={generateMonth.toString()} onValueChange={(v) => setGenerateMonth(parseInt(v))}>
-                  <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     {MONTHS_OPTIONS.map((m) => (
                       <SelectItem key={m.value} value={m.value.toString()} className="text-white focus:bg-white/10">
                         {m.label}

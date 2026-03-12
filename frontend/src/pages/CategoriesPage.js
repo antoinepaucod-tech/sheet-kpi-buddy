@@ -288,7 +288,7 @@ export default function CategoriesPage() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })}
                 placeholder="Ex: ASSURANCE"
-                className="bg-[#1C1C1E] border-white/10 text-white placeholder:text-white/20 font-mono"
+                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20 font-mono"
                 data-testid="cat-name-input"
               />
             </div>
@@ -297,10 +297,10 @@ export default function CategoriesPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase tracking-wider">Type *</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                  <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white" data-testid="cat-type-select">
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white" data-testid="cat-type-select">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10">
+                  <SelectContent className="bg-[#121214] border-white/10">
                     <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
                     <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
                   </SelectContent>
@@ -310,10 +310,10 @@ export default function CategoriesPage() {
               <div className="space-y-1.5">
                 <Label className="text-white/60 text-xs uppercase tracking-wider">Colonne KPI *</Label>
                 <Select value={form.kpi_column} onValueChange={(v) => setForm({ ...form, kpi_column: v })}>
-                  <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white" data-testid="cat-kpi-select">
+                  <SelectTrigger className="bg-[#121214] border-white/10 text-white" data-testid="cat-kpi-select">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1C1C1E] border-white/10 max-h-60">
+                  <SelectContent className="bg-[#121214] border-white/10 max-h-60">
                     <div className="px-2 py-1 text-white/40 text-xs uppercase">
                       {form.type === "expense" ? "Dépenses" : "Revenus"}
                     </div>
@@ -414,7 +414,7 @@ export default function CategoriesPage() {
                 value={kpiForm.label}
                 onChange={(e) => setKpiForm({ ...kpiForm, label: e.target.value })}
                 placeholder="Ex: Frais bancaires"
-                className="bg-[#1C1C1E] border-white/10 text-white placeholder:text-white/20"
+                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20"
                 data-testid="kpi-label-input"
               />
             </div>
@@ -424,17 +424,17 @@ export default function CategoriesPage() {
                 value={kpiForm.value}
                 onChange={(e) => setKpiForm({ ...kpiForm, value: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
                 placeholder="Ex: frais_bancaires"
-                className="bg-[#1C1C1E] border-white/10 text-white placeholder:text-white/20 font-mono"
+                className="bg-[#121214] border-white/10 text-white placeholder:text-white/20 font-mono"
                 data-testid="kpi-value-input"
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-white/60 text-xs uppercase tracking-wider">Type *</Label>
               <Select value={kpiForm.type} onValueChange={(v) => setKpiForm({ ...kpiForm, type: v })}>
-                <SelectTrigger className="bg-[#1C1C1E] border-white/10 text-white">
+                <SelectTrigger className="bg-[#121214] border-white/10 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1C1C1E] border-white/10">
+                <SelectContent className="bg-[#121214] border-white/10">
                   <SelectItem value="expense" className="text-white focus:bg-white/10">{t("expense")}</SelectItem>
                   <SelectItem value="revenue" className="text-white focus:bg-white/10">{t("revenueType")}</SelectItem>
                 </SelectContent>
@@ -447,7 +447,7 @@ export default function CategoriesPage() {
                 <Label className="text-white/60 text-xs uppercase tracking-wider mb-2 block">Colonnes personnalisées</Label>
                 <div className="space-y-2">
                   {customKpiColumns.map((col) => (
-                    <div key={col.value} className="flex items-center justify-between bg-[#1C1C1E] rounded px-3 py-2">
+                    <div key={col.value} className="flex items-center justify-between bg-[#121214] rounded px-3 py-2">
                       <div>
                         <span className="text-white text-sm">{col.label}</span>
                         <span className="text-white/40 text-xs ml-2 font-mono">{col.value}</span>

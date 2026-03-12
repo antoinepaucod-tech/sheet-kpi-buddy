@@ -58,7 +58,7 @@ export default function AuthPage() {
         await register(form.email, form.password, form.clubName);
         toast({
           title: lang === "fr" ? "Compte créé !" : "Account created!",
-          description: lang === "fr" ? "Bienvenue sur KPI Buddy" : "Welcome to KPI Buddy",
+          description: lang === "fr" ? "Bienvenue sur Transform" : "Welcome to Transform",
         });
       }
       navigate("/");
@@ -82,8 +82,8 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="font-heading text-4xl font-extrabold text-white uppercase tracking-tight">
-            KPI Buddy
+          <h1 className="font-heading text-5xl font-extrabold text-white uppercase tracking-tight">
+            Transform
           </h1>
           <p className="text-white/40 text-sm mt-2">
             {lang === "fr" 
@@ -95,7 +95,7 @@ export default function AuthPage() {
         {/* Auth Card */}
         <div className="bg-[#121214] border border-white/10 rounded-sm p-6">
           {/* Tab Switcher */}
-          <div className="flex mb-6 bg-[#1C1C1E] rounded-sm p-1">
+          <div className="flex mb-6 bg-[#121214] rounded-sm p-1">
             <button
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 text-sm font-medium rounded-sm transition-colors ${
@@ -130,7 +130,7 @@ export default function AuthPage() {
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="bg-[#1C1C1E] border-white/10 text-white"
+                className="bg-[#121214] border-white/10 text-white"
                 placeholder="club@example.com"
                 data-testid="input-email"
               />
@@ -145,7 +145,7 @@ export default function AuthPage() {
                   type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="bg-[#1C1C1E] border-white/10 text-white pr-10"
+                  className="bg-[#121214] border-white/10 text-white pr-10"
                   placeholder="••••••••"
                   data-testid="input-password"
                 />
@@ -168,7 +168,7 @@ export default function AuthPage() {
                   type="text"
                   value={form.clubName}
                   onChange={(e) => setForm({ ...form, clubName: e.target.value })}
-                  className="bg-[#1C1C1E] border-white/10 text-white"
+                  className="bg-[#121214] border-white/10 text-white"
                   placeholder={lang === "fr" ? "CrossFit Example" : "CrossFit Example"}
                   data-testid="input-club-name"
                 />
@@ -200,7 +200,7 @@ export default function AuthPage() {
         
         {/* Footer */}
         <p className="text-center text-white/20 text-xs mt-6 font-mono">
-          Sheet KPI Buddy v2.0
+          TRANSFORM v2.0
         </p>
       </div>
     </div>

@@ -101,7 +101,7 @@ export function ImportCSVModal({ open, onClose, onImported, categories }) {
 
         <div className="flex-1 overflow-auto space-y-4 py-2">
           {/* File format hint */}
-          <div className="bg-[#1C1C1E] border border-white/10 rounded-sm p-3 text-xs font-mono text-white/50">
+          <div className="bg-[#121214] border border-white/10 rounded-sm p-3 text-xs font-mono text-white/50">
             <p className="text-white/70 mb-1">Format attendu (séparateur = ;) :</p>
             <p>Date ; Description ; Catégorie ; Type ; Sous-type ; Montant (CHF)</p>
             <p className="mt-1 text-green-400/60">Compatible avec l'export de cette app (CSV)</p>
