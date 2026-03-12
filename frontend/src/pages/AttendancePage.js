@@ -304,6 +304,7 @@ export default function AttendancePage() {
                     return (
                       <td key={w} className="py-2 px-1 text-center">
                         <input
+                          key={`${member.id}_${w}_${val}`}
                           type="number"
                           min="0"
                           max="7"

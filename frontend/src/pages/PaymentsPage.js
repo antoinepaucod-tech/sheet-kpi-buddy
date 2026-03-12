@@ -68,7 +68,7 @@ const RECURRENCE_TYPES = [
 
 const STATUS_CONFIG = {
   pending: { label: "En attente", color: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]", icon: Clock },
-  paid: { label: "Payé", color: "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]", icon: Check },
+  paid: { label: "Payé", color: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]", icon: Check },
   late: { label: "En retard", color: "bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)]", icon: AlertTriangle },
   failed: { label: "Échoué", color: "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]", icon: X },
   cancelled: { label: "Annulé", color: "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]", icon: X },
@@ -260,7 +260,7 @@ export default function PaymentsPage() {
             <Plus size={16} className="mr-2" />
             Paiement manuel
           </Button>
-          <Button onClick={() => setScheduleModalOpen(true)} className="bg-[var(--color-success)] hover:opacity-85" data-testid="add-schedule-btn">
+          <Button onClick={() => setScheduleModalOpen(true)} className="bg-[var(--color-accent)] hover:opacity-85" data-testid="add-schedule-btn">
             <Plus size={16} className="mr-2" />
             Nouveau planning
           </Button>
@@ -284,8 +284,8 @@ export default function PaymentsPage() {
           <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-accent)' }}>{stats.pending}</p>
         </div>
         <div className="tf-stat">
-          <p className="tf-stat-label" style={{ color: 'var(--color-success)' }}>Payes</p>
-          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-success)' }}>{stats.paid}</p>
+          <p className="tf-stat-label" style={{ color: 'var(--color-accent)' }}>Payes</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-accent)' }}>{stats.paid}</p>
         </div>
         <div className="tf-stat">
           <p className="tf-stat-label flex items-center gap-1">
@@ -396,7 +396,7 @@ export default function PaymentsPage() {
                               <Button
                                 size="sm"
                                 onClick={() => openMarkPaid(payment)}
-                                className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
+                                className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
                                 data-testid={`mark-paid-${payment.id}`}
                               >
                                 <Check size={14} className="mr-1" /> Payé
@@ -452,13 +452,17 @@ export default function PaymentsPage() {
                 ) : (
                   latePayments.map((payment) => {
                     const daysLate = differenceInDays(new Date(), parseISO(payment.due_date));
+                    const member = members.find((m) => m.id === payment.member_id);
+                    const displayName = payment.member_name || member?.name || "Inconnu";
+                    const displayEmail = payment.member_email || member?.email || "";
+                    const displayPhone = payment.member_phone || member?.phone || "";
                     return (
                       <TableRow key={payment.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
-                        <TableCell className="text-white font-medium">{payment.member_name}</TableCell>
+                        <TableCell className="text-white font-medium">{displayName}</TableCell>
                         <TableCell>
                           <div className="text-[var(--color-text-secondary)] text-sm">
-                            <p>{payment.member_email}</p>
-                            <p>{payment.member_phone}</p>
+                            <p>{displayEmail}</p>
+                            <p>{displayPhone}</p>
                           </div>
                         </TableCell>
                         <TableCell className="text-[var(--color-text-secondary)]">
@@ -486,7 +490,7 @@ export default function PaymentsPage() {
                             <Button
                               size="sm"
                               onClick={() => openMarkPaid(payment)}
-                              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
+                              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
                             >
                               <Check size={14} className="mr-1" /> Payé
                             </Button>
@@ -703,7 +707,7 @@ export default function PaymentsPage() {
             <Button
               onClick={() => createScheduleMutation.mutate(scheduleForm)}
               disabled={!scheduleForm.member_id || !scheduleForm.amount || createScheduleMutation.isPending}
-              className="bg-[var(--color-success)] hover:opacity-85"
+              className="bg-[var(--color-accent)] hover:opacity-85"
             >
               {createScheduleMutation.isPending ? "..." : "Créer"}
             </Button>
@@ -758,7 +762,7 @@ export default function PaymentsPage() {
                 });
               }}
               disabled={markPaidMutation.isPending}
-              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
             >
               {markPaidMutation.isPending ? "..." : "Confirmer"}
             </Button>
@@ -812,7 +816,7 @@ export default function PaymentsPage() {
             <Button
               onClick={() => createPaymentMutation.mutate(paymentForm)}
               disabled={!paymentForm.member_id || !paymentForm.amount || createPaymentMutation.isPending}
-              className="bg-[var(--color-success)] hover:opacity-85"
+              className="bg-[var(--color-accent)] hover:opacity-85"
             >
               {createPaymentMutation.isPending ? "..." : "Créer"}
             </Button>

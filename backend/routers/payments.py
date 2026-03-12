@@ -72,7 +72,14 @@ async def get_payments(
         if due_to:
             query["due_date"]["$lte"] = due_to
     
-    return await db.payments.find(query, {"_id": 0}).sort("due_date", -1).to_list(1000)
+    docs = await db.payments.find(query, {"_id": 0}).sort("due_date", -1).to_list(1000)
+    
+    # Enrich with member names
+    for doc in docs:
+        member = await db.customer_members.find_one({"id": doc.get("member_id")}, {"_id": 0, "name": 1})
+        doc["member_name"] = member.get("name", "Inconnu") if member else "Inconnu"
+    
+    return docs
 
 
 @router.get("/payments/late")
@@ -94,10 +101,9 @@ async def get_late_payments():
     
     for doc in docs:
         member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
-        if member:
-            doc["member_name"] = member.get("name", "")
-            doc["member_email"] = member.get("email", "")
-            doc["member_phone"] = member.get("phone", "")
+        doc["member_name"] = member.get("name", "Inconnu") if member else "Inconnu"
+        doc["member_email"] = member.get("email", "") if member else ""
+        doc["member_phone"] = member.get("phone", "") if member else ""
     
     return docs
 

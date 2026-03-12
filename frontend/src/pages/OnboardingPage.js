@@ -197,19 +197,8 @@ export default function OnboardingPage() {
       );
     }
     
-    // Sort by name to keep stable order, but if editing, put the edited member first
-    const sorted = [...result].sort((a, b) => {
-      // Keep currently editing member at same position
-      if (editingMemberId) {
-        if (a.id === editingMemberId) return -1;
-        if (b.id === editingMemberId) return 1;
-      }
-      // Then sort by progress (incomplete first), then by name
-      const aProgress = a.onboarding_percentage || 0;
-      const bProgress = b.onboarding_percentage || 0;
-      if (aProgress !== bProgress) return aProgress - bProgress;
-      return (a.name || "").localeCompare(b.name || "");
-    });
+    // Sort alphabetically for stable order (no reordering when steps are toggled)
+    const sorted = [...result].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     
     return sorted;
   }, [pendingOnboarding, allMembersWithOnboarding, showCompleted, search, editingMemberId]);
