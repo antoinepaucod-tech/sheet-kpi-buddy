@@ -31,7 +31,7 @@ const SUBSCRIPTION_TYPES = [
   { value: "Annuel PT", label: "Annuel PT", defaultAmount: 2400 },
 ];
 
-export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
+export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChange }) {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(null);
   const [syncError, setSyncError] = useState(null);
@@ -97,10 +97,13 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
       const params = new URLSearchParams();
       if (startDate) params.append("start_date", startDate);
       if (endDate) params.append("end_date", endDate);
-      if (currentMonth) params.append("month", currentMonth);
       const url = `${API}/ghl/sync${params.toString() ? `?${params}` : ""}`;
       const res = await axios.post(url);
       setLastSync(res.data);
+      // Switch dashboard to the synced month
+      if (res.data.kpi_month && onMonthChange) {
+        onMonthChange(res.data.kpi_month);
+      }
       onKpiRefresh?.();
       fetchSales();
       fetchCallsMade();
@@ -163,6 +166,7 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
   };
   const funnelOpps = lastSync?.funnel_opportunities || {};
   const totalOpportunities = lastSync?.total_opportunities || 0;
+  const cashFromGHL = lastSync?.cash_from_ghl || 0;
   const totalLeads = totalOpportunities || 1;
   const maxVal = Math.max(...Object.values(funnel), 1);
 
@@ -407,9 +411,9 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
           })}
         </div>
 
-        {/* Conversion rates row */}
+        {/* Conversion rates + cash row */}
         {lastSync && (
-          <div className="grid grid-cols-3 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
+          <div className="grid grid-cols-4 gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
             {[
               {
                 label: lang === "fr" ? "Taux RDV" : "Apt. Rate",
@@ -427,7 +431,12 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
                   ? `${Math.round((funnel.showed_sold / (funnel.showed_sold + funnel.showed_lost)) * 100)}%`
                   : "0%",
               },
-            ].map(({ label, value }) => (
+              {
+                label: lang === "fr" ? "Cash GHL" : "GHL Cash",
+                value: formatCHF(cashFromGHL),
+                color: 'var(--color-success)',
+              },
+            ].map(({ label, value, color }) => (
               <div key={label} className="text-center">
                 <p style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {label}
@@ -435,7 +444,7 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
                 <p style={{
                   fontSize: 'var(--text-lg)',
                   fontWeight: 'var(--font-bold)',
-                  color: 'var(--color-accent)',
+                  color: color || 'var(--color-accent)',
                   fontFamily: 'var(--font-display)',
                   fontFeatureSettings: '"tnum" 1',
                 }}>

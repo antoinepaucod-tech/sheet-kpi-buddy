@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 async def sync_ghl(
     start_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
     end_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
-    month: Optional[str] = Query(None, description="Target KPI month YYYY-MM"),
 ):
     """Trigger a manual sync from GoHighLevel pipelines with optional date filter"""
     try:
@@ -57,11 +56,18 @@ async def sync_ghl(
     # "New Leads" = total pipeline opportunities (all leads that entered)
     total_funnel["new_leads"] = total_pipeline_opps
 
+    # Sum monetary values from showed_sold for cash_collected
+    cash_from_ghl = sum(
+        opp.get("monetary_value", 0) or 0
+        for opp in all_funnel_opps.get("showed_sold", [])
+    )
+
     # Store sync result
     sync_record = {
         "status": "success",
         "funnel": total_funnel,
         "total_opportunities": total_pipeline_opps,
+        "cash_from_ghl": cash_from_ghl,
         "funnel_opportunities": all_funnel_opps,
         "start_date": start_date,
         "end_date": end_date,
@@ -76,8 +82,13 @@ async def sync_ghl(
     await db.ghl_syncs.insert_one(sync_record)
     sync_record.pop("_id", None)
 
-    # Update KPI for the target month (from frontend, not from start_date)
-    kpi_month = month or datetime.now(timezone.utc).strftime("%Y-%m")
+    # Determine the correct KPI month from date range (not from dashboard selection)
+    if end_date:
+        kpi_month = end_date[:7]
+    elif start_date:
+        kpi_month = start_date[:7]
+    else:
+        kpi_month = datetime.now(timezone.utc).strftime("%Y-%m")
 
     leads = total_pipeline_opps
     scheduled = total_funnel["confirmed_appointment"] + total_funnel["cancelled"]
@@ -89,6 +100,8 @@ async def sync_ghl(
         "scheduled": scheduled,
         "show": show,
         "close": close,
+        "cash_collected": cash_from_ghl,
+        "avg_per_sale": round(cash_from_ghl / close, 2) if close > 0 else 0,
         "sched_percentage": round((scheduled / leads * 100) if leads > 0 else 0, 1),
         "show_percentage": round((show / scheduled * 100) if scheduled > 0 else 0, 1),
         "close_percentage": round((close / show * 100) if show > 0 else 0, 1),
@@ -103,6 +116,7 @@ async def sync_ghl(
         kpi = MonthlyKPI(month=kpi_month, **kpi_update)
         await db.monthly_kpis.insert_one(kpi.model_dump())
 
+    sync_record["kpi_month"] = kpi_month
     return sync_record
 
 

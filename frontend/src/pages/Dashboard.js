@@ -601,6 +601,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
             currentMonth={selectedMonth}
             lang={lang}
             onKpiRefresh={refetch}
+            onMonthChange={setSelectedMonth}
           />
         </TabsContent>
 
