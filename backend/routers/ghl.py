@@ -1,5 +1,6 @@
 """GoHighLevel sync routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from typing import Optional
 from datetime import datetime, timezone
 import logging
 
@@ -11,14 +12,16 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/sync")
-async def sync_ghl():
-    """Trigger a manual sync from GoHighLevel pipelines"""
+async def sync_ghl(
+    start_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
+    end_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
+):
+    """Trigger a manual sync from GoHighLevel pipelines with optional date filter"""
     try:
-        data = await sync_pipeline_data()
+        data = await sync_pipeline_data(start_date=start_date, end_date=end_date)
     except Exception as e:
         error_msg = str(e)
         logger.error(f"GHL sync failed: {error_msg}")
-        # Store failed sync attempt
         await db.ghl_syncs.insert_one({
             "status": "error",
             "error": error_msg,
@@ -56,6 +59,8 @@ async def sync_ghl():
         "funnel": total_funnel,
         "total_opportunities": total_pipeline_opps,
         "funnel_opportunities": all_funnel_opps,
+        "start_date": start_date,
+        "end_date": end_date,
         "pipelines": [{
             "id": p["pipeline_id"],
             "name": p["pipeline_name"],
@@ -67,10 +72,12 @@ async def sync_ghl():
     await db.ghl_syncs.insert_one(sync_record)
     sync_record.pop("_id", None)
 
-    # Update current month KPI with funnel data
-    # Total leads = all pipeline opportunities (not just "New Leads" stage)
-    now = datetime.now(timezone.utc)
-    current_month = now.strftime("%Y-%m")
+    # Update KPI for the relevant month
+    if start_date:
+        kpi_month = start_date[:7]
+    else:
+        kpi_month = datetime.now(timezone.utc).strftime("%Y-%m")
+
     leads = total_pipeline_opps
     scheduled = total_funnel["confirmed_appointment"] + total_funnel["cancelled"]
     show = total_funnel["showed_sold"] + total_funnel["showed_lost"] + total_funnel["no_showed"]
@@ -87,12 +94,12 @@ async def sync_ghl():
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    existing = await db.monthly_kpis.find_one({"month": current_month})
+    existing = await db.monthly_kpis.find_one({"month": kpi_month})
     if existing:
-        await db.monthly_kpis.update_one({"month": current_month}, {"$set": kpi_update})
+        await db.monthly_kpis.update_one({"month": kpi_month}, {"$set": kpi_update})
     else:
         from models.kpi import MonthlyKPI
-        kpi = MonthlyKPI(month=current_month, **kpi_update)
+        kpi = MonthlyKPI(month=kpi_month, **kpi_update)
         await db.monthly_kpis.insert_one(kpi.model_dump())
 
     return sync_record
@@ -122,10 +129,7 @@ async def get_sync_history():
 
 @router.post("/confirm-sale")
 async def confirm_sale(body: dict):
-    """
-    Confirm a sale from 'Showed Sold' stage.
-    Records the subscription type and cash collected.
-    """
+    """Confirm a sale from 'Showed Sold' stage."""
     opportunity_id = body.get("opportunity_id")
     opportunity_name = body.get("opportunity_name", "")
     subscription_type = body.get("subscription_type", "6 Week Challenge")
@@ -137,7 +141,6 @@ async def confirm_sale(body: dict):
     if not month:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
 
-    # Store sale confirmation
     sale = {
         "opportunity_id": opportunity_id,
         "opportunity_name": opportunity_name,
@@ -149,7 +152,6 @@ async def confirm_sale(body: dict):
     await db.ghl_sales.insert_one(sale)
     sale.pop("_id", None)
 
-    # Update KPI cash_collected for the month
     existing = await db.monthly_kpis.find_one({"month": month})
     if existing:
         new_cash = existing.get("cash_collected", 0) + cash_collected
@@ -173,3 +175,33 @@ async def get_sales(month: str):
         {"month": month}, {"_id": 0}
     ).sort("confirmed_at", -1).to_list(1000)
     return docs
+
+
+@router.patch("/calls-made")
+async def update_calls_made(body: dict):
+    """Update the calls_made field for a given month"""
+    month = body.get("month")
+    calls_made = body.get("calls_made", 0)
+
+    if not month:
+        raise HTTPException(status_code=400, detail="month required")
+
+    existing = await db.monthly_kpis.find_one({"month": month})
+    if not existing:
+        from models.kpi import MonthlyKPI
+        kpi = MonthlyKPI(month=month, calls_made=calls_made)
+        await db.monthly_kpis.insert_one(kpi.model_dump())
+    else:
+        leads = existing.get("leads", 0)
+        call_pct = round((calls_made / leads * 100) if leads > 0 else 0, 1)
+        await db.monthly_kpis.update_one(
+            {"month": month},
+            {"$set": {
+                "calls_made": calls_made,
+                "call_percentage": call_pct,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }}
+        )
+
+    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    return doc

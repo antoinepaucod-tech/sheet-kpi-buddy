@@ -1,0 +1,77 @@
+{
+  "summary": "Iteration 30: All 3 NEW features tested and PASSED. Backend: 9/9 pytest tests. Frontend: All UI features verified including date filters, calls_made input, and PIF Churn removal from Details tab.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_ghl_iteration30_new_features.py",
+    "/app/test_reports/pytest/pytest_results_iter30.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_ghl_iteration30_new_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all UI features verified)"
+  },
+  "test_credentials": "email=test@test.com, password=test123",
+  "seed_data_creation": "None - used real GHL data via PIT token",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "GHL API date filtering, calls_made editing, and PIF Churn removal all working correctly. Date filters on POST /api/ghl/sync return filtered results. PATCH /api/ghl/calls-made updates monthly_kpis collection. PIF Churn % removed from KPIDetailedView but General Churn and PT Churn remain.",
+  "test_results": {
+    "backend_tests": {
+      "status": "PASS",
+      "tests_run": 9,
+      "tests_passed": 9,
+      "test_categories": [
+        "TestGHLSyncDateFilters (4 tests): POST /api/ghl/sync with/without date filters",
+        "TestGHLCallsMade (4 tests): PATCH /api/ghl/calls-made updates KPI, requires month, creates if not exists",
+        "TestGHLLastSync (1 test): Verifies last-sync reflects date filters used"
+      ]
+    },
+    "frontend_tests": {
+      "status": "PASS",
+      "features_verified": [
+        "Login with test@test.com/test123 - PASS",
+        "Navigate to Acquisition tab (funnel tab) - PASS",
+        "Date pickers (Date debut, Date fin) visible with native HTML date inputs - PASS",
+        "Appels passes input field visible with value input working - PASS",
+        "Sauvegarder button saves calls_made value (button turns green 'Sauvegarde') - PASS",
+        "Set date range 2025-01-01 to 2025-06-30, sync shows filtered data - PASS",
+        "Navigate to Details tab - PASS",
+        "PIF Churn % is NOT present in Details tab - PASS",
+        "General Churn (Général Churn) IS present showing 0.00% - PASS",
+        "PT Churn IS present showing 0.00% - PASS"
+      ]
+    },
+    "new_features_summary": {
+      "feature_1_date_filters": {
+        "description": "Add date filters to GHL funnel",
+        "backend_endpoint": "POST /api/ghl/sync?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD",
+        "frontend_location": "Acquisition tab - DATE DEBUT and DATE FIN inputs",
+        "status": "WORKING"
+      },
+      "feature_2_calls_made": {
+        "description": "Add editable calls_made field",
+        "backend_endpoint": "PATCH /api/ghl/calls-made with {month, calls_made}",
+        "frontend_location": "Acquisition tab - APPELS PASSES input with Sauvegarder button",
+        "status": "WORKING"
+      },
+      "feature_3_pif_churn_removal": {
+        "description": "Remove PIF Churn % from member details",
+        "frontend_location": "Details tab - DÉTAIL DES MEMBRES section",
+        "verified": "PIF Churn NOT present, General Churn and PT Churn still present",
+        "status": "WORKING"
+      }
+    }
+  }
+}

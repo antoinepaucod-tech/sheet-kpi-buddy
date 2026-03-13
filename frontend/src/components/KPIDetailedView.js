@@ -132,7 +132,7 @@ export function KPIDetailedView({ kpi, lang }) {
 
       {/* Members Detailed Section */}
       <SectionTitle>{lang === "fr" ? "Détail des Membres" : "Members Breakdown"}</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
         <StatBox 
           label={lang === "fr" ? "Membres Actifs" : "Active Members"} 
           value={formatNum(kpi.total_active_members || kpi.total_members)} 
@@ -144,12 +144,6 @@ export function KPIDetailedView({ kpi, lang }) {
           value={formatNum(kpi.pif_members)} 
           icon={Users}
           subValue={kpi.pif_exits > 0 ? `Exits: ${kpi.pif_exits}` : null}
-        />
-        <StatBox 
-          label={lang === "fr" ? "PIF Churn" : "PIF Churn"} 
-          value={`${(kpi.pif_churn || 0).toFixed(2)}%`} 
-          icon={TrendingDown}
-          color={kpi.pif_churn < 3 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}
         />
         <StatBox 
           label={lang === "fr" ? "Récurrents" : "Recurring"} 

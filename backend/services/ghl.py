@@ -1,7 +1,9 @@
 """GoHighLevel API integration service"""
 import os
+import re
 import httpx
 from datetime import datetime, timezone
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -69,8 +71,6 @@ GHL_TO_FUNNEL = {
 }
 
 
-import re
-
 def _normalize_stage_name(name: str) -> str:
     """Strip emojis and special chars from stage name for matching"""
     cleaned = re.sub(r'[^\w\s-]', '', name).strip().lower()
@@ -78,11 +78,55 @@ def _normalize_stage_name(name: str) -> str:
     return cleaned
 
 
-async def sync_pipeline_data():
+def _parse_opp_date(opp: dict) -> Optional[datetime]:
+    """Parse the createdAt date from an opportunity"""
+    date_str = opp.get("createdAt") or opp.get("dateAdded") or ""
+    if not date_str:
+        return None
+    try:
+        if "T" in date_str:
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        return datetime.strptime(date_str[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    except (ValueError, TypeError):
+        return None
+
+
+def _filter_opps_by_date(opps: list, start_date: Optional[str], end_date: Optional[str]) -> list:
+    """Filter opportunities by date range"""
+    if not start_date and not end_date:
+        return opps
+
+    start_dt = None
+    end_dt = None
+    if start_date:
+        try:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+        except ValueError:
+            pass
+
+    filtered = []
+    for opp in opps:
+        opp_date = _parse_opp_date(opp)
+        if opp_date is None:
+            # Include opps with no date if no strict filter
+            continue
+        if start_dt and opp_date < start_dt:
+            continue
+        if end_dt and opp_date > end_dt:
+            continue
+        filtered.append(opp)
+    return filtered
+
+
+async def sync_pipeline_data(start_date: Optional[str] = None, end_date: Optional[str] = None):
     """
-    Sync all pipeline data from GHL.
-    Returns funnel counts mapped to our stages:
-    New Leads -> Confirmed Appointment -> Cancelled -> No Showed -> Showed Sold -> Showed Lost
+    Sync all pipeline data from GHL with optional date filtering.
+    start_date/end_date format: YYYY-MM-DD
     """
     pipelines = await get_pipelines()
     if not pipelines:
@@ -105,10 +149,13 @@ async def sync_pipeline_data():
                 break
             page += 1
 
+        # Filter by date if specified
+        filtered_opps = _filter_opps_by_date(all_opps, start_date, end_date)
+
         # Count opportunities per stage
         stage_counts = {}
         stage_opps = {}
-        for opp in all_opps:
+        for opp in filtered_opps:
             stage_id = opp.get("pipelineStageId", "")
             stage_counts[stage_id] = stage_counts.get(stage_id, 0) + 1
             if stage_id not in stage_opps:
@@ -148,8 +195,14 @@ async def sync_pipeline_data():
             "stages": [{"id": s.get("id"), "name": s.get("name")} for s in stages],
             "funnel": funnel,
             "funnel_opportunities": funnel_opps,
-            "total_opportunities": len(all_opps),
+            "total_opportunities": len(filtered_opps),
+            "total_unfiltered": len(all_opps),
             "synced_at": datetime.now(timezone.utc).isoformat(),
         })
 
-    return {"pipelines": results, "synced_at": datetime.now(timezone.utc).isoformat()}
+    return {
+        "pipelines": results,
+        "start_date": start_date,
+        "end_date": end_date,
+        "synced_at": datetime.now(timezone.utc).isoformat(),
+    }

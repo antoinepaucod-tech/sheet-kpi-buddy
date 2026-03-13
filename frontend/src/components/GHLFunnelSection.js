@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, UserPlus, Phone, Calendar, Eye, Trophy, UserX } from "lucide-react";
+import { RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, UserPlus, Calendar, Eye, Trophy, UserX, Phone, Save } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "./ui/dialog";
-import { formatCHF, formatNum } from "../utils/format";
+import { formatCHF } from "../utils/format";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -41,11 +41,22 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
   const [confirmingSale, setConfirmingSale] = useState(false);
   const [confirmedSales, setConfirmedSales] = useState([]);
 
+  // Date filter state
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Calls made state
+  const [callsMade, setCallsMade] = useState(0);
+  const [callsSaving, setCallsSaving] = useState(false);
+  const [callsSaved, setCallsSaved] = useState(false);
+
   const fetchLastSync = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/ghl/last-sync`);
       if (res.data.status === "success") {
         setLastSync(res.data);
+        if (res.data.start_date) setStartDate(res.data.start_date);
+        if (res.data.end_date) setEndDate(res.data.end_date);
       }
     } catch {
       // no sync yet
@@ -62,24 +73,60 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
     }
   }, [currentMonth]);
 
+  // Fetch calls_made from KPI
+  const fetchCallsMade = useCallback(async () => {
+    if (!currentMonth) return;
+    try {
+      const [year, month] = currentMonth.split("-");
+      const res = await axios.get(`${API}/kpis/${year}/${month}`);
+      setCallsMade(res.data?.calls_made || 0);
+    } catch {
+      // ignore
+    }
+  }, [currentMonth]);
+
   useEffect(() => {
     fetchLastSync();
     fetchSales();
-  }, [fetchLastSync, fetchSales]);
+    fetchCallsMade();
+  }, [fetchLastSync, fetchSales, fetchCallsMade]);
 
   const handleSync = async () => {
     setSyncing(true);
     setSyncError(null);
     try {
-      const res = await axios.post(`${API}/ghl/sync`);
+      const params = new URLSearchParams();
+      if (startDate) params.append("start_date", startDate);
+      if (endDate) params.append("end_date", endDate);
+      const url = `${API}/ghl/sync${params.toString() ? `?${params}` : ""}`;
+      const res = await axios.post(url);
       setLastSync(res.data);
       onKpiRefresh?.();
       fetchSales();
+      fetchCallsMade();
     } catch (e) {
       const msg = e.response?.data?.detail || e.message;
       setSyncError(msg);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleSaveCalls = async () => {
+    setCallsSaving(true);
+    setCallsSaved(false);
+    try {
+      await axios.patch(`${API}/ghl/calls-made`, {
+        month: currentMonth,
+        calls_made: callsMade,
+      });
+      setCallsSaved(true);
+      onKpiRefresh?.();
+      setTimeout(() => setCallsSaved(false), 2000);
+    } catch {
+      // ignore
+    } finally {
+      setCallsSaving(false);
     }
   };
 
@@ -115,50 +162,97 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
     no_showed: 0, showed_sold: 0, showed_lost: 0,
   };
   const funnelOpps = lastSync?.funnel_opportunities || {};
-
-  // Total leads = total pipeline opportunities (not just "New Leads" stage)
   const totalOpportunities = lastSync?.total_opportunities || 0;
   const totalLeads = totalOpportunities || 1;
   const maxVal = Math.max(...Object.values(funnel), 1);
 
-  // Check if an opportunity sale is already confirmed
   const isSaleConfirmed = (oppId) => confirmedSales.some(s => s.opportunity_id === oppId);
+
+  const inputStyle = {
+    background: 'var(--color-bg-secondary)',
+    border: '1px solid var(--color-border)',
+    color: 'var(--color-text-primary)',
+    fontSize: 'var(--text-xs)',
+    fontFamily: 'var(--font-display)',
+    fontFeatureSettings: '"tnum" 1',
+  };
 
   return (
     <div className="space-y-4" data-testid="ghl-funnel-section">
-      {/* Sync Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <h3 className="tf-label" style={{ fontSize: 'var(--text-sm)' }}>
-            {lang === "fr" ? "Entonnoir GoHighLevel" : "GoHighLevel Funnel"}
-          </h3>
-          {lastSync && (
-            <span className="flex items-center gap-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
-              <CheckCircle2 size={10} style={{ color: 'var(--color-success)' }} />
-              {new Date(lastSync.synced_at).toLocaleString(lang === "fr" ? "fr-FR" : "en-US", {
-                day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
-              })}
-            </span>
-          )}
+      {/* Date Filters + Sync Button */}
+      <div className="tf-card">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <h3 className="tf-label" style={{ fontSize: 'var(--text-sm)' }}>
+              {lang === "fr" ? "Entonnoir GoHighLevel" : "GoHighLevel Funnel"}
+            </h3>
+            {lastSync && (
+              <span className="flex items-center gap-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
+                <CheckCircle2 size={10} style={{ color: 'var(--color-success)' }} />
+                {new Date(lastSync.synced_at).toLocaleString(lang === "fr" ? "fr-FR" : "en-US", {
+                  day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+                })}
+              </span>
+            )}
+          </div>
+          <Button
+            onClick={handleSync}
+            disabled={syncing}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5"
+            data-testid="ghl-sync-btn"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text-secondary)',
+              fontSize: 'var(--text-xs)',
+            }}
+          >
+            {syncing ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+            {syncing
+              ? (lang === "fr" ? "Synchronisation..." : "Syncing...")
+              : (lang === "fr" ? "Synchroniser GHL" : "Sync GHL")}
+          </Button>
         </div>
-        <Button
-          onClick={handleSync}
-          disabled={syncing}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-1.5"
-          data-testid="ghl-sync-btn"
-          style={{
-            borderColor: 'var(--color-border)',
-            color: 'var(--color-text-secondary)',
-            fontSize: 'var(--text-xs)',
-          }}
-        >
-          {syncing ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-          {syncing
-            ? (lang === "fr" ? "Synchronisation..." : "Syncing...")
-            : (lang === "fr" ? "Synchroniser GHL" : "Sync GHL")}
-        </Button>
+
+        {/* Date Range Filters */}
+        <div className="flex items-end gap-3 flex-wrap">
+          <div className="flex-1 min-w-[140px]">
+            <label style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
+              {lang === "fr" ? "Date debut" : "Start Date"}
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full p-2 rounded-md"
+              style={inputStyle}
+              data-testid="ghl-start-date"
+            />
+          </div>
+          <div className="flex-1 min-w-[140px]">
+            <label style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
+              {lang === "fr" ? "Date fin" : "End Date"}
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full p-2 rounded-md"
+              style={inputStyle}
+              data-testid="ghl-end-date"
+            />
+          </div>
+          <Button
+            onClick={() => { setStartDate(""); setEndDate(""); }}
+            variant="ghost"
+            size="sm"
+            style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', padding: '8px 10px' }}
+            data-testid="ghl-clear-dates"
+          >
+            {lang === "fr" ? "Effacer" : "Clear"}
+          </Button>
+        </div>
       </div>
 
       {/* Sync Error */}
@@ -187,6 +281,47 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
         </div>
       )}
 
+      {/* Calls Made Input */}
+      <div className="tf-card">
+        <div className="flex items-center gap-3">
+          <Phone size={14} style={{ color: 'var(--color-accent)', opacity: 0.7 }} />
+          <label className="tf-label" style={{ fontSize: 'var(--text-xs)', flexShrink: 0 }}>
+            {lang === "fr" ? "Appels passes" : "Calls Made"}
+          </label>
+          <input
+            type="number"
+            value={callsMade}
+            onChange={(e) => { setCallsMade(parseInt(e.target.value) || 0); setCallsSaved(false); }}
+            className="w-24 p-1.5 rounded-md text-center"
+            style={inputStyle}
+            min={0}
+            data-testid="ghl-calls-input"
+          />
+          <Button
+            onClick={handleSaveCalls}
+            disabled={callsSaving}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            style={{
+              borderColor: callsSaved ? 'var(--color-success)' : 'var(--color-border)',
+              color: callsSaved ? 'var(--color-success)' : 'var(--color-text-secondary)',
+              fontSize: 'var(--text-xs)',
+              padding: '4px 10px',
+            }}
+            data-testid="ghl-save-calls"
+          >
+            {callsSaving ? <Loader2 size={10} className="animate-spin" /> : callsSaved ? <CheckCircle2 size={10} /> : <Save size={10} />}
+            {callsSaved ? (lang === "fr" ? "Sauvegarde" : "Saved") : (lang === "fr" ? "Sauvegarder" : "Save")}
+          </Button>
+          {totalOpportunities > 0 && callsMade > 0 && (
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', fontFeatureSettings: '"tnum" 1' }}>
+              ({Math.round((callsMade / totalOpportunities) * 100)}%)
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Visual Funnel */}
       <div className="tf-card" data-testid="ghl-funnel-visual">
         {/* Total leads header */}
@@ -194,6 +329,11 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
           <div className="flex items-center justify-between mb-3 pb-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {lang === "fr" ? "Total Opportunites Pipeline" : "Total Pipeline Opportunities"}
+              {(startDate || endDate) && (
+                <span style={{ marginLeft: 8, color: 'var(--color-accent)', textTransform: 'none' }}>
+                  {startDate && endDate ? `${startDate} → ${endDate}` : startDate ? `${lang === "fr" ? "Depuis" : "From"} ${startDate}` : `${lang === "fr" ? "Jusqu'au" : "Until"} ${endDate}`}
+                </span>
+              )}
             </span>
             <span style={{
               fontSize: 'var(--text-lg)',
@@ -207,7 +347,7 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
           </div>
         )}
         <div className="space-y-2">
-          {FUNNEL_STAGES.map((stage, idx) => {
+          {FUNNEL_STAGES.map((stage) => {
             const count = funnel[stage.key] || 0;
             const pct = totalLeads > 0 ? Math.round((count / totalLeads) * 100) : 0;
             const barWidth = maxVal > 0 ? Math.max((count / maxVal) * 100, 4) : 4;
@@ -277,7 +417,7 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
               },
               {
                 label: lang === "fr" ? "Taux Presence" : "Show Rate",
-                value: (funnel.confirmed_appointment + funnel.no_showed) > 0
+                value: (funnel.confirmed_appointment + funnel.no_showed + funnel.showed_sold + funnel.showed_lost) > 0
                   ? `${Math.round(((funnel.showed_sold + funnel.showed_lost) / (funnel.confirmed_appointment + funnel.no_showed + funnel.showed_sold + funnel.showed_lost)) * 100)}%`
                   : "0%",
               },
