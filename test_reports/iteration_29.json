@@ -1,0 +1,80 @@
+{
+  "summary": "Iteration 29: GHL Integration with WORKING PIT token - ALL TESTS PASSED. Backend: 8/8 pytest tests. Frontend: All UI features verified including funnel display and sale confirmation.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_ghl_integration_iter29.py",
+    "/app/test_reports/pytest/pytest_results_iter29.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_ghl_integration_iter29.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100% (all UI features verified)"
+  },
+  "test_credentials": "email=test@test.com, password=test123",
+  "seed_data_creation": "None - used real GHL data via PIT token",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "GHL API is NOW WORKING with PIT token. All endpoints return real data from GHL pipelines (684 opportunities, 33 showed_sold). The sync returns real pipeline data including funnel stages and opportunities. Sale confirmation flow works end-to-end.",
+  "test_results": {
+    "backend_tests": {
+      "status": "PASS",
+      "tests_run": 8,
+      "tests_passed": 8,
+      "test_categories": [
+        "TestGHLSync - POST /api/ghl/sync returns status='success' with funnel data and total_opportunities (684+)",
+        "TestGHLLastSync - GET /api/ghl/last-sync returns most recent successful sync",
+        "TestGHLConfirmSale (3 tests) - POST /api/ghl/confirm-sale creates sale records with subscription type/cash",
+        "TestGHLSales (2 tests) - GET /api/ghl/sales/2026-03 returns confirmed sales, Create->GET verification",
+        "TestConversionRates - Funnel data supports conversion rate calculations"
+      ]
+    },
+    "frontend_tests": {
+      "status": "PASS",
+      "features_verified": [
+        "Login with test@test.com/test123 - PASS",
+        "Navigate to Dashboard - PASS",
+        "Click Acquisition tab (funnel tab) - PASS",
+        "GHL funnel section renders with sync button - PASS",
+        "Total Pipeline Opportunities: 684 displayed - PASS",
+        "All 6 funnel stages displayed (Nouveaux Leads:0, RDV Confirmés:3, Annulés:4, Absents:1, Ventes:33, Perdus:0) - PASS",
+        "Conversion rates displayed (Taux RDV: 0%, Taux Présence: 89%, Taux Closing: 100%) - PASS",
+        "Ventes à Confirmer list shows 33 sales - PASS",
+        "Click Confirmer button opens dialog - PASS",
+        "Dialog shows subscription type selector defaulting to '6 Week Challenge' at 599 CHF - PASS",
+        "Confirm sale - sale shows as 'Confirmé' (green) in list - PASS"
+      ]
+    },
+    "api_endpoint_summary": {
+      "POST /api/ghl/sync": "PASS - Returns status='success', total_opportunities=684, funnel data with 33 showed_sold",
+      "GET /api/ghl/last-sync": "PASS - Returns most recent successful sync with all data",
+      "POST /api/ghl/confirm-sale": "PASS - Creates sale record with opportunity_id, opportunity_name, subscription_type, cash_collected, month",
+      "GET /api/ghl/sales/{month}": "PASS - Returns list of confirmed sales for given month"
+    },
+    "ghl_funnel_data": {
+      "total_opportunities": 684,
+      "new_leads": 0,
+      "confirmed_appointment": 3,
+      "cancelled": 4,
+      "no_showed": 1,
+      "showed_sold": 33,
+      "showed_lost": 0
+    },
+    "conversion_rates": {
+      "taux_rdv": "0%",
+      "taux_presence": "89%",
+      "taux_closing": "100%"
+    }
+  }
+}

@@ -116,7 +116,9 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
   };
   const funnelOpps = lastSync?.funnel_opportunities || {};
 
-  const totalLeads = funnel.new_leads || 1;
+  // Total leads = total pipeline opportunities (not just "New Leads" stage)
+  const totalOpportunities = lastSync?.total_opportunities || 0;
+  const totalLeads = totalOpportunities || 1;
   const maxVal = Math.max(...Object.values(funnel), 1);
 
   // Check if an opportunity sale is already confirmed
@@ -187,6 +189,23 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
 
       {/* Visual Funnel */}
       <div className="tf-card" data-testid="ghl-funnel-visual">
+        {/* Total leads header */}
+        {lastSync && totalOpportunities > 0 && (
+          <div className="flex items-center justify-between mb-3 pb-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {lang === "fr" ? "Total Opportunites Pipeline" : "Total Pipeline Opportunities"}
+            </span>
+            <span style={{
+              fontSize: 'var(--text-lg)',
+              fontWeight: 'var(--font-bold)',
+              color: 'var(--color-accent)',
+              fontFamily: 'var(--font-display)',
+              fontFeatureSettings: '"tnum" 1',
+            }}>
+              {totalOpportunities}
+            </span>
+          </div>
+        )}
         <div className="space-y-2">
           {FUNNEL_STAGES.map((stage, idx) => {
             const count = funnel[stage.key] || 0;
@@ -233,16 +252,14 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
                         {count}
                       </span>
                     </div>
-                    {idx > 0 && (
-                      <span style={{
-                        fontSize: '10px',
-                        color: 'var(--color-text-tertiary)',
-                        fontFamily: 'var(--font-display)',
-                        fontFeatureSettings: '"tnum" 1',
-                      }}>
-                        {pct}%
-                      </span>
-                    )}
+                    <span style={{
+                      fontSize: '10px',
+                      color: 'var(--color-text-tertiary)',
+                      fontFamily: 'var(--font-display)',
+                      fontFeatureSettings: '"tnum" 1',
+                    }}>
+                      {pct}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -256,12 +273,12 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
             {[
               {
                 label: lang === "fr" ? "Taux RDV" : "Apt. Rate",
-                value: totalLeads > 0 ? `${Math.round((funnel.confirmed_appointment / totalLeads) * 100)}%` : "0%",
+                value: totalOpportunities > 0 ? `${Math.round((funnel.confirmed_appointment / totalOpportunities) * 100)}%` : "0%",
               },
               {
                 label: lang === "fr" ? "Taux Presence" : "Show Rate",
-                value: funnel.confirmed_appointment > 0
-                  ? `${Math.round(((funnel.showed_sold + funnel.showed_lost) / funnel.confirmed_appointment) * 100)}%`
+                value: (funnel.confirmed_appointment + funnel.no_showed) > 0
+                  ? `${Math.round(((funnel.showed_sold + funnel.showed_lost) / (funnel.confirmed_appointment + funnel.no_showed + funnel.showed_sold + funnel.showed_lost)) * 100)}%`
                   : "0%",
               },
               {

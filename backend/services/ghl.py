@@ -63,8 +63,19 @@ GHL_TO_FUNNEL = {
     "no showed": "no_showed",
     "no show": "no_showed",
     "showed sold": "showed_sold",
+    "showed - sold": "showed_sold",
     "showed lost": "showed_lost",
+    "showed - lost": "showed_lost",
 }
+
+
+import re
+
+def _normalize_stage_name(name: str) -> str:
+    """Strip emojis and special chars from stage name for matching"""
+    cleaned = re.sub(r'[^\w\s-]', '', name).strip().lower()
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    return cleaned
 
 
 async def sync_pipeline_data():
@@ -124,7 +135,7 @@ async def sync_pipeline_data():
         funnel_opps = {k: [] for k in funnel}
 
         for stage in stages:
-            stage_name = stage.get("name", "").lower().strip()
+            stage_name = _normalize_stage_name(stage.get("name", ""))
             stage_id = stage.get("id")
             funnel_key = GHL_TO_FUNNEL.get(stage_name)
             if funnel_key:

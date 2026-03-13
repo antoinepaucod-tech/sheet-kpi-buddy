@@ -39,6 +39,7 @@ async def sync_ghl():
         "showed_lost": 0,
     }
     all_funnel_opps = {k: [] for k in total_funnel}
+    total_pipeline_opps = 0
 
     for p in data["pipelines"]:
         f = p.get("funnel", {})
@@ -47,11 +48,13 @@ async def sync_ghl():
         fo = p.get("funnel_opportunities", {})
         for key in all_funnel_opps:
             all_funnel_opps[key].extend(fo.get(key, []))
+        total_pipeline_opps += p.get("total_opportunities", 0)
 
     # Store sync result
     sync_record = {
         "status": "success",
         "funnel": total_funnel,
+        "total_opportunities": total_pipeline_opps,
         "funnel_opportunities": all_funnel_opps,
         "pipelines": [{
             "id": p["pipeline_id"],
@@ -65,9 +68,10 @@ async def sync_ghl():
     sync_record.pop("_id", None)
 
     # Update current month KPI with funnel data
+    # Total leads = all pipeline opportunities (not just "New Leads" stage)
     now = datetime.now(timezone.utc)
     current_month = now.strftime("%Y-%m")
-    leads = total_funnel["new_leads"]
+    leads = total_pipeline_opps
     scheduled = total_funnel["confirmed_appointment"] + total_funnel["cancelled"]
     show = total_funnel["showed_sold"] + total_funnel["showed_lost"] + total_funnel["no_showed"]
     close = total_funnel["showed_sold"]
