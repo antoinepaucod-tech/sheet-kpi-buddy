@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { KPICard } from "../components/KPICard";
 import { EditKPIModal } from "../components/EditKPIModal";
 import { KPIDetailedView } from "../components/KPIDetailedView";
+import { GHLFunnelSection } from "../components/GHLFunnelSection";
 import {
   TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw, Pencil,
   ChevronLeft, ChevronRight, FileDown,
@@ -596,50 +597,11 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
         {/* Funnel Tab */}
         <TabsContent value="funnel" className="space-y-4" data-testid="tab-funnel-content">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Acquisition stats */}
-            <div className="grid grid-cols-2 gap-4 tf-stagger">
-              {[
-                { label: t("newMembers"), value: formatNum(current?.new_members), color: "var(--color-success)" },
-                { label: t("lostMembers"), value: formatNum(current?.lost_members), color: "var(--color-danger)" },
-                { label: t("marketingSpend"), value: formatCHF(current?.marketing_spend), color: "var(--color-accent)" },
-                { label: t("cac"), value: formatCHF(current?.cac), color: "var(--color-info)" },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="tf-stat">
-                  <p className="tf-stat-label">{label}</p>
-                  <p className="tf-number-large" style={{ color, marginTop: 'var(--space-2)' }}>{value}</p>
-                </div>
-              ))}
-            </div>
-
-            <ChartCard title={t("cacEvolution")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={currentYearData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  {selectedLabel && <ReferenceLine x={selectedLabel} stroke={CHART_COLORS.cac} strokeDasharray="4 4" />}
-                  <Line type="monotone" dataKey="cac" name={t("cac")} stroke={CHART_COLORS.cac} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title={t("acquisitionFunnel")}>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={currentYearData} barSize={12}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip isCurrency={false} />} />
-                  <Legend wrapperStyle={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }} />
-                  {selectedLabel && <ReferenceLine x={selectedLabel} stroke={CHART_COLORS.revenue} strokeDasharray="4 4" />}
-                  <Bar dataKey="newMembers" name={t("newMembers")} fill={CHART_COLORS.members} radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="lostMembers" name={t("lostMembers")} fill={CHART_COLORS.churn} radius={[2, 2, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </div>
+          <GHLFunnelSection
+            currentMonth={selectedMonth}
+            lang={lang}
+            onKpiRefresh={refetch}
+          />
         </TabsContent>
 
         {/* Members Tab */}

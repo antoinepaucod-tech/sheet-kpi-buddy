@@ -23,7 +23,7 @@ from models.courses import Instructor, CourseKPI
 from routers import (
     auth, members, payments, annual_reviews, followups, onboarding,
     settings, coaches, challenges, kpis, transactions, trainings,
-    courses, alerts, reports, notifications
+    courses, alerts, reports, notifications, ghl
 )
 
 # App setup
@@ -50,6 +50,7 @@ api_router.include_router(courses.router)
 api_router.include_router(alerts.router)
 api_router.include_router(reports.router)
 api_router.include_router(notifications.router)
+api_router.include_router(ghl.router)
 
 
 # ── Settings Routes (Club Settings) ──────────────────────────────────────────
