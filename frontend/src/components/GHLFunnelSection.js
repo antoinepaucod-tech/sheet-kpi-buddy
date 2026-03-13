@@ -77,8 +77,7 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
   const fetchCallsMade = useCallback(async () => {
     if (!currentMonth) return;
     try {
-      const [year, month] = currentMonth.split("-");
-      const res = await axios.get(`${API}/kpis/${year}/${month}`);
+      const res = await axios.get(`${API}/monthly-kpis/${currentMonth}`);
       setCallsMade(res.data?.calls_made || 0);
     } catch {
       // ignore
@@ -98,6 +97,7 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh }) {
       const params = new URLSearchParams();
       if (startDate) params.append("start_date", startDate);
       if (endDate) params.append("end_date", endDate);
+      if (currentMonth) params.append("month", currentMonth);
       const url = `${API}/ghl/sync${params.toString() ? `?${params}` : ""}`;
       const res = await axios.post(url);
       setLastSync(res.data);

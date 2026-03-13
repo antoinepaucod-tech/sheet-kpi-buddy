@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 async def sync_ghl(
     start_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
     end_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
+    month: Optional[str] = Query(None, description="Target KPI month YYYY-MM"),
 ):
     """Trigger a manual sync from GoHighLevel pipelines with optional date filter"""
     try:
@@ -53,6 +54,9 @@ async def sync_ghl(
             all_funnel_opps[key].extend(fo.get(key, []))
         total_pipeline_opps += p.get("total_opportunities", 0)
 
+    # "New Leads" = total pipeline opportunities (all leads that entered)
+    total_funnel["new_leads"] = total_pipeline_opps
+
     # Store sync result
     sync_record = {
         "status": "success",
@@ -72,11 +76,8 @@ async def sync_ghl(
     await db.ghl_syncs.insert_one(sync_record)
     sync_record.pop("_id", None)
 
-    # Update KPI for the relevant month
-    if start_date:
-        kpi_month = start_date[:7]
-    else:
-        kpi_month = datetime.now(timezone.utc).strftime("%Y-%m")
+    # Update KPI for the target month (from frontend, not from start_date)
+    kpi_month = month or datetime.now(timezone.utc).strftime("%Y-%m")
 
     leads = total_pipeline_opps
     scheduled = total_funnel["confirmed_appointment"] + total_funnel["cancelled"]

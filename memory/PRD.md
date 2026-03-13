@@ -11,31 +11,18 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 ## Completed (All iterations 16-30 pass 100%)
 - 18 feature modules | Resend email | Backend refactoring
 - Apple Design System (colors, tokens, components, animations)
-- P0: KPI overflow, color consistency, dialog sizing, attendance cells
-- P0: Dialog h-fit, Bilans clickable filters, custom specialties, review toggle
-- P1: 6 Week Challenge (training-based check-ins, auto-add, badge, goal selector)
-- P2: Renouvellement d'abonnements avec changement de type + auto-add challenge
+- P0-P2 bugs and features (dialog sizing, bilans, challenges, renewals)
 - **P0: Integration GoHighLevel (GHL) - 2026-03-13 - COMPLETE**
   - Sync GHL pipelines avec filtre de dates (start_date, end_date)
-  - Mapping stages avec emojis (New Leads, Confirmed Appointments, etc.)
-  - Confirmation de vente (subscription type + cash collected)
+  - "Nouveaux Leads" = total pipeline opportunities (pas juste le stage)
+  - Sync met a jour les KPIs du mois selectionne (param `month`)
+  - Entonnoir de vente dans Details lie aux donnees GHL (Leads, Planifies, Show, Close)
   - Champ editable "Appels passes" (calls_made)
-  - PIF Churn % supprime du detail des membres (General Churn conserve)
-
-## Architecture
-```
-/app/backend/
-  routers/ghl.py          # GHL sync (date filter), sales, calls-made
-  services/ghl.py         # GHL API + date filtering logic
-  routers/kpis.py         # KPI CRUD + recalculation
-/app/frontend/src/
-  components/GHLFunnelSection.js  # Date pickers, calls input, funnel, sale dialog
-  components/KPIDetailedView.js   # Members detail (PIF Churn removed)
-  pages/Dashboard.js              # Main dashboard
-```
+  - Confirmation de vente (subscription type + cash collected)
+  - PIF Churn % supprime du detail des membres
 
 ## Key API Endpoints (GHL)
-- `POST /api/ghl/sync?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` - Sync with date filter
+- `POST /api/ghl/sync?start_date=&end_date=&month=` - Sync with date filter + target month
 - `GET /api/ghl/last-sync` - Last successful sync
 - `POST /api/ghl/confirm-sale` - Confirm sale
 - `GET /api/ghl/sales/{month}` - Sales for month
@@ -50,7 +37,7 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 
 ## 3rd Party Integrations
 - Resend: Integre et fonctionnel
-- GoHighLevel: Integre et fonctionnel (PIT token, date filtering)
+- GoHighLevel: Integre et fonctionnel (PIT token, date filtering, KPI linking)
 - Twilio: Installe mais non configure
 
 ## Testing: iterations 16-30, all 100% pass
