@@ -118,6 +118,10 @@ export default function MembersPage() {
     new_end_date: "",
     renewal_duration: "12 mois",
     notes: "",
+    // Membership change
+    change_membership: false,
+    new_membership: "",
+    new_member_type: "",
     // Billing cycle options for renewal
     update_billing: false,
     billing_cycle_type: "monthly_day",
@@ -300,6 +304,9 @@ export default function MembersPage() {
       new_end_date: format(newEnd, "yyyy-MM-dd"),
       renewal_duration: "12 mois",
       notes: "",
+      change_membership: false,
+      new_membership: member.membership || "",
+      new_member_type: member.member_type || "",
       update_billing: false,
       billing_cycle_type: member.billing_cycle_type || "monthly_day",
       billing_cycle_value: member.billing_cycle_value || 1,
@@ -471,15 +478,31 @@ export default function MembersPage() {
                     <TableCell>{getStatusBadge(member)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-[var(--color-success)] hover:text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.08)]"
-                          onClick={() => openRenewModal(member)}
-                          data-testid={`renew-${member.id}`}
-                        >
-                          <RefreshCw size={14} />
-                        </Button>
+                        {(() => {
+                          const days = getDaysRemaining(member.subscription_end_date);
+                          const isExpiring = days !== null && days <= 30;
+                          return isExpiring ? (
+                            <Button
+                              size="sm"
+                              className="bg-[var(--color-accent)] hover:opacity-85 text-xs gap-1"
+                              onClick={() => openRenewModal(member)}
+                              data-testid={`renew-${member.id}`}
+                            >
+                              <RefreshCw size={12} />
+                              Renouveler
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
+                              onClick={() => openRenewModal(member)}
+                              data-testid={`renew-${member.id}`}
+                            >
+                              <RefreshCw size={14} />
+                            </Button>
+                          );
+                        })()}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -943,6 +966,52 @@ export default function MembersPage() {
                 />
               </div>
 
+              {/* Membership type change option */}
+              <div className="border-t border-[var(--color-border)] pt-4">
+                <div className="flex items-center justify-between mb-3 bg-[rgba(10,132,255,0.08)] border border-[rgba(10,132,255,0.15)] rounded-[var(--radius-lg)] p-3">
+                  <label className="text-white text-sm font-medium flex items-center gap-2">
+                    <RefreshCw size={16} className="text-[var(--color-accent)]" />
+                    Changer d'abonnement
+                  </label>
+                  <Switch
+                    checked={renewData.change_membership}
+                    onCheckedChange={(v) => setRenewData({ ...renewData, change_membership: v })}
+                    data-testid="change-membership-switch"
+                  />
+                </div>
+                
+                {renewData.change_membership && (
+                  <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                    <div>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Nouvel abonnement</label>
+                      <Select value={renewData.new_membership} onValueChange={(v) => setRenewData({ ...renewData, new_membership: v })}>
+                        <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                          {MEMBERSHIP_OPTIONS.map((m) => (
+                            <SelectItem key={m} value={m} className="text-white">{m}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Type de membre</label>
+                      <Select value={renewData.new_member_type} onValueChange={(v) => setRenewData({ ...renewData, new_member_type: v })}>
+                        <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                          {MEMBER_TYPES.map((t) => (
+                            <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Billing cycle update option */}
               <div className="border-t border-[var(--color-border)] pt-4">
                 <div className="flex items-center justify-between mb-3">
@@ -1032,6 +1101,10 @@ export default function MembersPage() {
                   renewal_duration: renewData.renewal_duration,
                   notes: renewData.notes,
                 };
+                if (renewData.change_membership) {
+                  payload.new_membership = renewData.new_membership;
+                  payload.new_member_type = renewData.new_member_type;
+                }
                 if (renewData.update_billing) {
                   payload.billing_cycle_type = renewData.billing_cycle_type;
                   payload.billing_cycle_value = renewData.billing_cycle_value;
@@ -1041,7 +1114,7 @@ export default function MembersPage() {
                 renewMutation.mutate({ id: selectedMember?.id, data: payload });
               }}
               disabled={!renewData.new_end_date || renewMutation.isPending}
-              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
               data-testid="confirm-renew-btn"
             >
               {renewMutation.isPending ? "..." : "Renouveler"}

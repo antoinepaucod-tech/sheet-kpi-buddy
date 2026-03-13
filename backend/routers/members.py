@@ -259,6 +259,28 @@ async def renew_membership(member_id: str, body: dict):
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
+    # Update membership type if changing
+    if "new_membership" in body:
+        member_update["membership"] = body["new_membership"]
+    if "new_member_type" in body:
+        member_update["member_type"] = body["new_member_type"]
+    
+    # Auto-add to challenge if new membership is challenge type
+    new_membership = body.get("new_membership", member.get("membership", ""))
+    if new_membership and "challenge" in new_membership.lower():
+        active_challenge = await db.six_weeks_challenges.find_one({"is_active": True}, {"_id": 0})
+        if active_challenge:
+            existing_p = await db.challenge_participants.find_one({
+                "challenge_id": active_challenge["id"], "member_id": member_id
+            })
+            if not existing_p:
+                participant = ChallengeParticipant(
+                    challenge_id=active_challenge["id"],
+                    member_id=member_id,
+                    member_name=member.get("name", "")
+                )
+                await db.challenge_participants.insert_one(participant.model_dump())
+    
     # Update billing cycle if provided
     if "billing_cycle_type" in body:
         member_update["billing_cycle_type"] = body["billing_cycle_type"]
