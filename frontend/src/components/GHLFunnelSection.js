@@ -107,6 +107,17 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
       onKpiRefresh?.();
       fetchSales();
       fetchCallsMade();
+      // Auto-open sale dialog for first unconfirmed "Showed Sold"
+      const soldOpps = res.data?.funnel_opportunities?.showed_sold || [];
+      if (soldOpps.length > 0) {
+        // Will check which are unconfirmed after sales are fetched
+        const salesRes = await axios.get(`${API}/ghl/sales/${res.data.kpi_month || currentMonth}`);
+        const confirmedIds = new Set(salesRes.data.map(s => s.opportunity_id));
+        const firstUnconfirmed = soldOpps.find(o => !confirmedIds.has(o.id));
+        if (firstUnconfirmed) {
+          handleOpenSaleDialog(firstUnconfirmed);
+        }
+      }
     } catch (e) {
       const msg = e.response?.data?.detail || e.message;
       setSyncError(msg);
@@ -146,13 +157,24 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
       await axios.post(`${API}/ghl/confirm-sale`, {
         opportunity_id: selectedOpp.id,
         opportunity_name: selectedOpp.name,
+        contact_email: selectedOpp.email || "",
+        contact_phone: selectedOpp.phone || "",
         subscription_type: saleForm.subscription_type,
         cash_collected: saleForm.cash_collected,
         month: currentMonth,
       });
       setSaleDialogOpen(false);
-      fetchSales();
+      const salesRes = await axios.get(`${API}/ghl/sales/${currentMonth}`);
+      setConfirmedSales(salesRes.data);
       onKpiRefresh?.();
+
+      // Auto-open next unconfirmed sale
+      const soldOpps = funnelOpps.showed_sold || [];
+      const confirmedIds = new Set(salesRes.data.map(s => s.opportunity_id));
+      const nextUnconfirmed = soldOpps.find(o => !confirmedIds.has(o.id));
+      if (nextUnconfirmed) {
+        setTimeout(() => handleOpenSaleDialog(nextUnconfirmed), 300);
+      }
     } catch {
       // handle error
     } finally {

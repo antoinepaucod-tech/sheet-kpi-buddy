@@ -1,7 +1,7 @@
 """GoHighLevel sync routes"""
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 
 from core.config import db
@@ -144,9 +144,19 @@ async def get_sync_history():
 
 @router.post("/confirm-sale")
 async def confirm_sale(body: dict):
-    """Confirm a sale from 'Showed Sold' stage."""
+    """
+    Confirm a sale from 'Showed Sold' stage.
+    - Creates a member record
+    - If 6 Week Challenge: auto-adds to active challenge
+    - Updates KPI revenue (fast_cash + total_revenue)
+    """
+    from models.members import CustomerMember
+    from models.challenges import ChallengeParticipant
+
     opportunity_id = body.get("opportunity_id")
     opportunity_name = body.get("opportunity_name", "")
+    contact_email = body.get("contact_email", "")
+    contact_phone = body.get("contact_phone", "")
     subscription_type = body.get("subscription_type", "6 Week Challenge")
     cash_collected = body.get("cash_collected", 599)
     month = body.get("month")
@@ -156,25 +166,100 @@ async def confirm_sale(body: dict):
     if not month:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
 
+    # Check if already confirmed
+    existing_sale = await db.ghl_sales.find_one({"opportunity_id": opportunity_id})
+    if existing_sale:
+        existing_sale.pop("_id", None)
+        return existing_sale
+
+    # 1. Create member record
+    is_challenge = "challenge" in subscription_type.lower()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Determine subscription end date
+    if is_challenge:
+        end_date = (datetime.now(timezone.utc) + timedelta(days=42)).strftime("%Y-%m-%d")
+        member_type = "Membres PIF"
+    elif "annuel" in subscription_type.lower():
+        end_date = (datetime.now(timezone.utc) + timedelta(days=365)).strftime("%Y-%m-%d")
+        member_type = "Membres PIF"
+    elif "6 mois" in subscription_type.lower():
+        end_date = (datetime.now(timezone.utc) + timedelta(days=182)).strftime("%Y-%m-%d")
+        member_type = "Membres PIF"
+    elif "3 mois" in subscription_type.lower():
+        end_date = (datetime.now(timezone.utc) + timedelta(days=91)).strftime("%Y-%m-%d")
+        member_type = "Membres Généraux Récurrents"
+    else:
+        end_date = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
+        member_type = "Membres Généraux Récurrents"
+
+    member = CustomerMember(
+        name=opportunity_name,
+        email=contact_email,
+        phone=contact_phone,
+        membership=subscription_type,
+        member_type=member_type,
+        contract_signed_date=today,
+        subscription_end_date=end_date,
+        cash_collected=cash_collected,
+        onboarding_completed=False,
+    )
+    member_doc = member.model_dump()
+    await db.customer_members.insert_one(member_doc)
+    member_id = member_doc["id"]
+    member_doc.pop("_id", None)
+
+    # 2. Auto-add to active 6 Week Challenge if applicable
+    challenge_added = False
+    if is_challenge:
+        active_challenge = await db.six_weeks_challenges.find_one({"is_active": True}, {"_id": 0})
+        if active_challenge:
+            existing_p = await db.challenge_participants.find_one({
+                "challenge_id": active_challenge["id"], "member_id": member_id
+            })
+            if not existing_p:
+                participant = ChallengeParticipant(
+                    challenge_id=active_challenge["id"],
+                    member_id=member_id,
+                    member_name=opportunity_name
+                )
+                await db.challenge_participants.insert_one(participant.model_dump())
+                challenge_added = True
+
+    # 3. Store sale confirmation
     sale = {
         "opportunity_id": opportunity_id,
         "opportunity_name": opportunity_name,
         "subscription_type": subscription_type,
         "cash_collected": cash_collected,
+        "member_id": member_id,
+        "challenge_added": challenge_added,
         "month": month,
         "confirmed_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.ghl_sales.insert_one(sale)
     sale.pop("_id", None)
 
-    existing = await db.monthly_kpis.find_one({"month": month})
-    if existing:
-        new_cash = existing.get("cash_collected", 0) + cash_collected
-        close_count = existing.get("close", 0)
+    # 4. Update KPI: cash_collected + fast_cash_revenue + total_revenue
+    existing_kpi = await db.monthly_kpis.find_one({"month": month})
+    if existing_kpi:
+        new_cash = existing_kpi.get("cash_collected", 0) + cash_collected
+        new_fast_cash = existing_kpi.get("fast_cash_revenue", 0) + cash_collected
+        new_total_rev = (
+            existing_kpi.get("general_eft_revenue", 0) +
+            existing_kpi.get("pt_revenue", 0) +
+            existing_kpi.get("retail_revenue", 0) +
+            new_fast_cash
+        )
+        close_count = existing_kpi.get("close", 0)
+        new_members_count = existing_kpi.get("new_members", 0) + 1
         await db.monthly_kpis.update_one(
             {"month": month},
             {"$set": {
                 "cash_collected": new_cash,
+                "fast_cash_revenue": new_fast_cash,
+                "total_revenue": new_total_rev,
+                "new_members": new_members_count,
                 "avg_per_sale": round(new_cash / close_count, 2) if close_count > 0 else new_cash,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }}
