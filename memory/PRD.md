@@ -8,7 +8,7 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - Fonts: Inter tabular-nums
 - Dialog: `inset-0 mx-auto my-auto h-fit`, max-h-[90vh], flex flex-col
 
-## Completed (All iterations 16-29 pass 100%)
+## Completed (All iterations 16-30 pass 100%)
 - 18 feature modules | Resend email | Backend refactoring
 - Apple Design System (colors, tokens, components, animations)
 - P0: KPI overflow, color consistency, dialog sizing, attendance cells
@@ -16,28 +16,30 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - P1: 6 Week Challenge (training-based check-ins, auto-add, badge, goal selector)
 - P2: Renouvellement d'abonnements avec changement de type + auto-add challenge
 - **P0: Integration GoHighLevel (GHL) - 2026-03-13 - COMPLETE**
-  - Backend: `POST /api/ghl/sync` syncs real GHL pipelines (684 opportunities, 33 showed_sold)
-  - Backend: `POST /api/ghl/confirm-sale`, `GET /api/ghl/sales/{month}`, `GET /api/ghl/last-sync`, `GET /api/ghl/sync-history`
-  - Frontend: Visual funnel in Dashboard "Acquisition" tab with sync button, total pipeline opps, conversion rates
-  - Frontend: Sale confirmation dialog (subscription type dropdown + cash collected input)
-  - Pipeline mapping handles emoji-prefixed stage names
-  - GHL PIT token: `pit-af35bfcf-cddd-4510-8b60-27492bde1229`
+  - Sync GHL pipelines avec filtre de dates (start_date, end_date)
+  - Mapping stages avec emojis (New Leads, Confirmed Appointments, etc.)
+  - Confirmation de vente (subscription type + cash collected)
+  - Champ editable "Appels passes" (calls_made)
+  - PIF Churn % supprime du detail des membres (General Churn conserve)
 
 ## Architecture
 ```
 /app/backend/
-  routers/ghl.py          # GHL sync, sales endpoints
-  services/ghl.py         # GHL API integration logic (emoji-aware stage mapping)
+  routers/ghl.py          # GHL sync (date filter), sales, calls-made
+  services/ghl.py         # GHL API + date filtering logic
   routers/kpis.py         # KPI CRUD + recalculation
-  models/kpi.py           # MonthlyKPI with funnel fields
 /app/frontend/src/
-  components/GHLFunnelSection.js  # GHL funnel visual + sync + sale dialog
-  pages/Dashboard.js              # Main dashboard with funnel tab
+  components/GHLFunnelSection.js  # Date pickers, calls input, funnel, sale dialog
+  components/KPIDetailedView.js   # Members detail (PIF Churn removed)
+  pages/Dashboard.js              # Main dashboard
 ```
 
-## MongoDB Collections (GHL)
-- `ghl_syncs` - Sync history (status, funnel, total_opportunities, pipelines, synced_at)
-- `ghl_sales` - Confirmed sales (opportunity_id, subscription_type, cash_collected, month)
+## Key API Endpoints (GHL)
+- `POST /api/ghl/sync?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` - Sync with date filter
+- `GET /api/ghl/last-sync` - Last successful sync
+- `POST /api/ghl/confirm-sale` - Confirm sale
+- `GET /api/ghl/sales/{month}` - Sales for month
+- `PATCH /api/ghl/calls-made` - Update calls_made
 
 ## Backlog
 - **P0**: Calcul automatique CPL/CPR/LTV (attente du 2eme SaaS utilisateur)
@@ -48,7 +50,7 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 
 ## 3rd Party Integrations
 - Resend: Integre et fonctionnel
-- GoHighLevel: Integre et fonctionnel (PIT token)
+- GoHighLevel: Integre et fonctionnel (PIT token, date filtering)
 - Twilio: Installe mais non configure
 
-## Testing: iterations 16-29, all 100% pass
+## Testing: iterations 16-30, all 100% pass
