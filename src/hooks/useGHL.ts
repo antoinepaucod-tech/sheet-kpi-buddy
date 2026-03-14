@@ -137,7 +137,7 @@ export const useGHL = () => {
   const fetchAppointments = useCallback(async (locationId: string, calendarId?: string, startDate?: string, endDate?: string) => {
     setIsLoading(true);
     try {
-      const params: Record<string, string> = { locationId };
+      const params: Record<string, string> = { location_id: locationId };
       if (calendarId) params.calendarId = calendarId;
       if (startDate) params.startTime = startDate;
       if (endDate) params.endTime = endDate;
