@@ -314,6 +314,8 @@ async def confirm_sale(body: dict):
                 "total_revenue": new_total_rev,
                 "new_members": new_members_count,
                 "active_members": total_active,
+                "total_members": total_active,
+                "total_active_members": total_active,
                 "avg_per_sale": round(new_cash / close_count, 2) if close_count > 0 else new_cash,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }}

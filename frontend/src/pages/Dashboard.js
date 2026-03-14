@@ -139,7 +139,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         revenue: k.total_revenue,
         expenses: k.total_expenses,
         profit: k.net_profit,
-        members: k.total_members,
+        members: k.active_members || k.total_active_members || k.total_members,
         newMembers: k.new_members,
         lostMembers: k.lost_members,
         churn: k.churn_rate,

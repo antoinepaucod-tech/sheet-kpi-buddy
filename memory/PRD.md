@@ -3,40 +3,36 @@
 ## Overview
 SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 
-## Completed (All iterations through 32 pass 100%)
-- Apple Design System + 18 feature modules + Resend email
-- All P0-P2 bugs and features
-- **P0: Integration GoHighLevel (GHL) - COMPLETE**
-  - Sync GHL pipelines avec filtre de dates + auto-switch mois
-  - Confirmation de vente enrichie: type d'abonnement, type de membre (PIF/Récurrent/PT), cash, dates signature/expiration, cycle de facturation
-  - Date de signature = date de fermeture GHL (lastStageChangeAt)
-  - Email/phone du contact GHL transferes au membre
-  - Cash -> fast_cash_revenue -> total_revenue (visible partout)
-  - Active_members + PIF_members mis a jour lors du sync
-  - Auto-dialog pour ventes non confirmees apres sync
-  - Deduplication membres par nom
-  - CSS overflow fixe sur Cash Collecte (text-base + truncate)
-  - PIF Churn supprime du detail des membres
-  - Toggle cycle de facturation corrige dans le dialogue de renouvellement
-  - Dialogue de renouvellement: overflow-y-auto + state updates fonctionnels
+## Core Architecture
+- React frontend + FastAPI backend + MongoDB
+- GoHighLevel (GHL) integration for sales pipeline
+- Resend for email integration
 
-## Confirm Sale Flow (Updated)
-1. GHL Sync -> detecte "Showed Sold" opportunities
-2. Auto-ouvre dialog avec nom + email + phone + GHL value
-3. User choisit:
-   - Type d'abonnement (6 Week Challenge, Mensuel, 3 Mois, 6 Mois, Annuel, Annuel PT)
-   - Type de membre (PIF, Recurrent, PT) - pre-rempli par le type d'abonnement
-   - Cash collecte (pre-rempli par GHL monetary value ou default)
-   - Date de signature (pre-remplie par GHL lastStageChangeAt)
-   - Date d'expiration (auto-calculee, modifiable)
-   - Facturation recurrente (toggle + montant, methode, cycle, intervalle)
-4. Backend: cree membre avec tous les champs si pas de doublon
-5. Si "6 Week Challenge": auto-ajout au challenge actif
-6. Met a jour: cash_collected, fast_cash_revenue, total_revenue, active_members, new_members
+## Completed Features
+- Apple Design System + 18 feature modules
+- **GoHighLevel (GHL) Integration** - COMPLETE:
+  - Sync pipeline with date filter + auto-month switch
+  - Enhanced sale confirmation dialog: subscription type, member type (PIF/Recurring/PT), cash, signature date from GHL, expiration auto-calculated, recurring billing cycle
+  - Member creation with deduplication + 6 Week Challenge auto-add
+  - KPI updates: cash_collected, fast_cash, total_revenue, active_members, new_members
+- Onboarding & Follow-up system (5-step onboarding + scheduled followups)
+- Monthly KPIs with objectives and progress bars
+- Members management with renewal dialog + billing cycle
+- Multi-month analysis, PDF export, Transactions, Payments
+- Course KPIs, Sessions, Client KPIs, Coaches pages
+- Challenge 6 Sem., Bilans/Suivis, Categories, Recurring payments
+- Email communications via Resend
+
+## Data Consistency Fixes (March 14, 2026)
+- Cleaned test data pollution from testing agent (12 test sales, rogue 2030-12 KPI)
+- Fixed chart data mapping: `active_members || total_active_members || total_members`
+- Synced `total_members` with `active_members` in GHL confirm-sale endpoint
+- Fixed renewal dialog: overflow-y-auto + functional state updates for billing toggle
 
 ## Backlog
-- **P0**: Explication du workflow complet
-- **P0**: Calcul automatique CPL/CPR/LTV (attente du 2eme SaaS)
-- **P1**: Corriger erreurs visuelles restantes du dashboard
-- **P1**: Lier KPIs cours aux salaires
-- **P2**: WhatsApp alerts (Twilio), data migration
+- **P0**: Explain full workflow to user
+- **P1**: Fix remaining visual dashboard errors
+- **P1**: Link course KPIs to salaries for auto-expenses
+- **P2**: WhatsApp alerts (Twilio)
+- **P2**: Data migration interface
+- **P2**: Auto CPL/CPR/LTV calculation
