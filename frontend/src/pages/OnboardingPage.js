@@ -83,7 +83,7 @@ export default function OnboardingPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("onboarding");
   const [search, setSearch] = useState("");
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(true);
   const [followupModalOpen, setFollowupModalOpen] = useState(false);
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [selectedFollowup, setSelectedFollowup] = useState(null);
@@ -310,9 +310,9 @@ export default function OnboardingPage() {
         </div>
         <div className="tf-stat">
           <p className="tf-stat-label" style={{color:"var(--color-success)"}}>
-            <CheckCircle2 size={12} style={{display:'inline',marginRight:'4px'}} /> Complétés ce mois
+            <CheckCircle2 size={12} style={{display:'inline',marginRight:'4px'}} /> Onboardings complétés
           </p>
-          <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.completedThisMonth}</p>
+          <p className="tf-number-large" style={{color:"var(--color-success)"}}>{stats.completedOnboarding}</p>
         </div>
       </div>
 

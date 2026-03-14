@@ -10,11 +10,7 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 
 ## Completed Features
 - Apple Design System + 18 feature modules
-- **GoHighLevel (GHL) Integration** - COMPLETE:
-  - Sync pipeline with date filter + auto-month switch
-  - Enhanced sale confirmation dialog: subscription type, member type (PIF/Recurring/PT), cash, signature date from GHL, expiration auto-calculated, recurring billing cycle
-  - Member creation with deduplication + 6 Week Challenge auto-add
-  - KPI updates: cash_collected, fast_cash, total_revenue, active_members, new_members
+- **GoHighLevel (GHL) Integration** - COMPLETE
 - Onboarding & Follow-up system (5-step onboarding + scheduled followups)
 - Monthly KPIs with objectives and progress bars
 - Members management with renewal dialog + billing cycle
@@ -23,11 +19,12 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - Challenge 6 Sem., Bilans/Suivis, Categories, Recurring payments
 - Email communications via Resend
 
-## Data Consistency Fixes (March 14, 2026)
-- Cleaned test data pollution from testing agent (12 test sales, rogue 2030-12 KPI)
-- Fixed chart data mapping: `active_members || total_active_members || total_members`
-- Synced `total_members` with `active_members` in GHL confirm-sale endpoint
-- Fixed renewal dialog: overflow-y-auto + functional state updates for billing toggle
+## Recent Fixes (March 14, 2026)
+- Fixed revenue total (1797→599), active members (3→2), chart members mapping
+- Deleted rogue 2030-12 KPI, cleaned test data pollution
+- Enhanced renewal dialog: billing cycle toggle now green-themed, clickable container, visible Switch
+- Made both "Changer d'abonnement" and "Modifier le cycle de facturation" rows fully clickable
+- Onboarding: show completed members by default (toggle ON), stat card shows onboarding completions (3)
 
 ## Backlog
 - **P0**: Explain full workflow to user

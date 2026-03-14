@@ -968,14 +968,18 @@ export default function MembersPage() {
 
               {/* Membership type change option */}
               <div className="border-t border-[var(--color-border)] pt-4">
-                <div className="flex items-center justify-between mb-3 bg-[rgba(10,132,255,0.08)] border border-[rgba(10,132,255,0.15)] rounded-[var(--radius-lg)] p-3">
-                  <label className="text-white text-sm font-medium flex items-center gap-2">
+                <div
+                  className="flex items-center justify-between mb-3 bg-[rgba(10,132,255,0.08)] border border-[rgba(10,132,255,0.15)] rounded-[var(--radius-lg)] p-3 cursor-pointer"
+                  onClick={() => setRenewData(prev => ({ ...prev, change_membership: !prev.change_membership }))}
+                >
+                  <label className="text-white text-sm font-medium flex items-center gap-2 cursor-pointer">
                     <RefreshCw size={16} className="text-[var(--color-accent)]" />
                     Changer d'abonnement
                   </label>
                   <Switch
                     checked={renewData.change_membership}
-                    onCheckedChange={(v) => setRenewData({ ...renewData, change_membership: v })}
+                    onCheckedChange={(v) => setRenewData(prev => ({ ...prev, change_membership: v }))}
+                    onClick={(e) => e.stopPropagation()}
                     data-testid="change-membership-switch"
                   />
                 </div>
@@ -1014,14 +1018,19 @@ export default function MembersPage() {
 
               {/* Billing cycle update option */}
               <div className="border-t border-[var(--color-border)] pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
-                    <CreditCard size={14} className="text-[var(--color-success)]" />
+                <div
+                  className="flex items-center justify-between mb-3 rounded-[var(--radius-lg)] p-3 cursor-pointer"
+                  style={{ background: 'rgba(48,209,88,0.08)', border: '1px solid rgba(48,209,88,0.15)' }}
+                  onClick={() => setRenewData(prev => ({ ...prev, update_billing: !prev.update_billing }))}
+                >
+                  <label className="text-white text-sm font-medium flex items-center gap-2 cursor-pointer">
+                    <CreditCard size={16} className="text-[var(--color-success)]" />
                     Modifier le cycle de facturation
                   </label>
                   <Switch
                     checked={renewData.update_billing}
                     onCheckedChange={(v) => setRenewData(prev => ({ ...prev, update_billing: v }))}
+                    onClick={(e) => e.stopPropagation()}
                     data-testid="update-billing-switch"
                   />
                 </div>
