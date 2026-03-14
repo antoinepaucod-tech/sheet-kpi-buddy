@@ -2,32 +2,49 @@
 
 ## Overview
 SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
+- **Stack:** React frontend + FastAPI backend + MongoDB
+- **Integrations:** GoHighLevel (GHL), Resend (email)
 
 ## Core Architecture
-- React frontend + FastAPI backend + MongoDB
-- GoHighLevel (GHL) integration for sales pipeline
-- Resend for email integration
+```
+/app/
+├── backend/ (FastAPI)
+│   ├── routers/ (ghl, settings, members, kpis, challenges, etc.)
+│   ├── models/ (settings, members, kpi, etc.)
+│   ├── services/ (ghl_service)
+│   └── server.py
+└── frontend/ (React + Shadcn/UI + TailwindCSS)
+    ├── src/components/ (GHLFunnelSection, Layout, ui/)
+    ├── src/pages/ (Dashboard, MembersPage, SettingsTypesPage, etc.)
+    ├── src/hooks/ (useMonthlyKPIData, useTranslations, etc.)
+    └── craco.config.js (custom webpack config)
+```
 
-## Completed Features (All tested - 100% pass rate)
-- Apple Design System + 18 feature modules
-- **GoHighLevel (GHL) Integration** - COMPLETE (sync, funnel, sale confirmation, auto-member)
-- **Onboarding** - Simplified: 2 tabs (Onboarding + Historique), sidebar badge
+## Completed Features
+- Apple Design System + 18+ feature modules
+- **GoHighLevel (GHL) Integration** - sync, funnel, sale confirmation, auto-member creation
+- **Onboarding** - Simplified 2 tabs (Onboarding + Historique), sidebar badge
 - **Challenge 6 Sem** - Check-in read-only, bilans section, auto-generate
-- **Renewal dialog** - Dropdowns fixed (position="popper"), billing toggle with green container
-- **Categories** - Editable (pencil icon + PUT /api/categories/{id})
-- **ResizeObserver fix** - Global suppressor in index.js, StrictMode removed
-- **Membership types** - Cleaned to 5 types (removed Trimestriel, 6 Semaines duplicates)
+- **Renewal dialog** - Dynamic dropdowns, billing toggle
+- **Categories** - Editable (pencil icon + PUT endpoint)
+- **ResizeObserver fix** - 3-layer suppression (CRACO runtimeErrors + monkey-patch + error handler) [2026-03-14]
+- **Dynamic subscription types** - Membership types from DB, used in MembersPage + GHLFunnelSection [2026-03-14]
+- **Settings Types page** - Full CRUD for membership and member types [2026-03-14]
 - Monthly KPIs, Members, Transactions, Payments, Course KPIs, Sessions
 - Client KPIs, Coaches, Bilans/Suivis, Recurring payments, Email via Resend
+- PDF Report export
 
 ## Test Reports
-- iteration_32.json: 100% (backend confirm-sale + frontend dialog)
-- iteration_33.json: 100% (full E2E: all pages, dialogs, dropdowns, ResizeObserver)
+- iteration_34.json: 100% (ResizeObserver + dynamic types + Settings CRUD)
+- iteration_33.json: 100% (full E2E: all pages, dialogs, dropdowns)
+
+## Credentials
+- Login: test@crossfit.ch / test123
 
 ## Backlog
-- **P0**: Explain full workflow to user
-- **P1**: Fix remaining visual dashboard errors  
-- **P1**: Link course KPIs to salaries for auto-expenses
-- **P2**: WhatsApp alerts (Twilio)
-- **P2**: Data migration interface
-- **P2**: Auto CPL/CPR/LTV calculation
+- **P1**: Finaliser la generation automatique de bilans mensuels pour membres non-challengers
+- **P1**: Expliquer le workflow complet a l'utilisateur
+- **P1**: Lier les KPIs des cours aux salaires pour generer des depenses automatiques
+- **P2**: Alertes WhatsApp via Twilio
+- **P2**: Interface de migration de donnees
+- **P2**: Calcul automatique de CPL, CPR, LTV
