@@ -988,11 +988,11 @@ export default function MembersPage() {
                   <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                     <div>
                       <label className="text-[var(--color-text-secondary)] text-xs">Nouvel abonnement</label>
-                      <Select value={renewData.new_membership} onValueChange={(v) => setRenewData({ ...renewData, new_membership: v })}>
+                      <Select value={renewData.new_membership} onValueChange={(v) => setRenewData(prev => ({ ...prev, new_membership: v }))}>
                         <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                        <SelectContent position="popper" sideOffset={4} className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-[200px] overflow-y-auto z-[100]">
                           {MEMBERSHIP_OPTIONS.map((m) => (
                             <SelectItem key={m} value={m} className="text-white">{m}</SelectItem>
                           ))}
@@ -1001,11 +1001,11 @@ export default function MembersPage() {
                     </div>
                     <div>
                       <label className="text-[var(--color-text-secondary)] text-xs">Type de membre</label>
-                      <Select value={renewData.new_member_type} onValueChange={(v) => setRenewData({ ...renewData, new_member_type: v })}>
+                      <Select value={renewData.new_member_type} onValueChange={(v) => setRenewData(prev => ({ ...prev, new_member_type: v }))}>
                         <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                        <SelectContent position="popper" sideOffset={4} className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-[200px] overflow-y-auto z-[100]">
                           {MEMBER_TYPES.map((t) => (
                             <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>
                           ))}
@@ -1054,7 +1054,7 @@ export default function MembersPage() {
                           <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                          <SelectContent position="popper" sideOffset={4} className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-[200px] overflow-y-auto z-[100]">
                             {PAYMENT_METHODS.map((m) => (
                               <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
                             ))}
@@ -1069,7 +1069,7 @@ export default function MembersPage() {
                           <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                          <SelectContent position="popper" sideOffset={4} className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-[200px] overflow-y-auto z-[100]">
                             {BILLING_CYCLE_TYPES.map((t) => (
                               <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
                             ))}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -95,8 +95,18 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const { user, logout } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingOnboardingCount, setPendingOnboardingCount] = useState(0);
 
   const sections = NAV_SECTIONS(lang);
+
+  // Fetch pending onboarding count for badge
+  useEffect(() => {
+    const API = process.env.REACT_APP_BACKEND_URL + "/api";
+    fetch(`${API}/onboarding/pending`)
+      .then(r => r.json())
+      .then(data => setPendingOnboardingCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => {});
+  }, [location.pathname]);
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
@@ -135,6 +145,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
               <div className="space-y-0.5 px-2">
                 {section.items.map(({ path, icon: Icon, label }) => {
                   const isActive = location.pathname === path;
+                  const showBadge = path === "/onboarding" && pendingOnboardingCount > 0;
                   return (
                     <Link
                       key={path}
@@ -144,7 +155,21 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                     >
                       <Icon size={16} strokeWidth={1.5} />
                       {!collapsed && (
-                        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>{label}</span>
+                        <span className="flex-1" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>{label}</span>
+                      )}
+                      {!collapsed && showBadge && (
+                        <span
+                          className="min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold"
+                          style={{ background: 'var(--color-accent)', color: '#fff', fontSize: '10px', padding: '0 5px' }}
+                        >
+                          {pendingOnboardingCount}
+                        </span>
+                      )}
+                      {collapsed && showBadge && (
+                        <span
+                          className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
+                          style={{ background: 'var(--color-accent)' }}
+                        />
                       )}
                     </Link>
                   );

@@ -248,71 +248,22 @@ export default function OnboardingPage() {
   return (
     <div className="space-y-6" data-testid="onboarding-page">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="tf-page-header">
-            {lang === "fr" ? "Onboarding & Suivi" : "Onboarding & Follow-up"}
-          </h1>
-          <p className="tf-page-subtitle">
-            {lang === "fr" ? "Intégration des membres et suivis mensuels" : "Member integration and monthly follow-ups"}
-          </p>
-        </div>
-        <Button onClick={() => setFollowupModalOpen(true)} className="bg-[var(--color-accent)] hover:opacity-85" data-testid="add-followup-btn">
-          <Plus size={16} className="mr-2" />
-          Planifier un suivi
-        </Button>
+      <div>
+        <h1 className="tf-page-header">Onboarding</h1>
+        <p className="tf-page-subtitle">
+          {lang === "fr" ? "Suivi de l'intégration des nouveaux membres" : "New member integration tracking"}
+        </p>
       </div>
 
-      {/* Alerts Banner */}
-      {alerts && (alerts.late_payments > 0 || alerts.missed_followups > 0) && (
-        <div className="bg-[rgba(255,69,58,0.08)] border border-[rgba(255,69,58,0.2)] rounded-[var(--radius-lg)] p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="text-[var(--color-danger)]" size={24} />
-            <div>
-              <p className="text-[var(--color-danger)] font-medium">Actions requises</p>
-              <p className="text-[var(--color-text-secondary)] text-sm">
-                {alerts.late_payments > 0 && `${alerts.late_payments} paiements en retard`}
-                {alerts.late_payments > 0 && alerts.missed_followups > 0 && " • "}
-                {alerts.missed_followups > 0 && `${alerts.missed_followups} suivis manqués`}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {alerts.late_payments > 0 && (
-              <Badge className="bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] border-0">
-                <Bell size={12} className="mr-1" /> {alerts.late_payments} paiements
-              </Badge>
-            )}
-            {alerts.missed_followups > 0 && (
-              <Badge className="bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)] border-0">
-                <Calendar size={12} className="mr-1" /> {alerts.missed_followups} suivis
-              </Badge>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
+      <div className="grid grid-cols-2 gap-4 tf-stagger">
         <div className="tf-stat cursor-pointer" onClick={() => setActiveTab("onboarding")}>
           <p className="tf-stat-label" style={{color:"var(--color-accent)"}}>
             <ClipboardCheck size={12} style={{display:'inline',marginRight:'4px'}} /> Onboarding en cours
           </p>
           <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.pendingOnboarding}</p>
         </div>
-        <div className="tf-stat cursor-pointer" onClick={() => setActiveTab("upcoming")}>
-          <p className="tf-stat-label" style={{color:"var(--color-accent)"}}>
-            <Calendar size={12} style={{display:'inline',marginRight:'4px'}} /> Suivis à venir
-          </p>
-          <p className="tf-number-large" style={{color:"var(--color-accent)"}}>{stats.upcomingFollowups}</p>
-        </div>
-        <div className="tf-stat cursor-pointer" onClick={() => setActiveTab("missed")}>
-          <p className="tf-stat-label" style={{color:"var(--color-danger)"}}>
-            <AlertTriangle size={12} style={{display:'inline',marginRight:'4px'}} /> Suivis manqués
-          </p>
-          <p className="tf-number-large" style={{color:"var(--color-danger)"}}>{stats.missedFollowups}</p>
-        </div>
-        <div className="tf-stat">
+        <div className="tf-stat cursor-pointer" onClick={() => setActiveTab("history")}>
           <p className="tf-stat-label" style={{color:"var(--color-success)"}}>
             <CheckCircle2 size={12} style={{display:'inline',marginRight:'4px'}} /> Onboardings complétés
           </p>
@@ -323,8 +274,6 @@ export default function OnboardingPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
           <TabsTrigger value="onboarding" className="data-[state=active]:bg-[var(--color-accent)]">Onboarding ({stats.pendingOnboarding})</TabsTrigger>
-          <TabsTrigger value="upcoming" className="data-[state=active]:bg-[var(--color-accent)]">À venir ({stats.upcomingFollowups})</TabsTrigger>
-          <TabsTrigger value="missed" className="data-[state=active]:bg-[var(--color-danger)]">Manqués ({stats.missedFollowups})</TabsTrigger>
           <TabsTrigger value="history" className="data-[state=active]:bg-[var(--color-bg-tertiary)]">Historique</TabsTrigger>
         </TabsList>
 
@@ -447,164 +396,6 @@ export default function OnboardingPage() {
                 );
               })
             )}
-          </div>
-        </TabsContent>
-
-        {/* Upcoming Follow-ups Tab */}
-        <TabsContent value="upcoming" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(10,132,255,0.2)] overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-[rgba(10,132,255,0.08)]">
-              <h3 className="text-[var(--color-accent)] font-medium flex items-center gap-2">
-                <Calendar size={18} />
-                Suivis à venir (14 jours)
-              </h3>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-[var(--color-border)]">
-                  <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Contact</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Date prévue</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Dans</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {upcomingFollowups.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
-                      Aucun suivi planifié
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  upcomingFollowups.map((followup) => {
-                    const daysUntil = differenceInDays(parseISO(followup.followup_date), new Date());
-                    return (
-                      <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
-                        <TableCell className="text-white font-medium">{followup.member_name}</TableCell>
-                        <TableCell>
-                          <div className="text-[var(--color-text-secondary)] text-sm">
-                            <p>{followup.member_email}</p>
-                            <p>{followup.member_phone}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-[var(--color-text-secondary)]">
-                          {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={daysUntil <= 3 ? "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]" : "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]"}>
-                            {daysUntil === 0 ? "Aujourd'hui" : daysUntil === 1 ? "Demain" : `${daysUntil} jours`}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
-                            {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            onClick={() => openCompleteModal(followup)}
-                            className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
-                          >
-                            <CheckCircle2 size={14} className="mr-1" /> Compléter
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        {/* Missed Follow-ups Tab */}
-        <TabsContent value="missed" className="space-y-4">
-          <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[rgba(255,69,58,0.2)] overflow-hidden">
-            <div className="p-4 border-b border-[var(--color-border)] bg-[rgba(255,69,58,0.08)]">
-              <h3 className="text-[var(--color-danger)] font-medium flex items-center gap-2">
-                <AlertTriangle size={18} />
-                Suivis manqués - Action requise
-              </h3>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-[var(--color-border)]">
-                  <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Contact</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Date prévue</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Retard</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
-                  <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {missedFollowups.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-[var(--color-success)] py-8">
-                      <CheckCircle2 size={24} className="mx-auto mb-2" />
-                      Aucun suivi manqué
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  missedFollowups.map((followup) => {
-                    const daysLate = differenceInDays(new Date(), parseISO(followup.followup_date));
-                    return (
-                      <TableRow key={followup.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
-                        <TableCell className="text-white font-medium">{followup.member_name}</TableCell>
-                        <TableCell>
-                          <div className="text-[var(--color-text-secondary)] text-sm">
-                            <p>{followup.member_email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-[var(--color-text-secondary)]">
-                          {format(parseISO(followup.followup_date), "dd MMM yyyy", { locale: fr })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className="bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] border-0">
-                            {daysLate} jours
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)]">
-                            {FOLLOWUP_TYPES.find((t) => t.value === followup.followup_type)?.label || followup.followup_type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => openCompleteModal(followup)}
-                              className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
-                            >
-                              Compléter
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-[var(--color-border-strong)] text-white"
-                              onClick={() => {
-                                setFollowupForm({
-                                  member_id: followup.member_id,
-                                  followup_date: format(addDays(new Date(), 7), "yyyy-MM-dd"),
-                                  followup_type: followup.followup_type,
-                                  notes: `Reporté du ${format(parseISO(followup.followup_date), "dd/MM/yyyy")}`,
-                                });
-                                setFollowupModalOpen(true);
-                              }}
-                            >
-                              Reporter
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
           </div>
         </TabsContent>
 

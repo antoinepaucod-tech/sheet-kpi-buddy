@@ -11,25 +11,20 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 ## Completed Features
 - Apple Design System + 18 feature modules
 - **GoHighLevel (GHL) Integration** - COMPLETE
-- **Onboarding system** - Completed onboardings now appear in Historique tab (not toggle)
-- **Challenge 6 Semaines** - Check-in boxes read-only (driven by session attendance), bilans section added
-- **Auto-bilan generation**: Weekly bilans auto-created for challenge participants, monthly for others
-- Monthly KPIs, Members management, Renewal dialog with billing cycle
-- Multi-month analysis, PDF export, Transactions, Payments
-- Course KPIs, Sessions, Client KPIs, Coaches pages
-- Bilans/Suivis, Categories, Recurring payments
-- Email via Resend
+- **Onboarding** - Simplified: only Onboarding + Historique tabs, badge in sidebar (count of pending)
+- **Challenge 6 Sem** - Check-in read-only, bilans section, auto-generate weekly bilans
+- **Renewal dialog** - Fixed: billing toggle visible, dropdowns with position="popper", no overflow
+- Monthly KPIs, Members management, Multi-month analysis, PDF export
+- Transactions, Payments, Course KPIs, Sessions, Client KPIs, Coaches
+- Bilans/Suivis, Categories, Recurring payments, Email via Resend
 
 ## Recent Changes (March 14, 2026)
-- Moved completed onboardings from toggle to Historique tab
-- Challenge check-in boxes: read-only (no click), display only
-- Added "Bilans hebdomadaires" section to Challenge page
-- Auto-generate 6 weekly bilans when participant added to challenge
-- POST /api/challenges/auto-generate-bilans endpoint for monthly bilans
-- Added bilan_frequency field to member model
-- Cleaned test data (TEST_ members, rogue KPIs)
-- Fixed billing cycle toggle visibility in renewal dialog (green container)
-- Fixed chart data mapping (active_members)
+- Onboarding page: removed "À venir", "Manqués" tabs and "Planifier un suivi" button
+- Added sidebar notification badge for pending onboardings
+- Completed onboardings shown in Historique tab with table
+- Renewal dialog: fixed dropdown overflow with position="popper", cleaned duplicate membership types
+- Challenge: check-in boxes read-only, bilans section with auto-generate button
+- Cleaned test data (TEST_ participants, rogue KPIs, duplicate GHL sales)
 
 ## Backlog
 - **P0**: Explain full workflow to user
