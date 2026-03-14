@@ -63,12 +63,18 @@ export const useGHL = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 
-    const { data, error } = await supabase.functions.invoke('ghl-proxy', {
+    const response = await supabase.functions.invoke('ghl-proxy', {
       body: { endpoint, params },
     });
 
-    if (error) throw error;
-    return data;
+    if (response.error) {
+      // Try to extract useful error details
+      const errorMsg = response.error?.message || 'Unknown error';
+      console.error('GHL proxy error:', errorMsg, response.error);
+      throw new Error(errorMsg);
+    }
+    
+    return response.data;
   }, []);
 
   const fetchPipelines = useCallback(async (locationId: string) => {
