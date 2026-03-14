@@ -54,32 +54,55 @@ serve(async (req) => {
 
     const rawParams = (params && typeof params === 'object') ? { ...(params as Record<string, unknown>) } : {};
 
-    // GHL endpoints are inconsistent between camelCase and snake_case query params.
-    // We normalize by adding aliases when missing.
-    const aliasPairs: Array<[string, string]> = [
-      ['locationId', 'location_id'],
-      ['pipelineId', 'pipeline_id'],
-      ['calendarId', 'calendar_id'],
-      ['startTime', 'start_time'],
-      ['endTime', 'end_time'],
-    ];
+    // GHL has mixed query conventions depending on endpoint.
+    // opportunities/search => snake_case ; most others => camelCase.
+    const normalizeParams = (path: string, input: Record<string, unknown>): Record<string, unknown> => {
+      const normalized = { ...input };
 
-    for (const [camelKey, snakeKey] of aliasPairs) {
-      const camelVal = rawParams[camelKey];
-      const snakeVal = rawParams[snakeKey];
+      const pick = (...keys: string[]) => {
+        for (const key of keys) {
+          const value = normalized[key];
+          if (value !== undefined && value !== null && value !== '') return value;
+        }
+        return undefined;
+      };
 
-      if ((camelVal === undefined || camelVal === null || camelVal === '') && snakeVal !== undefined && snakeVal !== null && snakeVal !== '') {
-        rawParams[camelKey] = snakeVal;
+      if (path.startsWith('/opportunities/search')) {
+        const location = pick('location_id', 'locationId');
+        const pipeline = pick('pipeline_id', 'pipelineId');
+        if (location !== undefined) normalized.location_id = location;
+        if (pipeline !== undefined) normalized.pipeline_id = pipeline;
+        delete normalized.locationId;
+        delete normalized.pipelineId;
+        return normalized;
       }
 
-      if ((snakeVal === undefined || snakeVal === null || snakeVal === '') && camelVal !== undefined && camelVal !== null && camelVal !== '') {
-        rawParams[snakeKey] = camelVal;
-      }
-    }
+      const location = pick('locationId', 'location_id');
+      const pipeline = pick('pipelineId', 'pipeline_id');
+      const calendar = pick('calendarId', 'calendar_id');
+      const start = pick('startTime', 'start_time');
+      const end = pick('endTime', 'end_time');
+
+      if (location !== undefined) normalized.locationId = location;
+      if (pipeline !== undefined) normalized.pipelineId = pipeline;
+      if (calendar !== undefined) normalized.calendarId = calendar;
+      if (start !== undefined) normalized.startTime = start;
+      if (end !== undefined) normalized.endTime = end;
+
+      delete normalized.location_id;
+      delete normalized.pipeline_id;
+      delete normalized.calendar_id;
+      delete normalized.start_time;
+      delete normalized.end_time;
+
+      return normalized;
+    };
+
+    const normalizedParams = normalizeParams(endpoint, rawParams);
 
     // Build URL with query params
     const url = new URL(`${GHL_BASE_URL}${endpoint}`);
-    Object.entries(rawParams).forEach(([key, value]) => {
+    Object.entries(normalizedParams).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         url.searchParams.set(key, String(value));
       }
