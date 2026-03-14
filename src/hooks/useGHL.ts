@@ -117,7 +117,7 @@ export const useGHL = () => {
   const fetchCalendars = useCallback(async (locationId: string) => {
     setIsLoading(true);
     try {
-      const data = await callGHL('/calendars/', { location_id: locationId });
+      const data = await callGHL('/calendars/', { locationId });
       const cals = data.calendars || [];
       setCalendars(cals);
       return cals;
