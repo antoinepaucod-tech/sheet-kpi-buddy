@@ -52,15 +52,38 @@ serve(async (req) => {
       });
     }
 
+    const rawParams = (params && typeof params === 'object') ? { ...params as Record<string, unknown> } : {};
+
+    // GHL endpoints are inconsistent between camelCase and snake_case query params.
+    // We normalize by adding aliases when missing.
+    const aliasPairs: Array<[string, string]> = [
+      ['locationId', 'location_id'],
+      ['pipelineId', 'pipeline_id'],
+      ['calendarId', 'calendar_id'],
+      ['startTime', 'start_time'],
+      ['endTime', 'end_time'],
+    ];
+
+    for (const [camelKey, snakeKey] of aliasPairs) {
+      const camelVal = rawParams[camelKey];
+      const snakeVal = rawParams[snakeKey];
+
+      if ((camelVal === undefined || camelVal === null || camelVal === '') && snakeVal !== undefined && snakeVal !== null && snakeVal !== '') {
+        rawParams[camelKey] = snakeVal;
+      }
+
+      if ((snakeVal === undefined || snakeVal === null || snakeVal === '') && camelVal !== undefined && camelVal !== null && camelVal !== '') {
+        rawParams[snakeKey] = camelVal;
+      }
+    }
+
     // Build URL with query params
     const url = new URL(`${GHL_BASE_URL}${endpoint}`);
-    if (params && typeof params === 'object') {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          url.searchParams.set(key, String(value));
-        }
-      });
-    }
+    Object.entries(rawParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
 
     console.log(`GHL API Request: ${url.toString()}`);
 
