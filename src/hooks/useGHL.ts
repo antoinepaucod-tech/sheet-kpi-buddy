@@ -74,7 +74,7 @@ export const useGHL = () => {
   const fetchPipelines = useCallback(async (locationId: string) => {
     setIsLoading(true);
     try {
-      const data = await callGHL('/opportunities/pipelines', { location_id: locationId });
+      const data = await callGHL('/opportunities/pipelines', { locationId });
       const pipelinesData = data.pipelines || [];
       setPipelines(pipelinesData);
       return pipelinesData;
@@ -94,8 +94,8 @@ export const useGHL = () => {
   const fetchOpportunities = useCallback(async (locationId: string, pipelineId?: string) => {
     setIsLoading(true);
     try {
-      const params: Record<string, string> = { location_id: locationId };
-      if (pipelineId) params.pipeline_id = pipelineId;
+      const params: Record<string, string> = { locationId };
+      if (pipelineId) params.pipelineId = pipelineId;
       
       const data = await callGHL('/opportunities/search', params);
       const opps = data.opportunities || [];
@@ -117,7 +117,7 @@ export const useGHL = () => {
   const fetchCalendars = useCallback(async (locationId: string) => {
     setIsLoading(true);
     try {
-      const data = await callGHL('/calendars/', { location_id: locationId });
+      const data = await callGHL('/calendars/', { locationId });
       const cals = data.calendars || [];
       setCalendars(cals);
       return cals;
@@ -137,7 +137,7 @@ export const useGHL = () => {
   const fetchAppointments = useCallback(async (locationId: string, calendarId?: string, startDate?: string, endDate?: string) => {
     setIsLoading(true);
     try {
-      const params: Record<string, string> = { location_id: locationId };
+      const params: Record<string, string> = { locationId };
       if (calendarId) params.calendarId = calendarId;
       if (startDate) params.startTime = startDate;
       if (endDate) params.endTime = endDate;
