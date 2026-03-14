@@ -24,7 +24,7 @@ const GoHighLevel = () => {
     fetchAppointments,
   } = useGHL();
 
-  const [locationId, setLocationId] = useState("");
+  const [locationId, setLocationId] = useState("kG9diDpMqBt6LeA6VfkK");
   const [selectedPipeline, setSelectedPipeline] = useState<string>("");
   const [selectedCalendar, setSelectedCalendar] = useState<string>("");
   const [isConfigured, setIsConfigured] = useState(false);
