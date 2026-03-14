@@ -52,15 +52,61 @@ serve(async (req) => {
       });
     }
 
+    const rawParams = (params && typeof params === 'object') ? { ...(params as Record<string, unknown>) } : {};
+
+    // GHL has mixed query conventions depending on endpoint.
+    // opportunities/search => snake_case ; most others => camelCase.
+    const normalizeParams = (path: string, input: Record<string, unknown>): Record<string, unknown> => {
+      const normalized = { ...input };
+
+      const pick = (...keys: string[]) => {
+        for (const key of keys) {
+          const value = normalized[key];
+          if (value !== undefined && value !== null && value !== '') return value;
+        }
+        return undefined;
+      };
+
+      if (path.startsWith('/opportunities/search')) {
+        const location = pick('location_id', 'locationId');
+        const pipeline = pick('pipeline_id', 'pipelineId');
+        if (location !== undefined) normalized.location_id = location;
+        if (pipeline !== undefined) normalized.pipeline_id = pipeline;
+        delete normalized.locationId;
+        delete normalized.pipelineId;
+        return normalized;
+      }
+
+      const location = pick('locationId', 'location_id');
+      const pipeline = pick('pipelineId', 'pipeline_id');
+      const calendar = pick('calendarId', 'calendar_id');
+      const start = pick('startTime', 'start_time');
+      const end = pick('endTime', 'end_time');
+
+      if (location !== undefined) normalized.locationId = location;
+      if (pipeline !== undefined) normalized.pipelineId = pipeline;
+      if (calendar !== undefined) normalized.calendarId = calendar;
+      if (start !== undefined) normalized.startTime = start;
+      if (end !== undefined) normalized.endTime = end;
+
+      delete normalized.location_id;
+      delete normalized.pipeline_id;
+      delete normalized.calendar_id;
+      delete normalized.start_time;
+      delete normalized.end_time;
+
+      return normalized;
+    };
+
+    const normalizedParams = normalizeParams(endpoint, rawParams);
+
     // Build URL with query params
     const url = new URL(`${GHL_BASE_URL}${endpoint}`);
-    if (params && typeof params === 'object') {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          url.searchParams.set(key, String(value));
-        }
-      });
-    }
+    Object.entries(normalizedParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
 
     console.log(`GHL API Request: ${url.toString()}`);
 
