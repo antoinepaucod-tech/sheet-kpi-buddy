@@ -16,6 +16,8 @@ import {
   Target,
   Flame,
   Award,
+  ClipboardCheck,
+  Eye,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -92,6 +94,18 @@ export default function ChallengePage() {
   const { data: members = [] } = useQuery({
     queryKey: ["members"],
     queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
+  });
+
+  // Fetch bilans for challenge participants
+  const { data: challengeBilans = [] } = useQuery({
+    queryKey: ["challenge-bilans", selectedChallenge],
+    queryFn: async () => {
+      if (!challengeDetail?.participants?.length) return [];
+      const memberIds = challengeDetail.participants.map(p => p.member_id);
+      const allReviews = await axios.get(`${API}/annual-reviews`).then(r => r.data);
+      return allReviews.filter(r => memberIds.includes(r.member_id));
+    },
+    enabled: !!challengeDetail?.participants?.length,
   });
 
   // Create/Update challenge
@@ -476,21 +490,20 @@ export default function ChallengePage() {
                             const goal = challengeDetail.checkins_goal || 3;
                             const isComplete = checkins >= goal || participant[`week${week}`];
                             return (
-                              <button
+                              <div
                                 key={week}
-                                onClick={() => toggleWeekCheckin(participant, week)}
-                                className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
+                                className={`w-8 h-8 rounded flex items-center justify-center ${
                                   isComplete
                                     ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
                                     : checkins > 0
                                       ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]"
-                                      : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)] hover:bg-[rgba(255,255,255,0.1)]"
+                                      : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)]"
                                 }`}
                                 title={`S${week}: ${checkins}/${goal} séances`}
                                 data-testid={`check-w${week}-${participant.id}`}
                               >
                                 {isComplete ? <Check size={14} /> : checkins > 0 ? <span className="text-xs font-bold">{checkins}</span> : <span className="text-xs">{week}</span>}
-                              </button>
+                              </div>
                             );
                           })}
                         </div>
@@ -517,6 +530,100 @@ export default function ChallengePage() {
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bilans / Suivis des participants */}
+              <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border border-[var(--color-border)]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <ClipboardCheck size={18} className="text-[var(--color-accent)]" />
+                    Bilans hebdomadaires
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">
+                      {challengeBilans.length} bilan{challengeBilans.length > 1 ? "s" : ""}
+                    </Badge>
+                    {challengeDetail?.participants?.length > 0 && challengeBilans.length === 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs border-[var(--color-border)] text-[var(--color-accent)]"
+                        onClick={async () => {
+                          try {
+                            // Re-add each participant to trigger bilan creation
+                            for (const p of challengeDetail.participants) {
+                              try {
+                                await axios.post(`${API}/challenges/${selectedChallenge}/participants`, {
+                                  challenge_id: selectedChallenge,
+                                  member_id: p.member_id,
+                                  member_name: p.member_name,
+                                });
+                              } catch {} // Already exists, skip
+                            }
+                            queryClient.invalidateQueries(["challenge-bilans"]);
+                          } catch {}
+                        }}
+                        data-testid="generate-bilans-btn"
+                      >
+                        <ClipboardCheck size={12} className="mr-1" />
+                        Générer les bilans
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {challengeBilans.length === 0 ? (
+                  <div className="text-center py-6">
+                    <ClipboardCheck size={32} className="mx-auto text-[var(--color-text-tertiary)] mb-2" />
+                    <p className="text-[var(--color-text-secondary)] text-sm">
+                      Aucun bilan enregistré pour les participants
+                    </p>
+                    <p className="text-[var(--color-text-tertiary)] text-xs mt-1">
+                      Les bilans sont créés depuis la page Bilans / Suivis
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {challengeBilans
+                      .sort((a, b) => (b.review_date || "").localeCompare(a.review_date || ""))
+                      .map((bilan) => {
+                        const participant = challengeDetail.participants.find(p => p.member_id === bilan.member_id);
+                        return (
+                          <div
+                            key={bilan.id}
+                            className="flex items-center justify-between p-3 rounded-lg"
+                            style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-2 h-2 rounded-full ${bilan.status === "completed" ? "bg-[var(--color-success)]" : "bg-[var(--color-warning)]"}`} />
+                              <div>
+                                <p className="text-white text-sm font-medium">{participant?.member_name || bilan.member_name || "?"}</p>
+                                <p className="text-[var(--color-text-tertiary)] text-xs">
+                                  {bilan.review_date ? format(parseISO(bilan.review_date), "dd MMM yyyy", { locale: fr }) : "-"}
+                                  {" "}&middot;{" "}
+                                  <span className="capitalize">{bilan.review_type || "hebdomadaire"}</span>
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {bilan.status === "completed" && bilan.weight_current && (
+                                <span className="text-xs text-[var(--color-text-secondary)]">
+                                  {bilan.weight_current}kg
+                                </span>
+                              )}
+                              <Badge className={`border-0 text-xs ${
+                                bilan.status === "completed"
+                                  ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
+                                  : "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]"
+                              }`}>
+                                {bilan.status === "completed" ? "Complété" : "Planifié"}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
                 )}
               </div>

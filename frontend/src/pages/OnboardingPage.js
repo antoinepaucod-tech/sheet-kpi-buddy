@@ -110,19 +110,23 @@ export default function OnboardingPage() {
     queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
   });
 
+  // Completed onboarding members (for Historique tab)
+  const completedMembers = useMemo(() => {
+    return allMembers.filter(m => 
+      m.onboarding_completed === true && !pendingOnboarding.find(p => p.id === m.id)
+    );
+  }, [allMembers, pendingOnboarding]);
+
   // Combine pending + completed members for onboarding view
   const allMembersWithOnboarding = useMemo(() => {
-    const completedMembers = allMembers.filter(m => 
-      m.onboarding_completed === true && !pendingOnboarding.find(p => p.id === m.id)
-    ).map(m => ({
+    const completedWithProgress = completedMembers.map(m => ({
       ...m,
       onboarding_progress: 5,
       onboarding_total: 5,
       onboarding_percentage: 100
     }));
-    
-    return [...pendingOnboarding, ...completedMembers];
-  }, [allMembers, pendingOnboarding]);
+    return [...pendingOnboarding, ...completedWithProgress];
+  }, [completedMembers, pendingOnboarding]);
 
   const { data: upcomingFollowups = [] } = useQuery({
     queryKey: ["followups", "upcoming"],
@@ -336,16 +340,10 @@ export default function OnboardingPage() {
                 className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
               />
             </div>
-            <div className="flex items-center gap-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] px-4 py-2 border border-[var(--color-border)]">
-              <label className="text-[var(--color-text-secondary)] text-sm">Afficher les complétés</label>
-              <Switch
-                checked={showCompleted}
-                onCheckedChange={setShowCompleted}
-                data-testid="show-completed-toggle"
-              />
-              {showCompleted && (
+            <div className="flex items-center gap-3">
+              {completedMembers.length > 0 && (
                 <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
-                  +{stats.completedOnboarding}
+                  {completedMembers.length} complété{completedMembers.length > 1 ? "s" : ""} (voir Historique)
                 </Badge>
               )}
             </div>
@@ -354,58 +352,38 @@ export default function OnboardingPage() {
           <div className="grid gap-4">
             {loadingOnboarding ? (
               <div className="text-center text-[var(--color-text-secondary)] py-8">Chargement...</div>
-            ) : filteredOnboarding.length === 0 ? (
+            ) : pendingOnboarding.length === 0 ? (
               <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-8 border border-[rgba(48,209,88,0.2)] text-center">
                 <CheckCircle2 size={48} className="mx-auto text-[var(--color-success)] mb-4" />
                 <p className="text-[var(--color-success)] font-medium">
-                  {showCompleted ? "Aucun membre trouvé" : "Tous les onboardings sont complétés !"}
+                  Tous les onboardings sont complétés !
                 </p>
-                {!showCompleted && stats.completedOnboarding > 0 && (
-                  <Button 
-                    variant="link" 
-                    className="text-[var(--color-accent)] mt-2"
-                    onClick={() => setShowCompleted(true)}
-                  >
-                    Voir les {stats.completedOnboarding} membres complétés
-                  </Button>
-                )}
               </div>
             ) : (
-              filteredOnboarding.map((member) => {
-                const isCompleted = member.onboarding_percentage === 100;
+              pendingOnboarding.filter(m => {
+                const q = search.toLowerCase();
+                return !q || m.name?.toLowerCase().includes(q);
+              }).map((member) => {
                 const isEditing = editingMemberId === member.id;
                 
                 return (
                   <div
                     key={member.id}
                     className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-6 border transition-all duration-300 ${
-                      isCompleted 
-                        ? "border-[rgba(48,209,88,0.2)] bg-[rgba(48,209,88,0.05)]" 
-                        : isEditing 
-                          ? "border-[rgba(10,132,255,0.3)] ring-2 ring-[rgba(10,132,255,0.1)]" 
-                          : "border-[var(--color-border)]"
+                      isEditing 
+                        ? "border-[rgba(10,132,255,0.3)] ring-2 ring-[rgba(10,132,255,0.1)]" 
+                        : "border-[var(--color-border)]"
                     }`}
                     data-testid={`onboarding-${member.id}`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          isCompleted ? "bg-[rgba(48,209,88,0.15)]" : "bg-[rgba(10,132,255,0.15)]"
-                        }`}>
-                          {isCompleted ? (
-                            <CheckCircle2 className="text-[var(--color-success)]" size={24} />
-                          ) : (
-                            <User className="text-[var(--color-accent)]" size={24} />
-                          )}
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[rgba(10,132,255,0.15)]">
+                          <User className="text-[var(--color-accent)]" size={24} />
                         </div>
                         <div>
-                          <p className="text-white font-medium text-lg flex items-center gap-2">
+                          <p className="text-white font-medium text-lg">
                             {member.name}
-                            {isCompleted && (
-                              <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0 text-xs">
-                                Complété
-                              </Badge>
-                            )}
                           </p>
                           <div className="flex items-center gap-4 text-[var(--color-text-secondary)] text-sm">
                             {member.email && (
@@ -428,7 +406,7 @@ export default function OnboardingPage() {
                         <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Progression</p>
                         <div className="flex items-center gap-2">
                           <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-[rgba(255,255,255,0.1)]" />
-                          <span className={`font-bold ${isCompleted ? 'text-[var(--color-success)]' : 'text-[var(--color-accent)]'}`}>
+                          <span className="font-bold text-[var(--color-accent)]">
                             {member.onboarding_percentage}%
                           </span>
                         </div>
@@ -442,13 +420,11 @@ export default function OnboardingPage() {
                         return (
                           <div
                             key={step.key}
-                            onClick={() => !isCompleted && toggleOnboardingStep(member.id, step.key, isStepCompleted)}
+                            onClick={() => toggleOnboardingStep(member.id, step.key, isStepCompleted)}
                             className={`p-3 rounded-[var(--radius-lg)] border transition-all ${
                               isStepCompleted
                                 ? "bg-[rgba(48,209,88,0.08)] border-[rgba(48,209,88,0.2)]"
-                                : isCompleted 
-                                  ? "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] opacity-50"
-                                  : "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] hover:border-[rgba(10,132,255,0.3)] cursor-pointer"
+                                : "bg-[rgba(255,255,255,0.05)] border-[var(--color-border)] hover:border-[rgba(10,132,255,0.3)] cursor-pointer"
                             }`}
                             data-testid={`step-${step.key}-${member.id}`}
                           >
@@ -634,7 +610,54 @@ export default function OnboardingPage() {
 
         {/* History Tab */}
         <TabsContent value="history" className="space-y-4">
+          {/* Completed Onboardings Section */}
+          {completedMembers.length > 0 && (
+            <div className="tf-card overflow-hidden p-0">
+              <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-[var(--color-success)]" />
+                <span className="text-white font-medium text-sm">
+                  Onboardings complétés ({completedMembers.length})
+                </span>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-[var(--color-border)]">
+                    <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
+                    <TableHead className="text-[var(--color-text-secondary)]">Abonnement</TableHead>
+                    <TableHead className="text-[var(--color-text-secondary)]">Date signature</TableHead>
+                    <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {completedMembers.map((member) => (
+                    <TableRow key={member.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
+                      <TableCell className="text-white font-medium">{member.name}</TableCell>
+                      <TableCell className="text-[var(--color-text-secondary)]">{member.membership || "-"}</TableCell>
+                      <TableCell className="text-[var(--color-text-secondary)]">
+                        {member.contract_signed_date
+                          ? format(parseISO(member.contract_signed_date), "dd MMM yyyy", { locale: fr })
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
+                          Complété
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Followup History */}
           <div className="tf-card overflow-hidden p-0">
+            <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center gap-2">
+              <Calendar size={16} className="text-[var(--color-accent)]" />
+              <span className="text-white font-medium text-sm">
+                Historique des suivis ({allFollowups.length})
+              </span>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow className="border-[var(--color-border)]">

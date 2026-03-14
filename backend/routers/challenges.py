@@ -116,7 +116,105 @@ async def add_challenge_participant(challenge_id: str, data: ChallengeParticipan
     doc = participant.model_dump()
     await db.challenge_participants.insert_one(doc)
     doc.pop("_id", None)
+
+    # Auto-create 6 weekly bilans for the challenger
+    from models.members import AnnualReview
+    from datetime import timedelta
+    start_date_str = challenge.get("start_date", "")
+    if start_date_str:
+        try:
+            start_date = datetime.fromisoformat(start_date_str)
+        except Exception:
+            start_date = datetime.now(timezone.utc)
+    else:
+        start_date = datetime.now(timezone.utc)
+
+    member = await db.customer_members.find_one({"id": data.member_id}, {"_id": 0})
+
+    for week in range(1, 7):
+        review_date = (start_date + timedelta(weeks=week)).strftime("%Y-%m-%d")
+        # Check if bilan already exists for this member+date
+        existing_bilan = await db.annual_reviews.find_one({
+            "member_id": data.member_id,
+            "review_date": review_date,
+            "review_type": "weekly",
+        })
+        if not existing_bilan:
+            bilan = AnnualReview(
+                member_id=data.member_id,
+                review_date=review_date,
+                review_type="weekly",
+                notes=f"Bilan semaine {week} - {challenge.get('name', 'Challenge')}",
+                status="scheduled",
+            )
+            bilan_doc = bilan.model_dump()
+            await db.annual_reviews.insert_one(bilan_doc)
+
+    # Update member bilan frequency to weekly
+    await db.customer_members.update_one(
+        {"id": data.member_id},
+        {"$set": {"bilan_frequency": "weekly"}}
+    )
+
     return doc
+
+
+
+@router.post("/auto-generate-bilans")
+async def auto_generate_bilans():
+    """Auto-generate monthly bilans for all non-challenge active members."""
+    from models.members import AnnualReview
+    from datetime import timedelta
+
+    today = datetime.now(timezone.utc)
+    today_str = today.strftime("%Y-%m-%d")
+    next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
+
+    # Get all active members
+    members = await db.customer_members.find(
+        {"subscription_end_date": {"$gte": today_str}},
+        {"_id": 0, "id": 1, "name": 1, "bilan_frequency": 1}
+    ).to_list(500)
+
+    # Get active challenge participant member_ids
+    challenge_member_ids = set()
+    active_challenges = await db.six_weeks_challenges.find({"is_active": True}).to_list(50)
+    for ch in active_challenges:
+        participants = await db.challenge_participants.find(
+            {"challenge_id": ch["id"]}, {"_id": 0, "member_id": 1}
+        ).to_list(200)
+        for p in participants:
+            challenge_member_ids.add(p["member_id"])
+
+    created = 0
+    for member in members:
+        mid = member["id"]
+        freq = member.get("bilan_frequency", "monthly")
+
+        # Skip challenge members (they have weekly bilans already)
+        if mid in challenge_member_ids:
+            continue
+
+        # Check if a bilan already exists for this month
+        existing = await db.annual_reviews.find_one({
+            "member_id": mid,
+            "review_date": {"$gte": today.strftime("%Y-%m-01"), "$lt": next_month},
+        })
+        if existing:
+            continue
+
+        bilan = AnnualReview(
+            member_id=mid,
+            review_date=next_month,
+            review_type=freq,
+            notes=f"Check-in {freq} automatique",
+            status="scheduled",
+        )
+        bilan_doc = bilan.model_dump()
+        await db.annual_reviews.insert_one(bilan_doc)
+        created += 1
+
+    return {"message": f"{created} bilans mensuels créés", "created": created}
 
 
 @router.put("/{challenge_id}/participants/{participant_id}")

@@ -11,20 +11,25 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 ## Completed Features
 - Apple Design System + 18 feature modules
 - **GoHighLevel (GHL) Integration** - COMPLETE
-- Onboarding & Follow-up system (5-step onboarding + scheduled followups)
-- Monthly KPIs with objectives and progress bars
-- Members management with renewal dialog + billing cycle
+- **Onboarding system** - Completed onboardings now appear in Historique tab (not toggle)
+- **Challenge 6 Semaines** - Check-in boxes read-only (driven by session attendance), bilans section added
+- **Auto-bilan generation**: Weekly bilans auto-created for challenge participants, monthly for others
+- Monthly KPIs, Members management, Renewal dialog with billing cycle
 - Multi-month analysis, PDF export, Transactions, Payments
 - Course KPIs, Sessions, Client KPIs, Coaches pages
-- Challenge 6 Sem., Bilans/Suivis, Categories, Recurring payments
-- Email communications via Resend
+- Bilans/Suivis, Categories, Recurring payments
+- Email via Resend
 
-## Recent Fixes (March 14, 2026)
-- Fixed revenue total (1797→599), active members (3→2), chart members mapping
-- Deleted rogue 2030-12 KPI, cleaned test data pollution
-- Enhanced renewal dialog: billing cycle toggle now green-themed, clickable container, visible Switch
-- Made both "Changer d'abonnement" and "Modifier le cycle de facturation" rows fully clickable
-- Onboarding: show completed members by default (toggle ON), stat card shows onboarding completions (3)
+## Recent Changes (March 14, 2026)
+- Moved completed onboardings from toggle to Historique tab
+- Challenge check-in boxes: read-only (no click), display only
+- Added "Bilans hebdomadaires" section to Challenge page
+- Auto-generate 6 weekly bilans when participant added to challenge
+- POST /api/challenges/auto-generate-bilans endpoint for monthly bilans
+- Added bilan_frequency field to member model
+- Cleaned test data (TEST_ members, rogue KPIs)
+- Fixed billing cycle toggle visibility in renewal dialog (green container)
+- Fixed chart data mapping (active_members)
 
 ## Backlog
 - **P0**: Explain full workflow to user
