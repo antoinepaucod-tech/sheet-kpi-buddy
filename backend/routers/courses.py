@@ -194,17 +194,28 @@ async def generate_salary_expenses(year: int, month: int):
     if not courses:
         raise HTTPException(status_code=404, detail="Aucun cours trouvé pour ce mois")
 
+    # Build lookup maps by both name and id
+    coaches_list = await db.coaches.find({}, {"_id": 0}).to_list(100)
+    coaches_by_name = {c["name"]: c for c in coaches_list}
+    coaches_by_id = {c["id"]: c for c in coaches_list}
     instructors_map = {i["name"]: i for i in await db.instructors.find({}, {"_id": 0}).to_list(100)}
-    coaches_map = {c["name"]: c for c in await db.coaches.find({}, {"_id": 0}).to_list(100)}
 
     salary_by_coach = {}
     for course in courses:
-        main_instr = course.get("instructor", "")
+        # Resolve main instructor: try instructor field, then coach_id lookup
+        main_instr = course.get("instructor") or ""
+        if not main_instr and course.get("coach_id"):
+            coach = coaches_by_id.get(course["coach_id"])
+            if coach:
+                main_instr = coach["name"]
+
         if not main_instr:
             continue
+
+        # Resolve hourly rate
         rate = 0
-        if main_instr in coaches_map:
-            rate = coaches_map[main_instr].get("hourly_rate", 0)
+        if main_instr in coaches_by_name:
+            rate = coaches_by_name[main_instr].get("hourly_rate", 0)
         elif main_instr in instructors_map:
             rate = instructors_map[main_instr].get("hourly_rate", 0)
 
@@ -215,8 +226,8 @@ async def generate_salary_expenses(year: int, month: int):
             instr_name = override if override else main_instr
             r = rate
             if override:
-                if override in coaches_map:
-                    r = coaches_map[override].get("hourly_rate", 0)
+                if override in coaches_by_name:
+                    r = coaches_by_name[override].get("hourly_rate", 0)
                 elif override in instructors_map:
                     r = instructors_map[override].get("hourly_rate", 0)
             if instr_name not in salary_by_coach:

@@ -75,7 +75,7 @@ export default function CoursesPage() {
     time_slot: "07:00",
     course_name: "",
     coach_id: "",
-    instructor_name: "",
+    instructor: "",
     max_capacity: 12,
   });
   const [replaceData, setReplaceData] = useState({
@@ -194,7 +194,7 @@ export default function CoursesPage() {
       time_slot: "07:00",
       course_name: "",
       coach_id: coaches[0]?.id || "",
-      instructor_name: coaches[0]?.name || instructors[0]?.name || "",
+      instructor: coaches[0]?.name || instructors[0]?.name || "",
       max_capacity: 12,
     });
     setModalOpen(true);
@@ -553,7 +553,7 @@ export default function CoursesPage() {
                     setFormData({ 
                       ...formData, 
                       coach_id: v,
-                      instructor_name: coach?.name || ""
+                      instructor: coach?.name || ""
                     });
                   }}
                 >

@@ -21,6 +21,7 @@ import {
   Eye,
   BarChart3,
   Mail,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -164,6 +165,16 @@ export default function AnnualReviewsPage() {
     mutationFn: (reviewId) => axios.post(`${API}/notifications/send-review-reminder/${reviewId}`),
     onSuccess: (res) => toast.success(res.data.message),
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
+  });
+
+  // Auto-generate monthly bilans for non-challenge members
+  const autoGenerateMutation = useMutation({
+    mutationFn: () => axios.post(`${API}/challenges/auto-generate-bilans`),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries(["annual-reviews"]);
+      toast.success(res.data.message);
+    },
+    onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la génération"),
   });
 
   // Filter reviews
@@ -329,6 +340,16 @@ export default function AnnualReviewsPage() {
               : "Weight, nutrition and training tracking - monthly, quarterly, semi-annual, annual"}
           </p>
         </div>
+        <Button
+          onClick={() => autoGenerateMutation.mutate()}
+          disabled={autoGenerateMutation.isPending}
+          variant="outline"
+          className="border-[rgba(100,210,255,0.2)] text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[rgba(100,210,255,0.08)]"
+          data-testid="auto-generate-bilans-btn"
+        >
+          <RefreshCw size={14} className={`mr-1.5 ${autoGenerateMutation.isPending ? "animate-spin" : ""}`} />
+          {autoGenerateMutation.isPending ? "Génération..." : "Générer bilans mensuels"}
+        </Button>
       </div>
 
       {/* Stats */}
