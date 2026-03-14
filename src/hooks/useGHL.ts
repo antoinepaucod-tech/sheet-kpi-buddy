@@ -74,7 +74,7 @@ export const useGHL = () => {
   const fetchPipelines = useCallback(async (locationId: string) => {
     setIsLoading(true);
     try {
-      const data = await callGHL('/opportunities/pipelines', { locationId });
+      const data = await callGHL('/opportunities/pipelines', { location_id: locationId });
       const pipelinesData = data.pipelines || [];
       setPipelines(pipelinesData);
       return pipelinesData;
