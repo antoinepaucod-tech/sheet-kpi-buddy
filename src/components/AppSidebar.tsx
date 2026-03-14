@@ -29,6 +29,7 @@ const allMenuItems = [
   { title: "Comptabilité", url: "/accounting", icon: Receipt, roles: ["admin", "staff", "viewer"] },
   { title: "Échéances", url: "/expiring-subscriptions", icon: Bell, showAlert: true, roles: ["admin", "staff", "viewer"] },
   { title: "Inventaire", url: "/inventory", icon: Package, roles: ["admin", "staff", "viewer"] },
+  { title: "Go High Level", url: "/gohighlevel", icon: Zap, roles: ["admin", "staff"] },
 ];
 
 const tutorialItem = { title: "Tutoriel", url: "/tutorial", icon: GraduationCap, roles: ["admin", "staff", "viewer", "coach"] };

@@ -64,6 +64,7 @@ const App = () => (
             <Route path="/tutorial" element={<ProtectedLayout><Tutorial /></ProtectedLayout>} />
             <Route path="/inventory" element={<ProtectedLayout><Inventory /></ProtectedLayout>} />
             <Route path="/users" element={<ProtectedLayout><UserManagement /></ProtectedLayout>} />
+            <Route path="/gohighlevel" element={<ProtectedLayout><GoHighLevel /></ProtectedLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
