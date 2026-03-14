@@ -52,7 +52,7 @@ serve(async (req) => {
       });
     }
 
-    const rawParams = (params && typeof params === 'object') ? { ...params as Record<string, unknown> } : {};
+    const rawParams = (params && typeof params === 'object') ? { ...(params as Record<string, unknown>) } : {};
 
     // GHL endpoints are inconsistent between camelCase and snake_case query params.
     // We normalize by adding aliases when missing.
