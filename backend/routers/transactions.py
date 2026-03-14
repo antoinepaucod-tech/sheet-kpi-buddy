@@ -98,6 +98,19 @@ async def delete_category(category_id: str):
     return {"message": "Catégorie supprimée"}
 
 
+@router.put("/categories/{category_id}")
+async def update_category(category_id: str, data: CategoryCreate):
+    update = {k: v for k, v in data.model_dump().items() if v is not None}
+    result = await db.accounting_categories.update_one(
+        {"id": category_id}, {"$set": update}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Catégorie introuvable")
+    doc = await db.accounting_categories.find_one({"id": category_id}, {"_id": 0})
+    return doc
+
+
+
 # ── Excluded ──────────────────────────────────────────────────────────────────
 
 @router.get("/excluded")

@@ -11,20 +11,21 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 ## Completed Features
 - Apple Design System + 18 feature modules
 - **GoHighLevel (GHL) Integration** - COMPLETE
-- **Onboarding** - Simplified: only Onboarding + Historique tabs, badge in sidebar (count of pending)
+- **Onboarding** - Simplified (only Onboarding + Historique tabs), badge in sidebar
 - **Challenge 6 Sem** - Check-in read-only, bilans section, auto-generate weekly bilans
-- **Renewal dialog** - Fixed: billing toggle visible, dropdowns with position="popper", no overflow
+- **Renewal dialog** - Fixed: dropdowns with position="popper", no ResizeObserver error, clean membership types from settings
+- **Categories** - Now editable (pencil icon + PUT endpoint), duplicates removed
 - Monthly KPIs, Members management, Multi-month analysis, PDF export
 - Transactions, Payments, Course KPIs, Sessions, Client KPIs, Coaches
-- Bilans/Suivis, Categories, Recurring payments, Email via Resend
+- Bilans/Suivis, Recurring payments, Email via Resend
 
 ## Recent Changes (March 14, 2026)
-- Onboarding page: removed "À venir", "Manqués" tabs and "Planifier un suivi" button
-- Added sidebar notification badge for pending onboardings
-- Completed onboardings shown in Historique tab with table
-- Renewal dialog: fixed dropdown overflow with position="popper", cleaned duplicate membership types
-- Challenge: check-in boxes read-only, bilans section with auto-generate button
-- Cleaned test data (TEST_ participants, rogue KPIs, duplicate GHL sales)
+- Categories: added edit functionality (Pencil icon + backend PUT /api/categories/{id})
+- Removed duplicate membership types (Trimestriel, 6 Semaines)
+- Suppressed ResizeObserver error globally (Radix UI bug in Dialogs)
+- Onboarding: removed "À venir", "Manqués" tabs, simplified to 2 tabs only
+- Sidebar: added badge notification for pending onboardings
+- Renewal dialog: Select dropdowns use position="popper", all state updates use functional prev => ({...prev})
 
 ## Backlog
 - **P0**: Explain full workflow to user

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Palette, Plus, Trash2, Loader2, Settings } from "lucide-react";
+import { Palette, Plus, Trash2, Pencil, Loader2, Settings } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -61,6 +61,7 @@ export default function CategoriesPage() {
   const [showModal, setShowModal] = useState(false);
   const [showKpiModal, setShowKpiModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [kpiForm, setKpiForm] = useState(EMPTY_KPI_FORM);
   const [saving, setSaving] = useState(false);
@@ -86,16 +87,39 @@ export default function CategoriesPage() {
     if (!form.name || !form.kpi_column || !form.type) return;
     setSaving(true);
     try {
-      await axios.post(`${API}/categories`, form);
+      if (editingCategory) {
+        await axios.put(`${API}/categories/${editingCategory.id}`, form);
+        toast({ title: "Catégorie modifiée", description: `"${form.name}" mise à jour` });
+      } else {
+        await axios.post(`${API}/categories`, form);
+        toast({ title: "Catégorie créée", description: `"${form.name}" ajoutée avec succès` });
+      }
       await refetch();
       setShowModal(false);
+      setEditingCategory(null);
       setForm(EMPTY_FORM);
-      toast({ title: "Catégorie créée", description: `"${form.name}" ajoutée avec succès` });
     } catch (e) {
       toast({ title: "Erreur", description: e.response?.data?.detail || "Erreur serveur", variant: "destructive" });
     } finally {
       setSaving(false);
     }
+  };
+
+  const openEditModal = (cat) => {
+    setEditingCategory(cat);
+    setForm({
+      name: cat.name,
+      kpi_column: cat.kpi_column,
+      type: cat.type,
+      color: cat.color || "#0A84FF",
+    });
+    setShowModal(true);
+  };
+
+  const openAddModal = () => {
+    setEditingCategory(null);
+    setForm(EMPTY_FORM);
+    setShowModal(true);
   };
 
   const handleDelete = async () => {
@@ -181,7 +205,7 @@ export default function CategoriesPage() {
             {recalculating ? "Recalcul..." : "Recalculer les KPIs"}
           </Button>
           <Button
-            onClick={() => setShowModal(true)}
+            onClick={openAddModal}
             className="bg-[var(--color-accent)] hover:opacity-85 text-white font-bold uppercase tracking-wider text-xs"
             data-testid="add-category-btn"
           >
@@ -204,7 +228,7 @@ export default function CategoriesPage() {
               <TableRow className="border-[var(--color-border)] hover:bg-transparent">
                 <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Nom</TableHead>
                 <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Colonne KPI</TableHead>
-                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs w-16">Action</TableHead>
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -218,13 +242,22 @@ export default function CategoriesPage() {
                   </TableCell>
                   <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{cat.kpi_column}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => setDeleteId(cat.id)}
-                      className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
-                      data-testid={`delete-cat-${cat.id}`}
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEditModal(cat)}
+                        className="text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors"
+                        data-testid={`edit-cat-${cat.id}`}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(cat.id)}
+                        className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
+                        data-testid={`delete-cat-${cat.id}`}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -244,7 +277,7 @@ export default function CategoriesPage() {
               <TableRow className="border-[var(--color-border)] hover:bg-transparent">
                 <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Nom</TableHead>
                 <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Colonne KPI</TableHead>
-                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs w-16">Action</TableHead>
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -258,13 +291,22 @@ export default function CategoriesPage() {
                   </TableCell>
                   <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{cat.kpi_column}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => setDeleteId(cat.id)}
-                      className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
-                      data-testid={`delete-cat-${cat.id}`}
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEditModal(cat)}
+                        className="text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors"
+                        data-testid={`edit-cat-rev-${cat.id}`}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(cat.id)}
+                        className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
+                        data-testid={`delete-cat-${cat.id}`}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -273,12 +315,12 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Add Category Modal */}
-      <Dialog open={showModal} onOpenChange={(v) => !v && setShowModal(false)}>
+      {/* Add/Edit Category Modal */}
+      <Dialog open={showModal} onOpenChange={(v) => { if (!v) { setShowModal(false); setEditingCategory(null); setForm(EMPTY_FORM); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-extrabold uppercase">
-              Nouvelle Catégorie
+              {editingCategory ? "Modifier Catégorie" : "Nouvelle Catégorie"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
