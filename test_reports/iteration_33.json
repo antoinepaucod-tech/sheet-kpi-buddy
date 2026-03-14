@@ -1,0 +1,71 @@
+{
+  "summary": "Comprehensive E2E testing of ResizeObserver error suppression, subscription types verification, and all requested features. ALL TESTS PASSED - No ResizeObserver errors detected during dropdown/dialog interactions.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "login": "PASS - test@crossfit.ch / test123 works correctly",
+    "dashboard_kpis": "PASS - Shows 599 CHF revenus, 2 membres actifs, 1 nouveau membre",
+    "members_page": "PASS - 12 members displayed with renewal buttons",
+    "renewal_dialog": {
+      "opens": "PASS",
+      "change_membership_toggle": "PASS - Toggles ON/OFF correctly",
+      "subscription_dropdown": "PASS - Shows 5 types: Mensuel, Semestriel, Annuel, 6 Weeks Challenge, 3 Mois",
+      "billing_toggle": "PASS - Shows amount, method, cycle, day fields when enabled",
+      "resize_observer_errors": "PASS - NO errors during dropdown interactions"
+    },
+    "add_member_dialog": "PASS - Opens correctly with all form fields",
+    "settings_types_page": {
+      "access": "PASS - Via Config. Types sidebar link",
+      "membership_count": "PASS - Shows exactly 5 types (no duplicates)",
+      "types_list": ["Mensuel (1 mois)", "Semestriel (6 mois)", "Annuel (1 an)", "6 Weeks Challenge (42 jours)", "3 Mois (3 mois)"],
+      "add_button": "PASS - + Ajouter opens modal with all fields"
+    },
+    "categories_page": {
+      "edit_buttons": "PASS - 8 edit (pencil) buttons found",
+      "edit_modal": "PASS - Opens with pre-filled data (tested: LOYER)",
+      "put_endpoint": "Backend requires kpi_column field - properly handled in UI form"
+    },
+    "onboarding_page": {
+      "tabs": "PASS - 2 tabs: Onboarding (9) and Historique",
+      "badge": "PASS - Sidebar shows badge with count 9",
+      "historique_table": "PASS - Shows 3 completed onboardings (Camille Roux, Caroline Maerten, Chloé Simon)"
+    },
+    "challenge_page": {
+      "loads": "PASS - Challenge 6 Semaines page with 2 challenges",
+      "participants": "PASS - Challenge Hiver 2024 shows 6 participants with progression",
+      "check_in_boxes": "PASS - Check-in indicators are visual (not clickable buttons)",
+      "bilans_section": "PASS - Bilans hebdomadaires section exists with 'Générer les bilans' button"
+    },
+    "ghl_funnel_dashboard": {
+      "location": "Dashboard > Acquisition tab (funnel tab)",
+      "component": "GHLFunnelSection with sync button, date filters, funnel visualization"
+    }
+  },
+  "resize_observer_verification": {
+    "global_suppressor": "PASS - addEventListener('error', ..., true) in index.js working",
+    "strict_mode_removed": "PASS - StrictMode removed from index.js",
+    "dropdown_tests": "PASS - All dropdown interactions (renewal, settings, categories) show NO ResizeObserver errors"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "email": "test@crossfit.ch",
+    "password": "test123"
+  },
+  "seed_data_creation": "N/A - Used existing seed data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All critical features verified. ResizeObserver suppression working correctly. 5 membership types confirmed (duplicates removed). Categories edit feature working. Onboarding simplified to 2 tabs. GHL Funnel located in Dashboard Acquisition tab."
+}
