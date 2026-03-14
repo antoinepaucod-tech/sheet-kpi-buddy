@@ -94,8 +94,8 @@ export const useGHL = () => {
   const fetchOpportunities = useCallback(async (locationId: string, pipelineId?: string) => {
     setIsLoading(true);
     try {
-      const params: Record<string, string> = { location_id: locationId };
-      if (pipelineId) params.pipeline_id = pipelineId;
+      const params: Record<string, string> = { locationId };
+      if (pipelineId) params.pipelineId = pipelineId;
       
       const data = await callGHL('/opportunities/search', params);
       const opps = data.opportunities || [];
