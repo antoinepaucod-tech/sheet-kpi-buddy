@@ -22,7 +22,13 @@
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
         <title>Emergent | Fullstack App</title>
-        <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
+        <script>
+        // Layer 1: Monkey-patch ResizeObserver to prevent loop limit error at source
+        !function(){var R=window.ResizeObserver;window.ResizeObserver=function(cb){return new R(function(entries,obs){window.requestAnimationFrame(function(){cb(entries,obs)})})};window.ResizeObserver.prototype=R.prototype}();
+        // Layer 2: Suppress any remaining ResizeObserver errors from propagating
+        window.addEventListener("error",function(e){if(e&&e.message&&e.message.includes("ResizeObserver")){e.stopImmediatePropagation();e.stopPropagation();e.preventDefault();return false}},true);
+        window.addEventListener("unhandledrejection",function(e){if(e&&e.reason&&e.reason.message&&e.reason.message.includes("ResizeObserver")){e.stopImmediatePropagation();e.stopPropagation();e.preventDefault();return false}},true);
+        </script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>
     <body>

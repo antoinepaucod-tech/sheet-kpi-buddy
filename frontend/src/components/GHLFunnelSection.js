@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, UserPlus, Calendar, Eye, Trophy, UserX, Phone, Save, CreditCard } from "lucide-react";
 import { Button } from "./ui/button";
@@ -31,7 +32,7 @@ const FUNNEL_STAGES = [
   { key: "showed_lost", label: "Showed Lost", labelFr: "Perdus", icon: UserX, color: "#FF453A" },
 ];
 
-const SUBSCRIPTION_TYPES = [
+const FALLBACK_SUBSCRIPTION_TYPES = [
   { value: "6 Week Challenge", label: "6 Week Challenge", defaultAmount: 599, durationDays: 42, memberType: "Membres PIF", isPIF: true },
   { value: "Mensuel", label: "Mensuel", defaultAmount: 120, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false },
   { value: "3 Mois", label: "3 Mois", defaultAmount: 350, durationDays: 91, memberType: "Membres Généraux Récurrents", isPIF: false },
@@ -40,7 +41,7 @@ const SUBSCRIPTION_TYPES = [
   { value: "Annuel PT", label: "Annuel PT", defaultAmount: 2400, durationDays: 365, memberType: "Membres PT", isPIF: true },
 ];
 
-const MEMBER_TYPES = [
+const FALLBACK_MEMBER_TYPES = [
   "Membres Généraux Récurrents",
   "Membres PIF",
   "Membres PT",
@@ -87,6 +88,39 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
   const [callsMade, setCallsMade] = useState(0);
   const [callsSaving, setCallsSaving] = useState(false);
   const [callsSaved, setCallsSaved] = useState(false);
+
+  // Fetch dynamic membership & member types from API
+  const { data: apiMembershipTypes = [] } = useQuery({
+    queryKey: ["membership-types"],
+    queryFn: () => axios.get(`${API}/settings/membership-types?active_only=true`).then(r => r.data),
+  });
+  const { data: apiMemberTypes = [] } = useQuery({
+    queryKey: ["member-types"],
+    queryFn: () => axios.get(`${API}/settings/member-types?active_only=true`).then(r => r.data),
+  });
+
+  // Build dynamic subscription types from API data, fallback to hardcoded
+  const SUBSCRIPTION_TYPES = useMemo(() => {
+    if (apiMembershipTypes.length === 0) return FALLBACK_SUBSCRIPTION_TYPES;
+    return apiMembershipTypes.map(t => {
+      const durationDays = t.duration_days || (t.duration_months * 30);
+      return {
+        value: t.name,
+        label: t.name,
+        defaultAmount: t.price || 0,
+        durationDays,
+        memberType: t.is_recurring ? "Membres Généraux Récurrents" : "Membres PIF",
+        isPIF: !t.is_recurring,
+        billingCycleType: t.default_billing_cycle_type,
+        billingCycleValue: t.default_billing_cycle_value,
+      };
+    });
+  }, [apiMembershipTypes]);
+
+  const MEMBER_TYPES = useMemo(() => {
+    if (apiMemberTypes.length === 0) return FALLBACK_MEMBER_TYPES;
+    return apiMemberTypes.map(t => t.name);
+  }, [apiMemberTypes]);
 
   const fetchLastSync = useCallback(async () => {
     try {
@@ -184,7 +218,6 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
 
   const handleOpenSaleDialog = (opp) => {
     setSelectedOpp(opp);
-    // Parse the GHL closed_at date (last stage change) for signature_date
     const ghlDate = opp.last_stage_change_at || opp.created_at || "";
     let signatureDate = "";
     if (ghlDate) {
@@ -196,12 +229,11 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
       signatureDate = new Date().toISOString().split("T")[0];
     }
 
-    const defaultSub = SUBSCRIPTION_TYPES[0];
-    // Calculate end date based on signature date + duration
+    const defaultSub = SUBSCRIPTION_TYPES[0] || FALLBACK_SUBSCRIPTION_TYPES[0];
     const baseDate = new Date(signatureDate);
-    const endDate = new Date(baseDate);
-    endDate.setDate(endDate.getDate() + defaultSub.durationDays);
-    const endDateStr = endDate.toISOString().split("T")[0];
+    const endDateCalc = new Date(baseDate);
+    endDateCalc.setDate(endDateCalc.getDate() + defaultSub.durationDays);
+    const endDateStr = endDateCalc.toISOString().split("T")[0];
 
     setSaleForm({
       subscription_type: defaultSub.value,
@@ -211,28 +243,29 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
       subscription_end_date: endDateStr,
       billing_enabled: !defaultSub.isPIF,
       billing_amount: !defaultSub.isPIF ? defaultSub.defaultAmount : 0,
-      billing_cycle_type: "monthly_day",
-      billing_cycle_value: 1,
+      billing_cycle_type: defaultSub.billingCycleType || "monthly_day",
+      billing_cycle_value: defaultSub.billingCycleValue || 1,
       billing_payment_method: "prelevement",
     });
     setSaleDialogOpen(true);
   };
 
-  // Recalculate end date when subscription type or signature date changes
   const handleSubscriptionTypeChange = (value) => {
     const sub = SUBSCRIPTION_TYPES.find(s => s.value === value);
     if (!sub) return;
     const baseDate = new Date(saleForm.signature_date || new Date().toISOString().split("T")[0]);
-    const endDate = new Date(baseDate);
-    endDate.setDate(endDate.getDate() + sub.durationDays);
+    const endDateCalc = new Date(baseDate);
+    endDateCalc.setDate(endDateCalc.getDate() + sub.durationDays);
     setSaleForm(prev => ({
       ...prev,
       subscription_type: value,
       member_type: sub.memberType,
       cash_collected: sub.defaultAmount,
-      subscription_end_date: endDate.toISOString().split("T")[0],
+      subscription_end_date: endDateCalc.toISOString().split("T")[0],
       billing_enabled: !sub.isPIF,
       billing_amount: !sub.isPIF ? sub.defaultAmount : 0,
+      billing_cycle_type: sub.billingCycleType || prev.billing_cycle_type,
+      billing_cycle_value: sub.billingCycleValue || prev.billing_cycle_value,
     }));
   };
 
@@ -778,12 +811,12 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
                       const sub = SUBSCRIPTION_TYPES.find(s => s.value === saleForm.subscription_type);
                       if (sub && newDate) {
                         const base = new Date(newDate);
-                        const end = new Date(base);
-                        end.setDate(end.getDate() + sub.durationDays);
+                        const endCalc = new Date(base);
+                        endCalc.setDate(endCalc.getDate() + sub.durationDays);
                         setSaleForm(prev => ({
                           ...prev,
                           signature_date: newDate,
-                          subscription_end_date: end.toISOString().split("T")[0],
+                          subscription_end_date: endCalc.toISOString().split("T")[0],
                         }));
                       } else {
                         setSaleForm(prev => ({ ...prev, signature_date: newDate }));

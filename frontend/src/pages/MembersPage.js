@@ -164,7 +164,33 @@ export default function MembersPage() {
     queryFn: () => axios.get(`${API}/settings/member-types?active_only=true`).then((r) => r.data),
   });
 
-  // Build options from API data or fallback to defaults
+  // Build renewal duration options from membership types
+  const RENEWAL_DURATION_OPTIONS = useMemo(() => {
+    if (membershipTypes.length === 0) {
+      return [
+        { value: "1 mois", label: "1 mois" },
+        { value: "3 mois", label: "3 mois" },
+        { value: "6 mois", label: "6 mois" },
+        { value: "6 semaines", label: "6 semaines" },
+        { value: "12 mois", label: "12 mois" },
+      ];
+    }
+    return membershipTypes.map(t => {
+      let label;
+      if (t.duration_days) {
+        label = `${t.duration_days} jours`;
+        if (t.duration_days === 42) label = "6 semaines";
+      } else if (t.duration_months === 1) {
+        label = "1 mois";
+      } else if (t.duration_months === 12) {
+        label = "12 mois";
+      } else {
+        label = `${t.duration_months} mois`;
+      }
+      return { value: label, label: `${t.name} (${label})` };
+    });
+  }, [membershipTypes]);
+
   const MEMBERSHIP_OPTIONS = membershipTypes.length > 0
     ? membershipTypes.map(t => t.name)
     : DEFAULT_MEMBERSHIPS;
@@ -938,11 +964,9 @@ export default function MembersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                    <SelectItem value="1 mois" className="text-white">1 mois</SelectItem>
-                    <SelectItem value="3 mois" className="text-white">3 mois</SelectItem>
-                    <SelectItem value="6 mois" className="text-white">6 mois</SelectItem>
-                    <SelectItem value="6 semaines" className="text-white">6 semaines</SelectItem>
-                    <SelectItem value="12 mois" className="text-white">12 mois</SelectItem>
+                    {RENEWAL_DURATION_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-white">{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
