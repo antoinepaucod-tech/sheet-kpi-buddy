@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.analyze-business]
 verify_jwt = true
+
+[functions.ghl-proxy]
+verify_jwt = false
