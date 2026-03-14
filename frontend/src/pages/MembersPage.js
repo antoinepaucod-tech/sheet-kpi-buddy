@@ -914,7 +914,7 @@ export default function MembersPage() {
 
       {/* Renew Modal */}
       <Dialog open={renewModalOpen} onOpenChange={setRenewModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md overflow-y-auto" style={{ maxHeight: '90vh' }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <RefreshCw className="text-[var(--color-success)]" size={20} />
@@ -1021,7 +1021,7 @@ export default function MembersPage() {
                   </label>
                   <Switch
                     checked={renewData.update_billing}
-                    onCheckedChange={(v) => setRenewData({ ...renewData, update_billing: v })}
+                    onCheckedChange={(v) => setRenewData(prev => ({ ...prev, update_billing: v }))}
                     data-testid="update-billing-switch"
                   />
                 </div>
@@ -1034,14 +1034,14 @@ export default function MembersPage() {
                         <Input
                           type="number"
                           value={renewData.billing_amount}
-                          onChange={(e) => setRenewData({ ...renewData, billing_amount: parseFloat(e.target.value) || 0 })}
+                          onChange={(e) => setRenewData(prev => ({ ...prev, billing_amount: parseFloat(e.target.value) || 0 }))}
                           className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8"
                           data-testid="renew-billing-amount"
                         />
                       </div>
                       <div>
                         <label className="text-[var(--color-text-secondary)] text-xs">Méthode</label>
-                        <Select value={renewData.billing_payment_method} onValueChange={(v) => setRenewData({ ...renewData, billing_payment_method: v })}>
+                        <Select value={renewData.billing_payment_method} onValueChange={(v) => setRenewData(prev => ({ ...prev, billing_payment_method: v }))}>
                           <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -1056,7 +1056,7 @@ export default function MembersPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="text-[var(--color-text-secondary)] text-xs">Cycle de facturation</label>
-                        <Select value={renewData.billing_cycle_type} onValueChange={(v) => setRenewData({ ...renewData, billing_cycle_type: v })}>
+                        <Select value={renewData.billing_cycle_type} onValueChange={(v) => setRenewData(prev => ({ ...prev, billing_cycle_type: v }))}>
                           <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -1076,7 +1076,7 @@ export default function MembersPage() {
                           min={1}
                           max={renewData.billing_cycle_type === "monthly_day" ? 28 : 365}
                           value={renewData.billing_cycle_value}
-                          onChange={(e) => setRenewData({ ...renewData, billing_cycle_value: parseInt(e.target.value) || 1 })}
+                          onChange={(e) => setRenewData(prev => ({ ...prev, billing_cycle_value: parseInt(e.target.value) || 1 }))}
                           className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8"
                           data-testid="renew-billing-cycle-value"
                         />

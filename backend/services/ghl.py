@@ -169,6 +169,7 @@ async def sync_pipeline_data(start_date: Optional[str] = None, end_date: Optiona
                 "monetary_value": opp.get("monetaryValue", 0),
                 "status": opp.get("status", ""),
                 "created_at": opp.get("createdAt", ""),
+                "last_stage_change_at": opp.get("lastStageChangeAt", opp.get("updatedAt", "")),
                 "stage_id": stage_id,
             })
 

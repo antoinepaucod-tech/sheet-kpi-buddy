@@ -161,7 +161,7 @@ async def get_sync_history():
 async def confirm_sale(body: dict):
     """
     Confirm a sale from 'Showed Sold' stage.
-    - Creates a member record
+    - Creates a member record with full subscription details
     - If 6 Week Challenge: auto-adds to active challenge
     - Updates KPI revenue (fast_cash + total_revenue)
     """
@@ -173,13 +173,26 @@ async def confirm_sale(body: dict):
     contact_email = body.get("contact_email", "")
     contact_phone = body.get("contact_phone", "")
     subscription_type = body.get("subscription_type", "6 Week Challenge")
+    member_type = body.get("member_type", "")
     cash_collected = body.get("cash_collected", 599)
     month = body.get("month")
+    subscription_end_date = body.get("subscription_end_date", "")
+    signature_date = body.get("signature_date", "")
+    # Billing fields
+    billing_enabled = body.get("billing_enabled", False)
+    billing_amount = body.get("billing_amount", 0)
+    billing_cycle_type = body.get("billing_cycle_type", "monthly_day")
+    billing_cycle_value = body.get("billing_cycle_value", 1)
+    billing_payment_method = body.get("billing_payment_method", "prelevement")
 
     if not opportunity_id:
         raise HTTPException(status_code=400, detail="opportunity_id required")
     if not month:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
+
+    # Use GHL closed_at as signature date, fallback to today
+    if not signature_date:
+        signature_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     # Check if already confirmed
     existing_sale = await db.ghl_sales.find_one({"opportunity_id": opportunity_id})
@@ -187,10 +200,30 @@ async def confirm_sale(body: dict):
         existing_sale.pop("_id", None)
         return existing_sale
 
+    # Determine member_type if not provided
+    is_challenge = "challenge" in subscription_type.lower()
+    if not member_type:
+        if is_challenge or "annuel" in subscription_type.lower() or "6 mois" in subscription_type.lower():
+            member_type = "Membres PIF"
+        else:
+            member_type = "Membres Généraux Récurrents"
+
+    # Calculate end date if not provided
+    if not subscription_end_date:
+        base_date = datetime.strptime(signature_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        if is_challenge:
+            subscription_end_date = (base_date + timedelta(days=42)).strftime("%Y-%m-%d")
+        elif "annuel" in subscription_type.lower():
+            subscription_end_date = (base_date + timedelta(days=365)).strftime("%Y-%m-%d")
+        elif "6 mois" in subscription_type.lower():
+            subscription_end_date = (base_date + timedelta(days=182)).strftime("%Y-%m-%d")
+        elif "3 mois" in subscription_type.lower():
+            subscription_end_date = (base_date + timedelta(days=91)).strftime("%Y-%m-%d")
+        else:
+            subscription_end_date = (base_date + timedelta(days=30)).strftime("%Y-%m-%d")
+
     # 1. Check if member already exists (by name to avoid duplicates)
     existing_member = await db.customer_members.find_one({"name": opportunity_name})
-    is_challenge = "challenge" in subscription_type.lower()
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     if existing_member:
         # Update existing member with GHL data
@@ -202,32 +235,20 @@ async def confirm_sale(body: dict):
             update_fields["phone"] = contact_phone
         await db.customer_members.update_one({"id": member_id}, {"$set": update_fields})
     else:
-        # Determine subscription end date
-        if is_challenge:
-            end_date = (datetime.now(timezone.utc) + timedelta(days=42)).strftime("%Y-%m-%d")
-            member_type = "Membres PIF"
-        elif "annuel" in subscription_type.lower():
-            end_date = (datetime.now(timezone.utc) + timedelta(days=365)).strftime("%Y-%m-%d")
-            member_type = "Membres PIF"
-        elif "6 mois" in subscription_type.lower():
-            end_date = (datetime.now(timezone.utc) + timedelta(days=182)).strftime("%Y-%m-%d")
-            member_type = "Membres PIF"
-        elif "3 mois" in subscription_type.lower():
-            end_date = (datetime.now(timezone.utc) + timedelta(days=91)).strftime("%Y-%m-%d")
-            member_type = "Membres Généraux Récurrents"
-        else:
-            end_date = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
-            member_type = "Membres Généraux Récurrents"
-
         member = CustomerMember(
             name=opportunity_name,
             email=contact_email,
             phone=contact_phone,
             membership=subscription_type,
             member_type=member_type,
-            contract_signed_date=today,
-            subscription_end_date=end_date,
+            contract_signed_date=signature_date,
+            subscription_end_date=subscription_end_date,
             cash_collected=cash_collected,
+            billing_enabled=billing_enabled,
+            billing_amount=billing_amount,
+            billing_cycle_type=billing_cycle_type,
+            billing_cycle_value=billing_cycle_value,
+            billing_payment_method=billing_payment_method,
             onboarding_completed=False,
         )
         member_doc = member.model_dump()

@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
-import { RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, UserPlus, Calendar, Eye, Trophy, UserX, Phone, Save } from "lucide-react";
+import { RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, UserPlus, Calendar, Eye, Trophy, UserX, Phone, Save, CreditCard } from "lucide-react";
 import { Button } from "./ui/button";
+import { Switch } from "./ui/switch";
+import { Input } from "./ui/input";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +11,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "./ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { formatCHF } from "../utils/format";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -23,12 +32,30 @@ const FUNNEL_STAGES = [
 ];
 
 const SUBSCRIPTION_TYPES = [
-  { value: "6 Week Challenge", label: "6 Week Challenge", defaultAmount: 599 },
-  { value: "Mensuel", label: "Mensuel", defaultAmount: 120 },
-  { value: "3 Mois", label: "3 Mois", defaultAmount: 350 },
-  { value: "6 Mois", label: "6 Mois", defaultAmount: 650 },
-  { value: "Annuel", label: "Annuel", defaultAmount: 1200 },
-  { value: "Annuel PT", label: "Annuel PT", defaultAmount: 2400 },
+  { value: "6 Week Challenge", label: "6 Week Challenge", defaultAmount: 599, durationDays: 42, memberType: "Membres PIF", isPIF: true },
+  { value: "Mensuel", label: "Mensuel", defaultAmount: 120, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false },
+  { value: "3 Mois", label: "3 Mois", defaultAmount: 350, durationDays: 91, memberType: "Membres Généraux Récurrents", isPIF: false },
+  { value: "6 Mois", label: "6 Mois", defaultAmount: 650, durationDays: 182, memberType: "Membres PIF", isPIF: true },
+  { value: "Annuel", label: "Annuel", defaultAmount: 1200, durationDays: 365, memberType: "Membres PIF", isPIF: true },
+  { value: "Annuel PT", label: "Annuel PT", defaultAmount: 2400, durationDays: 365, memberType: "Membres PT", isPIF: true },
+];
+
+const MEMBER_TYPES = [
+  "Membres Généraux Récurrents",
+  "Membres PIF",
+  "Membres PT",
+];
+
+const PAYMENT_METHODS = [
+  { value: "prelevement", label: "Prélèvement automatique" },
+  { value: "carte", label: "Carte bancaire" },
+  { value: "virement", label: "Virement" },
+  { value: "especes", label: "Espèces" },
+];
+
+const BILLING_CYCLE_TYPES = [
+  { value: "monthly_day", label: "Jour fixe du mois" },
+  { value: "interval_days", label: "Tous les X jours" },
 ];
 
 export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChange }) {
@@ -37,7 +64,18 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
   const [syncError, setSyncError] = useState(null);
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [selectedOpp, setSelectedOpp] = useState(null);
-  const [saleForm, setSaleForm] = useState({ subscription_type: "6 Week Challenge", cash_collected: 599 });
+  const [saleForm, setSaleForm] = useState({
+    subscription_type: "6 Week Challenge",
+    member_type: "Membres PIF",
+    cash_collected: 599,
+    signature_date: "",
+    subscription_end_date: "",
+    billing_enabled: false,
+    billing_amount: 0,
+    billing_cycle_type: "monthly_day",
+    billing_cycle_value: 1,
+    billing_payment_method: "prelevement",
+  });
   const [confirmingSale, setConfirmingSale] = useState(false);
   const [confirmedSales, setConfirmedSales] = useState([]);
 
@@ -146,23 +184,82 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
 
   const handleOpenSaleDialog = (opp) => {
     setSelectedOpp(opp);
-    setSaleForm({ subscription_type: "6 Week Challenge", cash_collected: 599 });
+    // Parse the GHL closed_at date (last stage change) for signature_date
+    const ghlDate = opp.last_stage_change_at || opp.created_at || "";
+    let signatureDate = "";
+    if (ghlDate) {
+      try {
+        signatureDate = ghlDate.includes("T") ? ghlDate.split("T")[0] : ghlDate.slice(0, 10);
+      } catch { signatureDate = ""; }
+    }
+    if (!signatureDate) {
+      signatureDate = new Date().toISOString().split("T")[0];
+    }
+
+    const defaultSub = SUBSCRIPTION_TYPES[0];
+    // Calculate end date based on signature date + duration
+    const baseDate = new Date(signatureDate);
+    const endDate = new Date(baseDate);
+    endDate.setDate(endDate.getDate() + defaultSub.durationDays);
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    setSaleForm({
+      subscription_type: defaultSub.value,
+      member_type: defaultSub.memberType,
+      cash_collected: opp.monetary_value > 0 ? opp.monetary_value : defaultSub.defaultAmount,
+      signature_date: signatureDate,
+      subscription_end_date: endDateStr,
+      billing_enabled: !defaultSub.isPIF,
+      billing_amount: !defaultSub.isPIF ? defaultSub.defaultAmount : 0,
+      billing_cycle_type: "monthly_day",
+      billing_cycle_value: 1,
+      billing_payment_method: "prelevement",
+    });
     setSaleDialogOpen(true);
+  };
+
+  // Recalculate end date when subscription type or signature date changes
+  const handleSubscriptionTypeChange = (value) => {
+    const sub = SUBSCRIPTION_TYPES.find(s => s.value === value);
+    if (!sub) return;
+    const baseDate = new Date(saleForm.signature_date || new Date().toISOString().split("T")[0]);
+    const endDate = new Date(baseDate);
+    endDate.setDate(endDate.getDate() + sub.durationDays);
+    setSaleForm(prev => ({
+      ...prev,
+      subscription_type: value,
+      member_type: sub.memberType,
+      cash_collected: sub.defaultAmount,
+      subscription_end_date: endDate.toISOString().split("T")[0],
+      billing_enabled: !sub.isPIF,
+      billing_amount: !sub.isPIF ? sub.defaultAmount : 0,
+    }));
   };
 
   const handleConfirmSale = async () => {
     if (!selectedOpp) return;
     setConfirmingSale(true);
     try {
-      await axios.post(`${API}/ghl/confirm-sale`, {
+      const payload = {
         opportunity_id: selectedOpp.id,
         opportunity_name: selectedOpp.name,
         contact_email: selectedOpp.email || "",
         contact_phone: selectedOpp.phone || "",
         subscription_type: saleForm.subscription_type,
+        member_type: saleForm.member_type,
         cash_collected: saleForm.cash_collected,
+        signature_date: saleForm.signature_date,
+        subscription_end_date: saleForm.subscription_end_date,
         month: currentMonth,
-      });
+      };
+      if (saleForm.billing_enabled) {
+        payload.billing_enabled = true;
+        payload.billing_amount = saleForm.billing_amount;
+        payload.billing_cycle_type = saleForm.billing_cycle_type;
+        payload.billing_cycle_value = saleForm.billing_cycle_value;
+        payload.billing_payment_method = saleForm.billing_payment_method;
+      }
+      await axios.post(`${API}/ghl/confirm-sale`, payload);
       setSaleDialogOpen(false);
       const salesRes = await axios.get(`${API}/ghl/sales/${currentMonth}`);
       setConfirmedSales(salesRes.data);
@@ -553,16 +650,18 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
         </div>
       )}
 
-      {/* Sale Confirmation Dialog */}
+      {/* Sale Confirmation Dialog - Enhanced */}
       <Dialog open={saleDialogOpen} onOpenChange={setSaleDialogOpen}>
-        <DialogContent className="bg-[var(--color-bg-primary)] border-[var(--color-border)] h-fit my-auto" style={{ maxWidth: '420px' }}>
+        <DialogContent className="bg-[var(--color-bg-primary)] border-[var(--color-border)] h-fit my-auto overflow-y-auto" style={{ maxWidth: '480px', maxHeight: '90vh' }}>
           <DialogHeader>
-            <DialogTitle className="font-display" style={{ color: 'var(--color-text-primary)' }}>
+            <DialogTitle className="font-display flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <Trophy size={18} style={{ color: 'var(--color-success)' }} />
               {lang === "fr" ? "Confirmer la vente" : "Confirm Sale"}
             </DialogTitle>
           </DialogHeader>
           {selectedOpp && (
             <div className="space-y-4 py-2">
+              {/* Contact info from GHL */}
               <div className="p-3 rounded-lg" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
                 <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-medium)' }}>
                   {selectedOpp.name}
@@ -584,43 +683,76 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
                 )}
               </div>
 
+              {/* Subscription Type */}
               <div>
-                <label className="tf-label" style={{ marginBottom: 6, display: 'block' }}>
+                <label className="tf-label" style={{ marginBottom: 6, display: 'block', fontSize: 'var(--text-xs)' }}>
                   {lang === "fr" ? "Type d'abonnement" : "Subscription Type"}
                 </label>
-                <select
+                <Select
                   value={saleForm.subscription_type}
-                  onChange={(e) => {
-                    const sub = SUBSCRIPTION_TYPES.find(s => s.value === e.target.value);
-                    setSaleForm({
-                      subscription_type: e.target.value,
-                      cash_collected: sub?.defaultAmount || saleForm.cash_collected,
-                    });
-                  }}
-                  className="w-full p-2.5 rounded-lg"
-                  style={{
-                    background: 'var(--color-bg-secondary)',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-primary)',
-                    fontSize: 'var(--text-sm)',
-                  }}
-                  data-testid="sale-subscription-select"
+                  onValueChange={handleSubscriptionTypeChange}
                 >
-                  {SUBSCRIPTION_TYPES.map(s => (
-                    <option key={s.value} value={s.value}>{s.label} ({formatCHF(s.defaultAmount)})</option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    className="w-full"
+                    style={{
+                      background: 'var(--color-bg-secondary)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                      fontSize: 'var(--text-sm)',
+                    }}
+                    data-testid="sale-subscription-select"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    {SUBSCRIPTION_TYPES.map(s => (
+                      <SelectItem key={s.value} value={s.value} className="text-white">
+                        {s.label} ({formatCHF(s.defaultAmount)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Member Type (PIF / Récurrent / PT) */}
               <div>
-                <label className="tf-label" style={{ marginBottom: 6, display: 'block' }}>
+                <label className="tf-label" style={{ marginBottom: 6, display: 'block', fontSize: 'var(--text-xs)' }}>
+                  {lang === "fr" ? "Type de membre" : "Member Type"}
+                </label>
+                <Select
+                  value={saleForm.member_type}
+                  onValueChange={(v) => setSaleForm(prev => ({ ...prev, member_type: v }))}
+                >
+                  <SelectTrigger
+                    className="w-full"
+                    style={{
+                      background: 'var(--color-bg-secondary)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                      fontSize: 'var(--text-sm)',
+                    }}
+                    data-testid="sale-member-type-select"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    {MEMBER_TYPES.map(t => (
+                      <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Cash Collected */}
+              <div>
+                <label className="tf-label" style={{ marginBottom: 6, display: 'block', fontSize: 'var(--text-xs)' }}>
                   {lang === "fr" ? "Cash Collecte (CHF)" : "Cash Collected (CHF)"}
                 </label>
-                <input
+                <Input
                   type="number"
                   value={saleForm.cash_collected}
-                  onChange={(e) => setSaleForm({ ...saleForm, cash_collected: parseFloat(e.target.value) || 0 })}
-                  className="w-full p-2.5 rounded-lg"
+                  onChange={(e) => setSaleForm(prev => ({ ...prev, cash_collected: parseFloat(e.target.value) || 0 }))}
+                  className="w-full"
                   style={{
                     background: 'var(--color-bg-secondary)',
                     border: '1px solid var(--color-border)',
@@ -630,6 +762,164 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
                   }}
                   data-testid="sale-cash-input"
                 />
+              </div>
+
+              {/* Dates Row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="tf-label" style={{ marginBottom: 6, display: 'block', fontSize: 'var(--text-xs)' }}>
+                    {lang === "fr" ? "Date de signature" : "Signature Date"}
+                  </label>
+                  <Input
+                    type="date"
+                    value={saleForm.signature_date}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      const sub = SUBSCRIPTION_TYPES.find(s => s.value === saleForm.subscription_type);
+                      if (sub && newDate) {
+                        const base = new Date(newDate);
+                        const end = new Date(base);
+                        end.setDate(end.getDate() + sub.durationDays);
+                        setSaleForm(prev => ({
+                          ...prev,
+                          signature_date: newDate,
+                          subscription_end_date: end.toISOString().split("T")[0],
+                        }));
+                      } else {
+                        setSaleForm(prev => ({ ...prev, signature_date: newDate }));
+                      }
+                    }}
+                    className="w-full"
+                    style={{
+                      background: 'var(--color-bg-secondary)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                      fontSize: 'var(--text-xs)',
+                    }}
+                    data-testid="sale-signature-date"
+                  />
+                </div>
+                <div>
+                  <label className="tf-label" style={{ marginBottom: 6, display: 'block', fontSize: 'var(--text-xs)' }}>
+                    {lang === "fr" ? "Date d'expiration" : "Expiration Date"}
+                  </label>
+                  <Input
+                    type="date"
+                    value={saleForm.subscription_end_date}
+                    onChange={(e) => setSaleForm(prev => ({ ...prev, subscription_end_date: e.target.value }))}
+                    className="w-full"
+                    style={{
+                      background: 'var(--color-bg-secondary)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                      fontSize: 'var(--text-xs)',
+                    }}
+                    data-testid="sale-end-date"
+                  />
+                </div>
+              </div>
+
+              {/* Billing Cycle Section */}
+              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <label style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CreditCard size={14} style={{ color: 'var(--color-success)' }} />
+                    {lang === "fr" ? "Facturation recurrente" : "Recurring Billing"}
+                  </label>
+                  <Switch
+                    checked={saleForm.billing_enabled}
+                    onCheckedChange={(v) => setSaleForm(prev => ({ ...prev, billing_enabled: v }))}
+                    data-testid="sale-billing-switch"
+                  />
+                </div>
+
+                {saleForm.billing_enabled && (
+                  <div className="space-y-3 rounded-lg p-3" style={{ background: 'var(--color-bg-secondary)' }}>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', display: 'block', marginBottom: 4 }}>
+                          {lang === "fr" ? "Montant (CHF)" : "Amount (CHF)"}
+                        </label>
+                        <Input
+                          type="number"
+                          value={saleForm.billing_amount}
+                          onChange={(e) => setSaleForm(prev => ({ ...prev, billing_amount: parseFloat(e.target.value) || 0 }))}
+                          className="h-8"
+                          style={{
+                            background: 'var(--color-bg-secondary)',
+                            border: '1px solid var(--color-border)',
+                            color: 'var(--color-text-primary)',
+                          }}
+                          data-testid="sale-billing-amount"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', display: 'block', marginBottom: 4 }}>
+                          {lang === "fr" ? "Methode" : "Method"}
+                        </label>
+                        <Select
+                          value={saleForm.billing_payment_method}
+                          onValueChange={(v) => setSaleForm(prev => ({ ...prev, billing_payment_method: v }))}
+                        >
+                          <SelectTrigger className="h-8" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                            {PAYMENT_METHODS.map(m => (
+                              <SelectItem key={m.value} value={m.value} className="text-white">{m.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', display: 'block', marginBottom: 4 }}>
+                          {lang === "fr" ? "Cycle de facturation" : "Billing Cycle"}
+                        </label>
+                        <Select
+                          value={saleForm.billing_cycle_type}
+                          onValueChange={(v) => setSaleForm(prev => ({ ...prev, billing_cycle_type: v }))}
+                        >
+                          <SelectTrigger className="h-8" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                            {BILLING_CYCLE_TYPES.map(t => (
+                              <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-xs)', display: 'block', marginBottom: 4 }}>
+                          {saleForm.billing_cycle_type === "monthly_day"
+                            ? (lang === "fr" ? "Jour du mois (1-28)" : "Day of month (1-28)")
+                            : (lang === "fr" ? "Intervalle (jours)" : "Interval (days)")}
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={saleForm.billing_cycle_type === "monthly_day" ? 28 : 365}
+                          value={saleForm.billing_cycle_value}
+                          onChange={(e) => setSaleForm(prev => ({ ...prev, billing_cycle_value: parseInt(e.target.value) || 1 }))}
+                          className="h-8"
+                          style={{
+                            background: 'var(--color-bg-secondary)',
+                            border: '1px solid var(--color-border)',
+                            color: 'var(--color-text-primary)',
+                          }}
+                          data-testid="sale-billing-cycle-value"
+                        />
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>
+                      {saleForm.billing_cycle_type === "monthly_day"
+                        ? (lang === "fr" ? `Facture le ${saleForm.billing_cycle_value} de chaque mois` : `Billed on the ${saleForm.billing_cycle_value} of each month`)
+                        : (lang === "fr" ? `Facture tous les ${saleForm.billing_cycle_value} jours` : `Billed every ${saleForm.billing_cycle_value} days`)}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
