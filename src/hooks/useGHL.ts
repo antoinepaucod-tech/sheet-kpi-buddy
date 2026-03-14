@@ -60,21 +60,81 @@ export const useGHL = () => {
   const { toast } = useToast();
 
   const callGHL = useCallback(async (endpoint: string, params?: Record<string, string>) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
+    let lastError: unknown = null;
 
-    const response = await supabase.functions.invoke('ghl-proxy', {
-      body: { endpoint, params },
-    });
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const response = await supabase.functions.invoke('ghl-proxy', {
+          body: { endpoint, params },
+        });
 
-    if (response.error) {
-      // Try to extract useful error details
-      const errorMsg = response.error?.message || 'Unknown error';
-      console.error('GHL proxy error:', errorMsg, response.error);
-      throw new Error(errorMsg);
+        if (response.error) {
+          throw response.error;
+        }
+
+        return response.data;
+      } catch (invokeError) {
+        lastError = invokeError;
+
+        const invokeMessage =
+          invokeError instanceof Error
+            ? invokeError.message
+            : String((invokeError as { message?: string })?.message ?? 'Unknown error');
+
+        const isNetworkError =
+          invokeMessage.toLowerCase().includes('failed to send a request to the edge function') ||
+          invokeMessage.toLowerCase().includes('failed to fetch');
+
+        if (!isNetworkError) {
+          console.error('GHL proxy error:', invokeMessage, invokeError);
+          throw new Error(invokeMessage);
+        }
+
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          };
+
+          if (session?.access_token) {
+            headers.Authorization = `Bearer ${session.access_token}`;
+          }
+
+          const fallbackResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ghl-proxy`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ endpoint, params }),
+          });
+
+          const fallbackData = await fallbackResponse.json().catch(() => null);
+
+          if (!fallbackResponse.ok) {
+            const fallbackErrorMessage =
+              fallbackData?.error ||
+              fallbackData?.details?.message ||
+              fallbackData?.message ||
+              `HTTP ${fallbackResponse.status}`;
+            throw new Error(fallbackErrorMessage);
+          }
+
+          return fallbackData;
+        } catch (fallbackError) {
+          lastError = fallbackError;
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, attempt * 350));
+          }
+        }
+      }
     }
-    
-    return response.data;
+
+    const errorMessage =
+      lastError instanceof Error
+        ? lastError.message
+        : String((lastError as { message?: string })?.message ?? 'Erreur de connexion au service GHL');
+
+    console.error('GHL proxy error:', errorMessage, lastError);
+    throw new Error(errorMessage);
   }, []);
 
   const fetchPipelines = useCallback(async (locationId: string) => {
