@@ -20,6 +20,7 @@ import SixWeeksChallenge from "./pages/SixWeeksChallenge";
 import Auth from "./pages/Auth";
 import UserManagement from "./pages/UserManagement";
 import Inventory from "./pages/Inventory";
+import GoHighLevel from "./pages/GoHighLevel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/tutorial" element={<ProtectedLayout><Tutorial /></ProtectedLayout>} />
             <Route path="/inventory" element={<ProtectedLayout><Inventory /></ProtectedLayout>} />
             <Route path="/users" element={<ProtectedLayout><UserManagement /></ProtectedLayout>} />
+            <Route path="/gohighlevel" element={<ProtectedLayout><GoHighLevel /></ProtectedLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
