@@ -567,6 +567,21 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
                 <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-medium)' }}>
                   {selectedOpp.name}
                 </p>
+                {(selectedOpp.email || selectedOpp.phone) && (
+                  <div className="mt-1.5 space-y-0.5">
+                    {selectedOpp.email && (
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>{selectedOpp.email}</p>
+                    )}
+                    {selectedOpp.phone && (
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>{selectedOpp.phone}</p>
+                    )}
+                  </div>
+                )}
+                {selectedOpp.monetary_value > 0 && (
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-accent)', marginTop: 4 }}>
+                    GHL: {formatCHF(selectedOpp.monetary_value)}
+                  </p>
+                )}
               </div>
 
               <div>

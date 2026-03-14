@@ -6,13 +6,13 @@ import {
 } from "lucide-react";
 
 const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue }) => (
-  <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)]">
+  <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)] overflow-hidden">
     <div className="flex items-center gap-2 mb-1">
       {Icon && <Icon size={12} className="text-[var(--color-text-tertiary)]" />}
-      <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider truncate">{label}</span>
     </div>
-    <p className={`text-lg font-display font-bold ${color}`}>{value}</p>
-    {subValue && <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5">{subValue}</p>}
+    <p className={`text-base font-display font-bold ${color} truncate`} style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</p>
+    {subValue && <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 truncate">{subValue}</p>}
   </div>
 );
 
@@ -135,7 +135,7 @@ export function KPIDetailedView({ kpi, lang }) {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
         <StatBox 
           label={lang === "fr" ? "Membres Actifs" : "Active Members"} 
-          value={formatNum(kpi.total_active_members || kpi.total_members)} 
+          value={formatNum(kpi.active_members || kpi.total_active_members || kpi.total_members)} 
           icon={Users}
           color="text-[var(--color-accent)]"
         />

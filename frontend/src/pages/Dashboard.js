@@ -323,8 +323,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         />
         <KPICard
           label={t("totalMembers")}
-          value={formatNum(current?.total_members)}
-          trend={getTrend(current?.total_members, previous?.total_members)}
+          value={formatNum(current?.active_members || current?.total_active_members || current?.total_members)}
+          trend={getTrend(current?.active_members || current?.total_active_members || current?.total_members, previous?.active_members || previous?.total_active_members || previous?.total_members)}
           vsLabel={t("vsLastMonth")}
           icon={Users}
           data-testid="kpi-members"

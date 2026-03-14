@@ -95,6 +95,18 @@ async def sync_ghl(
     show = total_funnel["showed_sold"] + total_funnel["showed_lost"] + total_funnel["no_showed"]
     close = total_funnel["showed_sold"]
 
+    # Count real active members from DB
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    total_active = await db.customer_members.count_documents({"subscription_end_date": {"$gte": today_str}})
+    pif_count = await db.customer_members.count_documents({
+        "subscription_end_date": {"$gte": today_str},
+        "member_type": "Membres PIF"
+    })
+    recurring_count = await db.customer_members.count_documents({
+        "subscription_end_date": {"$gte": today_str},
+        "member_type": "Membres Généraux Récurrents"
+    })
+
     kpi_update = {
         "leads": leads,
         "scheduled": scheduled,
@@ -105,6 +117,9 @@ async def sync_ghl(
         "sched_percentage": round((scheduled / leads * 100) if leads > 0 else 0, 1),
         "show_percentage": round((show / scheduled * 100) if scheduled > 0 else 0, 1),
         "close_percentage": round((close / show * 100) if show > 0 else 0, 1),
+        "active_members": total_active,
+        "pif_members": pif_count,
+        "recurring_general_members": recurring_count,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -172,42 +187,53 @@ async def confirm_sale(body: dict):
         existing_sale.pop("_id", None)
         return existing_sale
 
-    # 1. Create member record
+    # 1. Check if member already exists (by name to avoid duplicates)
+    existing_member = await db.customer_members.find_one({"name": opportunity_name})
     is_challenge = "challenge" in subscription_type.lower()
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # Determine subscription end date
-    if is_challenge:
-        end_date = (datetime.now(timezone.utc) + timedelta(days=42)).strftime("%Y-%m-%d")
-        member_type = "Membres PIF"
-    elif "annuel" in subscription_type.lower():
-        end_date = (datetime.now(timezone.utc) + timedelta(days=365)).strftime("%Y-%m-%d")
-        member_type = "Membres PIF"
-    elif "6 mois" in subscription_type.lower():
-        end_date = (datetime.now(timezone.utc) + timedelta(days=182)).strftime("%Y-%m-%d")
-        member_type = "Membres PIF"
-    elif "3 mois" in subscription_type.lower():
-        end_date = (datetime.now(timezone.utc) + timedelta(days=91)).strftime("%Y-%m-%d")
-        member_type = "Membres Généraux Récurrents"
+    if existing_member:
+        # Update existing member with GHL data
+        member_id = existing_member["id"]
+        update_fields = {"updated_at": datetime.now(timezone.utc).isoformat()}
+        if contact_email and not existing_member.get("email"):
+            update_fields["email"] = contact_email
+        if contact_phone and not existing_member.get("phone"):
+            update_fields["phone"] = contact_phone
+        await db.customer_members.update_one({"id": member_id}, {"$set": update_fields})
     else:
-        end_date = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
-        member_type = "Membres Généraux Récurrents"
+        # Determine subscription end date
+        if is_challenge:
+            end_date = (datetime.now(timezone.utc) + timedelta(days=42)).strftime("%Y-%m-%d")
+            member_type = "Membres PIF"
+        elif "annuel" in subscription_type.lower():
+            end_date = (datetime.now(timezone.utc) + timedelta(days=365)).strftime("%Y-%m-%d")
+            member_type = "Membres PIF"
+        elif "6 mois" in subscription_type.lower():
+            end_date = (datetime.now(timezone.utc) + timedelta(days=182)).strftime("%Y-%m-%d")
+            member_type = "Membres PIF"
+        elif "3 mois" in subscription_type.lower():
+            end_date = (datetime.now(timezone.utc) + timedelta(days=91)).strftime("%Y-%m-%d")
+            member_type = "Membres Généraux Récurrents"
+        else:
+            end_date = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
+            member_type = "Membres Généraux Récurrents"
 
-    member = CustomerMember(
-        name=opportunity_name,
-        email=contact_email,
-        phone=contact_phone,
-        membership=subscription_type,
-        member_type=member_type,
-        contract_signed_date=today,
-        subscription_end_date=end_date,
-        cash_collected=cash_collected,
-        onboarding_completed=False,
-    )
-    member_doc = member.model_dump()
-    await db.customer_members.insert_one(member_doc)
-    member_id = member_doc["id"]
-    member_doc.pop("_id", None)
+        member = CustomerMember(
+            name=opportunity_name,
+            email=contact_email,
+            phone=contact_phone,
+            membership=subscription_type,
+            member_type=member_type,
+            contract_signed_date=today,
+            subscription_end_date=end_date,
+            cash_collected=cash_collected,
+            onboarding_completed=False,
+        )
+        member_doc = member.model_dump()
+        await db.customer_members.insert_one(member_doc)
+        member_id = member_doc["id"]
+        member_doc.pop("_id", None)
 
     # 2. Auto-add to active 6 Week Challenge if applicable
     challenge_added = False
@@ -253,6 +279,12 @@ async def confirm_sale(body: dict):
         )
         close_count = existing_kpi.get("close", 0)
         new_members_count = existing_kpi.get("new_members", 0) + 1
+
+        # Count actual active members from DB
+        total_active = await db.customer_members.count_documents({
+            "subscription_end_date": {"$gte": datetime.now(timezone.utc).strftime("%Y-%m-%d")}
+        })
+
         await db.monthly_kpis.update_one(
             {"month": month},
             {"$set": {
@@ -260,6 +292,7 @@ async def confirm_sale(body: dict):
                 "fast_cash_revenue": new_fast_cash,
                 "total_revenue": new_total_rev,
                 "new_members": new_members_count,
+                "active_members": total_active,
                 "avg_per_sale": round(new_cash / close_count, 2) if close_count > 0 else new_cash,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }}
