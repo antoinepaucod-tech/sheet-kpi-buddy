@@ -20,6 +20,7 @@ import SixWeeksChallenge from "./pages/SixWeeksChallenge";
 import Auth from "./pages/Auth";
 import UserManagement from "./pages/UserManagement";
 import Inventory from "./pages/Inventory";
+import GoHighLevel from "./pages/GoHighLevel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
