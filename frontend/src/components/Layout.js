@@ -97,10 +97,12 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const [collapsed, setCollapsed] = useState(false);
   const [pendingOnboardingCount, setPendingOnboardingCount] = useState(0);
   const [latePaymentsCount, setLatePaymentsCount] = useState(0);
+  const [upcomingReviewsCount, setUpcomingReviewsCount] = useState(0);
+  const [overdueReviewsCount, setOverdueReviewsCount] = useState(0);
 
   const sections = NAV_SECTIONS(lang);
 
-  // Fetch pending onboarding count for badge
+  // Fetch notification counts for badges
   useEffect(() => {
     const API = process.env.REACT_APP_BACKEND_URL + "/api";
     fetch(`${API}/onboarding/pending`)
@@ -110,6 +112,14 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
     fetch(`${API}/payments/late`)
       .then(r => r.json())
       .then(data => setLatePaymentsCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => {});
+    fetch(`${API}/annual-reviews/upcoming?days=14`)
+      .then(r => r.json())
+      .then(data => setUpcomingReviewsCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => {});
+    fetch(`${API}/annual-reviews/overdue`)
+      .then(r => r.json())
+      .then(data => setOverdueReviewsCount(Array.isArray(data) ? data.length : 0))
       .catch(() => {});
   }, [location.pathname]);
 
@@ -152,6 +162,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                   const isActive = location.pathname === path;
                   const showBadge = path === "/onboarding" && pendingOnboardingCount > 0;
                   const showLateBadge = path === "/payments" && latePaymentsCount > 0;
+                  const showReviewBadges = path === "/annual-reviews";
                   return (
                     <Link
                       key={path}
@@ -180,6 +191,28 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                           {latePaymentsCount}
                         </span>
                       )}
+                      {!collapsed && showReviewBadges && (
+                        <div className="flex items-center gap-1">
+                          {upcomingReviewsCount > 0 && (
+                            <span
+                              className="min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold"
+                              style={{ background: 'var(--color-accent)', color: '#fff', fontSize: '10px', padding: '0 5px' }}
+                              data-testid="upcoming-reviews-badge"
+                            >
+                              {upcomingReviewsCount}
+                            </span>
+                          )}
+                          {overdueReviewsCount > 0 && (
+                            <span
+                              className="min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold"
+                              style={{ background: 'var(--color-danger)', color: '#fff', fontSize: '10px', padding: '0 5px' }}
+                              data-testid="overdue-reviews-badge"
+                            >
+                              {overdueReviewsCount}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {collapsed && showBadge && (
                         <span
                           className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
@@ -187,6 +220,12 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                         />
                       )}
                       {collapsed && showLateBadge && (
+                        <span
+                          className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
+                          style={{ background: 'var(--color-danger)' }}
+                        />
+                      )}
+                      {collapsed && showReviewBadges && overdueReviewsCount > 0 && (
                         <span
                           className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
                           style={{ background: 'var(--color-danger)' }}

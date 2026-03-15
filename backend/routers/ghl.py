@@ -288,13 +288,17 @@ async def confirm_sale(body: dict):
     sale.pop("_id", None)
 
     # 3b. Create accounting transaction for this sale
+    # Find the revenue category for subscriptions
+    rev_cat = await db.accounting_categories.find_one({"type": "revenue", "kpi_column": "revenue_members"})
+    cat_name = rev_cat["name"] if rev_cat else "ABONNEMENTS"
+
     tx_doc = {
         "id": f"ghl-sale-{opportunity_id}",
         "date": signature_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "description": f"Vente {subscription_type} - {opportunity_name}",
         "amount": cash_collected,
-        "type": "income",
-        "category": "VENTES / ABONNEMENTS",
+        "type": "revenue",
+        "category": cat_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     # Avoid duplicates

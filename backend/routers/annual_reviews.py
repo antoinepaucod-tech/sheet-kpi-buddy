@@ -86,6 +86,26 @@ async def get_upcoming_reviews(days: int = 30):
     return docs
 
 
+@router.get("/overdue")
+async def get_overdue_reviews():
+    """Get reviews that are past due date and still scheduled"""
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    docs = await db.annual_reviews.find({
+        "review_date": {"$lt": today},
+        "status": "scheduled"
+    }, {"_id": 0}).sort("review_date", 1).to_list(100)
+
+    for doc in docs:
+        member = await db.customer_members.find_one(
+            {"id": doc["member_id"]}, {"_id": 0, "name": 1}
+        )
+        if member:
+            doc["member_name"] = member.get("name", "")
+
+    return docs
+
+
 @router.get("/{review_id}")
 async def get_review(review_id: str):
     doc = await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
