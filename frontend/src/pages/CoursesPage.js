@@ -15,6 +15,7 @@ import {
   RefreshCw,
   UserCog,
   ListPlus,
+  X,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -498,19 +499,30 @@ export default function CoursesPage() {
                       {course.max_capacity}
                     </Badge>
                   </TableCell>
-                  {[1, 2, 3, 4, 5].map((week) => (
-                    <TableCell key={week} className="text-center">
-                      <Input
-                        type="number"
-                        min="0"
-                        max={course.max_capacity}
-                        value={course[`week${week}_attendance`] || 0}
-                        onChange={(e) => handleAttendanceChange(course, week, e.target.value)}
-                        className="w-12 h-8 text-center bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white p-1"
-                        data-testid={`attendance-w${week}-${course.id}`}
-                      />
-                    </TableCell>
-                  ))}
+                  {[1, 2, 3, 4, 5].map((week) => {
+                    const weekInstructor = course[`week${week}_instructor`];
+                    const isOverridden = weekInstructor && weekInstructor !== course.instructor;
+                    return (
+                      <TableCell key={week} className="text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <Input
+                            type="number"
+                            min="0"
+                            max={course.max_capacity}
+                            value={course[`week${week}_attendance`] || 0}
+                            onChange={(e) => handleAttendanceChange(course, week, e.target.value)}
+                            className={`w-12 h-8 text-center bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white p-1 ${isOverridden ? 'border-[rgba(255,214,10,0.4)]' : ''}`}
+                            data-testid={`attendance-w${week}-${course.id}`}
+                          />
+                          {isOverridden && (
+                            <span className="text-[8px] text-[var(--color-warning)] truncate max-w-[50px]" title={weekInstructor}>
+                              {weekInstructor.split(" ")[0]}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                    );
+                  })}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Progress value={course.attendance_rate} className="w-16 h-2 bg-[rgba(255,255,255,0.1)]" />
@@ -756,89 +768,76 @@ export default function CoursesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Replace Coach Modal */}
+      {/* Replace Coach Modal - Per Week */}
       <Dialog open={replaceModalOpen} onOpenChange={setReplaceModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg bg-[var(--color-bg-primary)] border-[var(--color-border)]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-white">
               <UserCog className="text-[var(--color-warning)]" size={20} />
-              Remplacer le coach
+              Remplacer le coach par semaine
             </DialogTitle>
           </DialogHeader>
           {selectedCourse && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-2">
               <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                 <p className="text-white font-medium">{selectedCourse.course_name}</p>
                 <p className="text-[var(--color-text-secondary)] text-sm">
-                  {selectedCourse.day_of_week} à {selectedCourse.time_slot}
-                </p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">
-                  Coach actuel : {selectedCourse.instructor || getCoachName(selectedCourse.coach_id) || "-"}
+                  {selectedCourse.day_of_week} à {selectedCourse.time_slot} — Coach principal : <span className="text-[var(--color-accent)]">{selectedCourse.instructor || "-"}</span>
                 </p>
               </div>
-              <div>
-                <label className="tf-stat-label">Coach de remplacement *</label>
-                <Select 
-                  value={replaceData.replacement_coach_id} 
-                  onValueChange={(v) => setReplaceData({ ...replaceData, replacement_coach_id: v })}
-                >
-                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
-                    <SelectValue placeholder="Sélectionner..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                    {coaches.filter(c => c.id !== selectedCourse.coach_id).map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-white">
-                        {c.name} ({c.hourly_rate} CHF/h)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5].map((week) => {
+                  const override = selectedCourse[`week${week}_instructor`];
+                  const isOverridden = override && override !== selectedCourse.instructor;
+                  return (
+                    <div key={week} className="flex items-center gap-3 p-2 rounded-[var(--radius-md)] bg-[var(--color-bg-secondary)]" data-testid={`replace-week-${week}`}>
+                      <span className="text-xs font-bold text-[var(--color-text-secondary)] w-8">S{week}</span>
+                      <Select
+                        value={override || selectedCourse.instructor || ""}
+                        onValueChange={(v) => {
+                          const val = v === selectedCourse.instructor ? null : v;
+                          updateMutation.mutate({
+                            id: selectedCourse.id,
+                            data: { [`week${week}_instructor`]: val }
+                          });
+                          setSelectedCourse(prev => ({ ...prev, [`week${week}_instructor`]: val }));
+                        }}
+                      >
+                        <SelectTrigger className={`flex-1 h-8 text-sm border-[var(--color-border)] ${isOverridden ? 'bg-[rgba(255,214,10,0.08)] text-[var(--color-warning)] border-[rgba(255,214,10,0.3)]' : 'bg-[var(--color-bg-primary)] text-white'}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                          {coaches.map(c => (
+                            <SelectItem key={c.id} value={c.name} className="text-white">{c.name} ({c.hourly_rate} CHF/h)</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {isOverridden && (
+                        <button
+                          onClick={() => {
+                            updateMutation.mutate({
+                              id: selectedCourse.id,
+                              data: { [`week${week}_instructor`]: null }
+                            });
+                            setSelectedCourse(prev => ({ ...prev, [`week${week}_instructor`]: null }));
+                          }}
+                          className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
+                          title="Réinitialiser au coach principal"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <div>
-                <label className="tf-stat-label">Date du remplacement *</label>
-                <Input
-                  type="date"
-                  value={replaceData.date}
-                  onChange={(e) => setReplaceData({ ...replaceData, date: e.target.value })}
-                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
-                />
-              </div>
-              <div>
-                <label className="tf-stat-label">Raison</label>
-                <Select 
-                  value={replaceData.reason} 
-                  onValueChange={(v) => setReplaceData({ ...replaceData, reason: v })}
-                >
-                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
-                    <SelectValue placeholder="Sélectionner..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                    <SelectItem value="maladie" className="text-white">Maladie</SelectItem>
-                    <SelectItem value="absence" className="text-white">Absence</SelectItem>
-                    <SelectItem value="conge" className="text-white">Congé</SelectItem>
-                    <SelectItem value="autre" className="text-white">Autre</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <p className="text-xs text-[var(--color-text-tertiary)]">
+                Les semaines modifiées sont surlignées en jaune. Cliquez sur ✕ pour revenir au coach principal.
+              </p>
             </div>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setReplaceModalOpen(false)}>Annuler</Button>
-            <Button
-              onClick={() => {
-                replaceMutation.mutate({
-                  course_id: selectedCourse?.id,
-                  original_coach_id: selectedCourse?.coach_id || "",
-                  replacement_coach_id: replaceData.replacement_coach_id,
-                  date: replaceData.date,
-                  reason: replaceData.reason,
-                });
-              }}
-              disabled={!replaceData.replacement_coach_id || !replaceData.date || replaceMutation.isPending}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
-            >
-              {replaceMutation.isPending ? "..." : "Confirmer le remplacement"}
-            </Button>
+            <Button variant="ghost" onClick={() => setReplaceModalOpen(false)} className="text-white">Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

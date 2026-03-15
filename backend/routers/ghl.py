@@ -287,6 +287,22 @@ async def confirm_sale(body: dict):
     await db.ghl_sales.insert_one(sale)
     sale.pop("_id", None)
 
+    # 3b. Create accounting transaction for this sale
+    tx_doc = {
+        "id": f"ghl-sale-{opportunity_id}",
+        "date": signature_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "description": f"Vente {subscription_type} - {opportunity_name}",
+        "amount": cash_collected,
+        "type": "income",
+        "category": "VENTES / ABONNEMENTS",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    # Avoid duplicates
+    existing_tx = await db.accounting_transactions.find_one({"id": tx_doc["id"]})
+    if not existing_tx:
+        await db.accounting_transactions.insert_one(tx_doc)
+        tx_doc.pop("_id", None)
+
     # 4. Update KPI: cash_collected + fast_cash_revenue + total_revenue
     existing_kpi = await db.monthly_kpis.find_one({"month": month})
     if existing_kpi:

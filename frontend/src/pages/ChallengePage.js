@@ -221,12 +221,12 @@ export default function ChallengePage() {
     const totalParticipants = participants.length;
     const goal = challengeDetail.checkins_goal || 3;
     
-    // A week is "completed" if check-ins >= goal (from trainings or manual)
+    // A week is "completed" if check-ins >= goal (from trainings or manual only)
     const isWeekComplete = (p, w) => {
       const trainings = p[`week${w}_trainings`] || 0;
       const manual = p[`week${w}_checkins`] || 0;
       const checkins = Math.max(trainings, manual);
-      return checkins >= goal || p[`week${w}`];
+      return checkins >= goal;
     };
     
     const weeklyStats = WEEKS.map((w) => ({
@@ -488,7 +488,7 @@ export default function ChallengePage() {
                           {WEEKS.map((week) => {
                             const checkins = getWeeklyCheckins(participant, week);
                             const goal = challengeDetail.checkins_goal || 3;
-                            const isComplete = checkins >= goal || participant[`week${week}`];
+                            const isComplete = checkins >= goal;
                             return (
                               <div
                                 key={week}

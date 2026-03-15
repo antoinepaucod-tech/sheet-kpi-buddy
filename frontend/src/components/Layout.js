@@ -96,6 +96,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [pendingOnboardingCount, setPendingOnboardingCount] = useState(0);
+  const [latePaymentsCount, setLatePaymentsCount] = useState(0);
 
   const sections = NAV_SECTIONS(lang);
 
@@ -105,6 +106,10 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
     fetch(`${API}/onboarding/pending`)
       .then(r => r.json())
       .then(data => setPendingOnboardingCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => {});
+    fetch(`${API}/payments/late`)
+      .then(r => r.json())
+      .then(data => setLatePaymentsCount(Array.isArray(data) ? data.length : 0))
       .catch(() => {});
   }, [location.pathname]);
 
@@ -146,6 +151,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                 {section.items.map(({ path, icon: Icon, label }) => {
                   const isActive = location.pathname === path;
                   const showBadge = path === "/onboarding" && pendingOnboardingCount > 0;
+                  const showLateBadge = path === "/payments" && latePaymentsCount > 0;
                   return (
                     <Link
                       key={path}
@@ -165,10 +171,25 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                           {pendingOnboardingCount}
                         </span>
                       )}
+                      {!collapsed && showLateBadge && (
+                        <span
+                          className="min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold"
+                          style={{ background: 'var(--color-danger)', color: '#fff', fontSize: '10px', padding: '0 5px' }}
+                          data-testid="late-payments-badge"
+                        >
+                          {latePaymentsCount}
+                        </span>
+                      )}
                       {collapsed && showBadge && (
                         <span
                           className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
                           style={{ background: 'var(--color-accent)' }}
+                        />
+                      )}
+                      {collapsed && showLateBadge && (
+                        <span
+                          className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
+                          style={{ background: 'var(--color-danger)' }}
                         />
                       )}
                     </Link>
