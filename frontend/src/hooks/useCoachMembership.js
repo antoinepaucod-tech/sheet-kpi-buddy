@@ -1,10 +1,18 @@
-export function useCoachMembership(transactions) {
+export function useCoachMembership(transactions, categories = []) {
+  // Build category-to-kpi mapping
+  const revMemberCats = new Set();
+  const revCoachCats = new Set();
+  for (const cat of categories) {
+    if (cat.kpi_column === "revenue_members") revMemberCats.add(cat.name);
+    if (cat.kpi_column === "revenue_coaching") revCoachCats.add(cat.name);
+  }
+
   const memberRevenue = transactions
-    .filter((tx) => tx.type === "revenue" && tx.sub_type === "members")
+    .filter((tx) => tx.type === "revenue" && (revMemberCats.has(tx.category) || tx.sub_type === "members"))
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const coachRevenue = transactions
-    .filter((tx) => tx.type === "revenue" && tx.sub_type === "coaching")
+    .filter((tx) => tx.type === "revenue" && (revCoachCats.has(tx.category) || tx.sub_type === "coaching"))
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const totalRevenue = memberRevenue + coachRevenue;

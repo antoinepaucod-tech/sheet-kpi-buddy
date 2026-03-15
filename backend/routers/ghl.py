@@ -312,12 +312,8 @@ async def confirm_sale(body: dict):
     if existing_kpi:
         new_cash = existing_kpi.get("cash_collected", 0) + cash_collected
         new_fast_cash = existing_kpi.get("fast_cash_revenue", 0) + cash_collected
-        new_total_rev = (
-            existing_kpi.get("general_eft_revenue", 0) +
-            existing_kpi.get("pt_revenue", 0) +
-            existing_kpi.get("retail_revenue", 0) +
-            new_fast_cash
-        )
+        new_rev_members = existing_kpi.get("revenue_members", 0) + cash_collected
+        new_total_rev = new_rev_members + existing_kpi.get("revenue_coaching", 0)
         close_count = existing_kpi.get("close", 0)
         new_members_count = existing_kpi.get("new_members", 0) + 1
 
@@ -331,6 +327,7 @@ async def confirm_sale(body: dict):
             {"$set": {
                 "cash_collected": new_cash,
                 "fast_cash_revenue": new_fast_cash,
+                "revenue_members": new_rev_members,
                 "total_revenue": new_total_rev,
                 "new_members": new_members_count,
                 "active_members": total_active,

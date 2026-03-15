@@ -54,7 +54,7 @@ const translations = {
     "section.churnRates": "Taux de Désabonnement (Churn)",
     "section.financialSummary": "Résumé Financier",
     // Chart labels
-    revenueMembers: "Cotisations",
+    revenueMembers: "Abonnements",
     revenueCoaching: "Coaching",
     expenses: "Dépenses",
     profit: "Bénéfice",

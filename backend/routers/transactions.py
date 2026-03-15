@@ -49,7 +49,8 @@ async def delete_transaction(transaction_id: str):
         description=tx.get('description', ''),
         amount=tx.get('amount', 0),
         type=tx.get('type', 'expense'),
-        sub_type=tx.get('sub_type')
+        sub_type=tx.get('sub_type'),
+        date=tx.get('date'),
     )
     await db.excluded_recurring_expenses.insert_one(excl.model_dump())
     await db.accounting_transactions.delete_one({"id": transaction_id})
@@ -120,10 +121,26 @@ async def get_excluded():
 
 @router.delete("/excluded/{excluded_id}")
 async def remove_from_exclusions(excluded_id: str):
-    result = await db.excluded_recurring_expenses.delete_one({"id": excluded_id})
-    if result.deleted_count == 0:
+    # Find the excluded record first
+    excl = await db.excluded_recurring_expenses.find_one({"id": excluded_id}, {"_id": 0})
+    if not excl:
         raise HTTPException(status_code=404, detail="Exclusion introuvable")
-    return {"message": "Exclusion supprimée"}
+
+    # Restore the transaction back to accounting_transactions
+    restored_tx = AccountingTransaction(
+        date=excl.get("date", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+        description=excl.get("description", ""),
+        amount=excl.get("amount", 0),
+        type=excl.get("type", "expense"),
+        category=excl.get("category", ""),
+    )
+    doc = restored_tx.model_dump()
+    await db.accounting_transactions.insert_one(doc)
+    doc.pop("_id", None)
+
+    # Remove from exclusions
+    await db.excluded_recurring_expenses.delete_one({"id": excluded_id})
+    return {"message": "Transaction restaurée", "transaction": doc}
 
 
 # ── Recurring Transactions ────────────────────────────────────────────────────

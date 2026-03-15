@@ -1,0 +1,78 @@
+{
+  "summary": "Iteration 39 - ALL FEATURES VERIFIED. Testing key fixes: 1) Transaction exclusion restore, 2) GHL sales create revenue transactions with ABONNEMENTS category, 3) Dashboard dynamic revenue calculation, 4) Label changed from Cotisations to Abonnements, 5) Sidebar badges working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/health", "issue": "Returns 404 - endpoint may not exist (non-critical)"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "dashboard_kpis": {
+      "total_revenue": "PASS - Shows 1'947.00 CHF",
+      "net_profit": "PASS - Shows 1'597.00 CHF",
+      "profit_margin": "PASS - Shows 82.0%",
+      "expenses_in_chart": "PASS - Shows 350.00 CHF"
+    },
+    "transactions_page": {
+      "abonnements_card": "PASS - Shows 1'947.00 CHF (not COTISATIONS - label correctly changed)",
+      "depenses_card": "PASS - Shows 350.00 CHF",
+      "coaching_card": "PASS - Shows 0.00 CHF",
+      "total_revenue_card": "PASS - Shows 1'947.00 CHF"
+    },
+    "ghl_transactions": {
+      "count": "PASS - 4 GHL sale transactions visible",
+      "type": "PASS - All have type 'REVENU' (not 'income')",
+      "category": "PASS - All have category 'ABONNEMENTS'"
+    },
+    "caroline_maerten_transaction": {
+      "visible": "PASS - 'Vente 6 Week Challenge - Caroline Maerten' visible",
+      "amount": "PASS - Shows +599.00 CHF"
+    },
+    "remove_from_exclusions": {
+      "api": "PASS - DELETE /api/excluded/{id} returns restored transaction",
+      "response_message": "PASS - Returns 'Transaction restaurée' with transaction object"
+    },
+    "recalculate_kpi": {
+      "api": "PASS - POST /api/monthly-kpis/2026-03/recalculate returns correct totals",
+      "dynamic_calculation": "PASS - Sums revenue/expense columns from categories"
+    },
+    "sidebar_badges": {
+      "paiements": "PASS - RED badge showing '2' (late payments)",
+      "bilans_suivis": "PASS - BLUE badge '1' (upcoming/cette semaine) + RED badge '1' (overdue/en retard)",
+      "onboarding": "PASS - BLUE badge showing '9'"
+    },
+    "annual_reviews_endpoints": {
+      "overdue": "PASS - GET /api/annual-reviews/overdue returns overdue reviews",
+      "upcoming": "PASS - GET /api/annual-reviews/upcoming?days=14 returns upcoming reviews"
+    },
+    "label_change": {
+      "cotisations_to_abonnements": "PASS - Label changed from 'Cotisations' to 'Abonnements' in dashboard chart and transactions page"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration39_features.py",
+    "/app/test_reports/pytest/pytest_results_iter39.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration39_features.py"
+  ],
+  "success_rate": {
+    "backend": "92% (11/12 passed, 1 minor skip - health endpoint 404)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "email": "test@crossfit.ch",
+    "password": "test123"
+  },
+  "seed_data_creation": "Backend tests use TEST_ prefixed data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iteration 39 features verified: 1) Dashboard shows Revenue 1947 CHF, Expenses 350 CHF, Net Profit 1597 CHF, Margin 82%. 2) Transactions page shows ABONNEMENTS card with 1947 CHF (not COTISATIONS). 3) All 4 GHL transactions have type='revenue' and category='ABONNEMENTS'. 4) Caroline Maerten +599 CHF transaction visible. 5) Remove from exclusions restores transaction. 6) Recalculate KPI dynamically sums from categories. 7) Sidebar badges: Paiements RED(2), Bilans/Suivis BLUE(1)+RED(1), Onboarding BLUE(9). 8) Annual reviews overdue/upcoming endpoints working. Current data: 5 transactions (4 revenue, 1 expense), 1 excluded transaction."
+}

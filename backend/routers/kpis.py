@@ -91,29 +91,49 @@ async def update_note(month: str, body: dict):
 @router.post("/{month}/recalculate")
 async def recalculate_month(month: str):
     cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
-    cat_map = {c["name"]: c["kpi_column"] for c in cats}
+    cat_map = {c["name"]: c for c in cats}
+
     txs = await db.accounting_transactions.find(
         {"date": {"$regex": f"^{month}"}}, {"_id": 0}
     ).to_list(1000)
-    if not txs:
-        raise HTTPException(status_code=404, detail="Aucune transaction pour ce mois")
+
     existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
-    totals = {}
+
+    # Calculate totals per kpi_column from transactions
+    totals_by_col = {}
     for tx in txs:
-        col = cat_map.get(tx["category"])
-        if col:
-            totals[col] = totals.get(col, 0) + tx["amount"]
+        cat_info = cat_map.get(tx["category"])
+        if cat_info and cat_info.get("kpi_column"):
+            col = cat_info["kpi_column"]
+            totals_by_col[col] = totals_by_col.get(col, 0) + tx["amount"]
+
     merged = dict(existing)
-    for col, val in totals.items():
-        if val > 0:
-            merged[col] = val
-    total_revenue = merged.get("revenue_members", 0) + merged.get("revenue_coaching", 0)
-    total_expenses = sum(merged.get(k, 0) for k in ["loyer", "salaires", "utilities", "marketing_spend", "ad_spend", "other_expenses"])
+    for col, val in totals_by_col.items():
+        merged[col] = val
+
+    # Dynamically sum revenue and expense columns based on category types
+    revenue_cols = set()
+    expense_cols = set()
+    for c in cats:
+        kpi_col = c.get("kpi_column")
+        if kpi_col:
+            if c["type"] == "revenue":
+                revenue_cols.add(kpi_col)
+            elif c["type"] == "expense":
+                expense_cols.add(kpi_col)
+
+    total_revenue_from_tx = sum(merged.get(col, 0) for col in revenue_cols)
+    total_expenses_from_tx = sum(merged.get(col, 0) for col in expense_cols)
+
+    # Revenue: use transactions if available, else fallback to fast_cash_revenue
+    fast_cash = merged.get("fast_cash_revenue", 0)
+    total_revenue = max(total_revenue_from_tx, fast_cash) if total_revenue_from_tx == 0 else total_revenue_from_tx
+
     update = {
-        **{k: merged[k] for k in totals if totals[k] > 0},
+        **{col: totals_by_col[col] for col in totals_by_col},
         "total_revenue": total_revenue,
-        "total_expenses": total_expenses,
-        "net_profit": total_revenue - total_expenses,
+        "total_expenses": total_expenses_from_tx,
+        "net_profit": total_revenue - total_expenses_from_tx,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.monthly_kpis.update_one({"month": month}, {"$set": update})

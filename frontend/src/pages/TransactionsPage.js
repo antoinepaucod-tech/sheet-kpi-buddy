@@ -55,7 +55,7 @@ export default function TransactionsPage({ selectedMonth }) {
   const { transactions, categories, excluded, loading, refetch, addTransaction, deleteTransaction, removeFromExclusions } =
     useAccountingTransactions(filterMonth || null);
 
-  const { memberRevenue, coachRevenue } = useCoachMembership(transactions);
+  const { memberRevenue, coachRevenue } = useCoachMembership(transactions, categories);
 
   const filtered = transactions.filter((tx) => {
     if (filterType && filterType !== "all" && tx.type !== filterType) return false;

@@ -48,6 +48,7 @@ class ExcludedRecurringExpense(BaseModel):
     amount: float
     type: str = "expense"
     sub_type: Optional[str] = None
+    date: Optional[str] = None
     excluded_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
