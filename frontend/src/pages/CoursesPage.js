@@ -14,6 +14,7 @@ import {
   Copy,
   RefreshCw,
   UserCog,
+  ListPlus,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -83,6 +84,8 @@ export default function CoursesPage() {
     date: "",
     reason: "",
   });
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkRows, setBulkRows] = useState([]);
 
   // Fetch courses
   const { data: courses = [], isLoading } = useQuery({
@@ -128,6 +131,10 @@ export default function CoursesPage() {
       queryClient.invalidateQueries(["courses"]);
       setEditModalOpen(false);
       toast.success("Cours mis à jour");
+      // Auto-sync salary after attendance change
+      setTimeout(() => {
+        axios.post(`${API}/courses/generate-salary-expenses/${selectedYear}/${selectedMonth}`).catch(() => {});
+      }, 500);
     },
     onError: () => toast.error("Erreur"),
   });
@@ -155,9 +162,29 @@ export default function CoursesPage() {
   const generateSalaryMutation = useMutation({
     mutationFn: () => axios.post(`${API}/courses/generate-salary-expenses/${selectedYear}/${selectedMonth}`),
     onSuccess: (res) => {
+      queryClient.invalidateQueries(["transactions"]);
+      queryClient.invalidateQueries(["monthly-kpis"]);
       toast.success(res.data.message);
     },
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la génération"),
+  });
+
+  // Bulk create courses
+  const bulkCreateMutation = useMutation({
+    mutationFn: (rows) => axios.post(`${API}/courses/bulk`, rows),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries(["courses"]);
+      setBulkModalOpen(false);
+      setBulkRows([]);
+      toast.success(res.data.message);
+      // Auto-sync salary
+      setTimeout(() => {
+        axios.post(`${API}/courses/generate-salary-expenses/${selectedYear}/${selectedMonth}`).then(() => {
+          queryClient.invalidateQueries(["transactions"]);
+        }).catch(() => {});
+      }, 500);
+    },
+    onError: () => toast.error("Erreur lors de la création en lot"),
   });
 
   // Create coach replacement
@@ -198,6 +225,44 @@ export default function CoursesPage() {
       max_capacity: 12,
     });
     setModalOpen(true);
+  };
+
+  const openBulkModal = () => {
+    const defaultCoach = coaches[0];
+    setBulkRows([
+      { day_of_week: "Lundi", time_slot: "07:00", course_name: "", instructor: defaultCoach?.name || "", max_capacity: 12 },
+      { day_of_week: "Lundi", time_slot: "18:00", course_name: "", instructor: defaultCoach?.name || "", max_capacity: 12 },
+      { day_of_week: "Mardi", time_slot: "07:00", course_name: "", instructor: defaultCoach?.name || "", max_capacity: 12 },
+    ]);
+    setBulkModalOpen(true);
+  };
+
+  const addBulkRow = () => {
+    const defaultCoach = coaches[0];
+    setBulkRows(prev => [...prev, { day_of_week: "Lundi", time_slot: "07:00", course_name: "", instructor: defaultCoach?.name || "", max_capacity: 12 }]);
+  };
+
+  const updateBulkRow = (index, field, value) => {
+    setBulkRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
+  };
+
+  const removeBulkRow = (index) => {
+    setBulkRows(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const submitBulk = () => {
+    const validRows = bulkRows.filter(r => r.course_name.trim());
+    if (validRows.length === 0) return;
+    const payload = validRows.map(r => ({
+      year: selectedYear,
+      month: selectedMonth,
+      day_of_week: r.day_of_week,
+      time_slot: r.time_slot,
+      course_name: r.course_name,
+      instructor: r.instructor,
+      max_capacity: r.max_capacity,
+    }));
+    bulkCreateMutation.mutate(payload);
   };
 
   const openEditModal = (course) => {
@@ -257,6 +322,15 @@ export default function CoursesPage() {
             <Copy size={16} className="mr-2" />
             {copyPlanningMutation.isPending ? "..." : "Copier mois précédent"}
           </Button>
+          <Button
+            onClick={openBulkModal}
+            variant="outline"
+            className="border-[rgba(100,210,255,0.2)] text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[rgba(100,210,255,0.08)]"
+            data-testid="bulk-add-btn"
+          >
+            <ListPlus size={16} className="mr-2" />
+            Planifier la semaine
+          </Button>
           <Button onClick={openAddModal} className="bg-[var(--color-accent)] hover:opacity-85" data-testid="add-course-btn">
             <Plus size={16} className="mr-2" />
             {lang === "fr" ? "Ajouter un cours" : "Add course"}
@@ -286,7 +360,7 @@ export default function CoursesPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-            {[2023, 2024, 2025].map((y) => (
+            {[2023, 2024, 2025, 2026].map((y) => (
               <SelectItem key={y} value={y.toString()} className="text-white">{y}</SelectItem>
             ))}
           </SelectContent>
@@ -625,7 +699,10 @@ export default function CoursesPage() {
                       <SelectValue placeholder="Sélectionner..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                      {instructors.map((i) => (
+                      {coaches.map((c) => (
+                        <SelectItem key={c.id} value={c.name} className="text-white">{c.name} ({c.hourly_rate} CHF/h)</SelectItem>
+                      ))}
+                      {instructors.filter(i => !coaches.find(c => c.name === i.name)).map((i) => (
                         <SelectItem key={i.id} value={i.name} className="text-white">{i.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -696,7 +773,7 @@ export default function CoursesPage() {
                   {selectedCourse.day_of_week} à {selectedCourse.time_slot}
                 </p>
                 <p className="text-[var(--color-text-secondary)] text-sm mt-1">
-                  Coach actuel : {selectedCourse.instructor || selectedCourse.instructor_name || getCoachName(selectedCourse.coach_id) || "-"}
+                  Coach actuel : {selectedCourse.instructor || getCoachName(selectedCourse.coach_id) || "-"}
                 </p>
               </div>
               <div>
@@ -762,6 +839,102 @@ export default function CoursesPage() {
             >
               {replaceMutation.isPending ? "..." : "Confirmer le remplacement"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Planning Modal */}
+      <Dialog open={bulkModalOpen} onOpenChange={setBulkModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-[var(--color-bg-primary)] border-[var(--color-border)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <ListPlus className="text-[var(--color-info)]" size={20} />
+              Planifier la semaine — {MONTHS_FR[selectedMonth - 1]} {selectedYear}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {/* Column headers */}
+            <div className="grid grid-cols-[130px_100px_1fr_180px_70px_40px] gap-2 text-[var(--color-text-secondary)] text-xs uppercase px-1">
+              <span>Jour</span>
+              <span>Horaire</span>
+              <span>Nom du cours</span>
+              <span>Coach</span>
+              <span>Cap.</span>
+              <span></span>
+            </div>
+            {bulkRows.map((row, idx) => (
+              <div key={idx} className="grid grid-cols-[130px_100px_1fr_180px_70px_40px] gap-2 items-center" data-testid={`bulk-row-${idx}`}>
+                <Select value={row.day_of_week} onValueChange={(v) => updateBulkRow(idx, "day_of_week", v)}>
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    {DAYS_FR.map(d => <SelectItem key={d} value={d} className="text-white">{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={row.time_slot} onValueChange={(v) => updateBulkRow(idx, "time_slot", v)}>
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    {TIME_SLOTS.map(t => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={row.course_name}
+                  onChange={(e) => updateBulkRow(idx, "course_name", e.target.value)}
+                  placeholder="Nom du cours..."
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm"
+                  data-testid={`bulk-course-name-${idx}`}
+                />
+                <Select value={row.instructor} onValueChange={(v) => updateBulkRow(idx, "instructor", v)}>
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm">
+                    <SelectValue placeholder="Coach..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    {coaches.map(c => <SelectItem key={c.id} value={c.name} className="text-white">{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={row.max_capacity}
+                  onChange={(e) => updateBulkRow(idx, "max_capacity", parseInt(e.target.value) || 12)}
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm text-center"
+                />
+                <button
+                  onClick={() => removeBulkRow(idx)}
+                  className="text-[var(--color-danger)] hover:text-red-400 transition-colors h-9 flex items-center justify-center"
+                  data-testid={`bulk-remove-${idx}`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={addBulkRow}
+              className="w-full border border-dashed border-[var(--color-border)] rounded-[var(--radius-md)] py-2 text-[var(--color-text-secondary)] hover:text-[var(--color-info)] hover:border-[var(--color-info)] transition-colors text-sm flex items-center justify-center gap-1"
+              data-testid="bulk-add-row"
+            >
+              <Plus size={14} /> Ajouter une ligne
+            </button>
+          </div>
+          <DialogFooter className="flex items-center justify-between">
+            <p className="text-[var(--color-text-secondary)] text-xs">
+              {bulkRows.filter(r => r.course_name.trim()).length} cours à créer
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setBulkModalOpen(false)} className="text-white">Annuler</Button>
+              <Button
+                onClick={submitBulk}
+                disabled={bulkRows.filter(r => r.course_name.trim()).length === 0 || bulkCreateMutation.isPending}
+                className="bg-[var(--color-accent)] hover:opacity-85"
+                data-testid="bulk-submit-btn"
+              >
+                {bulkCreateMutation.isPending ? "Création..." : `Créer ${bulkRows.filter(r => r.course_name.trim()).length} cours`}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

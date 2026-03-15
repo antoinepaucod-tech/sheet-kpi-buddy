@@ -40,6 +40,20 @@ async def create_course(data: CourseKPICreate):
     return doc
 
 
+@router.post("/courses/bulk")
+async def bulk_create_courses(courses_data: list[CourseKPICreate]):
+    """Create multiple courses at once."""
+    created = []
+    for data in courses_data:
+        month_name = MONTHS_FR[data.month - 1] if 1 <= data.month <= 12 else ""
+        course = CourseKPI(**data.model_dump(), month_name=month_name)
+        doc = course.model_dump()
+        await db.course_kpis.insert_one(doc)
+        doc.pop('_id', None)
+        created.append(doc)
+    return {"message": f"{len(created)} cours créés", "created": len(created), "courses": created}
+
+
 @router.put("/courses/{course_id}")
 async def update_course(course_id: str, body: dict):
     existing = await db.course_kpis.find_one({"id": course_id})
