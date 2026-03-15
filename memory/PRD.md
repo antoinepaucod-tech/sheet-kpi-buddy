@@ -30,13 +30,18 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - Monthly KPIs, Members, Transactions, Payments, Course KPIs, Sessions
 - Client KPIs, Coaches, Bilans/Suivis, Recurring payments, Email via Resend
 - PDF Report export
-- **ResizeObserver fix** - 3-layer suppression (CRACO runtimeErrors + monkey-patch + error handler) [2026-03-14]
-- **Dynamic subscription types** - Membership types from DB, used in MembersPage + GHLFunnelSection [2026-03-14]
-- **Settings Types page** - Full CRUD for membership and member types [2026-03-14]
-- **Auto-generate bilans mensuels** - Button on Bilans/Suivis page, creates monthly check-ins for non-challenge members [2026-03-14]
-- **Course KPIs to salary expenses** - Fixed instructor field bug, improved salary generation with coach_id fallback [2026-03-14]
+- ResizeObserver fix - 3-layer suppression (CRACO runtimeErrors + monkey-patch + error handler) [2026-03-14]
+- Dynamic subscription types - Membership types from DB, used in MembersPage + GHLFunnelSection [2026-03-14]
+- Settings Types page - Full CRUD for membership and member types [2026-03-14]
+- Auto-generate bilans mensuels - Button on Bilans/Suivis page [2026-03-14]
+- Course KPIs to salary expenses - Fixed instructor field bug [2026-03-14]
+- **Bulk course creation** - "Planifier la semaine" dialog with multi-row form, POST /api/courses/bulk [2026-03-15]
+- **Auto-sync salaires** - Salary transactions auto-regenerate on attendance change [2026-03-15]
+- **Fix edit modal** - Instructor dropdown shows coaches (Antoine) instead of legacy instructors only [2026-03-15]
+- **Fix year selector** - Includes 2026 [2026-03-15]
 
 ## Test Reports
+- iteration_36.json: 100% (bulk creation + auto-sync salary + edit modal + year selector)
 - iteration_35.json: 100% (bilans auto-generate + salary generation)
 - iteration_34.json: 100% (ResizeObserver + dynamic types + Settings CRUD)
 
