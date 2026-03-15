@@ -14,6 +14,63 @@ from models.transactions import (
 router = APIRouter(tags=["transactions"])
 
 
+async def _auto_recalculate_kpis(tx_date: str):
+    """Auto-recalculate KPIs for the month of the given transaction date."""
+    if not tx_date or len(tx_date) < 7:
+        return
+    month = tx_date[:7]  # "YYYY-MM"
+
+    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+    cat_map = {c["name"]: c for c in cats}
+
+    txs = await db.accounting_transactions.find(
+        {"date": {"$regex": f"^{month}"}}, {"_id": 0}
+    ).to_list(1000)
+
+    existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
+
+    # Sum by kpi_column
+    totals_by_col = {}
+    for tx in txs:
+        cat_info = cat_map.get(tx.get("category"))
+        if cat_info and cat_info.get("kpi_column"):
+            col = cat_info["kpi_column"]
+            totals_by_col[col] = totals_by_col.get(col, 0) + tx["amount"]
+
+    merged = dict(existing)
+    for col, val in totals_by_col.items():
+        merged[col] = val
+    # Zero out kpi_columns that have no transactions anymore
+    for c in cats:
+        kpi_col = c.get("kpi_column")
+        if kpi_col and kpi_col not in totals_by_col:
+            merged[kpi_col] = 0
+
+    revenue_cols = {c["kpi_column"] for c in cats if c.get("kpi_column") and c["type"] == "revenue"}
+    expense_cols = {c["kpi_column"] for c in cats if c.get("kpi_column") and c["type"] == "expense"}
+
+    total_rev_tx = sum(merged.get(col, 0) for col in revenue_cols)
+    fast_cash = merged.get("fast_cash_revenue", 0)
+    total_revenue = total_rev_tx if total_rev_tx > 0 else fast_cash
+    total_expenses = sum(merged.get(col, 0) for col in expense_cols)
+
+    # Count actual active members
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    active_count = await db.customer_members.count_documents({
+        "subscription_end_date": {"$gte": today}
+    })
+
+    update = {
+        **{col: totals_by_col.get(col, 0) for col in {c.get("kpi_column") for c in cats if c.get("kpi_column")}},
+        "total_revenue": total_revenue,
+        "total_expenses": total_expenses,
+        "net_profit": total_revenue - total_expenses,
+        "active_members": active_count,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.monthly_kpis.update_one({"month": month}, {"$set": update}, upsert=True)
+
+
 # ── Transactions ──────────────────────────────────────────────────────────────
 
 @router.get("/transactions")
@@ -35,6 +92,7 @@ async def create_transaction(data: TransactionCreate):
     doc = tx.model_dump()
     await db.accounting_transactions.insert_one(doc)
     doc.pop('_id', None)
+    await _auto_recalculate_kpis(doc.get("date", ""))
     return doc
 
 
@@ -54,6 +112,7 @@ async def delete_transaction(transaction_id: str):
     )
     await db.excluded_recurring_expenses.insert_one(excl.model_dump())
     await db.accounting_transactions.delete_one({"id": transaction_id})
+    await _auto_recalculate_kpis(tx.get("date", ""))
     return {"message": "Transaction supprimée et ajoutée aux exclusions"}
 
 
@@ -140,6 +199,7 @@ async def remove_from_exclusions(excluded_id: str):
 
     # Remove from exclusions
     await db.excluded_recurring_expenses.delete_one({"id": excluded_id})
+    await _auto_recalculate_kpis(doc.get("date", ""))
     return {"message": "Transaction restaurée", "transaction": doc}
 
 

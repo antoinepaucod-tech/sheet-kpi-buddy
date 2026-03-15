@@ -127,13 +127,28 @@ async def recalculate_month(month: str):
 
     # Revenue: use transactions if available, else fallback to fast_cash_revenue
     fast_cash = merged.get("fast_cash_revenue", 0)
-    total_revenue = max(total_revenue_from_tx, fast_cash) if total_revenue_from_tx == 0 else total_revenue_from_tx
+    total_revenue = total_revenue_from_tx if total_revenue_from_tx > 0 else fast_cash
+
+    # Count actual active members
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    active_count = await db.customer_members.count_documents({
+        "subscription_end_date": {"$gte": today}
+    })
+
+    # Zero out kpi_columns that have no transactions anymore
+    zero_updates = {}
+    for c in cats:
+        kpi_col = c.get("kpi_column")
+        if kpi_col and kpi_col not in totals_by_col:
+            zero_updates[kpi_col] = 0
 
     update = {
+        **zero_updates,
         **{col: totals_by_col[col] for col in totals_by_col},
         "total_revenue": total_revenue,
         "total_expenses": total_expenses_from_tx,
         "net_profit": total_revenue - total_expenses_from_tx,
+        "active_members": active_count,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.monthly_kpis.update_one({"month": month}, {"$set": update})
