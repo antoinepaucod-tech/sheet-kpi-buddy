@@ -88,6 +88,71 @@ async def update_note(month: str, body: dict):
     return compute_metrics(doc) if doc else {"error": "Mois introuvable"}
 
 
+@router.get("/{month}/details")
+async def get_monthly_kpi_details(month: str):
+    """Return KPI data enriched with transaction breakdown and recurring info."""
+    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Mois introuvable")
+    kpi = compute_metrics(doc)
+
+    # Get categories
+    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+    cat_map = {c["name"]: c for c in cats}
+
+    # Get actual transactions for this month
+    txs = await db.accounting_transactions.find(
+        {"date": {"$regex": f"^{month}"}}, {"_id": 0}
+    ).to_list(1000)
+
+    # Build breakdown by category
+    revenue_breakdown = []
+    expense_breakdown = []
+    for cat_name, cat_info in cat_map.items():
+        cat_txs = [tx for tx in txs if tx.get("category") == cat_name]
+        if not cat_txs:
+            continue
+        total = sum(tx["amount"] for tx in cat_txs)
+        entry = {
+            "category": cat_name,
+            "kpi_column": cat_info.get("kpi_column", ""),
+            "total": total,
+            "count": len(cat_txs),
+            "transactions": [
+                {"date": tx["date"], "description": tx["description"], "amount": tx["amount"]}
+                for tx in cat_txs
+            ],
+        }
+        if cat_info["type"] == "revenue":
+            revenue_breakdown.append(entry)
+        else:
+            expense_breakdown.append(entry)
+
+    # Get active recurring transactions
+    recurring = await db.recurring_transactions.find(
+        {"is_active": True}, {"_id": 0}
+    ).to_list(1000)
+
+    recurring_revenue = [r for r in recurring if r["type"] == "revenue"]
+    recurring_expense = [r for r in recurring if r["type"] == "expense"]
+
+    # Check which recurring have been generated for this month
+    generated_descriptions = {tx["description"] for tx in txs}
+    for r in recurring:
+        r["generated_this_month"] = r["description"] in generated_descriptions
+
+    return {
+        "kpi": kpi,
+        "revenue_breakdown": revenue_breakdown,
+        "expense_breakdown": expense_breakdown,
+        "total_revenue_from_transactions": sum(e["total"] for e in revenue_breakdown),
+        "total_expenses_from_transactions": sum(e["total"] for e in expense_breakdown),
+        "recurring_revenue": recurring_revenue,
+        "recurring_expense": recurring_expense,
+        "transactions_count": len(txs),
+    }
+
+
 @router.post("/{month}/recalculate")
 async def recalculate_month(month: str):
     cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)

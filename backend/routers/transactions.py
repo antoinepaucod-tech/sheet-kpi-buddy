@@ -266,6 +266,10 @@ async def generate_monthly_transactions(year: int, month: int):
         await db.accounting_transactions.insert_one(doc)
         doc.pop('_id', None)
         created.append(doc)
+    # Auto-recalculate KPIs for the generated month
+    if created:
+        await _auto_recalculate_kpis(created[0]["date"])
+
     return {
         "month": month_str,
         "month_name": MONTHS_FR[month - 1],

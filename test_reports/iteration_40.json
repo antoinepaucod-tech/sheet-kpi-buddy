@@ -1,0 +1,81 @@
+{
+  "summary": "Iteration 40 - P0 Bug Fixes VERIFIED. All 3 corrections for Details tab working: (1) KPI Details endpoint returns revenue_breakdown, expense_breakdown, recurring_revenue, recurring_expense with transactions. (2) Frontend Details tab displays Fast Cash Revenue, revenue/expense breakdowns by category with clickable expansion. (3) Recurring transactions section shows 'loyer Hybrid' with 'EN ATTENTE' status.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "backend_api": {
+      "kpi_details_endpoint": {
+        "test": "GET /api/monthly-kpis/2026-03/details",
+        "status": "PASS",
+        "returns_kpi": "PASS - Returns full KPI object with all fields",
+        "returns_revenue_breakdown": "PASS - Contains ABONNEMENTS: 599 CHF, 1 tx",
+        "returns_expense_breakdown": "PASS - Contains SALAIRES COACHS: 350 CHF, 1 tx",
+        "returns_recurring_revenue": "PASS - Empty array (no active recurring revenue)",
+        "returns_recurring_expense": "PASS - Contains 'loyer Hybrid': 7700 CHF",
+        "generated_this_month_flag": "PASS - loyer Hybrid has generated_this_month=false",
+        "fast_cash_revenue": "PASS - KPI contains fast_cash_revenue: 1947 CHF",
+        "totals_from_transactions": "PASS - total_revenue: 599, total_expenses: 350"
+      },
+      "recurring_generation": {
+        "test": "POST /api/recurring-transactions/generate/2026/4",
+        "status": "PASS",
+        "auto_recalculates_kpi": "PASS - KPIs recalculated after generation"
+      }
+    },
+    "frontend_details_tab": {
+      "details_tab_visible": "PASS - Tab labeled 'Details' is visible and clickable",
+      "kpi_detailed_view_component": "PASS - Component loads and displays data",
+      "revenue_section": {
+        "total_revenus_transactions": "PASS - Shows 599.00 CHF",
+        "fast_cash_revenue": "PASS - Shows 1'947.00 CHF",
+        "total_revenus_kpi": "PASS - Shows 599.00 CHF",
+        "abonnements_category": "PASS - Shows +599.00 CHF (1 tx)"
+      },
+      "expense_section": {
+        "total_depenses_transactions": "PASS - Shows 350.00 CHF",
+        "total_depenses_kpi": "PASS - Shows 350.00 CHF",
+        "profit_net": "PASS - Shows 249.00 CHF",
+        "salaires_coachs_category": "PASS - Shows -350.00 CHF (1 tx)"
+      },
+      "recurring_section": {
+        "recurrences_actives": "PASS - Shows 1",
+        "revenus_recurrents": "PASS - Shows 0.00 CHF (0 modèles)",
+        "depenses_recurrentes": "PASS - Shows 7'700.00 CHF (1 modèle)",
+        "impact_net_recurrent": "PASS - Shows -7'700.00 CHF",
+        "loyer_hybrid_entry": "PASS - Shows loyer Hybrid -7'700.00 CHF with 'EN ATTENTE' badge"
+      },
+      "category_expansion": {
+        "abonnements_clickable": "PASS - Clicking expands to show Caroline Maerten transaction",
+        "salaires_coachs_clickable": "PASS - Clicking expands to show Antoine Paucod transaction"
+      }
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration40_kpi_details.py",
+    "/app/test_reports/pytest/pytest_results_iter40.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration40_kpi_details.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (All Details tab features verified)"
+  },
+  "test_credentials": {
+    "email": "test@crossfit.ch",
+    "password": "test123"
+  },
+  "seed_data_creation": "Backend tests use existing data (599 CHF ABONNEMENTS, 350 CHF SALAIRES COACHS, loyer Hybrid 7700 CHF)",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All P0 bug fixes verified: Details tab now shows (1) Fast Cash Revenue 1947 CHF, (2) Revenue breakdown with ABONNEMENTS 599 CHF, (3) Expense breakdown with SALAIRES COACHS 350 CHF, (4) Recurring transactions with 'loyer Hybrid' 7700 CHF showing 'EN ATTENTE' badge. Categories are clickable to expand and show individual transactions. Backend endpoint GET /api/monthly-kpis/{month}/details returns complete data. POST /api/recurring-transactions/generate triggers KPI auto-recalculation. Current data for mars 2026: 2 transactions, 1 active recurring expense."
+}
