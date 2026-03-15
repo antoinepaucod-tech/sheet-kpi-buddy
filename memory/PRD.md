@@ -5,60 +5,47 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - **Stack:** React frontend + FastAPI backend + MongoDB
 - **Integrations:** GoHighLevel (GHL), Resend (email)
 
-## Core Architecture
-```
-/app/
-├── backend/ (FastAPI)
-│   ├── routers/ (ghl, settings, members, kpis, challenges, courses, annual_reviews, etc.)
-│   ├── models/ (settings, members, kpi, courses, transactions, etc.)
-│   ├── services/ (ghl_service)
-│   └── server.py
-└── frontend/ (React + Shadcn/UI + TailwindCSS + CRACO)
-    ├── src/components/ (GHLFunnelSection, Layout, ui/)
-    ├── src/pages/ (Dashboard, MembersPage, CoursesPage, ChallengePage, AnnualReviewsPage, PaymentsPage, TransactionsPage, etc.)
-    ├── src/hooks/ (useMonthlyKPIData, useTranslations, etc.)
-    └── craco.config.js (custom webpack config with ResizeObserver fix)
-```
-
 ## Notification Badges (Sidebar)
-- **Onboarding** : badge bleu = pending onboardings
+- **Onboarding** : badge bleu = pending
 - **Paiements** : badge rouge = late payments
-- **Bilans / Suivis** : badge bleu = upcoming (14 jours) + badge rouge = overdue
+- **Bilans / Suivis** : badge bleu = upcoming (14j) + badge rouge = overdue
 
-## Completed Features
-- Apple Design System + 18+ feature modules
-- GoHighLevel (GHL) Integration + auto accounting transaction on sale confirmation
-- Onboarding - Simplified 2 tabs, sidebar badge
-- Challenge 6 Sem - Objective based on actual check-ins only
-- Renewal dialog - Dynamic dropdowns, billing toggle
-- Categories - Editable
-- Monthly KPIs, Members, Transactions, Payments, Course KPIs, Sessions
-- Client KPIs, Coaches, Bilans/Suivis, Recurring payments, Email via Resend
-- PDF Report export
-- ResizeObserver fix - 3-layer suppression [2026-03-14]
-- Dynamic subscription types [2026-03-14]
-- Settings Types page - Full CRUD [2026-03-14]
+## Revenue/Expense Calculation Logic
+- `recalculate_month` sums dynamically from categories (kpi_column mapping)
+- Revenue = sum of all revenue kpi_columns from transactions. Fallback: fast_cash_revenue
+- Expenses = sum of all expense kpi_columns (includes salaires_coachs)
+- GHL confirm-sale creates accounting transaction (type=revenue, category from DB) + updates revenue_members
+
+## Key Flows
+- **GHL Sale → Transaction**: confirm-sale creates member + accounting tx + updates KPI
+- **Exclude/Restore**: Delete tx → moves to excluded. Restore → moves back to transactions
+- **Salary Auto-gen**: Attendance change → auto-trigger generate-salary-expenses
+- **Bilans Auto-gen**: Button on Bilans/Suivis page → creates monthly check-ins
+
+## Completed Features (Latest)
+- ResizeObserver 3-layer fix [2026-03-14]
+- Dynamic subscription types from DB [2026-03-14]
+- Settings Types page CRUD [2026-03-14]
 - Auto-generate bilans mensuels [2026-03-14]
 - Course KPIs to salary expenses [2026-03-14]
-- Bulk course creation [2026-03-15]
+- Bulk course creation "Planifier la semaine" [2026-03-15]
 - Auto-sync salaires on attendance change [2026-03-15]
 - Late payments red badge [2026-03-15]
-- Challenge objective fix [2026-03-15]
-- GHL sale creates accounting transaction (type=revenue, category from DB) [2026-03-15]
-- Coach replacement per week (S1-S5 dropdown dialog) [2026-03-15]
-- **Bilans/Suivis dual badges** (blue upcoming + red overdue) [2026-03-15]
-- **GET /api/annual-reviews/overdue** endpoint [2026-03-15]
-
-## Concepts
-- **Transactions exclues** : Quand on supprime une transaction, elle est exclue (pas effacee). Recuperable via le toggle en bas de la page.
-- **Recurrentes** : Templates de transactions auto-generees chaque mois (loyer, abonnements, etc.).
+- Challenge objective fix (real check-ins only) [2026-03-15]
+- GHL sale creates accounting transaction [2026-03-15]
+- Coach replacement per week S1-S5 [2026-03-15]
+- Bilans/Suivis dual badges (blue + red) [2026-03-15]
+- **Restore excluded transaction** (now puts tx back in main list) [2026-03-15]
+- **Dynamic revenue/expense recalculation** from categories [2026-03-15]
+- **Label "Cotisations" → "Abonnements"** [2026-03-15]
+- **useCoachMembership uses categories** for revenue classification [2026-03-15]
+- **GHL confirm-sale updates revenue_members** in KPI [2026-03-15]
 
 ## Test Reports
-- iteration_38.json: 100% (badges bilans, GHL transaction fix)
-- iteration_37.json: 100% (badge late, challenge fix, coach replacement)
-- iteration_36.json: 100% (bulk, auto-sync salary)
-- iteration_35.json: 100% (bilans, salary)
-- iteration_34.json: 100% (ResizeObserver, dynamic types)
+- iteration_39: 100% (dashboard, transactions, GHL, restore, badges)
+- iteration_38: 100% (badges bilans, GHL transaction fix)
+- iteration_37: 100% (badge late, challenge fix, coach replacement)
+- iteration_36: 100% (bulk, auto-sync salary)
 
 ## Credentials
 - Login: test@crossfit.ch / test123
