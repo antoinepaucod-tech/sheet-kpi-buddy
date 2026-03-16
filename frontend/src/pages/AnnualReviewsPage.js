@@ -167,14 +167,23 @@ export default function AnnualReviewsPage() {
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
   });
 
-  // Auto-generate monthly bilans for non-challenge members
+  // Auto-generate reviews for all eligible members
   const autoGenerateMutation = useMutation({
-    mutationFn: () => axios.post(`${API}/challenges/auto-generate-bilans`),
+    mutationFn: () => axios.post(`${API}/annual-reviews/auto-generate`),
     onSuccess: (res) => {
       queryClient.invalidateQueries(["annual-reviews"]);
       toast.success(res.data.message);
     },
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la génération"),
+  });
+
+  // Send bulk review reminders
+  const sendBulkRemindersMutation = useMutation({
+    mutationFn: () => axios.post(`${API}/notifications/send-bulk`, { notification_type: "review_reminder" }),
+    onSuccess: (res) => {
+      toast.success(res.data.message);
+    },
+    onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
   });
 
   // Filter reviews
@@ -340,16 +349,28 @@ export default function AnnualReviewsPage() {
               : "Suivi poids, nutrition et programme - mensuel, trimestriel, semestriel, annuel"}
           </p>
         </div>
-        <Button
-          onClick={() => autoGenerateMutation.mutate()}
-          disabled={autoGenerateMutation.isPending}
-          variant="outline"
-          className="border-[rgba(100,210,255,0.2)] text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[rgba(100,210,255,0.08)]"
-          data-testid="auto-generate-bilans-btn"
-        >
-          <RefreshCw size={14} className={`mr-1.5 ${autoGenerateMutation.isPending ? "animate-spin" : ""}`} />
-          {autoGenerateMutation.isPending ? "Génération..." : "Générer bilans mensuels"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => sendBulkRemindersMutation.mutate()}
+            disabled={sendBulkRemindersMutation.isPending}
+            variant="outline"
+            className="border-[rgba(48,209,88,0.2)] text-[var(--color-success)] hover:text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.08)]"
+            data-testid="send-bulk-reminders-btn"
+          >
+            <Mail size={14} className="mr-1.5" />
+            {sendBulkRemindersMutation.isPending ? "Envoi..." : "Envoyer rappels"}
+          </Button>
+          <Button
+            onClick={() => autoGenerateMutation.mutate()}
+            disabled={autoGenerateMutation.isPending}
+            variant="outline"
+            className="border-[rgba(100,210,255,0.2)] text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[rgba(100,210,255,0.08)]"
+            data-testid="auto-generate-bilans-btn"
+          >
+            <RefreshCw size={14} className={`mr-1.5 ${autoGenerateMutation.isPending ? "animate-spin" : ""}`} />
+            {autoGenerateMutation.isPending ? "Génération..." : "Générer bilans auto"}
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

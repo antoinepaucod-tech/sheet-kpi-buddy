@@ -12,6 +12,25 @@ router = APIRouter(prefix="/monthly-kpis", tags=["kpis"])
 @router.get("")
 async def get_monthly_kpis():
     docs = await db.monthly_kpis.find({}, {"_id": 0}).sort("month", 1).to_list(1000)
+
+    # Enrich with real churn from member exit_dates
+    members = await db.customer_members.find(
+        {}, {"_id": 0, "exit_date": 1, "subscription_end_date": 1, "is_duplicate": 1}
+    ).to_list(10000)
+
+    for doc in docs:
+        month = doc.get("month", "")  # e.g. "2026-03"
+        if not month:
+            continue
+        # Count members who left this month (exit_date starts with this month)
+        lost = sum(
+            1 for m in members
+            if m.get("exit_date") and m["exit_date"].startswith(month)
+            and not m.get("is_duplicate")
+        )
+        if lost > 0 and doc.get("lost_members", 0) == 0:
+            doc["lost_members"] = lost
+
     return [compute_metrics(d) for d in docs]
 
 

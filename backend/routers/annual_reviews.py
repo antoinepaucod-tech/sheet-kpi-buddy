@@ -143,6 +143,91 @@ async def create_review(data: AnnualReviewCreate):
     return doc
 
 
+@router.post("/auto-generate")
+async def auto_generate_reviews():
+    """Scan all members with review_enabled and create missing scheduled reviews."""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Get all members with annual_review_enabled
+    members = await db.customer_members.find(
+        {"annual_review_enabled": True},
+        {"_id": 0, "id": 1, "name": 1, "contract_signed_date": 1,
+         "review_frequency": 1, "annual_review_date": 1, "exit_date": 1}
+    ).to_list(5000)
+
+    # Filter out departed members (exit_date in the past)
+    eligible = [m for m in members if not m.get("exit_date") or m["exit_date"] >= today]
+
+    created = 0
+    skipped = 0
+
+    for member in eligible:
+        member_id = member["id"]
+        freq = member.get("review_frequency", "annually")
+        delta = FREQUENCY_MAP.get(freq, relativedelta(years=1))
+
+        # Check if there's already a scheduled review
+        existing_scheduled = await db.annual_reviews.find_one({
+            "member_id": member_id,
+            "status": "scheduled",
+            "review_date": {"$gte": today}
+        })
+
+        if existing_scheduled:
+            skipped += 1
+            continue
+
+        # Calculate next review date
+        # Try from last completed review, then from annual_review_date, then from contract_signed_date
+        last_completed = await db.annual_reviews.find_one(
+            {"member_id": member_id, "status": "completed"},
+            {"_id": 0, "review_date": 1},
+            sort=[("review_date", -1)]
+        )
+
+        if last_completed:
+            base_date = datetime.strptime(last_completed["review_date"], "%Y-%m-%d")
+            next_date = base_date + delta
+            # If calculated date is in the past, keep adding frequency until future
+            while next_date.strftime("%Y-%m-%d") < today:
+                next_date = next_date + delta
+        elif member.get("annual_review_date") and member["annual_review_date"] >= today:
+            next_date = datetime.strptime(member["annual_review_date"], "%Y-%m-%d")
+        elif member.get("contract_signed_date"):
+            base_date = datetime.strptime(member["contract_signed_date"], "%Y-%m-%d")
+            next_date = base_date + delta
+            while next_date.strftime("%Y-%m-%d") < today:
+                next_date = next_date + delta
+        else:
+            skipped += 1
+            continue
+
+        review_date_str = next_date.strftime("%Y-%m-%d")
+
+        # Create review
+        new_review = AnnualReview(
+            member_id=member_id,
+            review_date=review_date_str,
+            review_type=freq,
+            status="scheduled"
+        )
+        await db.annual_reviews.insert_one(new_review.model_dump())
+
+        # Update member's annual_review_date
+        await db.customer_members.update_one(
+            {"id": member_id},
+            {"$set": {"annual_review_date": review_date_str}}
+        )
+        created += 1
+
+    return {
+        "message": f"{created} bilan(s) créé(s), {skipped} ignoré(s) (déjà planifié ou incomplet)",
+        "created": created,
+        "skipped": skipped,
+        "total_eligible": len(eligible)
+    }
+
+
 @router.put("/{review_id}")
 async def update_review(review_id: str, body: dict):
     existing = await db.annual_reviews.find_one({"id": review_id})

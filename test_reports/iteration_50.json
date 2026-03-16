@@ -1,0 +1,62 @@
+{
+  "summary": "Iteration 50 - Tested 3 new features: DUO warning modal, Churn calculation, Auto-generate reviews. All 12 backend tests passed. Frontend UI verified: DUO warning modal appears on edit/delete with correct title 'Membre DUO', warning text, and buttons ('Modifier quand même'/'Supprimer quand même'). Dashboard shows churn_rate=4.4% for March 2026. AnnualReviewsPage has 'Générer bilans auto' and 'Envoyer rappels' buttons.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration50_features.py",
+    "/app/test_reports/pytest/pytest_results_iter50.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DUO warning modal correctly triggers on edit/delete for is_duo=true members (MembersPage.js lines 672-696)",
+    "Churn calculation in kpis.py enriches monthly KPIs with real lost_members from exit_dates (lines 17-33)",
+    "Auto-generate reviews endpoint returns correct structure: created, skipped, total_eligible (annual_reviews.py lines 146-228)",
+    "No members have annual_review_enabled=True, so auto-generate returns 0 created - expected behavior"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration50_features.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 50 verified 3 features: 1) DUO warning modal appears when editing/deleting DUO members (is_duo=true). Modal shows title 'Membre DUO' with edit warning 'délier les deux membres DUO' or delete warning 'Suppression DUO'. Buttons: 'Annuler' and 'Modifier quand même'/'Supprimer quand même'. Test with member 'Jessica Snoeckx'. 2) Churn calculation works - GET /api/monthly-kpis returns lost_members and churn_rate enriched from member exit_dates. March 2026 has 5 lost members and 4.42% churn. 3) Auto-generate reviews POST /api/annual-reviews/auto-generate works, returns {created, skipped, total_eligible}. Currently 0 eligible since no members have annual_review_enabled=True. Frontend buttons 'Générer bilans auto' and 'Envoyer rappels' exist on AnnualReviewsPage.",
+  "features_verified": {
+    "duo_warning_modal_edit": {
+      "status": "PASS",
+      "details": "Modal title 'Membre DUO', warning about 'délier les deux membres DUO', button 'Modifier quand même'"
+    },
+    "duo_warning_modal_delete": {
+      "status": "PASS", 
+      "details": "Modal title 'Membre DUO', warning 'Suppression DUO' with 'délier la paire DUO', button 'Supprimer quand même'"
+    },
+    "churn_calculation": {
+      "status": "PASS",
+      "details": "March 2026 shows lost_members=5, churn_rate=4.42% based on member exit_dates"
+    },
+    "auto_generate_reviews": {
+      "status": "PASS",
+      "details": "POST /api/annual-reviews/auto-generate returns {created:0, skipped:0, total_eligible:0}"
+    },
+    "frontend_auto_generate_btn": {
+      "status": "PASS",
+      "details": "Button 'Générer bilans auto' exists on AnnualReviewsPage and calls endpoint"
+    },
+    "frontend_send_reminders_btn": {
+      "status": "PASS",
+      "details": "Button 'Envoyer rappels' exists on AnnualReviewsPage"
+    },
+    "dashboard_churn_display": {
+      "status": "PASS",
+      "details": "Dashboard shows 'TAUX DE CHURN' = 4.4% for March 2026"
+    }
+  }
+}

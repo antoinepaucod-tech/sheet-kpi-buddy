@@ -93,6 +93,9 @@ export default function MembersPage() {
   const [showExpiring, setShowExpiring] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [renewModalOpen, setRenewModalOpen] = useState(false);
+  const [duoWarningOpen, setDuoWarningOpen] = useState(false);
+  const [duoWarningMember, setDuoWarningMember] = useState(null);
+  const [duoWarningAction, setDuoWarningAction] = useState(null); // "edit" | "delete"
   const [selectedMember, setSelectedMember] = useState(null);
   const [expandedMember, setExpandedMember] = useState(null);
   const [formData, setFormData] = useState({
@@ -666,7 +669,15 @@ export default function MembersPage() {
                           size="sm"
                           variant="ghost"
                           className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
-                          onClick={() => openEditModal(member)}
+                          onClick={() => {
+                            if (member.is_duo) {
+                              setDuoWarningMember(member);
+                              setDuoWarningAction("edit");
+                              setDuoWarningOpen(true);
+                            } else {
+                              openEditModal(member);
+                            }
+                          }}
                           data-testid={`edit-${member.id}`}
                         >
                           <Edit size={14} />
@@ -675,7 +686,15 @@ export default function MembersPage() {
                           size="sm"
                           variant="ghost"
                           className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
-                          onClick={() => deleteMutation.mutate(member.id)}
+                          onClick={() => {
+                            if (member.is_duo) {
+                              setDuoWarningMember(member);
+                              setDuoWarningAction("delete");
+                              setDuoWarningOpen(true);
+                            } else {
+                              deleteMutation.mutate(member.id);
+                            }
+                          }}
                           data-testid={`delete-${member.id}`}
                         >
                           <Trash2 size={14} />
@@ -1319,6 +1338,62 @@ export default function MembersPage() {
               data-testid="confirm-renew-btn"
             >
               {renewMutation.isPending ? "..." : "Renouveler"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DUO Warning Modal */}
+      <Dialog open={duoWarningOpen} onOpenChange={setDuoWarningOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[var(--color-warning)]">
+              <AlertTriangle size={20} />
+              Membre DUO
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <p className="text-white text-sm">
+              <strong>{duoWarningMember?.name}</strong> fait partie d'un abonnement DUO.
+            </p>
+            {duoWarningAction === "edit" ? (
+              <div className="bg-[rgba(255,214,10,0.08)] border border-[rgba(255,214,10,0.2)] rounded-lg p-3">
+                <p className="text-[var(--color-warning)] text-sm font-medium">Attention</p>
+                <p className="text-[var(--color-text-secondary)] text-xs mt-1">
+                  Modifier ce membre individuellement peut <strong className="text-white">délier les deux membres DUO</strong>. 
+                  Si vous changez l'abonnement, les dates ou le nom, le partenaire ne sera pas mis à jour automatiquement.
+                </p>
+                <p className="text-[var(--color-text-tertiary)] text-xs mt-2">
+                  Pour modifier l'abonnement DUO entier, éditez le membre principal.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-[rgba(255,69,58,0.08)] border border-[rgba(255,69,58,0.2)] rounded-lg p-3">
+                <p className="text-[var(--color-danger)] text-sm font-medium">Suppression DUO</p>
+                <p className="text-[var(--color-text-secondary)] text-xs mt-1">
+                  Supprimer ce membre va <strong className="text-white">délier la paire DUO</strong>. 
+                  Le partenaire restera dans le système mais ne sera plus associé à ce membre.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setDuoWarningOpen(false)} data-testid="duo-warning-cancel">
+              Annuler
+            </Button>
+            <Button
+              className={duoWarningAction === "delete" ? "bg-[var(--color-danger)] hover:opacity-85" : "bg-[var(--color-accent)] hover:opacity-85"}
+              onClick={() => {
+                if (duoWarningAction === "edit") {
+                  openEditModal(duoWarningMember);
+                } else {
+                  deleteMutation.mutate(duoWarningMember.id);
+                }
+                setDuoWarningOpen(false);
+              }}
+              data-testid="duo-warning-confirm"
+            >
+              {duoWarningAction === "edit" ? "Modifier quand même" : "Supprimer quand même"}
             </Button>
           </DialogFooter>
         </DialogContent>
