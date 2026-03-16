@@ -681,6 +681,12 @@ export default function MembersPage() {
                       if (selectedType.default_billing_cycle_value) {
                         newData.billing_cycle_value = selectedType.default_billing_cycle_value;
                       }
+                      // Auto-detect challenge type and set review accordingly
+                      if (v.toLowerCase().includes("challenge")) {
+                        newData.review_enabled = true;
+                        newData.annual_review_enabled = true;
+                        newData.review_frequency = "challenge";
+                      }
                     }
                     
                     setFormData(newData);
@@ -864,6 +870,7 @@ export default function MembersPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                        <SelectItem value="challenge" className="text-white">Challenge (6 semaines)</SelectItem>
                         <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
                         <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
                         <SelectItem value="semi-annually" className="text-white">Semestriel</SelectItem>
@@ -872,6 +879,7 @@ export default function MembersPage() {
                     </Select>
                   </div>
                   <p className="text-[var(--color-text-tertiary)] text-xs">
+                    {formData.review_frequency === "challenge" && "Un bilan sera planifié 6 semaines après la date de signature"}
                     {formData.review_frequency === "monthly" && "Un bilan sera planifié chaque mois"}
                     {formData.review_frequency === "quarterly" && "Un bilan sera planifié tous les 3 mois"}
                     {formData.review_frequency === "semi-annually" && "Un bilan sera planifié tous les 6 mois"}

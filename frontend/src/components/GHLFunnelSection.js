@@ -33,7 +33,7 @@ const FUNNEL_STAGES = [
 ];
 
 const FALLBACK_SUBSCRIPTION_TYPES = [
-  { value: "6 WEEKS CHALENGE", label: "6 Weeks Challenge", defaultAmount: 599, durationDays: 42, memberType: "Membres PIF", isPIF: true, isCoach: false, isDuo: false },
+  { value: "6 WEEKS CHALLENGE", label: "6 Weeks Challenge", defaultAmount: 599, durationDays: 42, memberType: "Membres PIF", isPIF: true, isCoach: false, isDuo: false },
   { value: "HYBRID FULL - PAIEMENT MENSUEL", label: "Hybrid Full Mensuel", defaultAmount: 220, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false, isCoach: false, isDuo: false },
   { value: "THE COACH PASS MENSUEL", label: "The Coach Pass Mensuel", defaultAmount: 159, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false, isCoach: true, isDuo: false },
   { value: "UNLIMITED ACCESS - PAIEMENT MENSUEL", label: "Unlimited Access Mensuel", defaultAmount: 249, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false, isCoach: false, isDuo: false },

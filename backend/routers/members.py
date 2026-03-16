@@ -91,8 +91,18 @@ async def get_member(member_id: str):
 async def create_member(data: CustomerMemberCreate):
     member_data = data.model_dump()
     
-    # Calculate review date based on frequency
-    if data.annual_review_enabled and data.contract_signed_date:
+    # Auto-detect challenge membership type
+    is_challenge = data.membership and "challenge" in data.membership.lower()
+    
+    # If challenge, override review settings
+    if is_challenge:
+        member_data["annual_review_enabled"] = True
+        member_data["review_frequency"] = "challenge"
+        if data.contract_signed_date:
+            review_date = calc_review_date(data.contract_signed_date, "challenge")
+            if review_date:
+                member_data["annual_review_date"] = review_date
+    elif data.annual_review_enabled and data.contract_signed_date:
         freq = getattr(data, 'review_frequency', 'annually')
         review_date = calc_review_date(data.contract_signed_date, freq)
         if review_date:
@@ -116,9 +126,9 @@ async def create_member(data: CustomerMemberCreate):
         )
         await db.payment_schedules.insert_one(schedule.model_dump())
     
-    # Create review if enabled
-    if data.annual_review_enabled and doc.get("annual_review_date"):
-        freq = getattr(data, 'review_frequency', 'annually')
+    # Create review if enabled or if challenge (auto-enabled)
+    if (data.annual_review_enabled or is_challenge) and doc.get("annual_review_date"):
+        freq = "challenge" if is_challenge else getattr(data, 'review_frequency', 'annually')
         annual_review = AnnualReview(
             member_id=doc["id"],
             review_date=doc["annual_review_date"],

@@ -208,9 +208,11 @@ async def confirm_sale(body: dict):
         else:
             member_type = "Membres Généraux Récurrents"
 
+    # Parse signature date as base date for calculations
+    base_date = datetime.strptime(signature_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    
     # Calculate end date if not provided
     if not subscription_end_date:
-        base_date = datetime.strptime(signature_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         if is_challenge:
             subscription_end_date = (base_date + timedelta(days=42)).strftime("%Y-%m-%d")
         elif "annuel" in subscription_type.lower():
