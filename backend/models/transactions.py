@@ -10,6 +10,7 @@ class AccountingCategory(BaseModel):
     name: str
     kpi_column: str
     type: str  # "expense" | "revenue"
+    revenue_type: Optional[str] = None  # "Membre" | "Produit" | "Service" (for revenue only)
     color: str = "#3B82F6"
 
 
@@ -17,6 +18,7 @@ class CategoryCreate(BaseModel):
     name: str
     kpi_column: str
     type: str
+    revenue_type: Optional[str] = None
     color: str = "#3B82F6"
 
 
@@ -60,6 +62,8 @@ class RecurringTransaction(BaseModel):
     amount: float
     sub_type: Optional[str] = None
     recurrence_day: int = 1  # Day of month (1-28)
+    recurrence_end_date: Optional[str] = None  # Date de fin de récurrence
+    is_indefinite_recurrence: bool = True  # Sans date de fin
     is_active: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -72,4 +76,6 @@ class RecurringTransactionCreate(BaseModel):
     amount: float
     sub_type: Optional[str] = None
     recurrence_day: int = 1
+    recurrence_end_date: Optional[str] = None
+    is_indefinite_recurrence: bool = True
     is_active: bool = True

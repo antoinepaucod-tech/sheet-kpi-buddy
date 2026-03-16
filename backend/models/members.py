@@ -45,6 +45,8 @@ class CustomerMember(BaseModel):
     is_duo: bool = False
     duo_partner_id: Optional[str] = None
     duo_primary: bool = False
+    subscription_group_id: Optional[str] = None  # UUID linking duo pairs
+    is_primary_subscriber: bool = True  # Primary = pays, Secondary = 0 CHF
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
