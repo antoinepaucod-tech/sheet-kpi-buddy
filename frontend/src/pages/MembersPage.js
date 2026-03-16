@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { format, differenceInDays, parseISO, addYears } from "date-fns";
@@ -508,7 +508,7 @@ export default function MembersPage() {
                 const isExpired = member.subscription_end_date && member.subscription_end_date < today;
                 const rowOpacity = isExpired ? "opacity-50" : "";
                 return (
-                <>
+                <React.Fragment key={member.id}>
                   <TableRow
                     key={member.id}
                     className={`border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer ${rowOpacity}`}
@@ -647,7 +647,7 @@ export default function MembersPage() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               )})
             )}
           </TableBody>
