@@ -67,6 +67,39 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
     return docs
 
 
+@router.get("/stats")
+async def get_member_stats():
+    """Real-time member statistics: active, coaches, expired, new, lost."""
+    docs = await db.customer_members.find({}, {"_id": 0}).to_list(5000)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    coaches = [d for d in docs if _is_coach(d.get("membership", ""))]
+    non_coaches = [d for d in docs if not _is_coach(d.get("membership", ""))]
+    
+    active_coaches = [d for d in coaches if not d.get("exit_date") and (not d.get("subscription_end_date") or d["subscription_end_date"] >= today)]
+    active_members = [d for d in non_coaches if not d.get("exit_date") and (not d.get("subscription_end_date") or d["subscription_end_date"] >= today)]
+    expired_members = [d for d in non_coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today and not d.get("exit_date")]
+    expired_coaches = [d for d in coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today and not d.get("exit_date")]
+    
+    # PIF vs Recurring breakdown
+    pif_active = [d for d in active_members if d.get("member_type") == "Membres PIF"]
+    recurring_active = [d for d in active_members if d.get("member_type") == "Membres Généraux Récurrents"]
+    
+    return {
+        "total": len(docs),
+        "active_members": len(active_members),
+        "active_coaches": len(active_coaches),
+        "expired_members": len(expired_members),
+        "expired_coaches": len(expired_coaches),
+        "pif_active": len(pif_active),
+        "recurring_active": len(recurring_active),
+        "total_coaches": len(coaches),
+        "total_non_coaches": len(non_coaches),
+    }
+
+
+
+
 @router.get("/expiring")
 async def get_expiring_members(days: int = 30):
     today = datetime.now(timezone.utc).date()

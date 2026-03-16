@@ -87,6 +87,7 @@ export default function MembersPage() {
   const urlSearch = searchParams.get("search") || "";
   const [search, setSearch] = useState(urlSearch);
   const [filterType, setFilterType] = useState("all");
+  const [filterMembership, setFilterMembership] = useState("");
   const [view, setView] = useState(urlSearch ? "all" : "active"); // "all" | "active" | "coaches" | "expired"
   const [showExpiring, setShowExpiring] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -241,10 +242,14 @@ export default function MembersPage() {
 
   // Computed member categories
   const today = new Date().toISOString().split('T')[0];
-  const coaches = members.filter(m => m.is_coach);
-  const nonCoaches = members.filter(m => !m.is_coach);
+  const departed = members.filter(m => m.exit_date); // Partis
+  const current = members.filter(m => !m.exit_date); // Pas partis
+  const coaches = current.filter(m => m.is_coach);
+  const nonCoaches = current.filter(m => !m.is_coach);
   const activeMembersOnly = nonCoaches.filter(m => !m.subscription_end_date || m.subscription_end_date >= today);
+  const activeCoaches = coaches.filter(m => !m.subscription_end_date || m.subscription_end_date >= today);
   const expiredMembers = nonCoaches.filter(m => m.subscription_end_date && m.subscription_end_date < today);
+  const expiredCoaches = coaches.filter(m => m.subscription_end_date && m.subscription_end_date < today);
 
   const getDaysRemaining = (endDate) => {
     if (!endDate) return null;
@@ -253,10 +258,11 @@ export default function MembersPage() {
 
   // Filter members
   const filteredMembers = useMemo(() => {
-    let base = members;
+    let base = current; // Exclude departed by default
     if (view === "active") base = activeMembersOnly;
-    else if (view === "coaches") base = coaches;
-    else if (view === "expired") base = expiredMembers;
+    else if (view === "coaches") base = activeCoaches;
+    else if (view === "expired") base = [...expiredMembers, ...expiredCoaches];
+    else if (view === "departed") base = departed;
 
     if (showExpiring) {
       base = base.filter(m => {
@@ -265,6 +271,7 @@ export default function MembersPage() {
       });
     }
     if (filterType !== "all") base = base.filter(m => m.member_type === filterType);
+    if (filterMembership) base = base.filter(m => m.membership === filterMembership);
     if (search) {
       const s = search.toLowerCase();
       base = base.filter(m =>
@@ -274,23 +281,20 @@ export default function MembersPage() {
       );
     }
     return base;
-  }, [members, view, filterType, search, showExpiring, activeMembersOnly, coaches, expiredMembers]);
+  }, [current, view, filterType, filterMembership, search, showExpiring, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed]);
 
   // Stats
   const stats = useMemo(() => ({
-    total: members.length,
+    total: current.length,
     active: activeMembersOnly.length,
-    coaches: coaches.length,
-    expired: expiredMembers.length,
-    expiring: nonCoaches.filter(m => {
+    coaches: activeCoaches.length,
+    expired: expiredMembers.length + expiredCoaches.length,
+    departed: departed.length,
+    expiring: current.filter(m => {
       const days = getDaysRemaining(m.subscription_end_date);
       return days !== null && days >= 0 && days <= 30;
     }).length,
-    byType: MEMBER_TYPES.reduce((acc, type) => {
-      acc[type] = members.filter((m) => m.member_type === type).length;
-      return acc;
-    }, {}),
-  }), [members, activeMembersOnly, coaches, expiredMembers, nonCoaches]);
+  }), [current, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed]);
 
   const openAddModal = () => {
     setSelectedMember(null);
@@ -400,7 +404,7 @@ export default function MembersPage() {
       </div>
 
       {/* View Tabs + Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 tf-stagger">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 tf-stagger">
         <div
           className="tf-stat cursor-pointer transition-all"
           style={{ borderColor: view === "active" ? 'var(--color-success)' : undefined, borderWidth: view === "active" ? '2px' : undefined }}
@@ -416,7 +420,7 @@ export default function MembersPage() {
           onClick={() => { setView("coaches"); setShowExpiring(false); }}
           data-testid="tab-coaches"
         >
-          <p className="tf-stat-label" style={{ color: 'var(--color-accent)' }}>Coachs</p>
+          <p className="tf-stat-label" style={{ color: 'var(--color-accent)' }}>Coachs Actifs</p>
           <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: view === "coaches" ? 'var(--color-accent)' : undefined }}>{stats.coaches}</p>
         </div>
         <div
@@ -442,6 +446,15 @@ export default function MembersPage() {
         </div>
         <div
           className="tf-stat cursor-pointer transition-all"
+          style={{ borderColor: view === "departed" ? 'var(--color-text-tertiary)' : undefined, borderWidth: view === "departed" ? '2px' : undefined }}
+          onClick={() => { setView("departed"); setShowExpiring(false); }}
+          data-testid="tab-departed"
+        >
+          <p className="tf-stat-label" style={{ color: 'var(--color-text-tertiary)' }}>Partis</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.departed}</p>
+        </div>
+        <div
+          className="tf-stat cursor-pointer transition-all"
           style={{ borderColor: view === "all" ? 'var(--color-text-secondary)' : undefined, borderWidth: view === "all" ? '2px' : undefined }}
           onClick={() => { setView("all"); setShowExpiring(false); }}
           data-testid="tab-all"
@@ -452,8 +465,8 @@ export default function MembersPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
           <Input
             value={search}
@@ -464,16 +477,30 @@ export default function MembersPage() {
           />
         </div>
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[220px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="type-filter">
-            <SelectValue />
+          <SelectTrigger className="w-[200px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white text-xs" data-testid="type-filter">
+            <SelectValue placeholder="Tous les types" />
           </SelectTrigger>
           <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-            <SelectItem value="all" className="text-white">Tous les types</SelectItem>
+            <SelectItem value="all" className="text-white text-xs">Tous les types</SelectItem>
             {MEMBER_TYPES.map((type) => (
-              <SelectItem key={type} value={type} className="text-white">{type}</SelectItem>
+              <SelectItem key={type} value={type} className="text-white text-xs">{type}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <Select value={filterMembership} onValueChange={setFilterMembership}>
+          <SelectTrigger className="w-[260px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white text-xs" data-testid="membership-filter">
+            <SelectValue placeholder="Tous les abonnements" />
+          </SelectTrigger>
+          <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-60">
+            <SelectItem value="" className="text-white text-xs">Tous les abonnements</SelectItem>
+            {memberTypes.map((mt) => (
+              <SelectItem key={mt.id} value={mt.name} className="text-white text-xs">
+                {mt.name} {mt.is_pif ? "(PIF)" : ""} {mt.is_coach_subscription ? "(Coach)" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-[var(--color-text-tertiary)] ml-auto font-mono">{filteredMembers.length} résultats</p>
       </div>
 
       {/* Table */}
