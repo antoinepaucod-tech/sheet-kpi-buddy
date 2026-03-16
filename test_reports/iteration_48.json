@@ -1,0 +1,33 @@
+{
+  "summary": "Completed testing for member deduplication logic and KPI card overflow fix. All 15 backend deduplication tests passed (1 skipped for non-existent health endpoint). Frontend UI verified all tab counts correct (Actifs=59, Coachs=29, Expirés=5, Partis=226, Tous=98). Camille Astier correctly excluded from Actifs tab with is_coach_also flag and appears in Coachs tab with THE COACH membership. Compare page KPI cards display values without overflow.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/health", "issue": "Endpoint returns 404 - not implemented", "priority": "LOW"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_deduplication_iter48.py",
+    "/app/test_reports/pytest/pytest_results_iter48.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Deduplication logic in members.py correctly identifies dual subscriptions (HUBFIT + COACH) and flags with is_coach_also",
+    "True duplicates (same name + membership) correctly flagged with is_duplicate",
+    "MetricCard component in ComparePage.js uses text-base, truncate, min-w-0 to prevent overflow"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_deduplication_iter48.py"
+  ],
+  "success_rate": {"backend": "94%", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 48 tested member deduplication. Backend API /api/members/stats returns: active_members=59, active_coaches=29, expired=5, departed=226. GET /api/members returns is_coach_also=true for 5 HUBFIT records of dual-subscription members (Camille Astier, Johan Michelazzi, Lucas Da Costa, Léa Ebebeden, Taha Bentafat). is_duplicate=true for Nicholas Schmale HUBFIT and Salomé DUO duplicates. Frontend MembersPage correctly filters is_coach_also from Actifs tab. ComparePage MetricCard uses text-base truncate min-w-0 for overflow prevention."
+}

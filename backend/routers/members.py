@@ -55,6 +55,35 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
     for d in docs:
         d["is_coach"] = _is_coach(d.get("membership", ""))
     
+    # Separate current (non-departed) vs departed
+    current_docs = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"]]
+    departed_docs = [d for d in docs if d.get("exit_date") and d["exit_date"] not in [None, "", "None"]]
+    
+    # Deduplicate ONLY within current members
+    name_groups = {}
+    for d in current_docs:
+        name = d.get("name", "")
+        if name not in name_groups:
+            name_groups[name] = []
+        name_groups[name].append(d)
+    
+    for name, group in name_groups.items():
+        if len(group) <= 1:
+            continue
+        has_coach = any(d["is_coach"] for d in group)
+        has_noncoach = any(not d["is_coach"] for d in group)
+        if has_coach and has_noncoach:
+            for d in group:
+                if not d["is_coach"]:
+                    d["is_coach_also"] = True
+        # Handle true duplicates (same name AND same membership)
+        seen = set()
+        for d in group:
+            key = d.get("membership", "")
+            if key in seen:
+                d["is_duplicate"] = True
+            seen.add(key)
+    
     if expiring_soon:
         today = datetime.now(timezone.utc).date()
         thirty_days = today + timedelta(days=30)
@@ -77,15 +106,47 @@ async def get_member_stats():
     departed = [d for d in docs if d.get("exit_date") and d["exit_date"] not in [None, "", "None"]]
     current = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"]]
 
-    coaches = [d for d in current if _is_coach(d.get("membership", ""))]
-    non_coaches = [d for d in current if not _is_coach(d.get("membership", ""))]
+    # Deduplicate: identify people with both coach + non-coach subscriptions
+    name_coach_map = {}
+    for d in current:
+        name = d.get("name", "")
+        is_coach = _is_coach(d.get("membership", ""))
+        if name not in name_coach_map:
+            name_coach_map[name] = {"coach": False, "noncoach": False, "ids": []}
+        if is_coach:
+            name_coach_map[name]["coach"] = True
+        else:
+            name_coach_map[name]["noncoach"] = True
+        name_coach_map[name]["ids"].append(d.get("id"))
+
+    # Build sets of IDs to skip (non-coach records of people who are also coaches, and duplicates)
+    skip_ids = set()
+    seen_memberships = {}
+    for name, info in name_coach_map.items():
+        if info["coach"] and info["noncoach"]:
+            # Skip non-coach records for this person
+            for d in current:
+                if d.get("name") == name and not _is_coach(d.get("membership", "")):
+                    skip_ids.add(d.get("id"))
+    # Also skip exact duplicates (same name + same membership)
+    seen = set()
+    for d in current:
+        key = (d.get("name", ""), d.get("membership", ""))
+        if key in seen:
+            skip_ids.add(d.get("id"))
+        seen.add(key)
+
+    deduped = [d for d in current if d.get("id") not in skip_ids]
+
+    coaches = [d for d in deduped if _is_coach(d.get("membership", ""))]
+    non_coaches = [d for d in deduped if not _is_coach(d.get("membership", ""))]
 
     active_coaches = [d for d in coaches if not d.get("subscription_end_date") or d["subscription_end_date"] >= today]
     active_members = [d for d in non_coaches if not d.get("subscription_end_date") or d["subscription_end_date"] >= today]
     expired_members = [d for d in non_coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today]
     expired_coaches = [d for d in coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today]
 
-    expiring = [d for d in current if d.get("subscription_end_date") and today <= d["subscription_end_date"] <= thirty_days]
+    expiring = [d for d in deduped if d.get("subscription_end_date") and today <= d["subscription_end_date"] <= thirty_days]
 
     pif_active = [d for d in active_members if d.get("member_type") == "Membres PIF"]
     recurring_active = [d for d in active_members if d.get("member_type") == "Membres Généraux Récurrents"]

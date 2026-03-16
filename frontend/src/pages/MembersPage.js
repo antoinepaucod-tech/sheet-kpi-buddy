@@ -251,9 +251,10 @@ export default function MembersPage() {
   // Computed member categories
   const today = new Date().toISOString().split('T')[0];
   const departed = members.filter(m => m.exit_date); // Partis
-  const current = members.filter(m => !m.exit_date); // Pas partis
+  const current = members.filter(m => !m.exit_date && !m.is_duplicate); // Pas partis, pas doublons
   const coaches = current.filter(m => m.is_coach);
-  const nonCoaches = current.filter(m => !m.is_coach);
+  // Non-coaches: exclude members who also have a coach subscription (is_coach_also)
+  const nonCoaches = current.filter(m => !m.is_coach && !m.is_coach_also);
   const activeMembersOnly = nonCoaches.filter(m => !m.subscription_end_date || m.subscription_end_date >= today);
   const activeCoaches = coaches.filter(m => !m.subscription_end_date || m.subscription_end_date >= today);
   const expiredMembers = nonCoaches.filter(m => m.subscription_end_date && m.subscription_end_date < today);

@@ -58,12 +58,12 @@ const MetricCard = ({ label, value, trend, icon: Icon, variant = "default" }) =>
   };
   
   return (
-    <div className={`bg-[var(--color-bg-secondary)] border ${variants[variant]} rounded-[var(--radius-lg)] p-4`}>
+    <div className={`bg-[var(--color-bg-secondary)] border ${variants[variant]} rounded-[var(--radius-lg)] p-4 min-w-0`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="tf-stat-label">{label}</span>
-        {Icon && <Icon size={14} className="text-[var(--color-text-tertiary)]" />}
+        <span className="tf-stat-label truncate">{label}</span>
+        {Icon && <Icon size={14} className="text-[var(--color-text-tertiary)] shrink-0" />}
       </div>
-      <p className="text-xl font-display font-extrabold text-white">{value}</p>
+      <p className="text-base font-display font-extrabold text-white truncate">{value}</p>
       {trend !== undefined && (
         <div className={`flex items-center gap-1 mt-1 text-xs ${trend >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
           {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
