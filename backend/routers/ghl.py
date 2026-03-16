@@ -201,7 +201,7 @@ async def confirm_sale(body: dict):
         return existing_sale
 
     # Determine member_type if not provided
-    is_challenge = "challenge" in subscription_type.lower()
+    is_challenge = "challeng" in subscription_type.lower() or "6 week" in subscription_type.lower()
     if not member_type:
         if is_challenge or "annuel" in subscription_type.lower() or "6 mois" in subscription_type.lower():
             member_type = "Membres PIF"
@@ -255,6 +255,36 @@ async def confirm_sale(body: dict):
         await db.customer_members.insert_one(member_doc)
         member_id = member_doc["id"]
         member_doc.pop("_id", None)
+
+        # Create payment schedule if billing is enabled
+        if billing_enabled and billing_amount > 0:
+            from models.members import PaymentSchedule
+            schedule = PaymentSchedule(
+                member_id=member_id,
+                amount=billing_amount,
+                recurrence_type=billing_cycle_type,
+                recurrence_value=billing_cycle_value,
+                start_date=signature_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                payment_method=billing_payment_method,
+                is_active=True
+            )
+            await db.payment_schedules.insert_one(schedule.model_dump())
+
+        # Create bilan/suivi (annual review) for the new member
+        from models.members import AnnualReview
+        if is_challenge:
+            review_type = "challenge"
+            review_date_calc = base_date + timedelta(days=42)
+        else:
+            review_type = "quarterly"
+            review_date_calc = base_date + timedelta(days=90)
+        annual_review = AnnualReview(
+            member_id=member_id,
+            review_date=review_date_calc.strftime("%Y-%m-%d"),
+            review_type=review_type,
+            status="scheduled"
+        )
+        await db.annual_reviews.insert_one(annual_review.model_dump())
 
     # 2. Auto-add to active 6 Week Challenge if applicable
     challenge_added = False

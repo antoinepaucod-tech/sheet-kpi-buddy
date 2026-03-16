@@ -1,144 +1,170 @@
 <analysis>**original_problem_statement:**
-L'utilisateur souhaite reconstruire une application SaaS de pilotage financier pour les clubs de sport, nommée TRANSFORM. La demande initiale était une refonte complète de l'interface utilisateur pour s'aligner sur une identité de marque Apple-inspired.
-
-Les priorités actuelles, basées sur les dernières interactions, sont de corriger les incohérences de données sur le tableau de bord et d'ajouter de nouvelles fonctionnalités pour améliorer le flux de travail de gestion.
+L'utilisateur souhaite reconstruire une application SaaS de pilotage financier pour les clubs de sport, nommée TRANSFORM. Après une refonte de l'interface et de multiples corrections de bugs sur le tableau de bord, la nouvelle phase consiste à migrer la logique métier pour refléter un système de produits et de transactions plus complexe. L'utilisateur a fourni des fichiers (, ) décrivant 31 types d'abonnements spécifiques et les règles associées, et se prépare à fournir un historique complet des transactions pour importation. La priorité est d'assurer que les workflows de création de membres (via GHL et manuellement) sont parfaitement alignés avec ces nouvelles règles avant l'import de données.
 
 **PRODUCT REQUIREMENTS:**
-- **Intégration GoHighLevel (GHL):**
-    - Synchroniser les données du pipeline et confirmer les ventes, ce qui doit créer des transactions de revenus.
-- **Logique Métier :**
-    - Gérer dynamiquement les types d'abonnements.
-    - Automatiser la création de bilans et la génération de dépenses salariales pour les coachs.
-    - Permettre la planification de cours en masse (bulk).
+- **Migration de la Logique Métier:**
+    - Remplacer les types d'abonnements génériques par 31 produits spécifiques (PIF, Récurrents, Coach, Duo...).
+    - Adapter les modèles de données et l'interface pour gérer les nouvelles propriétés (ex: ,  pour les duos).
+- **Workflows de Création de Membres:**
+    - Le workflow  doit automatiquement créer un membre, une transaction comptable, un échéancier de paiement, un bilan/suivi et des tâches d'onboarding, tout en recalculant les KPIs.
+    - Le workflow d'ajout manuel de membre doit déclencher les mêmes actions.
+- **Import de Données Historiques:**
+    - L'application doit être prête à importer un CSV contenant l'historique des transactions depuis 2024.
 - **Corrections de bugs:**
-    - Assurer la cohérence des données sur le tableau de bord (revenus, dépenses, membres actifs).
-    - Afficher correctement les détails des revenus, les dépenses et les transactions récurrentes sur le tableau de bord.
-    - Assurer que les KPIs se mettent à jour automatiquement lorsque les transactions sont modifiées.
+    - Assurer la cohérence totale des données entre les transactions, les membres et le tableau de bord.
 
 **User's preferred language**: Français
 
 **what currently exists?**
-Une application full-stack (React/FastAPI/MongoDB) fonctionnelle. Le bug critique  qui bloquait le développement a été résolu. De nombreuses fonctionnalités ont été implémentées, notamment la gestion dynamique des abonnements, la planification de cours en masse, la génération automatique des salaires et des bilans, ainsi que des notifications (badges) dans le menu latéral. Le système recalcule désormais automatiquement les KPIs (indicateurs de performance) lors de la modification des transactions, améliorant considérablement la cohérence des données.
+Une application full-stack (React/FastAPI/MongoDB) dont la logique métier a été profondément remaniée pour s'aligner sur 31 nouveaux types de produits. Les modèles de données (, , ), les API et les composants frontend (, , ) ont été mis à jour pour refléter cette nouvelle structure. Des audits complets des workflows ont été menés, et des corrections ont été apportées pour s'assurer que la création de membres (manuelle ou via GHL) déclenche la création de transactions et le recalcul des KPIs. Cependant, des bugs persistent dans ces workflows critiques.
 
 **Last working item**:
-- **Last item agent was working:** L'agent a commencé à enquêter sur un bug signalé par l'utilisateur concernant le tableau de bord. La fenêtre modale détaillant les revenus est incorrecte : elle n'affiche pas le fast cash revenue, les dépenses, ni les transactions récurrentes de test. L'agent a commencé par analyser le code du backend () pour comprendre la logique de calcul des KPIs.
+- **Last item agent was working:** L'agent effectuait un audit final des deux workflows de création de membres (GHL et manuel). Il a découvert un bug critique : une faute de frappe dans le nom de l'abonnement 6 WEEKS CHALENGE (manquant un L) dans le code empêchait la création du bon type de Bilan (suivi). Le bilan était créé en tant que  au lieu de .
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** Both. L'agent doit corriger la logique backend dans  et/ou  pour inclure toutes les données nécessaires, puis mettre à jour le composant frontend . Les tests incluront l'appel à l'API des KPIs et une capture d'écran du tableau de bord pour vérifier que les détails sont corrects.
-- **User Testing Done:** Y (L'utilisateur a signalé le bug avec une capture d'écran).
+- **Which testing method agent to use?** Both. L'agent doit d'abord faire une recherche globale et corriger la typo CHALENGE dans tous les fichiers backend concernés (ex: , ). Ensuite, un test de bout en bout des deux workflows est nécessaire, en simulant une vente GHL et un ajout manuel pour vérifier que toutes les entités associées (membre, transaction, bilan avec type et date corrects) sont créées et que les KPIs du tableau de bord sont mis à jour.
+- **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: (P0 - CRITIQUE) Les détails des revenus/dépenses sur le tableau de bord sont incorrects et incomplets.**
-  - **Description:** Comme signalé par l'utilisateur (message 424), la vue détaillée du tableau de bord n'affiche pas les dépenses, les revenus fast cash et les transactions récurrentes, ce qui rend les chiffres globaux difficiles à comprendre.
-  - **Attempted fixes:** L'agent a commencé à inspecter .
+- **Issue 1: (P0 - CRITIQUE) Les workflows de création de membres sont bogués et incomplets.**
+  - **Description:** Le workflow de création d'un membre avec un abonnement 6 Weeks Challenge génère un type de bilan incorrect à cause d'une faute de frappe (CHALENGE) dans le code. Cet audit a révélé que, bien que des correctifs aient été appliqués, les workflows ne sont pas encore entièrement fiables pour garantir la création de toutes les données associées (bilans, échéanciers, etc.) et la cohérence des KPIs.
+  - **Attempted fixes:** L'agent a identifié la source du bug (la typo) dans  et s'apprêtait à la corriger dans tout le projet.
   - **Next debug checklist:**
-    1.  Vérifier le modèle Pydantic  dans  et y ajouter les champs manquants pour les détails des dépenses (par catégorie) et les revenus/dépenses récurrents.
-    2.  Modifier l'endpoint  dans  pour qu'il calcule et renvoie ces nouvelles données.
-    3.  Mettre à jour le composant  pour récupérer et afficher correctement ces nouvelles informations dans la modale de détails.
-  - **Why fix this issue?** Le tableau de bord est l'outil central de l'application. Des données incorrectes ou incomplètes sapent la confiance de l'utilisateur et rendent l'outil inutile.
+    1.  Effectuer une recherche globale pour CHALENGE et remplacer par CHALLENGE dans tous les fichiers pertinents (, , ).
+    2.  Relancer un test complet du **Workflow 1 (GHL)** : simuler une vente pour un 6 Weeks Challenge et vérifier que le membre, la transaction, et un bilan de type  avec la bonne date (date de début + 42 jours) sont créés.
+    3.  Relancer un test complet du **Workflow 2 (Ajout manuel)** : ajouter manuellement un membre avec un 6 Weeks Challenge et vérifier les mêmes points que pour le workflow 1.
+    4.  S'assurer qu'aucune donnée de test ne subsiste après la validation.
+  - **Why fix this issue?** C'est un bloqueur critique pour l'import des données historiques. Si la création de membres n'est pas fiable, l'application générera des données corrompues.
   - **Status:** IN PROGRESS
-  - **Is recurring issue?** Y (La cohérence des données du tableau de bord est un problème récurrent).
+  - **Is recurring issue?** Y (La cohérence des workflows et des données est un problème récurrent).
   - **Should Test frontend/backend/both after fix?** Both.
   - **Blocked on other issue:** Non.
 
 **In progress Task List**:
-N/A
+- **Task 1: Finaliser la migration de la logique métier (P1)**
+  - **Where to resume:** La tâche est presque terminée. La dernière étape consiste à résoudre l'Issue 1 pour s'assurer que les workflows de base fonctionnent parfaitement avec la nouvelle structure de données.
+  - **What will be achieved with this?** L'application sera stable, cohérente et prête pour l'import massif de données historiques.
+  - **Status:** IN PROGRESS
+  - **Should Test frontend/backend/both after fix?** Both.
+  - **Blocked on something:** Issue 1.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **(P1)** Fournir une explication complète du workflow de l'application à l'utilisateur une fois que les bugs sont résolus.
+  - **(P0)** Créer un script pour importer l'historique des transactions depuis 2024 (l'utilisateur fournira le fichier CSV).
+  - **(P1)** Configurer les types de Bilans (suivis) à créer en fonction du type d'abonnement, comme demandé par l'utilisateur.
+  - **(P1)** Implémenter un système de rappel automatique pour les bilans/suivis.
+  - **(P2)** Fournir une explication complète des workflows à l'utilisateur.
 - **Future Tasks:**
   - **(P2)** Alertes WhatsApp via Twilio.
-  - **(P2)** Interface de migration de données.
+  - **(P2)** Interface de migration de données pour l'utilisateur.
   - **(P2)** Calcul automatique de CPL (Cost Per Lead), CPR (Cost Per Registration), LTV (Lifetime Value).
 
 **Completed work in this session**
-- **Résolution du Bloqueur Critique:** Correction de l'erreur  qui rendait l'environnement de développement inutilisable.
-- **Cohérence des Données du Dashboard:** Correction de multiples bugs entraînant des revenus et un nombre de membres actifs incorrects. Implémentation d'un recalcul automatique des KPIs à chaque ajout/suppression de transaction.
-- **Gestion des Transactions:** Correction du flux de restauration des transactions exclues et de la création de transactions lors des ventes GHL.
-- **Badges de Notification:** Ajout de badges dans le menu latéral pour les paiements en retard (rouge), les onboardings en attente (bleu) et les bilans/suivis à venir (bleu) ou en retard (rouge).
-- **Planification de Cours en Masse:** Création d'une interface pour ajouter plusieurs cours en une seule fois.
-- **Remplacement de Coach Amélioré:** Refonte de l'interface pour permettre le remplacement d'un coach pour des semaines spécifiques.
-- **Synchronisation Automatique des Salaires:** Les salaires des coachs sont désormais automatiquement recalculés lorsque la participation à un cours est mise à jour.
-- **Correction du Suivi du 6-Week Challenge:** La logique de calcul de la progression a été corrigée pour ne pas compter les semaines non payées.
+- **Audit et Correction des Workflows:**
+    - Le flux GHL a été corrigé pour utiliser la fonction  au lieu d'une mise à jour manuelle incorrecte des KPIs.
+    - Le flux d'ajout manuel de membre a été corrigé pour créer automatiquement une transaction comptable et recalculer les KPIs.
+- **Migration Complète de la Logique Métier:**
+    - Remplacement de 5 abonnements génériques par 31 produits spécifiques issus d'un CSV.
+    - Mise à jour des modèles de la base de données (, , ) pour inclure de nouveaux champs (, , , etc.).
+    - Mise à jour de toutes les interfaces utilisateur concernées (, , , , ) pour afficher et gérer dynamiquement les nouvelles données.
+- **Correction du Recalcul des KPIs:**
+    - La fonction  a été corrigée pour mettre à jour le , assurant la cohérence avec le tableau de bord.
+- **Améliorations du Tableau de Bord:**
+    - Correction des pourcentages du funnel de vente.
+    - Correction des problèmes de débordement de texte dans les cartes de statistiques.
+    - Amélioration des graphiques (plafonnement des valeurs extrêmes, ajout des barres de membres gagnés/perdus).
+- **Nouvelle Fonctionnalité: Validation des Transactions Récurrentes:**
+    - Implémentation d'un système permettant de valider manuellement les revenus/dépenses récurrents chaque mois.
 
 **Earlier issues found/mentioned but not fixed**
 N/A
 
 **Known issue recurrence from previous fork**
-- **Problème :** Incohérence des données affichées sur le tableau de bord.
-- **Statut :** C'est le problème en cours de résolution (Issue 1).
+- **Issue recurrence in previous fork:** Incohérence des données affichées sur le tableau de bord et dans les workflows.
+- **Recurrence count:** Élevé.
+- **Status:** IN PROGRESS. La résolution de l'Issue 1 est la dernière étape pour solidifier la cohérence des données à la source (création de membres).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- FastAPI & Pydantic pour le backend.
-- React & TanStack Query pour le frontend.
-- MongoDB comme base de données.
-- Logique de recalcul automatique pour la synchronisation des données (KPIs).
-- Configuration de l'environnement de développement React (CRACO).
+- **Architecture:** FastAPI (backend), React (frontend), MongoDB (database).
+- **State Management (Frontend):** TanStack Query pour la gestion des données serveur.
+- **Data Integrity:** Le concept central est le recalcul automatique des KPIs () déclenché par toute opération sur les transactions pour garantir la cohérence du tableau de bord.
+- **Business Logic:** Le système a migré d'une logique simple à une logique complexe basée sur 31 produits avec des attributs variés (PIF, Récurrent, Duo, Coach) qui pilotent les actions en aval (création de bilans, échéanciers).
 
 **key DB schema**
-- : { : YYYY-MM, : int, : float, : float, ... }
-- : { Sun Mar 15 18:19:10 UTC 2026: datetime, : float, : revenue | expense, : str, : bool }
-- : { : ObjectId, : ObjectId, ... }
-- : Contient les modèles pour les transactions récurrentes.
+- : 
+- : 
+- : 
+- : 
+- : 
+- : 
 
 **changes in tech stack**
--  a été utilisé pour résoudre un bug de l'environnement de développement.
+-  a été utilisé pour résoudre un bug de l'environnement de développement React.
 
 **All files of reference**
-- 
-- 
-- 
-- 
-- 
-- 
+- **Fichiers critiques pour l'issue en cours:**
+  - 
+  - 
+  - 
+  - 
+- **Fichiers de contexte importants:**
+  - 
+  - 
+  - 
+  - 
+  - 
 
 **Areas that need refactoring**:
-N/A
+La logique de détermination du type et de la date des bilans est dispersée et basée sur des comparaisons de chaînes de caractères (ex: ). Il serait plus robuste de centraliser cette logique et de la lier directement aux propriétés des  (ex: un champ  ou  dans le modèle ).
 
 **key api endpoints**
--  (Au cœur du bug actuel)
-- 
--  (Déclenche le recalcul des KPIs)
--  (Nouvel endpoint)
--  (Nouvel endpoint pour les badges)
+- : Confirme une vente depuis GHL, déclenche le workflow de création.
+- : Ajoute un membre manuellement, déclenche le workflow de création.
+- : Crée un bilan/suivi pour un membre.
+- : Force le recalcul des KPIs pour un mois donné.
+- : Crée une transaction et déclenche le recalcul des KPIs.
+- : Supprime une transaction et déclenche le recalcul.
 
 **Critical Info for New Agent**
 - **Langue de l'Utilisateur :** Répondez **uniquement en français**.
-- **Priorité Absolue (P0) :** Corrigez l'affichage des détails sur le tableau de bord. L'utilisateur doit pouvoir voir la répartition des revenus, les dépenses et l'impact des transactions récurrentes. C'est essentiel pour sa confiance.
-- **Transactions Récurrentes :** L'utilisateur a mentionné pour la première fois les transactions récurrentes. Le backend a des modèles pour cela, mais ils ne sont pas intégrés dans le calcul ou l'affichage des KPIs du tableau de bord. C'est une partie clé du bug actuel à résoudre.
-- **Cohérence des Données :** L'utilisateur est très vigilant sur ce point. Validez toujours que les modifications d'une partie de l'application (ex: Transactions) se reflètent correctement dans les autres (ex: Dashboard).
+- **Priorité Absolue (P0) :** Corriger le bug de la typo CHALENGE et valider de bout en bout les deux workflows de création de membre. C'est un prérequis non négociable avant de pouvoir importer les données historiques de l'utilisateur.
+- **Contexte de la Prochaine Étape :** L'utilisateur est prêt à fournir un fichier CSV de transactions historiques. L'application doit être parfaitement stable pour cette opération.
+- **Intégrité des Données :** L'utilisateur est très exigeant sur la cohérence des données. Chaque modification doit être rigoureusement testée. Ne jamais laisser de données de test dans le système après une intervention.
 
 **documents and test reports created in this job**
-- Plusieurs rapports de test, le plus récent est .
--  a été mis à jour régulièrement.
+- 
+- 
+-  (Note: ce rapport date d'avant la découverte du bug de la typo)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **(PENDING)** dans le tableau de bord : les detail du revenu sont faux : pas de fast cash revenue les depenses nparaissent pas non plus jai aussi ajouté une recurrence pour tester je ne la voie nul part dans le tableau de bord ni dans les detail - **C'est le bug P0 actuel.**
-2.  jai supprimer les transaction test dans transaction et le tableau de bord ne sest pas mis a jour... (Corrigé, l'auto-recalcul a été implémenté).
-3.  jai récupérer une transaction exclue et elle napparait nul part (Corrigé).
-4.  je vois que pour Caroline il y a des transition exclu ? que cela veut il dire ? (Corrigé et expliqué).
-5.  actuellement il y a des paiement en retard... peux tu mettre... une notification dans le menu lateral... (Corrigé, badges ajoutés).
-6.  ajoute une solution pour la creation des planning pour ajouter les cours en bulk... (Fait).
-7.  tout fonctionne bien continue les deux next items (Approbation).
-8.  Messages d'approbation (ok, ca joue).
+1.  **PENDING:** Continue - L'utilisateur demande de poursuivre la correction du bug de la typo CHALENGE.
+2.  L'agent explique avoir trouvé le bug de la typo.
+3.  L'utilisateur donne une description détaillée de deux workflows critiques (GHL et ajout manuel) et demande une vérification approfondie. (Accompli, a révélé des bugs)
+4.  L'utilisateur confirme la fin de l'audit de cohérence et demande de s'assurer que les ventes GHL ne concernent que le 6 Weeks Challenge et que le système est prêt, sans données de test. (Accompli, a révélé des bugs)
+5.  L'utilisateur demande une vérification approfondie pour s'assurer que les 31 nouveaux types d'abonnements et catégories sont correctement intégrés partout avant l'import CSV. (Accompli, a révélé des incohérences qui ont été corrigées)
+6.  L'utilisateur confirme le plan pour la migration vers les nouvelles règles métier.
+7.  L'agent présente son analyse des documents fournis (, ).
+8.  L'utilisateur fournit deux fichiers pour la migration de la logique métier et annonce la future livraison d'un historique de transactions.
+9.  L'utilisateur confirme que le calcul du  est correct et doit être basé sur les transactions réelles.
+10. L'utilisateur demande pourquoi  est de 1947, ce qui mène à la découverte que c'était une valeur statique et incorrecte. (Corrigé)
 
 **Project Health Check:**
-- **Broken:** La vue détaillée du tableau de bord est cassée car elle affiche des données incomplètes. C'est un bug à haute visibilité.
+- **Broken:** Les workflows de création de membres sont fonctionnels mais génèrent des données incorrectes (mauvais type de bilan) à cause d'un bug (typo). C'est une faille critique dans la logique métier de base.
 - **Mocked:** N/A
 
 **3rd Party Integrations**
-- **GoHighLevel (GHL):** Intégrée.
-- **Resend:** Intégré.
+- **GoHighLevel (GHL):** Intégrée pour la synchronisation des leads et la confirmation des ventes.
+- **Resend:** Intégré (utilisation non spécifiée dans la session récente).
 - **Twilio:** Installé mais non utilisé.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. Utilisé à de multiples reprises pour valider les changements majeurs.
-- **Test files created:** Non.
-- **Known regressions:** La cohérence des données du tableau de bord est un point faible récurrent.
+- **Testing agent used after significant changes:** YES, mais le dernier test date d'avant la découverte du bug de la typo. Un nouveau test complet sera nécessaire.
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** []
+- **Known regressions:** Le bug du type de bilan est une régression introduite lors des refactorings précédents.
 
 **Credentials to test flow:**
 - **Application Login:**
@@ -146,4 +172,4 @@ N/A
   - Password: 
 
 **What agent forgot to execute**
-L'agent précédent n'a pas implémenté l'affichage complet des détails des KPIs sur le tableau de bord (détails des dépenses, transactions récurrentes), ce qui a conduit directement au bug actuel signalé par l'utilisateur.</analysis>
+L'agent précédent, lors de l'intégration de la nouvelle logique métier, a oublié de faire une recherche globale pour les chaînes de caractères liées aux abonnements, introduisant ainsi une faute de frappe (CHALENGE) qui a cassé une partie d'un workflow critique. Il a également fallu plusieurs audits initiés par l'utilisateur pour découvrir des lacunes dans les workflows (ex: la non-création de transactions lors d'un ajout manuel) qui auraient dû être identifiées par des tests de régression plus approfondis après le refactoring majeur.</analysis>

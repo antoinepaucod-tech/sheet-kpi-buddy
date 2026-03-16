@@ -20,6 +20,7 @@ FREQUENCY_DELTA = {
     "quarterly": relativedelta(months=3),
     "semi-annually": relativedelta(months=6),
     "annually": relativedelta(years=1),
+    "challenge": timedelta(days=42),  # 6 weeks challenge
 }
 
 
@@ -171,6 +172,27 @@ async def create_member(data: CustomerMemberCreate):
                 )
                 p_doc = participant.model_dump()
                 await db.challenge_participants.insert_one(p_doc)
+
+    # Create accounting transaction for the initial payment
+    if data.cash_collected and data.cash_collected > 0:
+        rev_cat = await db.accounting_categories.find_one({"type": "revenue", "kpi_column": "revenue_members"})
+        cat_name = rev_cat["name"] if rev_cat else "ABONNEMENTS"
+        tx_doc = {
+            "id": f"member-{doc['id']}-initial",
+            "date": data.contract_signed_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "description": f"Vente {data.membership} - {data.name}",
+            "amount": data.cash_collected,
+            "type": "revenue",
+            "category": cat_name,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        existing_tx = await db.accounting_transactions.find_one({"id": tx_doc["id"]})
+        if not existing_tx:
+            await db.accounting_transactions.insert_one(tx_doc)
+            tx_doc.pop("_id", None)
+        # Auto-recalculate KPIs
+        from routers.transactions import _auto_recalculate_kpis
+        await _auto_recalculate_kpis(tx_doc["date"])
 
     return doc
 
