@@ -19,6 +19,13 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - Badge "COACH" bleu visible sur chaque coach
 - Onglets: Actifs | Coachs | Expirés/Churn | Expirant | Partis | Tous
 
+### DUO Members
+- 7 abonnements DUO actifs (primary + partner = 14 records)
+- `persons_count=2` pour les primaires, `persons_count=1` pour les partenaires
+- `is_primary_subscriber` et `subscription_group_id` pour lier les pairs
+- Certains membres avec "&" dans le nom (ex: "Nathalie Zaharna & Neal") ne sont PAS marqués DUO
+- Doublons identifiés: Nicholas Schmale (HUBFIT×2), 4 personnes avec double abo (HUBFIT + THE COACH)
+
 ### Real-time Member Stats (from /api/members/stats)
 - 326 Total (importés)
 - 66 Membres actifs (non-coach, non-parti, non-expiré)
@@ -27,54 +34,37 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - 226 Partis (exit_date définie)
 - 0 Expirant (30j)
 
-### Accounting Categories (38)
-- **Revenue (25):** Per membership type + COMPLEMENTS ALIMENTAIRES, PT ANTOINE, PRÊT
-- **Expense (13):** LOGICIELS, ABONNEMENTS, LOYERS, SALAIRES COACH, etc.
-
-### Transactions (3425 imported)
-- Editable manuellement (PUT /api/transactions/{id})
-- Filtrables par catégorie avec groupes dépliants
-- Colonne Client avec lien vers profil membre
-
-### Payment Schedules (75)
-- Générés pour tous les membres récurrents actifs
-- Liés au cycle de facturation du membre
-
 ## Pages Principales
-- Dashboard (/) - KPIs financiers + stats membres en temps réel
-- Membres (/members) - Onglets: Actifs/Coachs/Expirés/Partis/Tous, filtres par abonnement (26 types)
+- Dashboard (/) - KPIs financiers + stats membres en temps réel + **zone d'alertes** expirations
+- Membres (/members) - Onglets, filtres par abonnement (26 types), **édition exit_date**
 - Transactions (/transactions) - Édition, filtres catégories, client links
 - Budget Mensuel (/budget) - Grille éditable catégories × mois
-- Catégories (/categories) - Gestion des catégories comptables
-- Récurrentes (/recurring) - Gestion des transactions récurrentes
-- Challenge 6 Sem. (/challenge) - Programme challenge
-- Bilans/Suivis (/annual-reviews) - Bilans par membre
-- KPIs Cours (/courses) - Fréquentation des cours (20 cours/mois, taux formaté 1 décimale)
+- KPIs Cours (/courses) - Fréquentation des cours (taux formaté 1 décimale)
 
 ## Key API Endpoints
-- `GET /api/members/stats` - Stats membres temps réel (actifs, coachs, expirés, partis)
+- `GET /api/members/stats` - Stats membres temps réel
 - `GET /api/members/memberships` - 26 noms d'abonnements uniques
+- `GET /api/members/expiring?days=60` - Membres dont l'abonnement expire bientôt
+- `PUT /api/members/{id}` - Mise à jour membre (inclut exit_date)
 - `GET /api/courses?year=X&month=Y` - Cours avec fréquentation
-- `PUT /api/transactions/{id}` - Édition transaction
-- `GET /api/transactions/monthly-grid` - Budget mensuel
 
 ## Completed Work
-- [2026-03-16] Import complet des données (326 membres, 3425 transactions, 38 catégories, etc.)
+- [2026-03-16] Import complet des données (326 membres, 3425 transactions, 38 catégories)
 - [2026-03-16] Page Budget Mensuel avec grille éditable
-- [2026-03-16] Différenciation Coachs (badge COACH, exclusion des actifs, onglet dédié)
-- [2026-03-16] Édition manuelle des transactions (PUT endpoint + modal UI)
-- [2026-03-16] Séparation Expirés/Churn avec style distinct et badge EXPIRÉ
-- [2026-03-16] Cartes statistiques cliquables comme filtres dans MembersPage
-- [2026-03-16] Filtres transactions par catégorie avec groupes dépliants
-- [2026-03-16] Colonne Client dans transactions avec lien vers profil membre
-- [2026-03-16] **FIX P0: Dashboard utilise stats temps réel (/api/members/stats) au lieu de KPIs statiques**
+- [2026-03-16] Différenciation Coachs (badge, exclusion des actifs, onglet)
+- [2026-03-16] Édition manuelle des transactions (PUT + modal UI)
+- [2026-03-16] Cartes statistiques cliquables sur MembersPage
+- [2026-03-16] Filtres transactions par catégorie
+- [2026-03-16] **FIX P0: Dashboard stats temps réel (/api/members/stats)**
 - [2026-03-16] **FIX P0: Filtre par abonnement (26 types) sur MembersPage**
-- [2026-03-16] **FIX P0: Membres "Partis" correctement classés (exit_date)**
-- [2026-03-16] **FIX P0: Échéanciers de paiement générés pour tous membres récurrents actifs (75 total)**
-- [2026-03-16] **FIX P0: Fréquentation des cours visible avec taux formaté (1 décimale)**
+- [2026-03-16] **FIX P0: Membres "Partis" correctement classés**
+- [2026-03-16] **FIX P0: Échéanciers de paiement générés (75 total)**
+- [2026-03-16] **FIX P0: Fréquentation des cours visible**
+- [2026-03-16] **Édition de la date de sortie (exit_date) dans le formulaire membre**
+- [2026-03-16] **Zone d'alertes Dashboard pour abonnements expirant (60j)**
 
 ## Backlog
-- **P1**: Configurer les types de bilans en fonction du type d'abonnement
+- **P1**: Configurer les types de bilans selon le type d'abonnement
 - **P1**: Système de rappels automatiques pour bilans/suivis
 - **P2**: Explication complète des workflows à l'utilisateur
 - **P2**: Alertes WhatsApp via Twilio
