@@ -101,19 +101,25 @@ async def delete_transaction(transaction_id: str):
     tx = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction introuvable")
-    excl = ExcludedRecurringExpense(
-        original_transaction_id=transaction_id,
-        category=tx.get('category', ''),
-        description=tx.get('description', ''),
-        amount=tx.get('amount', 0),
-        type=tx.get('type', 'expense'),
-        sub_type=tx.get('sub_type'),
-        date=tx.get('date'),
-    )
-    await db.excluded_recurring_expenses.insert_one(excl.model_dump())
+    # Only create exclusion if this transaction matches a recurring template
+    recurring = await db.recurring_transactions.find_one({
+        "category": tx.get("category", ""),
+        "description": tx.get("description", ""),
+    }, {"_id": 0})
+    if recurring:
+        excl = ExcludedRecurringExpense(
+            original_transaction_id=transaction_id,
+            category=tx.get('category', ''),
+            description=tx.get('description', ''),
+            amount=tx.get('amount', 0),
+            type=tx.get('type', 'expense'),
+            sub_type=tx.get('sub_type'),
+            date=tx.get('date'),
+        )
+        await db.excluded_recurring_expenses.insert_one(excl.model_dump())
     await db.accounting_transactions.delete_one({"id": transaction_id})
     await _auto_recalculate_kpis(tx.get("date", ""))
-    return {"message": "Transaction supprimée et ajoutée aux exclusions"}
+    return {"message": "Transaction supprimée"}
 
 
 @router.post("/transactions/bulk")
@@ -277,3 +283,58 @@ async def generate_monthly_transactions(year: int, month: int):
         "skipped": len(skipped),
         "transactions": created
     }
+
+
+
+# ── Recurring Validations ─────────────────────────────────────────────────────
+
+@router.get("/recurring-validations/{year_month}")
+async def get_recurring_validations(year_month: str):
+    """Get all validations for a given month."""
+    docs = await db.recurring_validations.find(
+        {"month": year_month}, {"_id": 0}
+    ).to_list(1000)
+    return docs
+
+
+@router.post("/recurring-validations")
+async def validate_recurring(body: dict):
+    """Validate (confirm payment/receipt) a recurring transaction for a month."""
+    recurring_id = body.get("recurring_id")
+    month = body.get("month")
+    if not recurring_id or not month:
+        raise HTTPException(status_code=400, detail="recurring_id et month requis")
+
+    existing = await db.recurring_validations.find_one(
+        {"recurring_id": recurring_id, "month": month}
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Déjà validée pour ce mois")
+
+    rec = await db.recurring_transactions.find_one({"id": recurring_id}, {"_id": 0})
+    if not rec:
+        raise HTTPException(status_code=404, detail="Transaction récurrente introuvable")
+
+    validation = {
+        "id": str(__import__("uuid").uuid4()),
+        "recurring_id": recurring_id,
+        "month": month,
+        "description": rec.get("description", ""),
+        "category": rec.get("category", ""),
+        "amount": rec.get("amount", 0),
+        "type": rec.get("type", "expense"),
+        "validated": True,
+        "validated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.recurring_validations.insert_one(validation)
+    validation.pop("_id", None)
+    return validation
+
+
+@router.delete("/recurring-validations/{validation_id}")
+async def unvalidate_recurring(validation_id: str):
+    """Remove a validation (unconfirm)."""
+    result = await db.recurring_validations.delete_one({"id": validation_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Validation introuvable")
+    return {"message": "Validation annulée"}

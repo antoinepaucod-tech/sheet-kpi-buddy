@@ -539,11 +539,11 @@ export default function ChallengePage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white font-medium flex items-center gap-2">
                     <ClipboardCheck size={18} className="text-[var(--color-accent)]" />
-                    Bilans hebdomadaires
+                    Bilans mensuels des participants
                   </h3>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">
-                      {challengeBilans.length} bilan{challengeBilans.length > 1 ? "s" : ""}
+                      {challengeBilans.filter(b => b.status === "completed").length} / {challengeDetail?.participants?.length || 0} remplis
                     </Badge>
                     {challengeDetail?.participants?.length > 0 && challengeBilans.length === 0 && (
                       <Button
@@ -552,7 +552,6 @@ export default function ChallengePage() {
                         className="text-xs border-[var(--color-border)] text-[var(--color-accent)]"
                         onClick={async () => {
                           try {
-                            // Re-add each participant to trigger bilan creation
                             for (const p of challengeDetail.participants) {
                               try {
                                 await axios.post(`${API}/challenges/${selectedChallenge}/participants`, {
@@ -560,7 +559,7 @@ export default function ChallengePage() {
                                   member_id: p.member_id,
                                   member_name: p.member_name,
                                 });
-                              } catch {} // Already exists, skip
+                              } catch {}
                             }
                             queryClient.invalidateQueries(["challenge-bilans"]);
                           } catch {}
@@ -574,56 +573,72 @@ export default function ChallengePage() {
                   </div>
                 </div>
 
-                {challengeBilans.length === 0 ? (
+                {/* Per-participant status grid */}
+                {challengeDetail?.participants?.length > 0 ? (
+                  <div className="space-y-2">
+                    {challengeDetail.participants.map((participant) => {
+                      const pBilans = challengeBilans.filter(b => b.member_id === participant.member_id);
+                      const completed = pBilans.filter(b => b.status === "completed");
+                      const scheduled = pBilans.filter(b => b.status === "scheduled");
+                      const hasCompletedBilan = completed.length > 0;
+                      return (
+                        <div
+                          key={participant.member_id}
+                          className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                            hasCompletedBilan
+                              ? 'bg-[rgba(48,209,88,0.04)] border-[rgba(48,209,88,0.15)]'
+                              : scheduled.length > 0
+                                ? 'bg-[rgba(255,214,10,0.04)] border-[rgba(255,214,10,0.15)]'
+                                : 'bg-[var(--color-bg-primary)] border-[var(--color-border)]'
+                          }`}
+                          data-testid={`bilan-status-${participant.member_id}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2.5 h-2.5 rounded-full ${
+                              hasCompletedBilan ? 'bg-[var(--color-success)]'
+                              : scheduled.length > 0 ? 'bg-[var(--color-warning)]'
+                              : 'bg-[var(--color-text-tertiary)]'
+                            }`} />
+                            <div>
+                              <p className="text-white text-sm font-medium">{participant.member_name}</p>
+                              {pBilans.length > 0 && (
+                                <p className="text-[var(--color-text-tertiary)] text-xs mt-0.5">
+                                  {completed.length > 0
+                                    ? `Dernier bilan: ${completed[0].review_date ? format(parseISO(completed[0].review_date), "dd MMM yyyy", { locale: fr }) : "-"}`
+                                    : scheduled.length > 0
+                                      ? `Planifié: ${scheduled[0].review_date ? format(parseISO(scheduled[0].review_date), "dd MMM yyyy", { locale: fr }) : "-"}`
+                                      : ""
+                                  }
+                                  {completed[0]?.weight_current ? ` - ${completed[0].weight_current}kg` : ""}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {hasCompletedBilan ? (
+                              <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0 text-xs">
+                                Bilan rempli
+                              </Badge>
+                            ) : scheduled.length > 0 ? (
+                              <Badge className="bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)] border-0 text-xs">
+                                En attente
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-[rgba(255,69,58,0.12)] text-[var(--color-danger)] border-0 text-xs">
+                                Pas de bilan
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
                   <div className="text-center py-6">
                     <ClipboardCheck size={32} className="mx-auto text-[var(--color-text-tertiary)] mb-2" />
                     <p className="text-[var(--color-text-secondary)] text-sm">
-                      Aucun bilan enregistré pour les participants
+                      Aucun participant inscrit
                     </p>
-                    <p className="text-[var(--color-text-tertiary)] text-xs mt-1">
-                      Les bilans sont créés depuis la page Bilans / Suivis
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {challengeBilans
-                      .sort((a, b) => (b.review_date || "").localeCompare(a.review_date || ""))
-                      .map((bilan) => {
-                        const participant = challengeDetail.participants.find(p => p.member_id === bilan.member_id);
-                        return (
-                          <div
-                            key={bilan.id}
-                            className="flex items-center justify-between p-3 rounded-lg"
-                            style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-2 h-2 rounded-full ${bilan.status === "completed" ? "bg-[var(--color-success)]" : "bg-[var(--color-warning)]"}`} />
-                              <div>
-                                <p className="text-white text-sm font-medium">{participant?.member_name || bilan.member_name || "?"}</p>
-                                <p className="text-[var(--color-text-tertiary)] text-xs">
-                                  {bilan.review_date ? format(parseISO(bilan.review_date), "dd MMM yyyy", { locale: fr }) : "-"}
-                                  {" "}&middot;{" "}
-                                  <span className="capitalize">{bilan.review_type || "hebdomadaire"}</span>
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {bilan.status === "completed" && bilan.weight_current && (
-                                <span className="text-xs text-[var(--color-text-secondary)]">
-                                  {bilan.weight_current}kg
-                                </span>
-                              )}
-                              <Badge className={`border-0 text-xs ${
-                                bilan.status === "completed"
-                                  ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
-                                  : "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]"
-                              }`}>
-                                {bilan.status === "completed" ? "Complété" : "Planifié"}
-                              </Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
                   </div>
                 )}
               </div>
@@ -849,7 +864,7 @@ export default function ChallengePage() {
                   const manual = selectedParticipant[`week${week}_checkins`] || 0;
                   const checkins = Math.max(trainings, manual);
                   const goal = challengeDetail?.checkins_goal || 3;
-                  const isComplete = checkins >= goal || selectedParticipant[`week${week}`];
+                  const isComplete = checkins >= goal;
                   return (
                     <div 
                       key={week} 

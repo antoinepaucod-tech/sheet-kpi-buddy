@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Trash2, Loader2, Calendar, Power, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Trash2, Loader2, Calendar, Power, RefreshCw, Check, X } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
@@ -42,7 +42,9 @@ import { useTranslations } from "../hooks/useTranslations";
 import { useToast } from "../hooks/use-toast";
 import { Toaster } from "../components/ui/toaster";
 import { formatCHF } from "../utils/format";
+import axios from "axios";
 
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
 
 export default function RecurringPage() {
@@ -68,6 +70,48 @@ export default function RecurringPage() {
     recurrence_day: 1,
     is_active: true,
   });
+
+  // Validation state
+  const now = new Date();
+  const [valMonth, setValMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+  const [validations, setValidations] = useState([]);
+  const [loadingVal, setLoadingVal] = useState(false);
+
+  const fetchValidations = useCallback(async () => {
+    if (!valMonth) return;
+    setLoadingVal(true);
+    try {
+      const { data } = await axios.get(`${API}/recurring-validations/${valMonth}`);
+      setValidations(data);
+    } catch { setValidations([]); }
+    finally { setLoadingVal(false); }
+  }, [valMonth]);
+
+  useEffect(() => { fetchValidations(); }, [fetchValidations]);
+
+  const validatedRecurringIds = new Set(validations.map(v => v.recurring_id));
+
+  const handleValidateRecurring = async (recurringId) => {
+    try {
+      await axios.post(`${API}/recurring-validations`, { recurring_id: recurringId, month: valMonth });
+      fetchValidations();
+      toast({ title: lang === "fr" ? "Validé" : "Validated" });
+    } catch (e) {
+      toast({ title: "Erreur", description: e.response?.data?.detail || "Erreur", variant: "destructive" });
+    }
+  };
+
+  const handleUnvalidateRecurring = async (recurringId) => {
+    const val = validations.find(v => v.recurring_id === recurringId);
+    if (!val) return;
+    try {
+      await axios.delete(`${API}/recurring-validations/${val.id}`);
+      fetchValidations();
+      toast({ title: lang === "fr" ? "Validation annulée" : "Validation removed" });
+    } catch (e) {
+      toast({ title: "Erreur", variant: "destructive" });
+    }
+  };
 
   const openAdd = () => {
     setEditItem(null);
@@ -301,6 +345,100 @@ export default function RecurringPage() {
               ))}
             </TableBody>
           </Table>
+        )}
+      </div>
+
+      {/* Monthly Validation Section */}
+      <div className="tf-card p-4 space-y-4" data-testid="validation-section">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-display font-bold text-white uppercase tracking-wider">
+            {lang === "fr" ? "Validation Mensuelle des Récurrences" : "Monthly Recurring Validation"}
+          </h2>
+          <div className="flex items-center gap-2">
+            <input
+              type="month"
+              value={valMonth}
+              onChange={(e) => setValMonth(e.target.value)}
+              className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-md)] px-3 py-1.5 text-white text-xs font-mono"
+              data-testid="validation-month-picker"
+            />
+          </div>
+        </div>
+
+        {loadingVal ? (
+          <div className="flex items-center justify-center h-20">
+            <Loader2 className="animate-spin text-[var(--color-accent)]" size={20} />
+          </div>
+        ) : recurring.filter(r => r.is_active).length === 0 ? (
+          <p className="text-[var(--color-text-tertiary)] text-sm text-center py-4 italic">
+            {lang === "fr" ? "Aucune récurrence active" : "No active recurring"}
+          </p>
+        ) : (
+          <div className="space-y-1.5">
+            {recurring.filter(r => r.is_active).map((item) => {
+              const isValidated = validatedRecurringIds.has(item.id);
+              const isRevenue = item.type === "revenue";
+              return (
+                <div
+                  key={item.id}
+                  className={`flex items-center justify-between p-3 rounded-[var(--radius-lg)] border transition-all ${
+                    isValidated
+                      ? 'bg-[rgba(48,209,88,0.05)] border-[rgba(48,209,88,0.2)]'
+                      : 'bg-[var(--color-bg-secondary)] border-[var(--color-border)]'
+                  }`}
+                  data-testid={`validation-row-${item.id}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <RefreshCw size={14} className="text-[var(--color-text-tertiary)]" />
+                    <div>
+                      <span className="text-sm text-white font-display font-bold">{item.description}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">{item.category}</span>
+                        <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">
+                          J{item.recurrence_day || 1}
+                        </span>
+                        <Badge className={`text-[9px] border-0 ${isRevenue ? 'bg-[rgba(48,209,88,0.12)] text-[var(--color-success)]' : 'bg-[rgba(255,69,58,0.12)] text-[var(--color-danger)]'}`}>
+                          {isRevenue ? (lang === "fr" ? "Revenu" : "Revenue") : (lang === "fr" ? "Dépense" : "Expense")}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`font-mono text-sm font-bold ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                      {isRevenue ? '+' : '-'}{formatCHF(item.amount)}
+                    </span>
+                    {isValidated ? (
+                      <button
+                        onClick={() => handleUnvalidateRecurring(item.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-[var(--radius-md)] bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.25)] transition-colors text-xs font-mono uppercase"
+                        data-testid={`unvalidate-${item.id}`}
+                      >
+                        <Check size={12} />
+                        {lang === "fr" ? "Validé" : "Validated"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleValidateRecurring(item.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-[var(--radius-md)] bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] transition-colors text-xs font-mono uppercase border border-[var(--color-border)]"
+                        data-testid={`validate-${item.id}`}
+                      >
+                        <X size={12} />
+                        {lang === "fr" ? "Non validé" : "Not validated"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between pt-3 border-t border-[var(--color-border)]">
+              <span className="text-xs text-[var(--color-text-secondary)] font-display uppercase tracking-wider">
+                {lang === "fr" ? "Progression" : "Progress"}
+              </span>
+              <span className="text-sm font-mono font-bold text-[var(--color-accent)]">
+                {validations.length} / {recurring.filter(r => r.is_active).length} {lang === "fr" ? "validées" : "validated"}
+              </span>
+            </div>
+          </div>
         )}
       </div>
 

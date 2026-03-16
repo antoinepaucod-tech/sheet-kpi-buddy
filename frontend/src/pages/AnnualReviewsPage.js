@@ -332,12 +332,12 @@ export default function AnnualReviewsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="tf-page-header">
-            {lang === "fr" ? "Bilans / Suivis" : "Reviews"}
+            Bilans / Suivis
           </h1>
           <p className="tf-page-subtitle">
             {lang === "fr"
               ? "Suivi poids, nutrition et programme - mensuel, trimestriel, semestriel, annuel"
-              : "Weight, nutrition and training tracking - monthly, quarterly, semi-annual, annual"}
+              : "Suivi poids, nutrition et programme - mensuel, trimestriel, semestriel, annuel"}
           </p>
         </div>
         <Button
@@ -358,7 +358,7 @@ export default function AnnualReviewsPage() {
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
             filterPeriod === "upcoming" ? "border-[var(--color-info)]" : "border-[var(--color-border)] hover:border-[rgba(100,210,255,0.3)]"
           }`}
-          onClick={() => setFilterPeriod("upcoming")}
+          onClick={() => { setFilterPeriod("upcoming"); setFilterStatus("all"); }}
           data-testid="filter-upcoming"
         >
           <p className="text-[var(--color-info)] text-xs uppercase flex items-center gap-1">
@@ -398,7 +398,7 @@ export default function AnnualReviewsPage() {
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
             filterPeriod === "thisweek" ? "border-[var(--color-warning)]" : "border-[rgba(255,214,10,0.2)] hover:border-[var(--color-warning)]"
           }`}
-          onClick={() => setFilterPeriod("thisweek")}
+          onClick={() => { setFilterPeriod("thisweek"); setFilterStatus("all"); }}
           data-testid="filter-thisweek"
         >
           <p className="text-[var(--color-warning)] text-xs uppercase flex items-center gap-1">
@@ -411,7 +411,7 @@ export default function AnnualReviewsPage() {
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
             filterPeriod === "late" ? "border-[var(--color-danger)]" : "border-[rgba(255,69,58,0.2)] hover:border-[var(--color-danger)]"
           }`}
-          onClick={() => setFilterPeriod("late")}
+          onClick={() => { setFilterPeriod("late"); setFilterStatus("all"); }}
           data-testid="filter-late"
         >
           <p className="text-[var(--color-danger)] text-xs uppercase flex items-center gap-1">

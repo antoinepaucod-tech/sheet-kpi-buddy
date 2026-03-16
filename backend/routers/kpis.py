@@ -141,6 +141,14 @@ async def get_monthly_kpi_details(month: str):
     for r in recurring:
         r["generated_this_month"] = r["description"] in generated_descriptions
 
+    # Get validations for this month
+    validations = await db.recurring_validations.find(
+        {"month": month}, {"_id": 0}
+    ).to_list(1000)
+    validated_ids = {v["recurring_id"] for v in validations}
+    for r in recurring:
+        r["validated_this_month"] = r["id"] in validated_ids
+
     return {
         "kpi": kpi,
         "revenue_breakdown": revenue_breakdown,
@@ -149,6 +157,7 @@ async def get_monthly_kpi_details(month: str):
         "total_expenses_from_transactions": sum(e["total"] for e in expense_breakdown),
         "recurring_revenue": recurring_revenue,
         "recurring_expense": recurring_expense,
+        "recurring_validations": validations,
         "transactions_count": len(txs),
     }
 

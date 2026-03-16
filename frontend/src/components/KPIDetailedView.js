@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { formatCHF, formatNum, formatPct } from "../utils/format";
 import { useTranslations } from "../hooks/useTranslations";
 import axios from "axios";
@@ -80,7 +80,7 @@ const CategoryBreakdown = ({ items, type, lang }) => {
   );
 };
 
-const RecurringSection = ({ items, type, lang }) => {
+const RecurringSection = ({ items, type, lang, month, onValidate, validatedIds }) => {
   if (!items || items.length === 0) {
     return (
       <p className="text-[var(--color-text-tertiary)] text-sm py-2 text-center italic">
@@ -91,30 +91,46 @@ const RecurringSection = ({ items, type, lang }) => {
   const isRevenue = type === "revenue";
   return (
     <div className="space-y-1">
-      {items.map((r) => (
-        <div key={r.id} className="flex items-center justify-between p-2.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)]">
-          <div className="flex items-center gap-2">
-            <RefreshCw size={12} className="text-[var(--color-text-tertiary)]" />
-            <span className="text-sm text-white">{r.description}</span>
-            <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">{r.category}</span>
-            <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">J{r.recurrence_day || 1}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`font-mono text-sm font-bold ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
-              {isRevenue ? '+' : '-'}{formatCHF(r.amount)}
-            </span>
-            {r.generated_this_month ? (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] font-mono uppercase">
-                {lang === "fr" ? "generee" : "generated"}
+      {items.map((r) => {
+        const isValidated = r.validated_this_month || validatedIds?.has(r.id);
+        return (
+          <div key={r.id} className="flex items-center justify-between p-2.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)]">
+            <div className="flex items-center gap-2">
+              <RefreshCw size={12} className="text-[var(--color-text-tertiary)]" />
+              <span className="text-sm text-white">{r.description}</span>
+              <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">{r.category}</span>
+              <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">J{r.recurrence_day || 1}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`font-mono text-sm font-bold ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                {isRevenue ? '+' : '-'}{formatCHF(r.amount)}
               </span>
-            ) : (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] font-mono uppercase">
-                {lang === "fr" ? "en attente" : "pending"}
-              </span>
-            )}
+              {isValidated ? (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] font-mono uppercase">
+                  {lang === "fr" ? "valide" : "validated"}
+                </span>
+              ) : r.generated_this_month ? (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] font-mono uppercase">
+                  {lang === "fr" ? "generee" : "generated"}
+                </span>
+              ) : (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] font-mono uppercase">
+                  {lang === "fr" ? "en attente" : "pending"}
+                </span>
+              )}
+              {onValidate && !isValidated && (
+                <button
+                  onClick={() => onValidate(r.id)}
+                  className="text-[10px] px-2 py-0.5 rounded bg-[rgba(48,209,88,0.1)] text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.2)] transition-colors font-mono uppercase"
+                  data-testid={`validate-recurring-${r.id}`}
+                >
+                  {lang === "fr" ? "Valider" : "Validate"}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -123,17 +139,34 @@ export function KPIDetailedView({ kpi, lang }) {
   const { t } = useTranslations();
   const [details, setDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [validatedIds, setValidatedIds] = useState(new Set());
 
-  useEffect(() => {
+  const fetchDetails = useCallback(() => {
     if (!kpi?.month) return;
-    let cancelled = false;
     setLoadingDetails(true);
     axios.get(`${API}/monthly-kpis/${kpi.month}/details`)
-      .then(res => { if (!cancelled) setDetails(res.data); })
+      .then(res => {
+        setDetails(res.data);
+        const vIds = new Set((res.data.recurring_validations || []).map(v => v.recurring_id));
+        setValidatedIds(vIds);
+      })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setLoadingDetails(false); });
-    return () => { cancelled = true; };
+      .finally(() => setLoadingDetails(false));
   }, [kpi?.month]);
+
+  useEffect(() => {
+    fetchDetails();
+  }, [fetchDetails]);
+
+  const handleValidate = async (recurringId) => {
+    try {
+      await axios.post(`${API}/recurring-validations`, {
+        recurring_id: recurringId,
+        month: kpi.month,
+      });
+      setValidatedIds(prev => new Set([...prev, recurringId]));
+    } catch {}
+  };
 
   if (!kpi) return null;
 
@@ -152,20 +185,13 @@ export function KPIDetailedView({ kpi, lang }) {
         <>
           {/* Revenue Transactions Breakdown */}
           <SectionTitle>{lang === "fr" ? "Revenus - Transactions du mois" : "Revenue - Monthly Transactions"}</SectionTitle>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-2 gap-2 mb-3">
             <StatBox
               label={lang === "fr" ? "Total Revenus (Transactions)" : "Total Revenue (Transactions)"}
               value={formatCHF(details.total_revenue_from_transactions)}
               icon={TrendingUp}
               color="text-[var(--color-success)]"
               subValue={`${details.revenue_breakdown?.length || 0} ${lang === "fr" ? "categories" : "categories"}`}
-            />
-            <StatBox
-              label="Fast Cash Revenue"
-              value={formatCHF(kpi.fast_cash_revenue)}
-              icon={Wallet}
-              color="text-[var(--color-warning)]"
-              subValue={lang === "fr" ? "Valeur importee/manuelle" : "Imported/manual value"}
             />
             <StatBox
               label={lang === "fr" ? "Total Revenus KPI" : "Total Revenue KPI"}
@@ -238,7 +264,7 @@ export function KPIDetailedView({ kpi, lang }) {
                   <p className="text-[10px] text-[var(--color-success)] uppercase tracking-wider font-bold mb-1.5">
                     {lang === "fr" ? "Revenus recurrents" : "Recurring revenue"}
                   </p>
-                  <RecurringSection items={details.recurring_revenue} type="revenue" lang={lang} />
+                  <RecurringSection items={details.recurring_revenue} type="revenue" lang={lang} month={kpi?.month} onValidate={handleValidate} validatedIds={validatedIds} />
                 </div>
               )}
               {details.recurring_expense?.length > 0 && (
@@ -246,7 +272,7 @@ export function KPIDetailedView({ kpi, lang }) {
                   <p className="text-[10px] text-[var(--color-danger)] uppercase tracking-wider font-bold mb-1.5">
                     {lang === "fr" ? "Depenses recurrentes" : "Recurring expenses"}
                   </p>
-                  <RecurringSection items={details.recurring_expense} type="expense" lang={lang} />
+                  <RecurringSection items={details.recurring_expense} type="expense" lang={lang} month={kpi?.month} onValidate={handleValidate} validatedIds={validatedIds} />
                 </div>
               )}
             </div>
