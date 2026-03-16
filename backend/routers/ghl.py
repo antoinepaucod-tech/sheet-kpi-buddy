@@ -307,33 +307,19 @@ async def confirm_sale(body: dict):
         await db.accounting_transactions.insert_one(tx_doc)
         tx_doc.pop("_id", None)
 
-    # 4. Update KPI: cash_collected + fast_cash_revenue + total_revenue
+    # 4. Auto-recalculate KPIs from transactions (replaces manual KPI update)
+    tx_date = signature_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    from routers.transactions import _auto_recalculate_kpis
+    await _auto_recalculate_kpis(tx_date)
+
+    # Update new_members count separately (not derived from transactions)
     existing_kpi = await db.monthly_kpis.find_one({"month": month})
     if existing_kpi:
-        new_cash = existing_kpi.get("cash_collected", 0) + cash_collected
-        new_fast_cash = existing_kpi.get("fast_cash_revenue", 0) + cash_collected
-        new_rev_members = existing_kpi.get("revenue_members", 0) + cash_collected
-        new_total_rev = new_rev_members + existing_kpi.get("revenue_coaching", 0)
-        close_count = existing_kpi.get("close", 0)
         new_members_count = existing_kpi.get("new_members", 0) + 1
-
-        # Count actual active members from DB
-        total_active = await db.customer_members.count_documents({
-            "subscription_end_date": {"$gte": datetime.now(timezone.utc).strftime("%Y-%m-%d")}
-        })
-
         await db.monthly_kpis.update_one(
             {"month": month},
             {"$set": {
-                "cash_collected": new_cash,
-                "fast_cash_revenue": new_fast_cash,
-                "revenue_members": new_rev_members,
-                "total_revenue": new_total_rev,
                 "new_members": new_members_count,
-                "active_members": total_active,
-                "total_members": total_active,
-                "total_active_members": total_active,
-                "avg_per_sale": round(new_cash / close_count, 2) if close_count > 0 else new_cash,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }}
         )

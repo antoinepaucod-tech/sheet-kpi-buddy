@@ -66,6 +66,7 @@ async def _auto_recalculate_kpis(tx_date: str):
         "total_expenses": total_expenses,
         "net_profit": total_revenue - total_expenses,
         "active_members": active_count,
+        "cash_collected": total_rev_tx,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.monthly_kpis.update_one({"month": month}, {"$set": update}, upsert=True)

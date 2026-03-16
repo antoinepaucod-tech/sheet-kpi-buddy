@@ -33,12 +33,10 @@ const FUNNEL_STAGES = [
 ];
 
 const FALLBACK_SUBSCRIPTION_TYPES = [
-  { value: "6 Week Challenge", label: "6 Week Challenge", defaultAmount: 599, durationDays: 42, memberType: "Membres PIF", isPIF: true },
-  { value: "Mensuel", label: "Mensuel", defaultAmount: 120, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false },
-  { value: "3 Mois", label: "3 Mois", defaultAmount: 350, durationDays: 91, memberType: "Membres Généraux Récurrents", isPIF: false },
-  { value: "6 Mois", label: "6 Mois", defaultAmount: 650, durationDays: 182, memberType: "Membres PIF", isPIF: true },
-  { value: "Annuel", label: "Annuel", defaultAmount: 1200, durationDays: 365, memberType: "Membres PIF", isPIF: true },
-  { value: "Annuel PT", label: "Annuel PT", defaultAmount: 2400, durationDays: 365, memberType: "Membres PT", isPIF: true },
+  { value: "6 WEEKS CHALENGE", label: "6 Weeks Challenge", defaultAmount: 599, durationDays: 42, memberType: "Membres PIF", isPIF: true, isCoach: false, isDuo: false },
+  { value: "HYBRID FULL - PAIEMENT MENSUEL", label: "Hybrid Full Mensuel", defaultAmount: 220, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false, isCoach: false, isDuo: false },
+  { value: "THE COACH PASS MENSUEL", label: "The Coach Pass Mensuel", defaultAmount: 159, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false, isCoach: true, isDuo: false },
+  { value: "UNLIMITED ACCESS - PAIEMENT MENSUEL", label: "Unlimited Access Mensuel", defaultAmount: 249, durationDays: 30, memberType: "Membres Généraux Récurrents", isPIF: false, isCoach: false, isDuo: false },
 ];
 
 const FALLBACK_MEMBER_TYPES = [
@@ -231,7 +229,8 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
       signatureDate = new Date().toISOString().split("T")[0];
     }
 
-    const defaultSub = SUBSCRIPTION_TYPES[0] || FALLBACK_SUBSCRIPTION_TYPES[0];
+    // Default to 6 Weeks Challenge (GHL primary product)
+    const defaultSub = SUBSCRIPTION_TYPES.find(s => s.value.includes("6 WEEKS") || s.value.includes("6 Week")) || SUBSCRIPTION_TYPES[0] || FALLBACK_SUBSCRIPTION_TYPES[0];
     const baseDate = new Date(signatureDate);
     const endDateCalc = new Date(baseDate);
     endDateCalc.setDate(endDateCalc.getDate() + defaultSub.durationDays);
