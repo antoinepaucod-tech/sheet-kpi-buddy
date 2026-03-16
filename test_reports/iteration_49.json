@@ -1,0 +1,46 @@
+{
+  "summary": "Iteration 49 - Verified bug fixes for member classification and DUO deduplication. All 15 backend tests passed. Frontend UI displays correct counts: Membres Actifs=97, Coachs Actifs=31, Partis=187. Alexandre Alsonso (exit_date=2026-10-15 future) correctly appears in Actifs tab, NOT in Partis tab. DUO members display correctly with PRIMARY/PARTENAIRE badges and visual grouping.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_member_classification_iter49.py",
+    "/app/test_reports/pytest/pytest_results_iter49.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend fix verified: members.py line 59-61 correctly classifies departed as exit_date < today (not exit_date exists)",
+    "Backend fix verified: members.py line 86-87 skips DUO members in deduplication logic (is_duo check)",
+    "Frontend correctly filters members: line 253-254 uses same logic (exit_date < today for departed)",
+    "DUO grouping works: lines 269-334 properly groups PRIMARY+PARTNER members together visually"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_member_classification_iter49.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 49 verified two bug fixes: 1) Members with future exit_date (exit_date >= today) are now correctly classified as active, not departed. Alexandre Alsonso (exit_date=2026-10-15) is now in Actifs tab. 2) DUO partners with same name as primary are NOT flagged as is_duplicate=true. All 15 backend tests pass. Frontend tab counts: Actifs=97, Coachs=31, Partis=187. DUO pairs display correctly with PRIMARY/PARTENAIRE badges.",
+  "bugs_fixed_and_verified": {
+    "bug_1_departed_classification": {
+      "description": "Members with exit_date in the future were incorrectly classified as 'Partis'",
+      "fix_location": "/app/backend/routers/members.py lines 59-61, 109-110",
+      "fix_logic": "Changed from 'exit_date exists' to 'exit_date < today' for departed classification",
+      "verification": "Alexandre Alsonso (exit_date=2026-10-15) now appears in Actifs tab, not Partis"
+    },
+    "bug_2_duo_deduplication": {
+      "description": "DUO partners with same name as primary were incorrectly flagged as is_duplicate=true",
+      "fix_location": "/app/backend/routers/members.py lines 86-87, 139-141",
+      "fix_logic": "Skip DUO members (is_duo=true) in deduplication logic",
+      "verification": "All 24+ DUO members have is_duplicate=false, DUO pairs display correctly"
+    }
+  }
+}

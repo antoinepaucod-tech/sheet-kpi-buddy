@@ -55,9 +55,10 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
     for d in docs:
         d["is_coach"] = _is_coach(d.get("membership", ""))
     
-    # Separate current (non-departed) vs departed
-    current_docs = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"]]
-    departed_docs = [d for d in docs if d.get("exit_date") and d["exit_date"] not in [None, "", "None"]]
+    # Separate current vs departed (departed = exit_date in the past only)
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    current_docs = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"] or d["exit_date"] >= today_str]
+    departed_docs = [d for d in docs if d.get("exit_date") and d["exit_date"] not in [None, "", "None"] and d["exit_date"] < today_str]
     
     # Deduplicate ONLY within current members
     name_groups = {}
@@ -76,12 +77,14 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
             for d in group:
                 if not d["is_coach"]:
                     d["is_coach_also"] = True
-        # Handle true duplicates (same name AND same membership)
+        # Handle true duplicates (same name AND same membership), but NOT DUO pairs
         seen = set()
         for d in group:
             key = d.get("membership", "")
             if key in seen:
-                d["is_duplicate"] = True
+                # Don't flag DUO partners as duplicates
+                if not d.get("is_duo"):
+                    d["is_duplicate"] = True
             seen.add(key)
     
     if expiring_soon:
@@ -103,8 +106,8 @@ async def get_member_stats():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     thirty_days = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
 
-    departed = [d for d in docs if d.get("exit_date") and d["exit_date"] not in [None, "", "None"]]
-    current = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"]]
+    departed = [d for d in docs if d.get("exit_date") and d["exit_date"] not in [None, "", "None"] and d["exit_date"] < today]
+    current = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"] or d["exit_date"] >= today]
 
     # Deduplicate: identify people with both coach + non-coach subscriptions
     name_coach_map = {}
@@ -128,12 +131,14 @@ async def get_member_stats():
             for d in current:
                 if d.get("name") == name and not _is_coach(d.get("membership", "")):
                     skip_ids.add(d.get("id"))
-    # Also skip exact duplicates (same name + same membership)
+    # Also skip exact duplicates (same name + same membership), but NOT DUO pairs
     seen = set()
     for d in current:
         key = (d.get("name", ""), d.get("membership", ""))
         if key in seen:
-            skip_ids.add(d.get("id"))
+            # Don't skip DUO partners
+            if not d.get("is_duo"):
+                skip_ids.add(d.get("id"))
         seen.add(key)
 
     deduped = [d for d in current if d.get("id") not in skip_ids]
