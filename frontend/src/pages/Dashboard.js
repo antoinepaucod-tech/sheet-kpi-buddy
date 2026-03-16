@@ -9,7 +9,7 @@ import { EditKPIModal } from "../components/EditKPIModal";
 import { KPIDetailedView } from "../components/KPIDetailedView";
 import { GHLFunnelSection } from "../components/GHLFunnelSection";
 import {
-  TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw, Pencil,
+  TrendingUp, Users, DollarSign, Target, Zap, Loader2, Pencil,
   ChevronLeft, ChevronRight, FileDown, UserCheck, UserX, AlertTriangle,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -69,7 +69,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   const { kpis, loading, refetch, getKpiByMonth, getPreviousKpi } = useMonthlyKPIData();
   const { settings } = useSettings();
   const { toast } = useToast();
-  const [seeding, setSeeding] = useState(false);
   const [editKpiOpen, setEditKpiOpen] = useState(false);
   const [showN1, setShowN1] = useState(false);
   const [memberStats, setMemberStats] = useState(null);
@@ -80,17 +79,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
     axios.get(`${API}/members/stats`).then(r => setMemberStats(r.data)).catch(() => {});
     axios.get(`${API}/members/expiring?days=60`).then(r => setExpiringMembers(r.data)).catch(() => {});
   }, []);
-
-  const handleSeed = async () => {
-    setSeeding(true);
-    try {
-      await axios.post(`${API}/seed`);
-      await refetch();
-      toast({ title: lang === "fr" ? "Données rechargées" : "Data reloaded" });
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   // Month navigation
   const navigateMonth = (direction) => {
@@ -218,19 +206,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4" data-testid="dashboard-empty">
         <p style={{ color: 'var(--color-text-secondary)' }}>{t("noData")}</p>
-        <button
-          onClick={handleSeed}
-          disabled={seeding}
-          className="tf-btn-primary flex items-center gap-2"
-          data-testid="seed-btn"
-        >
-          {seeding ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <RotateCcw size={14} />
-          )}
-          {seeding ? t("seeding") : t("seedData")}
-        </button>
       </div>
     );
   }
@@ -292,20 +267,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           >
             <FileDown size={12} />
             PDF
-          </button>
-          <button
-            onClick={handleSeed}
-            disabled={seeding}
-            className="tf-btn-secondary flex items-center gap-1.5"
-            style={{ padding: '6px 12px', fontSize: 'var(--text-xs)' }}
-            data-testid="reseed-btn"
-          >
-            {seeding ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <RotateCcw size={12} />
-            )}
-            {t("seedData")}
           </button>
         </div>
       </div>

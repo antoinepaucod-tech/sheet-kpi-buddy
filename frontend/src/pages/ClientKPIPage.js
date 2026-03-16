@@ -65,7 +65,7 @@ const ENGAGEMENT_BG = {
 export default function ClientKPIPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
-  const currentYear = 2024; // Use 2024 for demo data
+  const currentYear = new Date().getFullYear();
   
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");

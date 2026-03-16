@@ -59,11 +59,7 @@ function AppInner() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      axios.get(`${API}/init`).then((res) => {
-        if (!res.data.has_data) {
-          axios.post(`${API}/seed`).catch(() => {});
-        }
-      }).catch(() => {});
+      axios.get(`${API}/init`).catch(() => {});
     }
   }, [isAuthenticated]);
 

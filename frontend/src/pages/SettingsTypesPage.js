@@ -168,16 +168,6 @@ export default function SettingsTypesPage() {
     },
   });
 
-  // Seed defaults mutation
-  const seedMutation = useMutation({
-    mutationFn: () => axios.post(`${API}/settings/seed-defaults`),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries(["membership-types"]);
-      queryClient.invalidateQueries(["member-types"]);
-      toast.success(`${res.data.membership_types_created} abonnements et ${res.data.member_types_created} types de membres créés`);
-    },
-  });
-
   const resetMembershipForm = () => {
     setEditingMembership(null);
     setMembershipForm({
@@ -291,16 +281,6 @@ export default function SettingsTypesPage() {
               : "Manage membership and member types"}
           </p>
         </div>
-        <Button
-          onClick={() => seedMutation.mutate()}
-          disabled={seedMutation.isPending}
-          variant="outline"
-          className="border-[var(--color-border-strong)] text-white hover:bg-[rgba(255,255,255,0.1)]"
-          data-testid="seed-defaults-btn"
-        >
-          <Download size={16} className="mr-2" />
-          {seedMutation.isPending ? "..." : "Charger les types par défaut"}
-        </Button>
       </div>
 
       {/* Tabs */}
