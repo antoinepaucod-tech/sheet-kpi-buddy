@@ -20,6 +20,7 @@ class MonthlyKPI(BaseModel):
     general_eft_revenue: float = 0
     pt_revenue: float = 0
     retail_revenue: float = 0
+    coaching_virtuel_revenue: float = 0
     fast_cash_revenue: float = 0
     
     # Members - Base
@@ -74,8 +75,10 @@ class MonthlyKPI(BaseModel):
     loyer: float = 0
     salaires: float = 0
     salaires_coach: float = 0
+    salaires_coachs: float = 0
     utilities: float = 0
     other_expenses: float = 0
+    other_expenses_misc: float = 0
     
     # Expenses - Extended
     rent: float = 0

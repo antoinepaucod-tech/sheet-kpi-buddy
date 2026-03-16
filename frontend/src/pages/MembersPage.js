@@ -94,7 +94,7 @@ export default function MembersPage() {
     name: "",
     email: "",
     phone: "",
-    membership: "Annuel",
+    membership: "",
     member_type: "Membres Généraux Récurrents",
     contract_signed_date: "",
     subscription_end_date: "",
@@ -273,7 +273,7 @@ export default function MembersPage() {
       name: "",
       email: "",
       phone: "",
-      membership: "Annuel",
+      membership: "",
       member_type: "Membres Généraux Récurrents",
       contract_signed_date: format(new Date(), "yyyy-MM-dd"),
       subscription_end_date: format(addYears(new Date(), 1), "yyyy-MM-dd"),
@@ -297,7 +297,7 @@ export default function MembersPage() {
       name: member.name || "",
       email: member.email || "",
       phone: member.phone || "",
-      membership: member.membership || "Annuel",
+      membership: member.membership || "",
       member_type: member.member_type || "Membres Généraux Récurrents",
       contract_signed_date: member.contract_signed_date || "",
       subscription_end_date: member.subscription_end_date || "",
@@ -673,6 +673,8 @@ export default function MembersPage() {
                       // Pre-fill billing settings from membership type defaults
                       newData.billing_amount = selectedType.price || formData.billing_amount;
                       newData.billing_enabled = selectedType.is_recurring;
+                      newData.member_type = selectedType.member_type || formData.member_type;
+                      newData.is_duo = selectedType.is_duo || false;
                       if (selectedType.default_billing_cycle_type) {
                         newData.billing_cycle_type = selectedType.default_billing_cycle_type;
                       }

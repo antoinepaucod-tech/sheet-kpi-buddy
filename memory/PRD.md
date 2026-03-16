@@ -5,76 +5,58 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - **Stack:** React frontend + FastAPI backend + MongoDB
 - **Integrations:** GoHighLevel (GHL), Resend (email)
 
-## Revenue/Expense Calculation Logic
-- **Auto-recalculate**: KPIs recalculent automatiquement a chaque creation/suppression/restauration de transaction ET apres generation des recurrences
-- Revenue = sum of revenue kpi_columns from transactions (fallback: fast_cash_revenue if no tx)
-- Expenses = sum of expense kpi_columns (includes salaires_coachs)
-- active_members = count of members with subscription_end_date >= today
+## Subscription Types (31)
+- **14 Membres Generaux Recurrents**: HUBFIT, HYBRID FULL (mensuel, duo, student, sans engagement), IFRC, OPEN GYM, THE COACH PASS (mensuel, annuel), UNLIMITED ACCESS (mensuel, duo, sans engagement), VIRTUAL COACH
+- **17 Membres PIF**: 6 WEEKS CHALLENGE, HUBFIT(PIF), HYBRID FULL (annuel, duo annuel), IFRC(PIF), OFFRE 6 MOIS, OPEN GYM (annuel), PACK 10/20, PRET, THE COACH ENTREE, THE COACH PASS (annuel PIF, 6 mois), UNLIMITED ACCESS (annuel, duo annuel), VIRTUAL COACH(PIF)
+- Chaque type a: member_type, is_coach_subscription, is_duo, is_pif, nb_membres
 
-## Sales Funnel Percentages
-- Calculees dynamiquement dans `compute_metrics()` a partir des raw counts:
-  - call_percentage = calls_made / leads * 100
-  - sched_percentage = scheduled / calls_made * 100
-  - show_percentage = show / scheduled * 100
-  - close_percentage = close / show * 100
+## Categories Comptables (13)
+### Revenue (4)
+- ABONNEMENTS (revenue_members) - revenue_type: Membre
+- COACHING (revenue_coaching) - revenue_type: Service
+- RETAIL (retail_revenue) - revenue_type: Produit
+- COACHING VIRTUEL (coaching_virtuel_revenue) - revenue_type: Service
 
-## KPI Details Endpoint
-- `GET /api/monthly-kpis/{month}/details` retourne:
-  - kpi, revenue_breakdown, expense_breakdown
-  - recurring_revenue/expense avec validated_this_month
-  - recurring_validations
+### Expense (9)
+- LOYER, SALAIRES, SALAIRES COACHS, UTILITIES, MARKETING, PUBLICITE, ASSURANCE, AUTRE, DIVERS
 
-## Recurring Validation System
-- Collection: `recurring_validations`
-- Endpoints: GET/POST/DELETE /api/recurring-validations/{month|id}
-- UI: Section "Validation Mensuelle" dans RecurringPage + boutons "Valider" dans Dashboard Details
+## Business Rules
+- **PIF**: montant total au 1er mois, 0 CHF les mois suivants
+- **Duo**: 2 membres lies par subscription_group_id, seul le primaire genere des revenus
+- **Membres actifs**: base sur subscription_end_date dans le futur OU pas d'exit_date
+- **Revenue types**: Membre, Produit, Service
+- **Recurrences**: auto-generees chaque mois, controlees par subscription_end_date et recurrence_end_date
+- **Funnel %**: Calcules dynamiquement dans compute_metrics()
+- **cash_collected**: = total revenue from transactions
+- **avg_per_sale**: = cash_collected / close
 
-## Transaction Deletion Logic
-- Suppression manuelle: pas d'exclusion automatique
-- Suppression correspondant a un template recurrent: cree une exclusion
+## KPI Model Fields
+### Revenue
+- revenue_members, revenue_coaching, coaching_virtuel_revenue, retail_revenue, fast_cash_revenue
 
-## 6-Week Challenge
-- Objectif par semaine: 3 seances minimum
-- isComplete = checkins >= goal (pas de fallback booleen)
-- Section bilans par participant avec statut
+### Expenses
+- loyer, salaires, salaires_coach, salaires_coachs, utilities, other_expenses, other_expenses_misc, insurance, marketing_spend, ad_spend
 
-## Chart Fixes
-- profitMargin clampe entre -200% et +200% dans le chart
-- Members Evolution: ComposedChart avec Bar (Nouveaux, Perdus) + Line (Membres Actifs)
-- formatPct arrondi pour valeurs extremes (>999)
+## Recurring Validation
+- Collection: recurring_validations
+- Validation mensuelle de chaque recurrence (paiement/reception confirme)
 
-## CSS / UI
-- tf-stat-value: font-size clamp(14px, 1.2vw, 22px), overflow hidden, text-overflow ellipsis
-- KPIDetailedView StatBox: text-sm avec truncate
-
-## Completed Features (All Sessions)
-- ResizeObserver 3-layer fix
-- Dynamic subscription types, Settings CRUD
-- Auto-generate bilans, Course KPIs to salary
-- Bulk course creation, Auto-sync salaires
-- Late payments badges, Challenge objective fix
-- GHL sale creates transaction, Coach replacement S1-S5
-- Restore excluded transaction, Dynamic recalculation
-- Auto-recalculate KPIs on tx create/delete/restore
-- Active members from subscription dates
-- Dashboard Details: revenue/expense/recurring breakdown [2026-03-16]
-- Auto-recalculate KPIs after recurring generation [2026-03-16]
-- Suppression Fast Cash Revenue du dashboard [2026-03-16]
-- Renommage Reviews -> Bilans / Suivis [2026-03-16]
-- Fix filtres page Bilans [2026-03-16]
-- Bilans par participant dans Challenge [2026-03-16]
-- Simplification suppression transactions [2026-03-16]
-- Validation mensuelle des recurrences [2026-03-16]
-- **Fix Sales Funnel percentages (compute_metrics)** [2026-03-16]
-- **Fix text overflow dans stat boxes (CSS clamp + truncate)** [2026-03-16]
-- **Profit margin chart clampe a +-200%** [2026-03-16]
-- **Members Evolution chart avec bars + line + legend** [2026-03-16]
+## Audit de Coherence (2026-03-16)
+### Verifie et corrige:
+- SettingsTypesPage: formulaire inclut member_type, is_coach, is_duo, is_pif, nb_membres
+- MembersPage: membership default="" (plus "Annuel"), auto-fill member_type depuis le type choisi
+- CategoriesPage: revenue_type affiche + editable, DEFAULT_KPI_COLUMNS a jour
+- GHLFunnelSection: SUBSCRIPTION_TYPES dynamiques avec member_type, isPIF, isCoach, isDuo
+- KPI model: nouvelles colonnes (coaching_virtuel_revenue, other_expenses_misc, salaires_coachs)
+- Dashboard Details: revenue/expense breakdown, recurring validations
+- Transactions: categories dynamiques, pas d'exclusion auto pour manuelles
 
 ## Credentials
 - Login: test@crossfit.ch / test123
 
 ## Backlog
-- **P1**: Explication complete du workflow de l'application
+- **P0**: Import historique des transactions depuis 2024 (en attente du fichier)
+- **P1**: Explication complete du workflow
 - **P2**: Alertes WhatsApp via Twilio
 - **P2**: Interface de migration de donnees
-- **P2**: Calcul automatique de CPL, CPR, LTV
+- **P2**: Calcul CPL, CPR, LTV

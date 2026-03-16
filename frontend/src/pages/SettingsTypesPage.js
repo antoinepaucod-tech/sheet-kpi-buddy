@@ -70,6 +70,11 @@ export default function SettingsTypesPage() {
     price: 0,
     description: "",
     is_recurring: true,
+    member_type: "Membres Généraux Récurrents",
+    is_coach_subscription: false,
+    is_duo: false,
+    is_pif: false,
+    nb_membres: 0,
     default_billing_cycle_type: "monthly_day",
     default_billing_cycle_value: 1,
     is_active: true,
@@ -182,6 +187,11 @@ export default function SettingsTypesPage() {
       price: 0,
       description: "",
       is_recurring: true,
+      member_type: "Membres Généraux Récurrents",
+      is_coach_subscription: false,
+      is_duo: false,
+      is_pif: false,
+      nb_membres: 0,
       default_billing_cycle_type: "monthly_day",
       default_billing_cycle_value: 1,
       is_active: true,
@@ -211,6 +221,11 @@ export default function SettingsTypesPage() {
       price: item.price,
       description: item.description || "",
       is_recurring: item.is_recurring,
+      member_type: item.member_type || "Membres Généraux Récurrents",
+      is_coach_subscription: item.is_coach_subscription || false,
+      is_duo: item.is_duo || false,
+      is_pif: item.is_pif || false,
+      nb_membres: item.nb_membres || 0,
       default_billing_cycle_type: item.default_billing_cycle_type || "monthly_day",
       default_billing_cycle_value: item.default_billing_cycle_value || 1,
       is_active: item.is_active,
@@ -333,6 +348,8 @@ export default function SettingsTypesPage() {
                   <TableHead className="text-[var(--color-text-secondary)]">Prix</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Cycle facturation</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Récurrent</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Type Membre</TableHead>
+                  <TableHead className="text-[var(--color-text-secondary)]">Nb</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
                 </TableRow>
@@ -373,9 +390,19 @@ export default function SettingsTypesPage() {
                         {item.is_recurring ? (
                           <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">Récurrent</Badge>
                         ) : (
-                          <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] border-0">One-time</Badge>
+                          <Badge variant="secondary" className="bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] border-0">
+                            {item.is_pif ? "PIF" : "One-time"}
+                          </Badge>
                         )}
                       </TableCell>
+                      <TableCell className="text-[var(--color-text-secondary)] text-xs">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span>{item.member_type === "Membres PIF" ? "PIF" : item.member_type === "Membres PT" ? "PT" : "Récurrent"}</span>
+                          {item.is_coach_subscription && <Badge className="bg-[rgba(139,92,246,0.15)] text-purple-400 border-0 text-[9px] px-1">Coach</Badge>}
+                          {item.is_duo && <Badge className="bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)] border-0 text-[9px] px-1">Duo</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-[var(--color-text-secondary)] font-mono text-sm">{item.nb_membres || 0}</TableCell>
                       <TableCell>
                         {item.is_active ? (
                           <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">Actif</Badge>
@@ -594,9 +621,63 @@ export default function SettingsTypesPage() {
               <label className="text-[var(--color-text-secondary)] text-sm">Abonnement récurrent</label>
               <Switch
                 checked={membershipForm.is_recurring}
-                onCheckedChange={(v) => setMembershipForm({ ...membershipForm, is_recurring: v })}
+                onCheckedChange={(v) => setMembershipForm({ ...membershipForm, is_recurring: v, is_pif: !v })}
                 data-testid="membership-recurring-switch"
               />
+            </div>
+
+            {/* Classification */}
+            <div className="border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-3 bg-[var(--color-bg-secondary)]">
+              <label className="text-[var(--color-text-secondary)] text-xs uppercase block">Classification</label>
+              <div>
+                <label className="text-[var(--color-text-secondary)] text-xs">Type de membre</label>
+                <Select
+                  value={membershipForm.member_type}
+                  onValueChange={(v) => setMembershipForm({ ...membershipForm, member_type: v })}
+                >
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    {memberTypes.map((mt) => (
+                      <SelectItem key={mt.code} value={mt.name} className="text-white">{mt.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[var(--color-text-secondary)] text-xs">Coach</label>
+                  <Switch
+                    checked={membershipForm.is_coach_subscription}
+                    onCheckedChange={(v) => setMembershipForm({ ...membershipForm, is_coach_subscription: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-[var(--color-text-secondary)] text-xs">Duo</label>
+                  <Switch
+                    checked={membershipForm.is_duo}
+                    onCheckedChange={(v) => setMembershipForm({ ...membershipForm, is_duo: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-[var(--color-text-secondary)] text-xs">PIF</label>
+                  <Switch
+                    checked={membershipForm.is_pif}
+                    onCheckedChange={(v) => setMembershipForm({ ...membershipForm, is_pif: v })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[var(--color-text-secondary)] text-xs">Nb membres actuel</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={membershipForm.nb_membres}
+                  onChange={(e) => setMembershipForm({ ...membershipForm, nb_membres: parseInt(e.target.value) || 0 })}
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-9"
+                />
+              </div>
             </div>
             
             {/* Default billing cycle settings */}

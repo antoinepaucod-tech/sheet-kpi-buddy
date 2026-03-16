@@ -39,19 +39,21 @@ const DEFAULT_KPI_COLUMNS = [
   { value: "utilities", label: "Charges (eau, électricité)", type: "expense" },
   { value: "marketing_spend", label: "Marketing", type: "expense" },
   { value: "ad_spend", label: "Publicité", type: "expense" },
-  { value: "assurance", label: "Assurance", type: "expense" },
+  { value: "insurance", label: "Assurance", type: "expense" },
   { value: "equipement", label: "Équipement", type: "expense" },
   { value: "entretien", label: "Entretien", type: "expense" },
-  { value: "abonnements", label: "Abonnements (logiciels)", type: "expense" },
+  { value: "subscriptions", label: "Abonnements (logiciels)", type: "expense" },
   { value: "other_expenses", label: "Autres dépenses", type: "expense" },
+  { value: "other_expenses_misc", label: "Divers", type: "expense" },
   { value: "revenue_members", label: "Revenus Membres", type: "revenue" },
   { value: "revenue_coaching", label: "Revenus Coaching", type: "revenue" },
+  { value: "coaching_virtuel_revenue", label: "Revenus Coaching Virtuel", type: "revenue" },
+  { value: "retail_revenue", label: "Ventes Produits (Retail)", type: "revenue" },
   { value: "revenue_challenges", label: "Revenus Challenges", type: "revenue" },
-  { value: "revenue_products", label: "Ventes Produits", type: "revenue" },
   { value: "other_revenue", label: "Autres revenus", type: "revenue" },
 ];
 
-const EMPTY_FORM = { name: "", kpi_column: "other_expenses", type: "expense", color: "#0A84FF" };
+const EMPTY_FORM = { name: "", kpi_column: "other_expenses", type: "expense", revenue_type: "", color: "#0A84FF" };
 const EMPTY_KPI_FORM = { value: "", label: "", type: "expense" };
 
 export default function CategoriesPage() {
@@ -111,6 +113,7 @@ export default function CategoriesPage() {
       name: cat.name,
       kpi_column: cat.kpi_column,
       type: cat.type,
+      revenue_type: cat.revenue_type || "",
       color: cat.color || "#0A84FF",
     });
     setShowModal(true);
@@ -277,6 +280,7 @@ export default function CategoriesPage() {
               <TableRow className="border-[var(--color-border)] hover:bg-transparent">
                 <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Nom</TableHead>
                 <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Colonne KPI</TableHead>
+                <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs">Type Revenu</TableHead>
                 <TableHead className="text-[var(--color-text-tertiary)] uppercase text-xs w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -290,6 +294,15 @@ export default function CategoriesPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-[var(--color-text-secondary)] text-xs font-mono">{cat.kpi_column}</TableCell>
+                  <TableCell>
+                    {cat.revenue_type && (
+                      <Badge className={`border-0 text-[10px] ${
+                        cat.revenue_type === "Membre" ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]" :
+                        cat.revenue_type === "Produit" ? "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]" :
+                        "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]"
+                      }`}>{cat.revenue_type}</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <button
@@ -338,7 +351,7 @@ export default function CategoriesPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="tf-stat-label">Type *</Label>
-                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v, revenue_type: v === "expense" ? "" : form.revenue_type })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-type-select">
                     <SelectValue />
                   </SelectTrigger>
@@ -348,6 +361,22 @@ export default function CategoriesPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {form.type === "revenue" && (
+                <div className="space-y-1.5">
+                  <Label className="tf-stat-label">Type de revenu</Label>
+                  <Select value={form.revenue_type || ""} onValueChange={(v) => setForm({ ...form, revenue_type: v })}>
+                    <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="cat-revenue-type-select">
+                      <SelectValue placeholder="Sélectionner..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                      <SelectItem value="Membre" className="text-white focus:bg-[rgba(255,255,255,0.1)]">Membre</SelectItem>
+                      <SelectItem value="Produit" className="text-white focus:bg-[rgba(255,255,255,0.1)]">Produit</SelectItem>
+                      <SelectItem value="Service" className="text-white focus:bg-[rgba(255,255,255,0.1)]">Service</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label className="tf-stat-label">Colonne KPI *</Label>

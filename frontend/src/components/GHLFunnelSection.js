@@ -109,8 +109,10 @@ export function GHLFunnelSection({ currentMonth, lang, onKpiRefresh, onMonthChan
         label: t.name,
         defaultAmount: t.price || 0,
         durationDays,
-        memberType: t.is_recurring ? "Membres Généraux Récurrents" : "Membres PIF",
-        isPIF: !t.is_recurring,
+        memberType: t.member_type || (t.is_recurring ? "Membres Généraux Récurrents" : "Membres PIF"),
+        isPIF: t.is_pif || !t.is_recurring,
+        isCoach: t.is_coach_subscription || false,
+        isDuo: t.is_duo || false,
         billingCycleType: t.default_billing_cycle_type,
         billingCycleValue: t.default_billing_cycle_value,
       };
