@@ -8,7 +8,11 @@ export const formatCHF = (amount) => {
   }).format(amount);
 };
 
-export const formatPct = (value) => `${(value ?? 0).toFixed(1)}%`;
+export const formatPct = (value) => {
+  const v = value ?? 0;
+  if (Math.abs(v) > 999) return `${v > 0 ? "+" : ""}${Math.round(v)}%`;
+  return `${v.toFixed(1)}%`;
+};
 
 export const formatNum = (value) =>
   new Intl.NumberFormat("fr-CH").format(value ?? 0);

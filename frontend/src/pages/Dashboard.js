@@ -145,7 +145,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         churn: k.churn_rate,
         cac: k.cac,
         roas: k.roas,
-        profitMargin: k.profit_margin,
+        profitMargin: Math.max(-200, Math.min(200, k.profit_margin)),
         revMembers: k.revenue_members,
         revCoaching: k.revenue_coaching,
         loyer: k.loyer,
@@ -610,7 +610,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("membersEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={currentYearData}>
+                <ComposedChart data={currentYearData}>
                   <defs>
                     <linearGradient id="membGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={CHART_COLORS.members} stopOpacity={0.2} />
@@ -621,9 +621,12 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<ChartTooltip isCurrency={false} />} />
+                  <Legend wrapperStyle={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }} />
                   {selectedLabel && <ReferenceLine x={selectedLabel} stroke={CHART_COLORS.members} strokeDasharray="4 4" />}
-                  <Area type="monotone" dataKey="members" name={t("totalMembers")} stroke={CHART_COLORS.members} fill="url(#membGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                </AreaChart>
+                  <Bar dataKey="lostMembers" name={lang === "fr" ? "Perdus" : "Lost"} fill={CHART_COLORS.expenses} opacity={0.6} barSize={12} radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="newMembers" name={lang === "fr" ? "Nouveaux" : "New"} fill={CHART_COLORS.members} opacity={0.8} barSize={12} radius={[2, 2, 0, 0]} />
+                  <Line type="monotone" dataKey="members" name={t("totalMembers")} stroke={CHART_COLORS.members} fill="url(#membGrad)" strokeWidth={2} dot={{ r: 3, fill: CHART_COLORS.members }} activeDot={{ r: 5 }} />
+                </ComposedChart>
               </ResponsiveContainer>
             </ChartCard>
 

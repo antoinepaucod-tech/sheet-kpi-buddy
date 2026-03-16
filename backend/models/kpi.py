@@ -156,4 +156,26 @@ def compute_metrics(kpi: dict) -> dict:
     roas = round((kpi.get('total_revenue', 0) / ad) if ad > 0 else 0, 2)
     rev = kpi.get('total_revenue', 0)
     profit_margin = round((kpi.get('net_profit', 0) / rev * 100) if rev > 0 else 0, 2)
-    return {**kpi, 'churn_rate': churn_rate, 'cac': cac, 'roas': roas, 'profit_margin': profit_margin}
+
+    # Recalculate funnel percentages from raw counts
+    leads = kpi.get('leads', 0) or 0
+    calls = kpi.get('calls_made', 0) or 0
+    scheduled = kpi.get('scheduled', 0) or 0
+    show = kpi.get('show', 0) or 0
+    close = kpi.get('close', 0) or 0
+    call_percentage = round((calls / leads * 100), 1) if leads > 0 else 0
+    sched_percentage = round((scheduled / calls * 100), 1) if calls > 0 else 0
+    show_percentage = round((show / scheduled * 100), 1) if scheduled > 0 else 0
+    close_percentage = round((close / show * 100), 1) if show > 0 else 0
+
+    return {
+        **kpi,
+        'churn_rate': churn_rate,
+        'cac': cac,
+        'roas': roas,
+        'profit_margin': profit_margin,
+        'call_percentage': call_percentage,
+        'sched_percentage': sched_percentage,
+        'show_percentage': show_percentage,
+        'close_percentage': close_percentage,
+    }

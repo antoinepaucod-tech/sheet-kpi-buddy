@@ -11,12 +11,12 @@ import {
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue }) => (
-  <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)] overflow-hidden">
+  <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)] overflow-hidden min-w-0">
     <div className="flex items-center gap-2 mb-1">
-      {Icon && <Icon size={12} className="text-[var(--color-text-tertiary)]" />}
+      {Icon && <Icon size={12} className="text-[var(--color-text-tertiary)] shrink-0" />}
       <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider truncate">{label}</span>
     </div>
-    <p className={`text-base font-display font-bold ${color} truncate`} style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</p>
+    <p className={`text-sm font-display font-bold ${color} truncate`} style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</p>
     {subValue && <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 truncate">{subValue}</p>}
   </div>
 );

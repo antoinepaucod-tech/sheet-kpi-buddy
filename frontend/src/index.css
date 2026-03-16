@@ -751,13 +751,16 @@ table tbody td {
 .tf-stat-value {
   font-family: var(--font-display);
   font-weight: var(--font-bold);
-  font-size: var(--text-2xl);
+  font-size: clamp(14px, 1.2vw, 22px);
   color: var(--color-text-primary);
   margin-top: var(--space-1);
   letter-spacing: -0.02em;
   line-height: 1.1;
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 

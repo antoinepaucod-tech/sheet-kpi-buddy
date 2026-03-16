@@ -1,0 +1,86 @@
+{
+  "summary": "Iteration 42 - Dashboard TRANSFORM corrections verified. All backend API tests pass (6/6). Frontend UI fixes confirmed via screenshots.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "backend_api": {
+      "sales_funnel_march_2026": {
+        "GET /api/monthly-kpis/2026-03": "PASS",
+        "call_percentage": "50.0% (was 6.1% before fix)",
+        "sched_percentage": "14.3%",
+        "show_percentage": "33.3%",
+        "close_percentage": "50.0%",
+        "raw_values": "leads=84, calls=42, scheduled=6, show=2, close=1"
+      },
+      "sales_funnel_jan_2026": {
+        "GET /api/monthly-kpis/2026-01": "PASS",
+        "call_percentage": "238.1% (correct - calls=200 > leads=84)",
+        "note": "Percentage > 100% is valid when calls exceed leads"
+      },
+      "profit_margin": {
+        "march_2026_profit_margin": "PASS - returns -1243.91%",
+        "note": "API returns raw value, chart clamps to -200%"
+      }
+    },
+    "frontend_verification": {
+      "details_tab_sales_funnel": {
+        "test": "Sales Funnel shows correct percentages",
+        "status": "PASS",
+        "evidence": "Screenshot shows 50.0%, 14.3%, 33.3%, 50.0%"
+      },
+      "stat_boxes_overflow": {
+        "test": "StatBox values don't overflow",
+        "status": "PASS",
+        "evidence": "StatBox uses text-sm and truncate class, values fit"
+      },
+      "metrics_tab_profit_margin_chart": {
+        "test": "Profit margin chart clamped between -200% and +200%",
+        "status": "PASS",
+        "evidence": "Y-axis shows 0% to -200%, line clamped at bottom"
+      },
+      "members_tab_chart_legend": {
+        "test": "Members Evolution shows bars (Nouveaux, Perdus) + line (Membres Actifs)",
+        "status": "PASS",
+        "evidence": "Legend shows 'Membres Actifs', 'Nouveaux', 'Perdus'"
+      }
+    }
+  },
+  "features_verified": {
+    "1_sales_funnel_percentages_fixed": "PASS - call_percentage=50.0% (not 6.1%)",
+    "2_stat_boxes_no_overflow": "PASS - text-sm and truncate applied",
+    "3_profit_margin_chart_clamped": "PASS - Y-axis limited to -200% to +200%",
+    "4_members_chart_legend_clear": "PASS - shows Nouveaux, Perdus, Membres Actifs"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration42_funnel_fixes.py",
+    "/app/test_reports/pytest/pytest_results_iter42.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "compute_metrics() in backend/models/kpi.py correctly recalculates funnel percentages from raw counts",
+    "Dashboard.js clamps profitMargin with Math.max(-200, Math.min(200, k.profit_margin))",
+    "Members chart uses ComposedChart with Bar (newMembers, lostMembers) + Line (members)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration42_funnel_fixes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 tests passed)",
+    "frontend": "100% (all features verified via UI)"
+  },
+  "test_credentials": {
+    "email": "test@crossfit.ch",
+    "password": "test123"
+  },
+  "seed_data_creation": "N/A - tested existing data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 42 verified all TRANSFORM dashboard corrections: (1) Sales funnel percentages now correctly calculated (call=calls/leads*100, sched=scheduled/calls*100, etc.), (2) StatBox text doesn't overflow due to truncate class, (3) Profit margin chart Y-axis clamped to -200% to +200%, (4) Members Evolution chart uses ComposedChart with bars for new/lost members and line for active members with clear legend. March 2026 data: leads=84, calls=42, scheduled=6, show=2, close=1. January 2026 has calls>leads (200>84) resulting in 238.1% which is correct behavior."
+}
