@@ -169,14 +169,14 @@ async def recalculate_month(month: str):
 
     txs = await db.accounting_transactions.find(
         {"date": {"$regex": f"^{month}"}}, {"_id": 0}
-    ).to_list(1000)
+    ).to_list(10000)
 
     existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
 
     # Calculate totals per kpi_column from transactions
     totals_by_col = {}
     for tx in txs:
-        cat_info = cat_map.get(tx["category"])
+        cat_info = cat_map.get(tx.get("category"))
         if cat_info and cat_info.get("kpi_column"):
             col = cat_info["kpi_column"]
             totals_by_col[col] = totals_by_col.get(col, 0) + tx["amount"]
@@ -216,17 +216,31 @@ async def recalculate_month(month: str):
         if kpi_col and kpi_col not in totals_by_col:
             zero_updates[kpi_col] = 0
 
+    # Build aliases for French/English expense fields
+    ALIASES = {
+        "rent": "loyer", "salaries": "salaires",
+        "salaires_coach": "salaires_coachs",
+        "ad_spend": "marketing_spend",
+    }
+
     update = {
         **zero_updates,
         **{col: totals_by_col[col] for col in totals_by_col},
         "total_revenue": total_revenue,
         "total_expenses": total_expenses_from_tx,
         "net_profit": total_revenue - total_expenses_from_tx,
+        "profit": total_revenue - total_expenses_from_tx,
         "active_members": active_count,
         "cash_collected": total_revenue_from_tx,
+        "revenue_members": totals_by_col.get("general_eft_revenue", 0),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    await db.monthly_kpis.update_one({"month": month}, {"$set": update})
+    # Set aliases
+    for eng, fr in ALIASES.items():
+        if eng in totals_by_col:
+            update[fr] = totals_by_col[eng]
+
+    await db.monthly_kpis.update_one({"month": month}, {"$set": update}, upsert=True)
     doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
     return compute_metrics(doc) if doc else {"error": "Mois introuvable"}
 

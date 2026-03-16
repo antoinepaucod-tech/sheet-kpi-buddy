@@ -23,6 +23,7 @@ import {
   UserCog,
   ListChecks,
   Mail,
+  Table2,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -71,6 +72,7 @@ const NAV_SECTIONS = (lang) => [
     label: lang === "fr" ? "Comptabilité" : "Accounting",
     items: [
       { path: "/transactions", icon: ArrowLeftRight, label: lang === "fr" ? "Transactions" : "Transactions" },
+      { path: "/budget", icon: Table2, label: lang === "fr" ? "Budget Mensuel" : "Monthly Budget" },
       { path: "/recurring", icon: RefreshCw, label: lang === "fr" ? "Récurrentes" : "Recurring" },
       { path: "/categories", icon: Tag, label: lang === "fr" ? "Catégories" : "Categories" },
     ],

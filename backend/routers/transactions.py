@@ -25,7 +25,7 @@ async def _auto_recalculate_kpis(tx_date: str):
 
     txs = await db.accounting_transactions.find(
         {"date": {"$regex": f"^{month}"}}, {"_id": 0}
-    ).to_list(1000)
+    ).to_list(10000)
 
     existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
 
@@ -60,15 +60,31 @@ async def _auto_recalculate_kpis(tx_date: str):
         "subscription_end_date": {"$gte": today}
     })
 
+    # Build update with both English and French aliases for expenses
+    ALIASES = {
+        "rent": "loyer", "salaries": "salaires",
+        "salaires_coach": "salaires_coachs",
+        "ad_spend": "marketing_spend",
+    }
+    
     update = {
         **{col: totals_by_col.get(col, 0) for col in {c.get("kpi_column") for c in cats if c.get("kpi_column")}},
         "total_revenue": total_revenue,
         "total_expenses": total_expenses,
         "net_profit": total_revenue - total_expenses,
+        "profit": total_revenue - total_expenses,
         "active_members": active_count,
         "cash_collected": total_rev_tx,
+        "revenue_members": totals_by_col.get("general_eft_revenue", 0),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    # Set aliases
+    for eng, fr in ALIASES.items():
+        if eng in totals_by_col:
+            update[fr] = totals_by_col[eng]
+        elif eng in update:
+            update[fr] = update[eng]
+    
     await db.monthly_kpis.update_one({"month": month}, {"$set": update}, upsert=True)
 
 
@@ -79,7 +95,7 @@ async def get_transactions(month: Optional[str] = None):
     query = {}
     if month:
         query["date"] = {"$regex": f"^{month}"}
-    return await db.accounting_transactions.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    return await db.accounting_transactions.find(query, {"_id": 0}).sort("date", -1).to_list(10000)
 
 
 @router.post("/transactions")
@@ -91,6 +107,13 @@ async def create_transaction(data: TransactionCreate):
         raise HTTPException(status_code=400, detail="Cette transaction a été exclue précédemment")
     tx = AccountingTransaction(**data.model_dump())
     doc = tx.model_dump()
+    # Auto-fill year/month from date
+    if doc.get("date") and len(doc["date"]) >= 7:
+        try:
+            doc["year"] = int(doc["date"][:4])
+            doc["month"] = int(doc["date"][5:7])
+        except (ValueError, IndexError):
+            pass
     await db.accounting_transactions.insert_one(doc)
     doc.pop('_id', None)
     await _auto_recalculate_kpis(doc.get("date", ""))
@@ -339,3 +362,140 @@ async def unvalidate_recurring(validation_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Validation introuvable")
     return {"message": "Validation annulée"}
+
+
+
+# ── Monthly Grid (édition des prix par mois) ─────────────────────────────────
+
+MONTH_NAMES = {
+    1: "Jan", 2: "Fév", 3: "Mar", 4: "Avr", 5: "Mai", 6: "Jun",
+    7: "Jul", 8: "Aoû", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Déc"
+}
+
+
+@router.get("/transactions/monthly-grid")
+async def get_monthly_grid(year: int, type: Optional[str] = None):
+    """Get transactions summarized by category and month for a given year."""
+    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+    cat_filter = {}
+    if type:
+        cat_filter = {"type": type}
+        cats = [c for c in cats if c.get("type") == type]
+
+    # Get all transactions for the year
+    txs = await db.accounting_transactions.find(
+        {"date": {"$regex": f"^{year}"}}, {"_id": 0}
+    ).to_list(50000)
+
+    # Build grid: category → month → total amount
+    grid = {}
+    for tx in txs:
+        cat = tx.get("category", "")
+        try:
+            m = int(tx.get("date", "")[5:7])
+        except (ValueError, IndexError):
+            continue
+        if cat not in grid:
+            grid[cat] = {}
+        grid[cat][m] = grid[cat].get(m, 0) + tx.get("amount", 0)
+
+    # Format response
+    result = []
+    for c in sorted(cats, key=lambda x: x.get("position", 0)):
+        cat_name = c["name"]
+        months = {}
+        year_total = 0
+        for m in range(1, 13):
+            val = round(grid.get(cat_name, {}).get(m, 0), 2)
+            months[str(m)] = val
+            year_total += val
+        result.append({
+            "id": c["id"],
+            "category": cat_name,
+            "type": c["type"],
+            "is_recurring": c.get("is_recurring", False),
+            "default_amount": c.get("default_amount", 0),
+            "revenue_type": c.get("revenue_type"),
+            "months": months,
+            "year_total": round(year_total, 2),
+        })
+
+    return result
+
+
+from pydantic import BaseModel as PydanticBaseModel
+
+class MonthlyAmountUpdate(PydanticBaseModel):
+    category: str
+    year: int
+    month: int
+    amount: float
+    description: Optional[str] = None
+
+
+@router.put("/transactions/update-monthly-amount")
+async def update_monthly_amount(data: MonthlyAmountUpdate):
+    """Update or create a transaction for a specific category/month."""
+    month_str = f"{data.year}-{data.month:02d}"
+
+    # Find existing transactions for this category/month
+    existing = await db.accounting_transactions.find(
+        {"category": data.category, "date": {"$regex": f"^{month_str}"}}, {"_id": 0}
+    ).to_list(1000)
+
+    # Determine category type
+    cat = await db.accounting_categories.find_one({"name": data.category}, {"_id": 0})
+    if not cat:
+        raise HTTPException(status_code=404, detail="Catégorie introuvable")
+
+    if len(existing) == 1:
+        # Update the single transaction
+        await db.accounting_transactions.update_one(
+            {"id": existing[0]["id"]},
+            {"$set": {
+                "amount": data.amount,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        tx_date = existing[0]["date"]
+    elif len(existing) == 0:
+        # Create a new transaction
+        day = cat.get("recurrence_day", 1) or 1
+        max_day = monthrange(data.year, data.month)[1]
+        day = min(day, max_day)
+        tx_date = f"{data.year}-{data.month:02d}-{day:02d}"
+        
+        tx = AccountingTransaction(
+            date=tx_date,
+            description=data.description or cat["name"],
+            amount=data.amount,
+            type=cat["type"],
+            category=data.category,
+            is_auto_generated=False,
+            year=data.year,
+            month=data.month,
+            month_name=MONTH_NAMES.get(data.month, ""),
+        )
+        doc = tx.model_dump()
+        await db.accounting_transactions.insert_one(doc)
+        doc.pop("_id", None)
+    else:
+        # Multiple transactions: compute the difference and apply to the first auto-generated or first one
+        current_total = sum(t.get("amount", 0) for t in existing)
+        diff = data.amount - current_total
+        if abs(diff) > 0.01:
+            # Find an auto-generated tx to adjust, or the first one
+            target = next((t for t in existing if t.get("is_auto_generated")), existing[0])
+            new_amount = target["amount"] + diff
+            await db.accounting_transactions.update_one(
+                {"id": target["id"]},
+                {"$set": {
+                    "amount": round(new_amount, 2),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+        tx_date = existing[0]["date"]
+
+    # Recalculate KPIs
+    await _auto_recalculate_kpis(f"{month_str}-01")
+    return {"status": "ok", "category": data.category, "month": month_str, "amount": data.amount}

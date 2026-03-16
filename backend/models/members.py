@@ -41,6 +41,8 @@ class CustomerMember(BaseModel):
     next_followup_date: Optional[str] = None
     followup_notes: Optional[str] = ""
     notes: Optional[str] = ""
+    sold_by: Optional[str] = None
+    persons_count: int = 1
     # Duo subscription
     is_duo: bool = False
     duo_partner_id: Optional[str] = None

@@ -22,6 +22,7 @@ import SettingsTypesPage from "./pages/SettingsTypesPage";
 import CoachesPage from "./pages/CoachesPage";
 import AttendancePage from "./pages/AttendancePage";
 import NotificationsPage from "./pages/NotificationsPage";
+import MonthlyBudgetPage from "./pages/MonthlyBudgetPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -68,7 +69,13 @@ function AppInner() {
 
   useEffect(() => {
     if (kpis.length > 0 && !selectedMonth) {
-      setSelectedMonth(kpis[kpis.length - 1].month);
+      // Default to the latest month with actual data (revenue or expenses > 0)
+      const withData = kpis.filter(k => (k.total_revenue || 0) > 0 || (k.total_expenses || 0) > 0);
+      if (withData.length > 0) {
+        setSelectedMonth(withData[withData.length - 1].month);
+      } else {
+        setSelectedMonth(kpis[kpis.length - 1].month);
+      }
     }
   }, [kpis, selectedMonth]);
 
@@ -120,6 +127,7 @@ function AppInner() {
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/annual-reviews" element={<AnnualReviewsPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
+                  <Route path="/budget" element={<MonthlyBudgetPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/settings/types" element={<SettingsTypesPage />} />
                   <Route path="/coaches" element={<CoachesPage />} />
