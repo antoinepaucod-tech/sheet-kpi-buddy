@@ -1,0 +1,114 @@
+{
+  "summary": "Iteration 47 - Tested 2 new features: 1) exit_date editable in member form, 2) Dashboard alert zone for expiring subscriptions. All backend tests (7/7) passed. All frontend features verified via Playwright.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "backend_api": {
+      "PUT /api/members/{id} with exit_date": {
+        "status": "PASS",
+        "details": "Setting exit_date moves member to Partis. Clearing exit_date returns member to active."
+      },
+      "GET /api/members/expiring?days=60": {
+        "status": "PASS",
+        "details": "Returns members with subscriptions expiring within 60 days, with days_remaining field, sorted ascending"
+      },
+      "GET /api/members/expiring (default 30 days)": {
+        "status": "PASS",
+        "details": "Default parameter returns members expiring within 30 days"
+      },
+      "Expiring members excludes departed": {
+        "status": "PASS",
+        "details": "Members with exit_date are excluded from expiring members list"
+      },
+      "GET /api/members/stats": {
+        "status": "PASS",
+        "details": "Returns correct counts: active_members=66, active_coaches=29, departed=226"
+      },
+      "GET /api/members/memberships": {
+        "status": "PASS",
+        "details": "Returns 26 unique membership types sorted alphabetically"
+      }
+    },
+    "frontend_verification": {
+      "exit_date_field_in_edit_modal": {
+        "status": "PASS",
+        "details": "Edit modal shows 'DATE DE SORTIE' field (red label with UserX icon) with data-testid='exit-date-input'"
+      },
+      "dashboard_alert_zone": {
+        "status": "PASS",
+        "details": "Alert zone shows 'ABONNEMENTS EXPIRANT BIENTÔT (1)' with Caroline Martinod (PACK 20 SESSIONS, 33j restants, Fin: 2026-04-18)"
+      },
+      "alert_zone_color_coding": {
+        "status": "PASS",
+        "details": "33 days remaining shows green background (>30 days). Color coding: red <=7 days, yellow <=30 days, green >30 days"
+      },
+      "dashboard_kpi_cards": {
+        "status": "PASS",
+        "details": "Membres actifs=66, Coachs actifs=29 (real-time from /api/members/stats)"
+      },
+      "members_page_stat_cards": {
+        "status": "PASS",
+        "details": "Active=66, Coaches=29, Expired=5, Expiring(30j)=0, Partis=226, All=100"
+      },
+      "membership_filter": {
+        "status": "PASS",
+        "details": "Filter dropdown shows 27 options (26 memberships + 'Tous les abonnements')"
+      }
+    }
+  },
+  "features_verified": [
+    "1. exit_date field visible in member edit modal with red styling and UserX icon",
+    "2. PUT /api/members/{id} correctly handles exit_date field - members move to 'Partis' tab when set",
+    "3. Clearing exit_date returns member to active state",
+    "4. Dashboard alert zone shows expiring members within 60 days (fetched from /api/members/expiring?days=60)",
+    "5. Alert zone displays: member name, membership type, days remaining, end date",
+    "6. Color coding works: green for >30 days (33j restants displayed in green)",
+    "7. GET /api/members/expiring returns sorted list with days_remaining field",
+    "8. Dashboard KPI cards: Membres actifs=66, Coachs actifs=29 (real-time stats)",
+    "9. Membership filter dropdown shows 26 unique membership types"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iteration47_exit_date_alerts.py",
+    "/app/test_reports/pytest/pytest_results_iter47.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration47_exit_date_alerts.py"
+  ],
+  "success_rate": {
+    "backend": "100% (7/7 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "email": "test@crossfit.ch",
+    "password": "test123"
+  },
+  "seed_data_creation": "No new test data created",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Two new features tested successfully: (1) exit_date field in member edit modal - styled in red, has clear button, moves members to Partis tab when set. (2) Dashboard alert zone for expiring subscriptions - shows members from /api/members/expiring?days=60, displays name/membership/days_remaining/end_date with color-coded badges (green >30d, yellow <=30d, red <=7d). Current expiring member: Caroline Martinod (PACK 20 SESSIONS, 33j restants). KPIs: 66 active members, 29 active coaches, 226 departed.",
+  "data_summary": {
+    "alert_zone": {
+      "expiring_members_60_days": 1,
+      "example": "Caroline Martinod, PACK 20 SESSIONS, 33 days remaining, expires 2026-04-18"
+    },
+    "members": {
+      "active": 66,
+      "coaches": 29,
+      "departed": 226,
+      "expired": 5,
+      "total_current": 100
+    },
+    "memberships": {
+      "unique_count": 26
+    }
+  }
+}

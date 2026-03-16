@@ -10,7 +10,7 @@ import { KPIDetailedView } from "../components/KPIDetailedView";
 import { GHLFunnelSection } from "../components/GHLFunnelSection";
 import {
   TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw, Pencil,
-  ChevronLeft, ChevronRight, FileDown, UserCheck, UserX,
+  ChevronLeft, ChevronRight, FileDown, UserCheck, UserX, AlertTriangle,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useTranslations } from "../hooks/useTranslations";
@@ -73,10 +73,12 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   const [editKpiOpen, setEditKpiOpen] = useState(false);
   const [showN1, setShowN1] = useState(false);
   const [memberStats, setMemberStats] = useState(null);
+  const [expiringMembers, setExpiringMembers] = useState([]);
 
-  // Fetch real-time member stats
+  // Fetch real-time member stats + expiring members
   useEffect(() => {
     axios.get(`${API}/members/stats`).then(r => setMemberStats(r.data)).catch(() => {});
+    axios.get(`${API}/members/expiring?days=60`).then(r => setExpiringMembers(r.data)).catch(() => {});
   }, []);
 
   const handleSeed = async () => {
@@ -364,6 +366,72 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           data-testid="kpi-roas"
         />
       </div>
+
+      {/* Alert Zone - Expiring subscriptions */}
+      {expiringMembers.length > 0 && (
+        <div className="tf-card" style={{ borderLeft: '3px solid var(--color-warning)', background: 'rgba(255,214,10,0.04)' }} data-testid="alert-zone">
+          <div className="flex items-center justify-between mb-3">
+            <p className="tf-label flex items-center gap-2" style={{ color: 'var(--color-warning)' }}>
+              <AlertTriangle size={16} />
+              Abonnements expirant bientôt ({expiringMembers.length})
+            </p>
+            <a href="/members" className="text-xs text-[var(--color-accent)] hover:underline" data-testid="alert-view-all">
+              Voir tous les membres
+            </a>
+          </div>
+          <div className="space-y-2 max-h-[240px] overflow-y-auto">
+            {expiringMembers.map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between py-2 px-3 rounded-lg"
+                style={{ background: 'var(--color-bg-secondary)' }}
+                data-testid={`alert-member-${m.id}`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="min-w-0">
+                    <a
+                      href={`/members`}
+                      className="text-white text-sm font-medium hover:text-[var(--color-accent)] truncate block"
+                    >
+                      {m.name}
+                    </a>
+                    <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                      {m.membership}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0 ml-3">
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: m.days_remaining <= 7
+                        ? 'rgba(255,69,58,0.15)'
+                        : m.days_remaining <= 30
+                          ? 'rgba(255,214,10,0.15)'
+                          : 'rgba(48,209,88,0.15)',
+                      color: m.days_remaining <= 7
+                        ? 'var(--color-error)'
+                        : m.days_remaining <= 30
+                          ? 'var(--color-warning)'
+                          : 'var(--color-success)',
+                    }}
+                    data-testid={`alert-days-${m.id}`}
+                  >
+                    {m.days_remaining === 0
+                      ? "Expire aujourd'hui"
+                      : m.days_remaining === 1
+                        ? "1 jour restant"
+                        : `${m.days_remaining}j restants`}
+                  </span>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-tertiary)' }}>
+                    Fin: {m.subscription_end_date}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPI vs Targets */}
       {settings?.targets && current && (

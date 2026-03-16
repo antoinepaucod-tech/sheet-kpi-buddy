@@ -80,6 +80,8 @@ class CustomerMemberCreate(BaseModel):
     session_introduction: bool = False
     # Follow-up
     next_followup_date: Optional[str] = None
+    # Exit date
+    exit_date: Optional[str] = None
     # Duo subscription
     is_duo: bool = False
     duo_partner_name: Optional[str] = None

@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   CreditCard,
   ClipboardCheck,
+  UserX,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -102,6 +103,7 @@ export default function MembersPage() {
     member_type: "Membres Généraux Récurrents",
     contract_signed_date: "",
     subscription_end_date: "",
+    exit_date: "",
     cash_collected: 0,
     notes: "",
     // Billing
@@ -336,6 +338,7 @@ export default function MembersPage() {
       member_type: member.member_type || "Membres Généraux Récurrents",
       contract_signed_date: member.contract_signed_date || "",
       subscription_end_date: member.subscription_end_date || "",
+      exit_date: member.exit_date || "",
       cash_collected: member.cash_collected || 0,
       notes: member.notes || "",
       billing_enabled: member.billing_enabled !== false,
@@ -818,6 +821,31 @@ export default function MembersPage() {
                   data-testid="expiration-date-input"
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1 text-red-400">
+                  <UserX size={12} /> Date de sortie
+                </label>
+                <Input
+                  type="date"
+                  value={formData.exit_date}
+                  onChange={(e) => setFormData({ ...formData, exit_date: e.target.value })}
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
+                  data-testid="exit-date-input"
+                />
+                {formData.exit_date && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, exit_date: "" })}
+                    className="text-xs text-red-400 hover:text-red-300 mt-1 underline"
+                    data-testid="clear-exit-date"
+                  >
+                    Effacer la date de sortie
+                  </button>
+                )}
+              </div>
+              <div />
             </div>
             <div>
               <label className="tf-stat-label">Notes</label>
