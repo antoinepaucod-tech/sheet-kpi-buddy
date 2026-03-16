@@ -1,18 +1,24 @@
 export function useCoachMembership(transactions, categories = []) {
-  // Build category-to-kpi mapping
-  const revMemberCats = new Set();
-  const revCoachCats = new Set();
+  // Build category-to-type mapping using kpi_column
+  const memberCats = new Set();
+  const coachCats = new Set();
   for (const cat of categories) {
-    if (cat.kpi_column === "revenue_members") revMemberCats.add(cat.name);
-    if (cat.kpi_column === "revenue_coaching") revCoachCats.add(cat.name);
+    if (cat.type !== "revenue") continue;
+    const kpi = cat.kpi_column || "";
+    // Coach/PT revenue
+    if (kpi === "pt_revenue" || cat.name.includes("THE COACH") || cat.name.includes("PT ANTOINE")) {
+      coachCats.add(cat.name);
+    } else if (kpi === "general_eft_revenue" || kpi === "retail_revenue") {
+      memberCats.add(cat.name);
+    }
   }
 
   const memberRevenue = transactions
-    .filter((tx) => tx.type === "revenue" && (revMemberCats.has(tx.category) || tx.sub_type === "members"))
+    .filter((tx) => tx.type === "revenue" && memberCats.has(tx.category))
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const coachRevenue = transactions
-    .filter((tx) => tx.type === "revenue" && (revCoachCats.has(tx.category) || tx.sub_type === "coaching"))
+    .filter((tx) => tx.type === "revenue" && coachCats.has(tx.category))
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const totalRevenue = memberRevenue + coachRevenue;

@@ -276,7 +276,7 @@ export default function MembersPage() {
     if (showExpiring) {
       base = base.filter(m => {
         const days = getDaysRemaining(m.subscription_end_date);
-        return days !== null && days >= 0 && days <= 30;
+        return days !== null && days >= 0 && days <= 60;
       });
     }
     if (filterType !== "all") base = base.filter(m => m.member_type === filterType);
@@ -289,7 +289,48 @@ export default function MembersPage() {
         m.membership?.toLowerCase().includes(s)
       );
     }
-    return base;
+    // Group DUO pairs: put partner right after primary
+    const sorted = [...base];
+    sorted.sort((a, b) => {
+      const aGroup = a.subscription_group_id || "";
+      const bGroup = b.subscription_group_id || "";
+      // Same DUO group: primary first
+      if (aGroup && aGroup === bGroup) {
+        return (b.duo_primary ? 1 : 0) - (a.duo_primary ? 1 : 0);
+      }
+      // DUO primary before partner in general sort
+      const aKey = a.duo_primary ? a.name : a.is_duo && !a.duo_primary ? `${aGroup}_zzz` : a.name;
+      const bKey = b.duo_primary ? b.name : b.is_duo && !b.duo_primary ? `${bGroup}_zzz` : b.name;
+      return aKey.localeCompare(bKey);
+    });
+    // Re-sort: place DUO partners right after their primary
+    const result = [];
+    const partnerMap = new Map();
+    for (const m of sorted) {
+      if (m.is_duo && !m.duo_primary && m.subscription_group_id) {
+        if (!partnerMap.has(m.subscription_group_id)) partnerMap.set(m.subscription_group_id, []);
+        partnerMap.get(m.subscription_group_id).push(m);
+      }
+    }
+    const usedPartners = new Set();
+    for (const m of sorted) {
+      if (m.is_duo && !m.duo_primary) continue; // Skip partners, we'll insert them after primary
+      result.push(m);
+      if (m.is_duo && m.duo_primary && m.subscription_group_id) {
+        const partners = partnerMap.get(m.subscription_group_id) || [];
+        for (const p of partners) {
+          result.push(p);
+          usedPartners.add(p.id);
+        }
+      }
+    }
+    // Add any orphan partners not matched
+    for (const m of sorted) {
+      if (m.is_duo && !m.duo_primary && !usedPartners.has(m.id)) {
+        result.push(m);
+      }
+    }
+    return result;
   }, [current, view, filterType, filterMembership, search, showExpiring, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed]);
 
   // Stats
@@ -301,7 +342,7 @@ export default function MembersPage() {
     departed: departed.length,
     expiring: current.filter(m => {
       const days = getDaysRemaining(m.subscription_end_date);
-      return days !== null && days >= 0 && days <= 30;
+      return days !== null && days >= 0 && days <= 60;
     }).length,
   }), [current, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed]);
 
@@ -383,7 +424,10 @@ export default function MembersPage() {
 
   const getStatusBadge = (member) => {
     const days = getDaysRemaining(member.subscription_end_date);
-    if (days === null) return null;
+    // No expiration date = active (recurring or no-end memberships)
+    if (days === null) {
+      return <Badge variant="secondary" className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]">Actif</Badge>;
+    }
     
     if (days < 0) {
       return <Badge variant="destructive">Expiré</Badge>;
@@ -450,7 +494,7 @@ export default function MembersPage() {
         >
           <p className="tf-stat-label flex items-center gap-1" style={{ color: 'var(--color-warning)' }}>
             <AlertTriangle size={12} />
-            Expirant (30j)
+            Expirant (60j)
           </p>
           <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: showExpiring ? 'var(--color-warning)' : undefined }}>{stats.expiring}</p>
         </div>
@@ -548,7 +592,7 @@ export default function MembersPage() {
                 <React.Fragment key={member.id}>
                   <TableRow
                     key={member.id}
-                    className={`border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer ${rowOpacity}`}
+                    className={`border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer ${rowOpacity} ${member.is_duo && !member.duo_primary ? 'bg-[rgba(10,132,255,0.03)]' : ''}`}
                     onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
                     data-testid={`member-row-${member.id}`}
                   >
@@ -556,9 +600,18 @@ export default function MembersPage() {
                       <div className="flex items-center gap-3">
                         {expandedMember === member.id ? <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" /> : <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />}
                         <div className="flex items-center gap-2">
-                          <p className="text-white font-medium">{member.name}</p>
+                          {member.is_duo && !member.duo_primary && (
+                            <span className="text-[var(--color-accent)] text-xs mr-1">└</span>
+                          )}
+                          <p className={`text-white font-medium ${member.is_duo && !member.duo_primary ? 'text-sm text-[var(--color-text-secondary)]' : ''}`}>{member.name}</p>
                           {member.is_coach && (
                             <Badge className="bg-[rgba(10,132,255,0.2)] text-[var(--color-accent)] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid="coach-badge">COACH</Badge>
+                          )}
+                          {member.is_duo && member.duo_primary && (
+                            <Badge className="bg-[rgba(191,90,242,0.15)] text-[#BF5AF2] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid="duo-primary-badge">DUO</Badge>
+                          )}
+                          {member.is_duo && !member.duo_primary && (
+                            <Badge className="bg-[rgba(191,90,242,0.1)] text-[#BF5AF2] border-0 text-[9px] px-1.5 py-0 opacity-70" data-testid="duo-partner-badge">PARTENAIRE</Badge>
                           )}
                         </div>
                       </div>
@@ -569,12 +622,7 @@ export default function MembersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-[var(--color-text-secondary)]">
-                      <div className="flex items-center gap-1.5">
-                        {member.membership}
-                        {member.is_duo && (
-                          <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0 text-[10px] px-1.5">DUO</Badge>
-                        )}
-                      </div>
+                      {member.membership}
                     </TableCell>
                     <TableCell className="text-[var(--color-text-secondary)]">
                       {member.contract_signed_date
