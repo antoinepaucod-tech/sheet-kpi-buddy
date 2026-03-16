@@ -168,6 +168,10 @@ def compute_metrics(kpi: dict) -> dict:
     show_percentage = round((show / scheduled * 100), 1) if scheduled > 0 else 0
     close_percentage = round((close / show * 100), 1) if show > 0 else 0
 
+    # Recalculate avg_per_sale from cash_collected and close
+    cash_collected = kpi.get('cash_collected', 0) or 0
+    avg_per_sale = round((cash_collected / close), 2) if close > 0 else 0
+
     return {
         **kpi,
         'churn_rate': churn_rate,
@@ -178,4 +182,5 @@ def compute_metrics(kpi: dict) -> dict:
         'sched_percentage': sched_percentage,
         'show_percentage': show_percentage,
         'close_percentage': close_percentage,
+        'avg_per_sale': avg_per_sale,
     }

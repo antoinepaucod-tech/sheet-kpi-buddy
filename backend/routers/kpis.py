@@ -223,6 +223,7 @@ async def recalculate_month(month: str):
         "total_expenses": total_expenses_from_tx,
         "net_profit": total_revenue - total_expenses_from_tx,
         "active_members": active_count,
+        "cash_collected": total_revenue_from_tx,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.monthly_kpis.update_one({"month": month}, {"$set": update})
