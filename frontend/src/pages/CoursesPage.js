@@ -527,7 +527,7 @@ export default function CoursesPage() {
                     <div className="flex items-center gap-2">
                       <Progress value={course.attendance_rate} className="w-16 h-2 bg-[rgba(255,255,255,0.1)]" />
                       <span className={`text-sm font-medium ${getAttendanceColor(course.attendance_rate)}`}>
-                        {course.attendance_rate}%
+                        {(course.attendance_rate || 0).toFixed(1)}%
                       </span>
                     </div>
                   </TableCell>

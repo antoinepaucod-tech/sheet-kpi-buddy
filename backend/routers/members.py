@@ -69,33 +69,48 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
 
 @router.get("/stats")
 async def get_member_stats():
-    """Real-time member statistics: active, coaches, expired, new, lost."""
+    """Real-time member statistics computed from raw data."""
     docs = await db.customer_members.find({}, {"_id": 0}).to_list(5000)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    
-    coaches = [d for d in docs if _is_coach(d.get("membership", ""))]
-    non_coaches = [d for d in docs if not _is_coach(d.get("membership", ""))]
-    
-    active_coaches = [d for d in coaches if not d.get("exit_date") and (not d.get("subscription_end_date") or d["subscription_end_date"] >= today)]
-    active_members = [d for d in non_coaches if not d.get("exit_date") and (not d.get("subscription_end_date") or d["subscription_end_date"] >= today)]
-    expired_members = [d for d in non_coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today and not d.get("exit_date")]
-    expired_coaches = [d for d in coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today and not d.get("exit_date")]
-    
-    # PIF vs Recurring breakdown
+    thirty_days = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
+
+    departed = [d for d in docs if d.get("exit_date") and d["exit_date"] not in [None, "", "None"]]
+    current = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"]]
+
+    coaches = [d for d in current if _is_coach(d.get("membership", ""))]
+    non_coaches = [d for d in current if not _is_coach(d.get("membership", ""))]
+
+    active_coaches = [d for d in coaches if not d.get("subscription_end_date") or d["subscription_end_date"] >= today]
+    active_members = [d for d in non_coaches if not d.get("subscription_end_date") or d["subscription_end_date"] >= today]
+    expired_members = [d for d in non_coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today]
+    expired_coaches = [d for d in coaches if d.get("subscription_end_date") and d["subscription_end_date"] < today]
+
+    expiring = [d for d in current if d.get("subscription_end_date") and today <= d["subscription_end_date"] <= thirty_days]
+
     pif_active = [d for d in active_members if d.get("member_type") == "Membres PIF"]
     recurring_active = [d for d in active_members if d.get("member_type") == "Membres Généraux Récurrents"]
-    
+
     return {
         "total": len(docs),
         "active_members": len(active_members),
         "active_coaches": len(active_coaches),
         "expired_members": len(expired_members),
         "expired_coaches": len(expired_coaches),
+        "departed": len(departed),
+        "expiring_30d": len(expiring),
         "pif_active": len(pif_active),
         "recurring_active": len(recurring_active),
         "total_coaches": len(coaches),
         "total_non_coaches": len(non_coaches),
     }
+
+
+@router.get("/memberships")
+async def get_unique_memberships():
+    """Return all unique membership names from the members collection."""
+    docs = await db.customer_members.find({}, {"_id": 0, "membership": 1}).to_list(5000)
+    memberships = sorted(set(d.get("membership", "") for d in docs if d.get("membership")))
+    return memberships
 
 
 

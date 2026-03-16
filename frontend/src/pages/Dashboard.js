@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
@@ -10,7 +10,7 @@ import { KPIDetailedView } from "../components/KPIDetailedView";
 import { GHLFunnelSection } from "../components/GHLFunnelSection";
 import {
   TrendingUp, Users, Percent, DollarSign, Target, Zap, Loader2, RotateCcw, Pencil,
-  ChevronLeft, ChevronRight, FileDown,
+  ChevronLeft, ChevronRight, FileDown, UserCheck, UserX,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useTranslations } from "../hooks/useTranslations";
@@ -72,6 +72,12 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   const [seeding, setSeeding] = useState(false);
   const [editKpiOpen, setEditKpiOpen] = useState(false);
   const [showN1, setShowN1] = useState(false);
+  const [memberStats, setMemberStats] = useState(null);
+
+  // Fetch real-time member stats
+  useEffect(() => {
+    axios.get(`${API}/members/stats`).then(r => setMemberStats(r.data)).catch(() => {});
+  }, []);
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -322,24 +328,20 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           data-testid="kpi-profit"
         />
         <KPICard
-          label={t("totalMembers")}
-          value={formatNum(current?.active_members || current?.total_active_members || current?.total_members)}
-          trend={getTrend(current?.active_members || current?.total_active_members || current?.total_members, previous?.active_members || previous?.total_active_members || previous?.total_members)}
-          vsLabel={t("vsLastMonth")}
-          icon={Users}
+          label={lang === "fr" ? "Membres actifs" : "Active Members"}
+          value={formatNum(memberStats?.active_members ?? current?.active_members ?? 0)}
+          trend={null}
+          vsLabel={memberStats ? `${memberStats.departed} partis` : ""}
+          icon={UserCheck}
           data-testid="kpi-members"
         />
         <KPICard
-          label={t("churnRate")}
-          value={formatPct(current?.churn_rate)}
-          trend={
-            current?.churn_rate && previous?.churn_rate
-              ? { pct: Math.abs(current.churn_rate - previous.churn_rate).toFixed(1), up: current.churn_rate < previous.churn_rate }
-              : null
-          }
-          vsLabel={t("vsLastMonth")}
-          icon={Percent}
-          data-testid="kpi-churn"
+          label={lang === "fr" ? "Coachs actifs" : "Active Coaches"}
+          value={formatNum(memberStats?.active_coaches ?? 0)}
+          trend={null}
+          vsLabel={memberStats ? `${memberStats.expired_coaches + memberStats.expired_members} expirés` : ""}
+          icon={Users}
+          data-testid="kpi-coaches"
         />
         <KPICard
           label={t("cac")}

@@ -87,7 +87,7 @@ export default function MembersPage() {
   const urlSearch = searchParams.get("search") || "";
   const [search, setSearch] = useState(urlSearch);
   const [filterType, setFilterType] = useState("all");
-  const [filterMembership, setFilterMembership] = useState("");
+  const [filterMembership, setFilterMembership] = useState("_all");
   const [view, setView] = useState(urlSearch ? "all" : "active"); // "all" | "active" | "coaches" | "expired"
   const [showExpiring, setShowExpiring] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -162,7 +162,13 @@ export default function MembersPage() {
     queryFn: () => axios.get(`${API}/settings/membership-types?active_only=true`).then((r) => r.data),
   });
 
-  // Fetch member types from settings
+  // Fetch unique memberships for filter
+  const { data: uniqueMemberships = [] } = useQuery({
+    queryKey: ["memberships-unique"],
+    queryFn: () => axios.get(`${API}/members/memberships`).then((r) => r.data),
+  });
+
+  // Fetch member types for add/edit form
   const { data: memberTypes = [] } = useQuery({
     queryKey: ["member-types"],
     queryFn: () => axios.get(`${API}/settings/member-types?active_only=true`).then((r) => r.data),
@@ -271,7 +277,7 @@ export default function MembersPage() {
       });
     }
     if (filterType !== "all") base = base.filter(m => m.member_type === filterType);
-    if (filterMembership) base = base.filter(m => m.membership === filterMembership);
+    if (filterMembership && filterMembership !== "_all") base = base.filter(m => m.membership === filterMembership);
     if (search) {
       const s = search.toLowerCase();
       base = base.filter(m =>
@@ -492,10 +498,10 @@ export default function MembersPage() {
             <SelectValue placeholder="Tous les abonnements" />
           </SelectTrigger>
           <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-60">
-            <SelectItem value="" className="text-white text-xs">Tous les abonnements</SelectItem>
-            {memberTypes.map((mt) => (
-              <SelectItem key={mt.id} value={mt.name} className="text-white text-xs">
-                {mt.name} {mt.is_pif ? "(PIF)" : ""} {mt.is_coach_subscription ? "(Coach)" : ""}
+            <SelectItem value="_all" className="text-white text-xs">Tous les abonnements</SelectItem>
+            {uniqueMemberships.map((name) => (
+              <SelectItem key={name} value={name} className="text-white text-xs">
+                {name}
               </SelectItem>
             ))}
           </SelectContent>
