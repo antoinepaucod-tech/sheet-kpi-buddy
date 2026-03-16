@@ -83,8 +83,11 @@ const BILLING_CYCLE_TYPES = [
 export default function MembersPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlSearch = searchParams.get("search") || "";
+  const [search, setSearch] = useState(urlSearch);
   const [filterType, setFilterType] = useState("all");
+  const [view, setView] = useState(urlSearch ? "all" : "active"); // "all" | "active" | "coaches" | "expired"
   const [showExpiring, setShowExpiring] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [renewModalOpen, setRenewModalOpen] = useState(false);
@@ -236,36 +239,58 @@ export default function MembersPage() {
     onError: () => toast.error("Erreur lors du renouvellement"),
   });
 
+  // Computed member categories
+  const today = new Date().toISOString().split('T')[0];
+  const coaches = members.filter(m => m.is_coach);
+  const nonCoaches = members.filter(m => !m.is_coach);
+  const activeMembersOnly = nonCoaches.filter(m => !m.subscription_end_date || m.subscription_end_date >= today);
+  const expiredMembers = nonCoaches.filter(m => m.subscription_end_date && m.subscription_end_date < today);
+
+  const getDaysRemaining = (endDate) => {
+    if (!endDate) return null;
+    return differenceInDays(parseISO(endDate), new Date());
+  };
+
   // Filter members
   const filteredMembers = useMemo(() => {
-    let result = showExpiring ? expiringMembers : members;
-    
-    if (filterType !== "all") {
-      result = result.filter((m) => m.member_type === filterType);
+    let base = members;
+    if (view === "active") base = activeMembersOnly;
+    else if (view === "coaches") base = coaches;
+    else if (view === "expired") base = expiredMembers;
+
+    if (showExpiring) {
+      base = base.filter(m => {
+        const days = getDaysRemaining(m.subscription_end_date);
+        return days !== null && days >= 0 && days <= 30;
+      });
     }
-    
+    if (filterType !== "all") base = base.filter(m => m.member_type === filterType);
     if (search) {
       const s = search.toLowerCase();
-      result = result.filter(
-        (m) =>
-          m.name?.toLowerCase().includes(s) ||
-          m.email?.toLowerCase().includes(s) ||
-          m.membership?.toLowerCase().includes(s)
+      base = base.filter(m =>
+        m.name?.toLowerCase().includes(s) ||
+        m.email?.toLowerCase().includes(s) ||
+        m.membership?.toLowerCase().includes(s)
       );
     }
-    
-    return result;
-  }, [members, expiringMembers, showExpiring, filterType, search]);
+    return base;
+  }, [members, view, filterType, search, showExpiring, activeMembersOnly, coaches, expiredMembers]);
 
   // Stats
   const stats = useMemo(() => ({
     total: members.length,
-    expiring: expiringMembers.length,
+    active: activeMembersOnly.length,
+    coaches: coaches.length,
+    expired: expiredMembers.length,
+    expiring: nonCoaches.filter(m => {
+      const days = getDaysRemaining(m.subscription_end_date);
+      return days !== null && days >= 0 && days <= 30;
+    }).length,
     byType: MEMBER_TYPES.reduce((acc, type) => {
       acc[type] = members.filter((m) => m.member_type === type).length;
       return acc;
     }, {}),
-  }), [members, expiringMembers]);
+  }), [members, activeMembersOnly, coaches, expiredMembers, nonCoaches]);
 
   const openAddModal = () => {
     setSelectedMember(null);
@@ -342,11 +367,6 @@ export default function MembersPage() {
     setRenewModalOpen(true);
   };
 
-  const getDaysRemaining = (endDate) => {
-    if (!endDate) return null;
-    return differenceInDays(parseISO(endDate), new Date());
-  };
-
   const getStatusBadge = (member) => {
     const days = getDaysRemaining(member.subscription_end_date);
     if (days === null) return null;
@@ -379,30 +399,56 @@ export default function MembersPage() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 tf-stagger">
-        <div className="tf-stat">
-          <p className="tf-stat-label">Total</p>
-          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.total}</p>
+      {/* View Tabs + Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 tf-stagger">
+        <div
+          className="tf-stat cursor-pointer transition-all"
+          style={{ borderColor: view === "active" ? 'var(--color-success)' : undefined, borderWidth: view === "active" ? '2px' : undefined }}
+          onClick={() => { setView("active"); setShowExpiring(false); }}
+          data-testid="tab-active"
+        >
+          <p className="tf-stat-label" style={{ color: 'var(--color-success)' }}>Membres Actifs</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: view === "active" ? 'var(--color-success)' : undefined }}>{stats.active}</p>
         </div>
-        <div 
-          className="tf-stat cursor-pointer"
-          style={{ borderColor: showExpiring ? 'var(--color-warning)' : undefined }}
-          onClick={() => setShowExpiring(!showExpiring)}
-          data-testid="expiring-filter"
+        <div
+          className="tf-stat cursor-pointer transition-all"
+          style={{ borderColor: view === "coaches" ? 'var(--color-accent)' : undefined, borderWidth: view === "coaches" ? '2px' : undefined }}
+          onClick={() => { setView("coaches"); setShowExpiring(false); }}
+          data-testid="tab-coaches"
+        >
+          <p className="tf-stat-label" style={{ color: 'var(--color-accent)' }}>Coachs</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: view === "coaches" ? 'var(--color-accent)' : undefined }}>{stats.coaches}</p>
+        </div>
+        <div
+          className="tf-stat cursor-pointer transition-all"
+          style={{ borderColor: view === "expired" ? 'var(--color-danger)' : undefined, borderWidth: view === "expired" ? '2px' : undefined }}
+          onClick={() => { setView("expired"); setShowExpiring(false); }}
+          data-testid="tab-expired"
+        >
+          <p className="tf-stat-label" style={{ color: 'var(--color-danger)' }}>Expirés / Churn</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: view === "expired" ? 'var(--color-danger)' : undefined }}>{stats.expired}</p>
+        </div>
+        <div
+          className="tf-stat cursor-pointer transition-all"
+          style={{ borderColor: showExpiring ? 'var(--color-warning)' : undefined, borderWidth: showExpiring ? '2px' : undefined }}
+          onClick={() => { setShowExpiring(!showExpiring); if (!showExpiring) setView("active"); }}
+          data-testid="tab-expiring"
         >
           <p className="tf-stat-label flex items-center gap-1" style={{ color: 'var(--color-warning)' }}>
             <AlertTriangle size={12} />
             Expirant (30j)
           </p>
-          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-warning)' }}>{stats.expiring}</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: showExpiring ? 'var(--color-warning)' : undefined }}>{stats.expiring}</p>
         </div>
-        {MEMBER_TYPES.map((type) => (
-          <div key={type} className="tf-stat">
-            <p className="tf-stat-label truncate">{type.replace("Membres ", "")}</p>
-            <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.byType[type]}</p>
-          </div>
-        ))}
+        <div
+          className="tf-stat cursor-pointer transition-all"
+          style={{ borderColor: view === "all" ? 'var(--color-text-secondary)' : undefined, borderWidth: view === "all" ? '2px' : undefined }}
+          onClick={() => { setView("all"); setShowExpiring(false); }}
+          data-testid="tab-all"
+        >
+          <p className="tf-stat-label">Tous</p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.total}</p>
+        </div>
       </div>
 
       {/* Filters */}
@@ -458,20 +504,25 @@ export default function MembersPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredMembers.map((member) => (
+              filteredMembers.map((member) => {
+                const isExpired = member.subscription_end_date && member.subscription_end_date < today;
+                const rowOpacity = isExpired ? "opacity-50" : "";
+                return (
                 <>
                   <TableRow
                     key={member.id}
-                    className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer"
+                    className={`border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer ${rowOpacity}`}
                     onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
                     data-testid={`member-row-${member.id}`}
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {expandedMember === member.id ? <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" /> : <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />}
-                        <div>
+                        <div className="flex items-center gap-2">
                           <p className="text-white font-medium">{member.name}</p>
-                          <p className="text-[var(--color-text-secondary)] text-xs">{member.email}</p>
+                          {member.is_coach && (
+                            <Badge className="bg-[rgba(10,132,255,0.2)] text-[var(--color-accent)] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid="coach-badge">COACH</Badge>
+                          )}
                         </div>
                       </div>
                     </TableCell>
@@ -485,9 +536,6 @@ export default function MembersPage() {
                         {member.membership}
                         {member.is_duo && (
                           <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0 text-[10px] px-1.5">DUO</Badge>
-                        )}
-                        {member.membership && member.membership.toLowerCase().includes("challenge") && (
-                          <span title="6 Weeks Challenge" className="text-sm">🔥</span>
                         )}
                       </div>
                     </TableCell>
@@ -600,7 +648,7 @@ export default function MembersPage() {
                     </TableRow>
                   )}
                 </>
-              ))
+              )})
             )}
           </TableBody>
         </Table>

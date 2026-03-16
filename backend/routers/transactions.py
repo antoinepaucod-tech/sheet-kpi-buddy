@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from datetime import datetime, timezone
 from calendar import monthrange
+from pydantic import BaseModel
 
 from core.config import db, MONTHS_FR
 from models.transactions import (
@@ -118,6 +119,41 @@ async def create_transaction(data: TransactionCreate):
     doc.pop('_id', None)
     await _auto_recalculate_kpis(doc.get("date", ""))
     return doc
+
+
+class TransactionUpdate(BaseModel):
+    date: Optional[str] = None
+    description: Optional[str] = None
+    amount: Optional[float] = None
+    category: Optional[str] = None
+    client_name: Optional[str] = None
+    payment_method: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@router.put("/transactions/{transaction_id}")
+async def update_transaction(transaction_id: str, data: TransactionUpdate):
+    tx = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction introuvable")
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if "date" in updates and len(updates["date"]) >= 7:
+        try:
+            updates["year"] = int(updates["date"][:4])
+            updates["month"] = int(updates["date"][5:7])
+        except (ValueError, IndexError):
+            pass
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.accounting_transactions.update_one({"id": transaction_id}, {"$set": updates})
+    # Recalculate KPIs for old and new months
+    old_date = tx.get("date", "")
+    new_date = updates.get("date", old_date)
+    await _auto_recalculate_kpis(old_date)
+    if new_date[:7] != old_date[:7]:
+        await _auto_recalculate_kpis(new_date)
+    updated = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
+    return updated
+
 
 
 @router.delete("/transactions/{transaction_id}")
@@ -423,9 +459,7 @@ async def get_monthly_grid(year: int, type: Optional[str] = None):
     return result
 
 
-from pydantic import BaseModel as PydanticBaseModel
-
-class MonthlyAmountUpdate(PydanticBaseModel):
+class MonthlyAmountUpdate(BaseModel):
     category: str
     year: int
     month: int

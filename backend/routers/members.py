@@ -34,13 +34,26 @@ def calc_review_date(contract_date_str, frequency):
         return None
 
 
+COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH"]
+
+def _is_coach(membership: str) -> bool:
+    if not membership:
+        return False
+    upper = membership.upper()
+    return any(kw in upper for kw in COACH_KEYWORDS)
+
+
 @router.get("")
 async def get_members(expiring_soon: Optional[bool] = None, member_type: Optional[str] = None):
     query = {}
     if member_type:
         query["member_type"] = member_type
     
-    docs = await db.customer_members.find(query, {"_id": 0}).sort("name", 1).to_list(1000)
+    docs = await db.customer_members.find(query, {"_id": 0}).sort("name", 1).to_list(5000)
+    
+    # Add computed is_coach field
+    for d in docs:
+        d["is_coach"] = _is_coach(d.get("membership", ""))
     
     if expiring_soon:
         today = datetime.now(timezone.utc).date()

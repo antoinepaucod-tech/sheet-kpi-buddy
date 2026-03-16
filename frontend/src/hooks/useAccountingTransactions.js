@@ -38,6 +38,12 @@ export function useAccountingTransactions(month = null) {
     return res.data;
   };
 
+  const updateTransaction = async (id, data) => {
+    const res = await axios.put(`${API}/transactions/${id}`, data);
+    await fetchAll();
+    return res.data;
+  };
+
   const deleteTransaction = async (id) => {
     await axios.delete(`${API}/transactions/${id}`);
     await fetchAll();
@@ -55,6 +61,7 @@ export function useAccountingTransactions(month = null) {
     loading,
     refetch: fetchAll,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
     removeFromExclusions,
   };
