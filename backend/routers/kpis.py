@@ -285,33 +285,32 @@ async def recalculate_month(month: str):
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    # --- Funnel: Calculate from new member sign-ups if GHL data not available ---
-    new_members_this_month = await db.customer_members.find(
-        {"contract_signed_date": {"$regex": f"^{month}"}},
-        {"_id": 0, "name": 1, "billing_amount": 1, "membership": 1}
-    ).to_list(1000)
+    # --- Funnel: Use GHL sync data if available, do NOT override ---
+    # Check if GHL has already set funnel data for this month
+    existing_leads = merged.get("leads", 0)
+    existing_close = merged.get("close", 0)
 
-    if new_members_this_month:
-        # Calculate cash collected from first transactions of new members
-        new_member_names = [m.get("name") for m in new_members_this_month if m.get("name")]
-        first_tx_total = 0
-        for name in new_member_names:
-            first_tx = await db.accounting_transactions.find_one(
-                {"client_name": name, "date": {"$regex": f"^{month}"}, "amount": {"$gt": 0}},
-                {"_id": 0, "amount": 1}
-            )
-            if first_tx:
-                first_tx_total += first_tx.get("amount", 0)
+    # Only fill funnel from new sign-ups if GHL hasn't provided data at all
+    if existing_leads == 0 and existing_close == 0:
+        new_members_this_month = await db.customer_members.find(
+            {"contract_signed_date": {"$regex": f"^{month}"}},
+            {"_id": 0, "name": 1, "billing_amount": 1}
+        ).to_list(1000)
 
-        new_count = len(new_members_this_month)
-        # Only update funnel if GHL hasn't provided data (close is 0)
-        if merged.get("close", 0) == 0:
-            update["close"] = new_count
-            update["new_members"] = new_count
-            update["cash_collected"] = first_tx_total
-    else:
-        if merged.get("close", 0) == 0:
+        if new_members_this_month:
+            new_member_names = [m.get("name") for m in new_members_this_month if m.get("name")]
+            first_tx_total = 0
+            for name in new_member_names:
+                first_tx = await db.accounting_transactions.find_one(
+                    {"client_name": name, "date": {"$regex": f"^{month}"}, "amount": {"$gt": 0}},
+                    {"_id": 0, "amount": 1}
+                )
+                if first_tx:
+                    first_tx_total += first_tx.get("amount", 0)
+            update["new_members"] = len(new_members_this_month)
+        else:
             update["cash_collected"] = 0
+    # If GHL data exists, don't touch funnel fields (leads, close, cash_collected, etc.)
 
     # --- Recurring: Calculate from active billing members ---
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
