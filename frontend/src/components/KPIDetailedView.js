@@ -152,10 +152,16 @@ export function KPIDetailedView({ kpi, lang }) {
   const [details, setDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [validatedIds, setValidatedIds] = useState(new Set());
+  const [memberStats, setMemberStats] = useState(null);
 
   const handleClickMember = (clientName) => {
     navigate(`/members?search=${encodeURIComponent(clientName)}`);
   };
+
+  // Fetch real-time member stats
+  useEffect(() => {
+    axios.get(`${API}/members/stats`).then(r => setMemberStats(r.data)).catch(() => {});
+  }, []);
 
   const fetchDetails = useCallback(() => {
     if (!kpi?.month) return;
@@ -328,14 +334,14 @@ export function KPIDetailedView({ kpi, lang }) {
         </div>
       </div>
 
-      {/* Members Detailed */}
+      {/* Members Detailed - Real-time from /api/members/stats */}
       <SectionTitle>{lang === "fr" ? "Detail des Membres" : "Members Breakdown"}</SectionTitle>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-        <StatBox label={lang === "fr" ? "Membres Actifs" : "Active Members"} value={formatNum(kpi.active_members || kpi.total_active_members || kpi.total_members)} icon={Users} color="text-[var(--color-accent)]" />
-        <StatBox label="PIF Members" value={formatNum(kpi.pif_members)} icon={Users} subValue={kpi.pif_exits > 0 ? `Exits: ${kpi.pif_exits}` : null} />
-        <StatBox label={lang === "fr" ? "Recurrents" : "Recurring"} value={formatNum(kpi.recurring_general_members)} icon={Users} subValue={kpi.general_exits > 0 ? `Exits: ${kpi.general_exits}` : null} />
-        <StatBox label={lang === "fr" ? "General Churn" : "General Churn"} value={`${(kpi.general_churn || 0).toFixed(2)}%`} icon={TrendingDown} color={kpi.general_churn < 5 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"} />
-        <StatBox label="Pauses" value={formatNum(kpi.pauses)} icon={UserMinus} color="text-[var(--color-warning)]" />
+        <StatBox label={lang === "fr" ? "Membres Actifs" : "Active Members"} value={formatNum(memberStats?.active_members ?? kpi.active_members ?? 0)} icon={Users} color="text-[var(--color-accent)]" />
+        <StatBox label={lang === "fr" ? "Coachs Actifs" : "Active Coaches"} value={formatNum(memberStats?.active_coaches ?? kpi.active_coaches ?? 0)} icon={Users} color="text-[var(--color-success)]" />
+        <StatBox label={lang === "fr" ? "Expires" : "Expired"} value={formatNum(memberStats?.expired_members ?? kpi.expired_members ?? 0)} icon={UserMinus} color="text-[var(--color-warning)]" />
+        <StatBox label={lang === "fr" ? "Taux Churn" : "Churn Rate"} value={`${(kpi.churn_rate ?? 0).toFixed(1)}%`} icon={TrendingDown} color={(kpi.churn_rate ?? 0) < 5 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"} />
+        <StatBox label={lang === "fr" ? "Partis" : "Departed"} value={formatNum(memberStats?.departed ?? 0)} icon={UserMinus} color="text-[var(--color-danger)]" />
       </div>
 
       {/* Advanced Metrics */}

@@ -1,0 +1,65 @@
+{
+  "summary": "Iteration 53 - Verified 3 Dashboard fixes: (1) TAUX DE CHURN replaced ROAS in KPI cards, (2) Cash Collecte = 0.00 CHF when close=0, (3) Detail des Membres shows real-time stats (97 active members, 32 active coaches). All 7 backend tests passed + UI verification successful.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dashboard_fixes_iter53.py",
+    "/app/test_reports/pytest/pytest_results_iter53.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Dashboard.js lines 326-337: Last KPI card correctly shows TAUX DE CHURN with data-testid='kpi-churn'",
+    "Dashboard.js lines 411-453: Objectifs du mois has 5 objectives (Churn, CAC, New Members, Marge Nette, Revenus) - NO ROAS",
+    "kpis.py line 251-252: cash_collected correctly set to 0 when close=0 in recalculate_month()",
+    "KPIDetailedView.js lines 162-163: Fetches memberStats from /api/members/stats on mount",
+    "KPIDetailedView.js lines 340-345: Detail des Membres uses memberStats for real-time values"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_dashboard_fixes_iter53.py"
+  ],
+  "success_rate": {"backend": "100% (7/7 tests)", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 53 verified Dashboard fixes: (1) KPI cards: 6th card shows 'TAUX DE CHURN' at 3.6%, (2) Objectifs du mois: 5 objectives without ROAS, (3) Entonnoir de Vente: CASH COLLECTE = 0.00 CHF when close=0, (4) Detail des Membres: real-time stats showing 97 active members, 32 active coaches from /api/members/stats. March 2026 is the test month.",
+  "features_verified": {
+    "kpi_churn_card": {
+      "status": "PASS",
+      "details": "Last KPI card shows 'TAUX DE CHURN' 3.6% instead of ROAS"
+    },
+    "membres_actifs_97": {
+      "status": "PASS",
+      "details": "KPI card shows 97 active members (from /api/members/stats)"
+    },
+    "coachs_actifs_32": {
+      "status": "PASS",
+      "details": "KPI card shows 32 active coaches (from /api/members/stats)"
+    },
+    "objectifs_no_roas": {
+      "status": "PASS",
+      "details": "5 objectives displayed: Churn, CAC, Nouveaux Membres, Marge Nette, Revenus Totaux"
+    },
+    "cash_collecte_zero": {
+      "status": "PASS",
+      "details": "Entonnoir de Vente shows CASH COLLECTE = 0.00 CHF when close=0"
+    },
+    "detail_membres_realtime": {
+      "status": "PASS",
+      "details": "Detail des Membres section shows 97 active members, 32 active coaches from real-time API"
+    },
+    "backend_recalculate": {
+      "status": "PASS",
+      "details": "POST /api/monthly-kpis/2026-03/recalculate correctly sets cash_collected=0 when close=0"
+    }
+  },
+  "test_date": "2026-03-17",
+  "test_month": "2026-03"
+}

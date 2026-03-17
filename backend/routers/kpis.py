@@ -222,11 +222,6 @@ async def recalculate_month(month: str):
     fast_cash = merged.get("fast_cash_revenue", 0)
     total_revenue = total_revenue_from_tx if total_revenue_from_tx > 0 else fast_cash
 
-    # Count actual active members
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    active_count = await db.customer_members.count_documents({
-        "subscription_end_date": {"$gte": today}
-    })
 
     # Zero out kpi_columns that have no transactions anymore
     zero_updates = {}
@@ -249,11 +244,12 @@ async def recalculate_month(month: str):
         "total_expenses": total_expenses_from_tx,
         "net_profit": total_revenue - total_expenses_from_tx,
         "profit": total_revenue - total_expenses_from_tx,
-        "active_members": active_count,
-        "cash_collected": total_revenue_from_tx,
         "revenue_members": totals_by_col.get("general_eft_revenue", 0),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    # Only set cash_collected if close > 0 (from sales funnel), otherwise reset to 0
+    if merged.get("close", 0) == 0:
+        update["cash_collected"] = 0
     # Set aliases
     for eng, fr in ALIASES.items():
         if eng in totals_by_col:

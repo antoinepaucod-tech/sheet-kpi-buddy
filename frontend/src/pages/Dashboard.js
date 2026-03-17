@@ -9,7 +9,7 @@ import { EditKPIModal } from "../components/EditKPIModal";
 import { KPIDetailedView } from "../components/KPIDetailedView";
 import { GHLFunnelSection } from "../components/GHLFunnelSection";
 import {
-  TrendingUp, Users, DollarSign, Target, Zap, Loader2, Pencil,
+  TrendingUp, TrendingDown, Users, DollarSign, Target, Loader2, Pencil,
   ChevronLeft, ChevronRight, FileDown, UserCheck, UserX, AlertTriangle,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -326,12 +326,12 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           data-testid="kpi-cac"
         />
         <KPICard
-          label={t("roas")}
-          value={`${(current?.roas ?? 0).toFixed(1)}x`}
-          trend={getTrend(current?.roas, previous?.roas)}
-          vsLabel={t("vsLastMonth")}
-          icon={Zap}
-          data-testid="kpi-roas"
+          label={lang === "fr" ? "Taux de Churn" : "Churn Rate"}
+          value={`${(current?.churn_rate ?? 0).toFixed(1)}%`}
+          trend={null}
+          vsLabel={memberStats ? `${memberStats.expired_members} expirés` : ""}
+          icon={TrendingDown}
+          data-testid="kpi-churn"
         />
       </div>
 
@@ -422,13 +422,6 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                 target: settings.targets.cac,
                 format: formatCHF,
                 lower_is_better: true,
-              },
-              {
-                label: t("roas"),
-                actual: current.roas,
-                target: settings.targets.roas,
-                format: (v) => `${v?.toFixed(1)}x`,
-                lower_is_better: false,
               },
               {
                 label: t("newMembers"),
