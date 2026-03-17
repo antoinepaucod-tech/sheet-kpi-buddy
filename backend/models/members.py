@@ -82,6 +82,8 @@ class CustomerMemberCreate(BaseModel):
     next_followup_date: Optional[str] = None
     # Exit date
     exit_date: Optional[str] = None
+    # Renewal cycle
+    renewal_cycle: Optional[str] = None  # "1m", "3m", "6m", "12m", "custom"
     # Duo subscription
     is_duo: bool = False
     duo_partner_name: Optional[str] = None

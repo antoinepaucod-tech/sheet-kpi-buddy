@@ -97,7 +97,7 @@ export default function MembersPage() {
   const [search, setSearch] = useState(urlSearch);
   const [filterType, setFilterType] = useState("all");
   const [filterMembership, setFilterMembership] = useState("_all");
-  const [view, setView] = useState(urlSearch ? "all" : "active"); // "all" | "active" | "coaches" | "expired"
+  const [view, setView] = useState(urlSearch ? "search_all" : "active"); // "search_all" = search across all including departed
   const [showExpiring, setShowExpiring] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [renewModalOpen, setRenewModalOpen] = useState(false);
@@ -284,6 +284,7 @@ export default function MembersPage() {
     else if (view === "coaches") base = activeCoaches;
     else if (view === "expired") base = [...expiredMembers, ...expiredCoaches];
     else if (view === "departed") base = departed;
+    else if (view === "search_all") base = [...current, ...departed]; // Search across all including departed
 
     if (showExpiring) {
       base = base.filter(m => {
