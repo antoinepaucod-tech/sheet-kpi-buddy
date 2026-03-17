@@ -147,26 +147,63 @@ async def get_monthly_kpi_details(month: str):
         else:
             expense_breakdown.append(entry)
 
-    # Get active recurring transactions
-    recurring = await db.recurring_transactions.find(
-        {"is_active": True}, {"_id": 0}
+    # Get active recurring billing from payment_schedules and members
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    schedules = await db.payment_schedules.find(
+        {"is_active": True,
+         "start_date": {"$lte": f"{month}-31"},
+         "$or": [
+             {"end_date": {"$gte": f"{month}-01"}},
+             {"end_date": None}, {"end_date": ""},
+             {"end_date": {"$exists": False}}
+         ]},
+        {"_id": 0}
+    ).to_list(5000)
+
+    # If no payment_schedules match, fall back to billing-enabled members
+    if not schedules:
+        billing_members = await db.customer_members.find(
+            {"billing_enabled": True, "billing_amount": {"$gt": 0},
+             "$or": [
+                 {"exit_date": None}, {"exit_date": ""},
+                 {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
+             ]},
+            {"_id": 0, "id": 1, "name": 1, "billing_amount": 1, "membership": 1,
+             "billing_cycle_type": 1, "billing_cycle_value": 1, "billing_payment_method": 1}
+        ).to_list(5000)
+        schedules = [{
+            "id": m["id"],
+            "member_name": m.get("name", ""),
+            "membership": m.get("membership", ""),
+            "amount": m.get("billing_amount", 0),
+            "billing_cycle_type": m.get("billing_cycle_type", "monthly_day"),
+            "billing_cycle_value": m.get("billing_cycle_value", 1),
+            "billing_payment_method": m.get("billing_payment_method", "prelevement"),
+            "type": "revenue",
+            "description": m.get("membership", ""),
+            "is_active": True,
+        } for m in billing_members]
+
+    recurring_revenue = [s for s in schedules if s.get("amount", 0) > 0]
+    recurring_expense = []
+
+    # Also get recurring expense templates
+    recurring_exp_docs = await db.recurring_transactions.find(
+        {"is_active": True, "type": "expense"}, {"_id": 0}
     ).to_list(1000)
+    recurring_expense = recurring_exp_docs
 
-    recurring_revenue = [r for r in recurring if r["type"] == "revenue"]
-    recurring_expense = [r for r in recurring if r["type"] == "expense"]
-
-    # Check which recurring have been generated for this month
+    # Mark generated and validated status
     generated_descriptions = {tx["description"] for tx in txs}
-    for r in recurring:
-        r["generated_this_month"] = r["description"] in generated_descriptions
+    for r in recurring_revenue + recurring_expense:
+        r["generated_this_month"] = r.get("description", "") in generated_descriptions or r.get("membership", "") in generated_descriptions
 
-    # Get validations for this month
     validations = await db.recurring_validations.find(
         {"month": month}, {"_id": 0}
     ).to_list(1000)
     validated_ids = {v["recurring_id"] for v in validations}
-    for r in recurring:
-        r["validated_this_month"] = r["id"] in validated_ids
+    for r in recurring_revenue + recurring_expense:
+        r["validated_this_month"] = r.get("id", "") in validated_ids
 
     return {
         "kpi": kpi,
@@ -247,9 +284,62 @@ async def recalculate_month(month: str):
         "revenue_members": totals_by_col.get("general_eft_revenue", 0),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    # Only set cash_collected if close > 0 (from sales funnel), otherwise reset to 0
-    if merged.get("close", 0) == 0:
-        update["cash_collected"] = 0
+
+    # --- Funnel: Calculate from new member sign-ups if GHL data not available ---
+    new_members_this_month = await db.customer_members.find(
+        {"contract_signed_date": {"$regex": f"^{month}"}},
+        {"_id": 0, "name": 1, "billing_amount": 1, "membership": 1}
+    ).to_list(1000)
+
+    if new_members_this_month:
+        # Calculate cash collected from first transactions of new members
+        new_member_names = [m.get("name") for m in new_members_this_month if m.get("name")]
+        first_tx_total = 0
+        for name in new_member_names:
+            first_tx = await db.accounting_transactions.find_one(
+                {"client_name": name, "date": {"$regex": f"^{month}"}, "amount": {"$gt": 0}},
+                {"_id": 0, "amount": 1}
+            )
+            if first_tx:
+                first_tx_total += first_tx.get("amount", 0)
+
+        new_count = len(new_members_this_month)
+        # Only update funnel if GHL hasn't provided data (close is 0)
+        if merged.get("close", 0) == 0:
+            update["close"] = new_count
+            update["new_members"] = new_count
+            update["cash_collected"] = first_tx_total
+    else:
+        if merged.get("close", 0) == 0:
+            update["cash_collected"] = 0
+
+    # --- Recurring: Calculate from active billing members ---
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    active_recurring = await db.customer_members.find(
+        {"billing_enabled": True, "billing_amount": {"$gt": 0},
+         "$or": [
+             {"exit_date": None}, {"exit_date": ""},
+             {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
+         ]},
+        {"_id": 0, "billing_amount": 1}
+    ).to_list(5000)
+
+    recurring_count = len(active_recurring)
+    recurring_rev = sum(m.get("billing_amount", 0) for m in active_recurring)
+
+    # Recurring expenses from expense categories marked as recurring
+    recurring_expense_txs = await db.accounting_transactions.find(
+        {"date": {"$regex": f"^{month}"}, "amount": {"$lt": 0},
+         "$or": [{"is_recurring": True}, {"description": {"$regex": "MENSUEL|LOYER|ABONNEMENT|SALAIRE", "$options": "i"}}]},
+        {"_id": 0, "amount": 1}
+    ).to_list(5000)
+    recurring_exp = abs(sum(tx.get("amount", 0) for tx in recurring_expense_txs))
+
+    update["active_recurrences"] = recurring_count
+    update["recurring_revenue"] = recurring_rev
+    update["recurring_expenses"] = recurring_exp
+    update["recurring_net_impact"] = recurring_rev - recurring_exp
+
     # Set aliases
     for eng, fr in ALIASES.items():
         if eng in totals_by_col:

@@ -106,11 +106,10 @@ const RecurringSection = ({ items, type, lang, month, onValidate, validatedIds }
         const isValidated = r.validated_this_month || validatedIds?.has(r.id);
         return (
           <div key={r.id} className="flex items-center justify-between p-2.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)]">
-            <div className="flex items-center gap-2">
-              <RefreshCw size={12} className="text-[var(--color-text-tertiary)]" />
-              <span className="text-sm text-white">{r.description}</span>
-              <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">{r.category}</span>
-              <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">J{r.recurrence_day || 1}</span>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <RefreshCw size={12} className="text-[var(--color-text-tertiary)] shrink-0" />
+              <span className="text-sm text-white truncate">{r.member_name || r.description || "—"}</span>
+              <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono truncate hidden md:inline">{r.membership || r.category || ""}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className={`font-mono text-sm font-bold ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
