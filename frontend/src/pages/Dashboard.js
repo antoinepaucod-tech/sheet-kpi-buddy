@@ -80,6 +80,13 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
     axios.get(`${API}/members/expiring?days=60`).then(r => setExpiringMembers(r.data)).catch(() => {});
   }, []);
 
+  // Auto-recalculate KPIs for selected month to keep data in sync with transactions
+  useEffect(() => {
+    if (selectedMonth) {
+      axios.post(`${API}/monthly-kpis/${selectedMonth}/recalculate`).then(() => refetch()).catch(() => {});
+    }
+  }, [selectedMonth, refetch]);
+
   // Month navigation
   const navigateMonth = (direction) => {
     if (!kpis.length || !selectedMonth) return;

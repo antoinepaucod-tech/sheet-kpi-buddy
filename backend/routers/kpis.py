@@ -138,7 +138,7 @@ async def get_monthly_kpi_details(month: str):
             "total": total,
             "count": len(cat_txs),
             "transactions": [
-                {"date": tx["date"], "description": tx["description"], "amount": tx["amount"]}
+                {"date": tx["date"], "description": tx["description"], "amount": tx["amount"], "client_name": tx.get("client_name", "")}
                 for tx in cat_txs
             ],
         }

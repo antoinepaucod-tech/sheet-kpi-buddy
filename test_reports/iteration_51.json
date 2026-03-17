@@ -1,0 +1,80 @@
+{
+  "summary": "Iteration 51 - Tested 3 features: (1) Dashboard KPIs auto-recalculate from transactions - March 2026 correctly shows 4762 CHF revenue and 2592 CHF profit; (2) Clickable transaction member links - Lucas Sanchez link in Details tab navigates to /members?search=Lucas%20Sanchez; (3) Renewal cycle selector in edit form - All 5 options (Mensuel/Trimestriel/Semestriel/Annuel/Personnalisé) present, auto-recalculates expiration date when changed, and manual date change sets cycle to Personnalisé. 9/9 backend tests passed. Frontend UI verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Transaction member link navigation",
+        "issue": "When navigating from transaction link with ?search=Lucas%20Sanchez, member not found in 'all' view because Lucas Sanchez has exit_date in the past. The 'all' view excludes departed members, so users must click 'Partis' tab to see them.",
+        "affected_selectors": ["[data-testid=\"member-search\"]"],
+        "severity": "LOW",
+        "note": "This is expected behavior per current code - 'all' view uses 'current' which excludes departed. Consider: either include departed in 'all' view when search param present, or change urlSearch default view to search across all including departed."
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration51_features.py",
+    "/app/test_reports/pytest/pytest_results_iter51.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Dashboard auto-recalculate KPIs works correctly via useEffect at Dashboard.js line 84-87",
+    "KPIDetailedView.js correctly passes onClickMember to CategoryBreakdown and navigates to /members?search=<name>",
+    "MembersPage.js renewal cycle selector at line 893-928 correctly recalculates subscription_end_date",
+    "Backend kpis.py line 141 includes client_name in transaction breakdown",
+    "Backend recalculate endpoint at line 184 correctly sums transactions by category",
+    "renewal_cycle is frontend-only state, not persisted to backend - this is intentional UI helper"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration51_features.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 51 verified 3 features: (1) KPI auto-recalculate - Dashboard.js line 84-87 triggers POST /api/monthly-kpis/{month}/recalculate on selectedMonth change. March 2026 KPIs: total_revenue=4762, net_profit=2592. (2) Clickable member links - KPIDetailedView.js CategoryBreakdown shows client_name with ExternalLink icon. Clicking navigates to /members?search=<name>. Lucas Sanchez is in 'Partis' category (exit_date=2026-02-28). (3) Renewal cycle selector - MembersPage.js edit form has CYCLE DE RENOUVELLEMENT with 5 options (Mensuel/Trimestriel/Semestriel/Annuel/Personnalisé). Changing cycle auto-recalculates expiration date. Manual date change sets cycle to Personnalisé. renewal_cycle is UI-only, not persisted to backend.",
+  "features_verified": {
+    "kpi_auto_recalculate": {
+      "status": "PASS",
+      "details": "Dashboard auto-recalculates KPIs on load. March 2026: total_revenue=4762 CHF, net_profit=2592 CHF"
+    },
+    "kpi_recalculate_endpoint": {
+      "status": "PASS",
+      "details": "POST /api/monthly-kpis/2026-03/recalculate returns correct values from transactions"
+    },
+    "transaction_client_name": {
+      "status": "PASS",
+      "details": "GET /api/monthly-kpis/{month}/details includes client_name in transactions (e.g., Lucas Sanchez)"
+    },
+    "clickable_member_link": {
+      "status": "PASS",
+      "details": "Clicking client name link navigates to /members?search=<name>"
+    },
+    "members_search_prefilled": {
+      "status": "PASS",
+      "details": "Search input pre-filled from URL param when arriving at /members?search=Lucas%20Sanchez"
+    },
+    "renewal_cycle_selector": {
+      "status": "PASS",
+      "details": "Edit modal shows CYCLE DE RENOUVELLEMENT dropdown with 5 options"
+    },
+    "renewal_cycle_options": {
+      "status": "PASS",
+      "details": "Options: Mensuel (1 mois), Trimestriel (3 mois), Semestriel (6 mois), Annuel (12 mois), Personnalisé"
+    },
+    "renewal_cycle_auto_calculate": {
+      "status": "PASS",
+      "details": "Changing cycle from Personnalisé to Annuel recalculates expiration date automatically"
+    },
+    "manual_date_sets_custom": {
+      "status": "PASS",
+      "details": "Manually editing expiration date sets renewal cycle to Personnalisé"
+    }
+  }
+}

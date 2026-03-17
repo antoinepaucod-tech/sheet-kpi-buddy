@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { formatCHF, formatNum, formatPct } from "../utils/format";
 import { useTranslations } from "../hooks/useTranslations";
 import axios from "axios";
 import {
   Users, DollarSign, TrendingUp, TrendingDown, Target, Phone, Calendar,
   UserPlus, UserMinus, Percent, BarChart3, Wallet, CreditCard,
-  RefreshCw, ChevronDown, ChevronUp, Loader2,
+  RefreshCw, ChevronDown, ChevronUp, Loader2, ExternalLink,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -28,7 +29,7 @@ const SectionTitle = ({ children }) => (
   </div>
 );
 
-const CategoryBreakdown = ({ items, type, lang }) => {
+const CategoryBreakdown = ({ items, type, lang, onClickMember }) => {
   const [expanded, setExpanded] = useState(null);
   if (!items || items.length === 0) {
     return (
@@ -63,11 +64,21 @@ const CategoryBreakdown = ({ items, type, lang }) => {
             <div className="border-t border-[var(--color-border)] px-3 py-2 space-y-1">
               {item.transactions.map((tx, i) => (
                 <div key={i} className="flex items-center justify-between text-xs py-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[var(--color-text-tertiary)] font-mono">{tx.date}</span>
-                    <span className="text-[var(--color-text-secondary)]">{tx.description}</span>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-[var(--color-text-tertiary)] font-mono shrink-0">{tx.date}</span>
+                    <span className="text-[var(--color-text-secondary)] truncate">{tx.description}</span>
+                    {tx.client_name && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onClickMember?.(tx.client_name); }}
+                        className="flex items-center gap-1 text-[var(--color-accent)] hover:underline shrink-0 cursor-pointer"
+                        data-testid={`tx-member-link-${i}`}
+                      >
+                        <span className="truncate max-w-[140px]">{tx.client_name}</span>
+                        <ExternalLink size={10} />
+                      </button>
+                    )}
                   </div>
-                  <span className={`font-mono font-bold ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                  <span className={`font-mono font-bold shrink-0 ml-2 ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
                     {formatCHF(tx.amount)}
                   </span>
                 </div>
@@ -137,9 +148,14 @@ const RecurringSection = ({ items, type, lang, month, onValidate, validatedIds }
 
 export function KPIDetailedView({ kpi, lang }) {
   const { t } = useTranslations();
+  const navigate = useNavigate();
   const [details, setDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [validatedIds, setValidatedIds] = useState(new Set());
+
+  const handleClickMember = (clientName) => {
+    navigate(`/members?search=${encodeURIComponent(clientName)}`);
+  };
 
   const fetchDetails = useCallback(() => {
     if (!kpi?.month) return;
@@ -200,7 +216,7 @@ export function KPIDetailedView({ kpi, lang }) {
               color="text-[var(--color-accent)]"
             />
           </div>
-          <CategoryBreakdown items={details.revenue_breakdown} type="revenue" lang={lang} />
+          <CategoryBreakdown items={details.revenue_breakdown} type="revenue" lang={lang} onClickMember={handleClickMember} />
 
           {/* Expenses Transactions Breakdown */}
           <SectionTitle>{lang === "fr" ? "Depenses - Transactions du mois" : "Expenses - Monthly Transactions"}</SectionTitle>
@@ -225,7 +241,7 @@ export function KPIDetailedView({ kpi, lang }) {
               color={kpi.net_profit >= 0 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}
             />
           </div>
-          <CategoryBreakdown items={details.expense_breakdown} type="expense" lang={lang} />
+          <CategoryBreakdown items={details.expense_breakdown} type="expense" lang={lang} onClickMember={handleClickMember} />
 
           {/* Recurring Transactions */}
           <SectionTitle>{lang === "fr" ? "Transactions Recurrentes" : "Recurring Transactions"}</SectionTitle>

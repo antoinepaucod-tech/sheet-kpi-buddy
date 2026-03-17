@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { format, differenceInDays, parseISO, addYears } from "date-fns";
+import { format, differenceInDays, parseISO, addYears, addMonths, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Users,
@@ -81,6 +81,14 @@ const BILLING_CYCLE_TYPES = [
   { value: "interval_days", label: "Tous les X jours" },
 ];
 
+const RENEWAL_CYCLES = [
+  { value: "1m", label: "Mensuel (1 mois)", months: 1 },
+  { value: "3m", label: "Trimestriel (3 mois)", months: 3 },
+  { value: "6m", label: "Semestriel (6 mois)", months: 6 },
+  { value: "12m", label: "Annuel (12 mois)", months: 12 },
+  { value: "custom", label: "Personnalisé", months: null },
+];
+
 export default function MembersPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
@@ -107,6 +115,7 @@ export default function MembersPage() {
     contract_signed_date: "",
     subscription_end_date: "",
     exit_date: "",
+    renewal_cycle: "", // "1m", "3m", "6m", "12m", "custom"
     cash_collected: 0,
     notes: "",
     // Billing
@@ -359,6 +368,7 @@ export default function MembersPage() {
       member_type: "Membres Généraux Récurrents",
       contract_signed_date: format(new Date(), "yyyy-MM-dd"),
       subscription_end_date: format(addYears(new Date(), 1), "yyyy-MM-dd"),
+      renewal_cycle: "12m",
       cash_collected: 0,
       notes: "",
       billing_enabled: true,
@@ -384,6 +394,7 @@ export default function MembersPage() {
       contract_signed_date: member.contract_signed_date || "",
       subscription_end_date: member.subscription_end_date || "",
       exit_date: member.exit_date || "",
+      renewal_cycle: member.renewal_cycle || "custom",
       cash_collected: member.cash_collected || 0,
       notes: member.notes || "",
       billing_enabled: member.billing_enabled !== false,
@@ -879,12 +890,51 @@ export default function MembersPage() {
               </div>
               <div>
                 <label className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
+                  <RefreshCw size={12} /> Cycle de renouvellement
+                </label>
+                <Select 
+                  value={formData.renewal_cycle || "custom"} 
+                  onValueChange={(v) => {
+                    const cycle = RENEWAL_CYCLES.find(c => c.value === v);
+                    const newData = { ...formData, renewal_cycle: v };
+                    if (cycle && cycle.months && formData.contract_signed_date) {
+                      try {
+                        const baseDate = parseISO(formData.contract_signed_date);
+                        let nextEnd = addMonths(baseDate, cycle.months);
+                        const today = new Date();
+                        // Avancer jusqu'à la prochaine échéance future
+                        while (nextEnd < today) {
+                          nextEnd = addMonths(nextEnd, cycle.months);
+                        }
+                        newData.subscription_end_date = format(nextEnd, "yyyy-MM-dd");
+                      } catch {}
+                    }
+                    setFormData(newData);
+                  }}
+                >
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1" data-testid="renewal-cycle-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RENEWAL_CYCLES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.renewal_cycle && formData.renewal_cycle !== "custom" && (
+                  <p className="text-[10px] text-[var(--color-text-tertiary)] mt-1">
+                    La date d'expiration sera recalculée automatiquement
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-[var(--color-text-secondary)] text-xs uppercase flex items-center gap-1">
                   <Clock size={12} /> Date d'expiration
                 </label>
                 <Input
                   type="date"
                   value={formData.subscription_end_date}
-                  onChange={(e) => setFormData({ ...formData, subscription_end_date: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, subscription_end_date: e.target.value, renewal_cycle: "custom" })}
                   className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
                   data-testid="expiration-date-input"
                 />
