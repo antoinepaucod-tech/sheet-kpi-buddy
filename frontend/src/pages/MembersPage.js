@@ -772,13 +772,13 @@ export default function MembersPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg" style={{ maxHeight: '90vh' }}>
           <DialogHeader>
             <DialogTitle>
               {selectedMember ? "Modifier le membre" : "Ajouter un membre"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 130px)' }}>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="tf-stat-label">Nom *</label>
@@ -901,12 +901,7 @@ export default function MembersPage() {
                     if (cycle && cycle.months && formData.contract_signed_date) {
                       try {
                         const baseDate = parseISO(formData.contract_signed_date);
-                        let nextEnd = addMonths(baseDate, cycle.months);
-                        const today = new Date();
-                        // Avancer jusqu'à la prochaine échéance future
-                        while (nextEnd < today) {
-                          nextEnd = addMonths(nextEnd, cycle.months);
-                        }
+                        const nextEnd = addMonths(baseDate, cycle.months);
                         newData.subscription_end_date = format(nextEnd, "yyyy-MM-dd");
                       } catch {}
                     }
@@ -985,7 +980,6 @@ export default function MembersPage() {
                 <Switch
                   checked={formData.billing_enabled}
                   onCheckedChange={(v) => setFormData({ ...formData, billing_enabled: v })}
-                  disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                 />
               </div>
               
@@ -993,11 +987,9 @@ export default function MembersPage() {
                 <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
                   {/* Info banner when values come from membership type */}
                   {membershipTypes.find(t => t.name === formData.membership) && (
-                    <div className="bg-[rgba(10,132,255,0.08)] border border-[rgba(10,132,255,0.15)] rounded p-2 mb-2">
-                      <p className="text-[var(--color-accent)] text-xs">
-                        Valeurs définies par le type d'abonnement "{formData.membership}" 
-                        <br/>
-                        <span className="text-[var(--color-accent)] opacity-70">Modifiables dans Config. Types</span>
+                    <div className="bg-[rgba(255,214,10,0.06)] border border-[rgba(255,214,10,0.15)] rounded p-2 mb-2">
+                      <p className="text-[var(--color-warning)] text-xs">
+                        Valeurs par défaut du type "{formData.membership}". Modifiable ici pour ce membre uniquement.
                       </p>
                     </div>
                   )}
@@ -1008,9 +1000,8 @@ export default function MembersPage() {
                         type="number"
                         value={formData.billing_amount}
                         onChange={(e) => setFormData({ ...formData, billing_amount: parseFloat(e.target.value) || 0 })}
-                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8"
                         data-testid="billing-amount-input"
-                        disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
                     </div>
                     <div>
@@ -1036,9 +1027,8 @@ export default function MembersPage() {
                       <Select 
                         value={formData.billing_cycle_type} 
                         onValueChange={(v) => setFormData({ ...formData, billing_cycle_type: v })}
-                        disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       >
-                        <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
@@ -1058,9 +1048,8 @@ export default function MembersPage() {
                         max={formData.billing_cycle_type === "monthly_day" ? 28 : 365}
                         value={formData.billing_cycle_value}
                         onChange={(e) => setFormData({ ...formData, billing_cycle_value: parseInt(e.target.value) || 1 })}
-                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8"
                         data-testid="billing-cycle-value-input"
-                        disabled={!!membershipTypes.find(t => t.name === formData.membership)}
                       />
                     </div>
                   </div>

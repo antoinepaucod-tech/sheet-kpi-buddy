@@ -30,7 +30,7 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
       ref={ref}
       className={cn(
         "fixed inset-0 z-50 flex flex-col w-full max-w-lg mx-auto my-auto h-fit gap-4 p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        "bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-xl)] text-[var(--color-text-primary)] max-h-[90vh]",
+        "bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-xl)] text-[var(--color-text-primary)] max-h-[90vh] overflow-y-auto",
         className
       )}
       {...props}>

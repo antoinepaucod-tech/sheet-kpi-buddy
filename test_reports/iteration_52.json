@@ -1,0 +1,59 @@
+{
+  "summary": "Iteration 52 - Tested 2 bug fixes in MembersPage edit modal: (1) Monthly renewal cycle calculation now correctly adds 1 month from signed_date (Adrienne: 2025-12-10 + 1 month = 2026-01-10). (2) Billing section fields (Montant, Méthode, Cycle, Jour du mois) are now EDITABLE, not disabled. All 7 test cases passed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_52.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MembersPage.js line 893-906: Renewal cycle selector correctly uses addMonths(baseDate, cycle.months) without the old 'advance until future' loop",
+    "MembersPage.js line 974+: Billing section no longer has disabled attributes on fields",
+    "MembersPage.js line 989-995: Yellow info banner correctly displays when membership type is configured",
+    "dialog.jsx line 33: overflow-y-auto added to DialogContent for proper modal scrolling"
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 52 verified 2 bug fixes in MembersPage edit modal: (1) Monthly renewal cycle now correctly calculates +1 month from contract_signed_date (tested with Adrienne Polli: 2025-12-10 + 1 month = 2026-01-10, and Annuel: +12 months = 2026-12-10). (2) Billing fields are now editable - removed disabled attribute. The modal scrolls properly with overflow-y-auto on DialogContent. Yellow info banner appears for members with configured membership types.",
+  "features_verified": {
+    "modal_scroll": {
+      "status": "PASS",
+      "details": "Edit modal has overflow-y-auto on content div, billing section visible by scrolling"
+    },
+    "billing_fields_editable": {
+      "status": "PASS",
+      "details": "Billing Amount, Cycle Value fields are NOT disabled - can edit values"
+    },
+    "renewal_cycle_mensuel": {
+      "status": "PASS",
+      "details": "Selecting 'Mensuel (1 mois)' correctly sets expiration to contract_date + 1 month (2025-12-10 -> 2026-01-10)"
+    },
+    "renewal_cycle_annuel": {
+      "status": "PASS",
+      "details": "Selecting 'Annuel (12 mois)' correctly sets expiration to contract_date + 12 months (2025-12-10 -> 2026-12-10)"
+    },
+    "manual_date_sets_custom": {
+      "status": "PASS",
+      "details": "Manually editing expiration date changes renewal cycle to 'Personnalisé'"
+    },
+    "billing_toggle": {
+      "status": "PASS",
+      "details": "Facturation récurrente toggle can be turned ON/OFF, fields show/hide accordingly"
+    },
+    "yellow_info_message": {
+      "status": "PASS",
+      "details": "Yellow banner displays 'Valeurs par défaut du type... Modifiable ici pour ce membre uniquement' for members with configured membership type"
+    }
+  },
+  "test_date": "2026-03-17",
+  "test_member": "Adrienne Polli (contract_signed_date: 2025-12-10, membership: HYBRID FULL - PAIEMENT MENSUEL)"
+}
