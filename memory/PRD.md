@@ -27,20 +27,15 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - Fix: Partenaires DUO non doublons
 - Churn en temps reel depuis exit_dates
 - Systeme rappels automatiques bilans
-- KPIs auto-recalcules depuis transactions (4762 CHF vs 300 CHF)
-- Transactions cliquables vers membres dans Details Dashboard
-- Cycle de renouvellement editable (Mensuel/Trimestriel/Semestriel/Annuel) avec recalcul date expiration
-- Section Facturation recurrente modifiable (removed disabled, scroll modal)
+- KPIs auto-recalcules depuis transactions
+- Transactions cliquables vers membres
+- Cycle de renouvellement editable
+- Section Facturation recurrente modifiable
+- **Dashboard corrige: Cash Collecte = 0 (pas de ventes GHL), ROAS supprime (pas de Meta Ads), Detail des Membres synchronise avec stats temps reel**
 
 ## Backlog
-- **P1**: Explication complete des workflows a l'utilisateur
+- **P1**: Explication complete des workflows
 - **P2**: Alertes WhatsApp via Twilio
 - **P2**: Interface migration donnees CSV
 - **P2**: Calcul CPL, CPR, LTV
-
-## Key API Endpoints
-- `GET /api/members/stats`: Stats deduplicees temps reel
-- `GET /api/monthly-kpis`: KPIs enrichis churn reel
-- `POST /api/monthly-kpis/{month}/recalculate`: Recalcul depuis transactions
-- `POST /api/annual-reviews/auto-generate`: Generation auto bilans
-- `GET /api/monthly-kpis/{month}/details`: Details avec client_name
+- **P2**: Integration Meta Ads API pour ROAS reel
