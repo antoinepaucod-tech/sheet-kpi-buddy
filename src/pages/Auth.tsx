@@ -112,7 +112,11 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
+          <div className="text-center mb-4">
+            <h1 className="text-page-header text-primary">TRANSFORM</h1>
+            <p className="text-label text-muted-foreground mt-1">PERFORMANCE COACHING</p>
+          </div>
+          <CardTitle className="text-xl font-bold text-center">
             {isLogin ? "Connexion" : "Créer un compte"}
           </CardTitle>
           <CardDescription className="text-center">
@@ -124,7 +128,7 @@ const Auth = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-label">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -135,11 +139,11 @@ const Auth = () => {
                 className={errors.email ? "border-destructive" : ""}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
+                <p className="text-[var(--text-xs)] text-destructive">{errors.email}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password" className="text-label">Mot de passe</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -153,13 +157,13 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
+                <p className="text-[var(--text-xs)] text-destructive">{errors.password}</p>
               )}
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
@@ -167,7 +171,7 @@ const Auth = () => {
               {isLogin ? "Se connecter" : "Créer le compte"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-[var(--text-sm)]">
             <span className="text-muted-foreground">
               {isLogin ? "Pas encore de compte ?" : "Déjà un compte ?"}
             </span>{" "}
@@ -176,7 +180,7 @@ const Auth = () => {
                 setIsLogin(!isLogin);
                 setErrors({});
               }}
-              className="text-primary hover:underline font-medium"
+              className="text-primary hover:text-primary-glow font-medium transition-colors"
               disabled={loading}
             >
               {isLogin ? "S'inscrire" : "Se connecter"}

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus, DollarSign, Users, Target, Percent, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Users, Target, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SummaryItem {
@@ -31,8 +31,8 @@ const TrendIndicator = ({ current, previous }: { current?: number; previous?: nu
   
   return (
     <div className={cn(
-      "flex items-center gap-1 text-xs font-medium",
-      isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+      "flex items-center gap-1 text-[var(--text-xs)] font-semibold",
+      isPositive ? "text-success" : "text-destructive"
     )}>
       {isPositive ? (
         <TrendingUp className="h-3 w-3" />
@@ -46,7 +46,7 @@ const TrendIndicator = ({ current, previous }: { current?: number; previous?: nu
 
 export const KPISummaryCard = ({ items, title = "Résumé du Mois" }: KPISummaryCardProps) => {
   return (
-    <Card className="bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20">
+    <Card className="border-primary/20">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
@@ -62,8 +62,8 @@ export const KPISummaryCard = ({ items, title = "Résumé du Mois" }: KPISummary
             return (
               <div key={index} className="space-y-1">
                 <p className={cn(
-                  "text-xs truncate flex items-center gap-1",
-                  isCoachItem ? "text-amber-600 dark:text-amber-400 font-medium" : "text-muted-foreground"
+                  "text-label flex items-center gap-1",
+                  isCoachItem ? "text-warning font-semibold" : "text-muted-foreground"
                 )}>
                   {isCoachItem && <Activity className="h-3 w-3" />}
                   {isMemberItem && <Users className="h-3 w-3" />}
@@ -71,8 +71,8 @@ export const KPISummaryCard = ({ items, title = "Résumé du Mois" }: KPISummary
                 </p>
                 <div className="flex items-baseline gap-2">
                   <span className={cn(
-                    "text-lg font-bold",
-                    isCoachItem && "text-amber-600 dark:text-amber-400"
+                    "font-mono font-bold text-lg",
+                    isCoachItem && "text-warning"
                   )}>
                     {item.value}{item.suffix}
                   </span>
