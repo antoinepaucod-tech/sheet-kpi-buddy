@@ -25,7 +25,6 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
 
   const filteredDataKeys = dataKeys.filter(({ key }) => selectedKeys.includes(key));
   const chartData = data.map(item => {
-    // Handle month as string or number, fallback to month_name
     let name = '';
     if (typeof item.month === 'string') {
       name = item.month.substring(0, 3);
@@ -45,9 +44,9 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
   const Chart = type === "line" ? LineChart : BarChart;
 
   return (
-    <Card className="animate-fade-in border border-border/50 bg-card/50 backdrop-blur-sm">
+    <Card className="animate-fade-in">
       <CardHeader>
-        <CardTitle className="text-xl font-medium text-heading tracking-tight">{title}</CardTitle>
+        <CardTitle className="text-heading">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {showFilter && (
@@ -59,24 +58,30 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
         )}
         <ResponsiveContainer width="100%" height={height}>
           <Chart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.15} />
+            <CartesianGrid stroke="var(--color-border)" strokeDasharray="none" opacity={0.5} />
             <XAxis 
               dataKey="name" 
-              stroke="hsl(var(--foreground))"
-              style={{ fontSize: '13px', fontWeight: 500 }}
+              stroke="var(--color-text-secondary)"
+              style={{ fontSize: 'var(--text-xs)' }}
+              tickLine={false}
+              axisLine={false}
             />
             <YAxis 
-              stroke="hsl(var(--foreground))"
-              style={{ fontSize: '13px', fontWeight: 500 }}
+              stroke="var(--color-text-secondary)"
+              style={{ fontSize: 'var(--text-xs)' }}
+              tickLine={false}
+              axisLine={false}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                padding: '12px',
+                backgroundColor: 'var(--color-bg-secondary)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3)',
+                color: 'var(--color-text-primary)',
               }}
-              labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
+              labelStyle={{ fontWeight: 600, marginBottom: '4px', color: 'var(--color-text-primary)' }}
+              itemStyle={{ color: 'var(--color-text-secondary)' }}
             />
             <Legend 
               wrapperStyle={{ paddingTop: '20px' }}
@@ -90,9 +95,9 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
                   dataKey={key}
                   name={name}
                   stroke={color}
-                  strokeWidth={3}
-                  dot={{ fill: color, r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
-                  activeDot={{ r: 7 }}
+                  strokeWidth={2}
+                  dot={{ fill: color, r: 4, strokeWidth: 0 }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
               ) : (
                 <Bar
@@ -100,7 +105,7 @@ export const KPIChart = ({ data, title, dataKeys, type = "line", showFilter = tr
                   dataKey={key}
                   name={name}
                   fill={color}
-                  radius={[8, 8, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                 />
               )
             ))}
