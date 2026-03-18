@@ -39,11 +39,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="bg-popover/95 backdrop-blur-sm border rounded-lg shadow-lg p-3 min-w-[180px]">
-      <p className="font-semibold text-sm mb-2 text-foreground">{label}</p>
+    <div className="bg-secondary border border-border rounded-[var(--radius-md)] p-3 min-w-[180px]">
+      <p className="font-semibold text-[var(--text-sm)] mb-2 text-foreground">{label}</p>
       <div className="space-y-1.5">
         {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-4 text-xs">
+          <div key={index} className="flex items-center justify-between gap-4 text-[var(--text-xs)]">
             <div className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-sm" 
@@ -51,7 +51,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               />
               <span className="text-muted-foreground">{entry.name}</span>
             </div>
-            <span className="font-medium text-foreground">
+            <span className="font-mono font-bold text-foreground">
               {typeof entry.value === 'number' 
                 ? entry.value.toLocaleString('fr-CH', { maximumFractionDigits: 0 })
                 : entry.value}
@@ -103,14 +103,14 @@ export const InteractiveChart = ({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <CardTitle className="text-base sm:text-lg">{title}</CardTitle>
+          <CardTitle className="text-heading">{title}</CardTitle>
           <div className="flex items-center gap-2 flex-wrap">
             {showComparison && comparisonData && (
               <Button
                 variant={showComparisonLine ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowComparisonLine(!showComparisonLine)}
-                className="text-xs"
+                className="text-[var(--text-xs)]"
               >
                 {comparisonLabel}
               </Button>
@@ -129,21 +129,25 @@ export const InteractiveChart = ({
         <ResponsiveContainer width="100%" height={height}>
           {type === "line" ? (
             <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.15} />
+              <CartesianGrid stroke="var(--color-border)" strokeDasharray="none" opacity={0.5} />
               <XAxis 
                 dataKey="month" 
-                tick={{ fontSize: 11 }}
-                className="text-muted-foreground"
+                style={{ fontSize: 'var(--text-xs)' }}
+                stroke="var(--color-text-secondary)"
+                tickLine={false}
+                axisLine={false}
               />
               <YAxis 
-                tick={{ fontSize: 11 }}
-                className="text-muted-foreground"
+                style={{ fontSize: 'var(--text-xs)' }}
+                stroke="var(--color-text-secondary)"
                 tickFormatter={(value) => value.toLocaleString('fr-CH', { notation: 'compact' })}
+                tickLine={false}
+                axisLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
                 wrapperStyle={{ paddingTop: "1rem" }}
-                formatter={(value) => <span className="text-xs">{value}</span>}
+                formatter={(value) => <span className="text-[var(--text-xs)]">{value}</span>}
               />
               {filteredDataKeys.map((dk) => (
                 <Line
@@ -153,8 +157,8 @@ export const InteractiveChart = ({
                   name={dk.name}
                   stroke={dk.color}
                   strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6, strokeWidth: 2 }}
+                  dot={{ r: 4, strokeWidth: 0 }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
               ))}
               {showComparisonLine && filteredDataKeys.map((dk) => (
@@ -171,21 +175,25 @@ export const InteractiveChart = ({
             </LineChart>
           ) : (
             <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.15} />
+              <CartesianGrid stroke="var(--color-border)" strokeDasharray="none" opacity={0.5} />
               <XAxis 
                 dataKey="month" 
-                tick={{ fontSize: 11 }}
-                className="text-muted-foreground"
+                style={{ fontSize: 'var(--text-xs)' }}
+                stroke="var(--color-text-secondary)"
+                tickLine={false}
+                axisLine={false}
               />
               <YAxis 
-                tick={{ fontSize: 11 }}
-                className="text-muted-foreground"
+                style={{ fontSize: 'var(--text-xs)' }}
+                stroke="var(--color-text-secondary)"
                 tickFormatter={(value) => value.toLocaleString('fr-CH', { notation: 'compact' })}
+                tickLine={false}
+                axisLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
                 wrapperStyle={{ paddingTop: "1rem" }}
-                formatter={(value) => <span className="text-xs">{value}</span>}
+                formatter={(value) => <span className="text-[var(--text-xs)]">{value}</span>}
               />
               {filteredDataKeys.map((dk) => (
                 <Bar
@@ -193,7 +201,7 @@ export const InteractiveChart = ({
                   dataKey={dk.key}
                   name={dk.name}
                   fill={dk.color}
-                  radius={[4, 4, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                 />
               ))}
             </BarChart>
