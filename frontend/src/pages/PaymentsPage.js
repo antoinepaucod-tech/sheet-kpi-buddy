@@ -115,7 +115,7 @@ export default function PaymentsPage() {
 
   const { data: upcomingPayments = [] } = useQuery({
     queryKey: ["payments", "upcoming"],
-    queryFn: () => axios.get(`${API}/payments/upcoming?days=14`).then((r) => r.data),
+    queryFn: () => axios.get(`${API}/payments/upcoming?days=7`).then((r) => r.data),
   });
 
   const { data: schedules = [] } = useQuery({
@@ -226,7 +226,10 @@ export default function PaymentsPage() {
     paid: payments.filter((p) => p.status === "paid").length,
     totalAmount: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
     lateAmount: latePayments.reduce((sum, p) => sum + (p.amount || 0), 0),
-  }), [payments, latePayments]);
+    upcomingAmount: upcomingPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
+    schedulesAmount: schedules.filter(s => s.is_active).reduce((sum, s) => sum + (s.amount || 0), 0),
+    activeSchedules: schedules.filter(s => s.is_active).length,
+  }), [payments, latePayments, upcomingPayments, schedules]);
 
   const openMarkPaid = (payment) => {
     setSelectedPayment(payment);
@@ -297,10 +300,10 @@ export default function PaymentsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="payments">Paiements</TabsTrigger>
-          <TabsTrigger value="late" className="data-[state=active]:bg-[var(--color-danger)]">En retard ({stats.late})</TabsTrigger>
-          <TabsTrigger value="upcoming" className="data-[state=active]:bg-[var(--color-accent)]">À venir ({upcomingPayments.length})</TabsTrigger>
-          <TabsTrigger value="schedules" className="data-[state=active]:bg-[var(--color-info)]">Plannings ({schedules.length})</TabsTrigger>
+          <TabsTrigger value="payments">Paiements ({stats.total})</TabsTrigger>
+          <TabsTrigger value="late" className="data-[state=active]:bg-[var(--color-danger)]">En retard ({stats.late}) — {stats.lateAmount.toLocaleString("fr-CH")} CHF</TabsTrigger>
+          <TabsTrigger value="upcoming" className="data-[state=active]:bg-[var(--color-accent)]">À venir ({upcomingPayments.length}) — {stats.upcomingAmount.toLocaleString("fr-CH")} CHF</TabsTrigger>
+          <TabsTrigger value="schedules" className="data-[state=active]:bg-[var(--color-info)]">Plannings ({stats.activeSchedules}) — {stats.schedulesAmount.toLocaleString("fr-CH")} CHF/mois</TabsTrigger>
         </TabsList>
 
         {/* All Payments Tab */}
@@ -511,7 +514,7 @@ export default function PaymentsPage() {
             <div className="p-4 border-b border-[var(--color-border)] bg-[rgba(10,132,255,0.08)]">
               <h3 className="text-[var(--color-accent)] font-medium flex items-center gap-2">
                 <Calendar size={18} />
-                Paiements à venir (14 jours)
+                Paiements à venir (7 jours)
               </h3>
             </div>
             <Table>
@@ -583,7 +586,7 @@ export default function PaymentsPage() {
                 ) : (
                   schedules.map((schedule) => (
                     <TableRow key={schedule.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]" data-testid={`schedule-${schedule.id}`}>
-                      <TableCell className="text-white font-medium">{getMemberName(schedule.member_id)}</TableCell>
+                      <TableCell className="text-white font-medium">{schedule.member_name || getMemberName(schedule.member_id)}</TableCell>
                       <TableCell className="text-white font-medium">{schedule.amount?.toLocaleString("fr-CH")} CHF</TableCell>
                       <TableCell className="text-[var(--color-text-secondary)]">
                         {schedule.recurrence_type === "monthly_day"
