@@ -349,6 +349,69 @@ async def recalculate_month(month: str):
     ).to_list(1000)
     update["new_members"] = len(new_members_this_month)
 
+    # --- Member counts: Calculate active members for this specific month ---
+    year_int, month_int = int(month[:4]), int(month[5:7])
+    if month_int == 12:
+        month_end_str = f"{year_int + 1}-01-01"
+    else:
+        month_end_str = f"{year_int}-{month_int + 1:02d}-01"
+    month_start_str = f"{month}-01"
+
+    all_members_for_count = await db.customer_members.find(
+        {"contract_signed_date": {"$lt": month_end_str}},
+        {"_id": 0, "name": 1, "membership": 1, "exit_date": 1,
+         "subscription_end_date": 1, "is_duo": 1}
+    ).to_list(10000)
+
+    # Filter: not departed before start of month
+    current_members = []
+    for m in all_members_for_count:
+        exit_d = m.get("exit_date")
+        if exit_d and exit_d not in (None, "", "None") and exit_d < month_start_str:
+            continue
+        current_members.append(m)
+
+    # Deduplicate: group by name, handle coach/non-coach overlap
+    coach_kw_count = ["THE COACH", "VIRTUAL COACH"]
+    name_groups = {}
+    for m in current_members:
+        name = m.get("name", "")
+        if name not in name_groups:
+            name_groups[name] = []
+        name_groups[name].append(m)
+
+    active_members_count = 0
+    coach_members_count = 0
+    for name, group in name_groups.items():
+        has_coach = any(any(kw in (g.get("membership") or "").upper() for kw in coach_kw_count) for g in group)
+        has_noncoach = any(not any(kw in (g.get("membership") or "").upper() for kw in coach_kw_count) for g in group)
+        if has_coach and has_noncoach:
+            # Person with both: count as coach only
+            coach_members_count += 1
+        elif has_coach:
+            coach_members_count += 1
+        else:
+            # Count unique non-coach (deduplicate same name+membership)
+            seen_ms = set()
+            for g in group:
+                ms = g.get("membership", "")
+                key = ms
+                if key not in seen_ms or g.get("is_duo"):
+                    if key not in seen_ms:
+                        active_members_count += 1
+                    seen_ms.add(key)
+
+    # Lost members: departed this month
+    lost_this_month = sum(
+        1 for m in all_members_for_count
+        if m.get("exit_date") and m["exit_date"].startswith(month)
+    )
+
+    update["active_members"] = active_members_count
+    update["total_members"] = active_members_count + coach_members_count
+    update["total_active_members"] = active_members_count + coach_members_count
+    update["lost_members"] = lost_this_month
+
     # --- Recurring: Calculate from active billing members (exclude coaches) ---
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     coach_kw_rec = ["THE COACH", "VIRTUAL COACH"]
