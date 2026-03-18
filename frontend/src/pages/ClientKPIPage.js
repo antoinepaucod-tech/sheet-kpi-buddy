@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -370,9 +370,8 @@ export default function ClientKPIPage() {
               </TableRow>
             ) : (
               filteredMembers.map((member) => (
-                <>
+                <React.Fragment key={member.id}>
                   <TableRow
-                    key={member.id}
                     className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer"
                     onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
                     data-testid={`client-row-${member.id}`}
@@ -496,7 +495,7 @@ export default function ClientKPIPage() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               ))
             )}
           </TableBody>
