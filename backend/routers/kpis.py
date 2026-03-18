@@ -229,6 +229,26 @@ async def get_monthly_kpi_details(month: str):
     for r in recurring_revenue + recurring_expense:
         r["validated_this_month"] = r.get("id", "") in validated_ids
 
+    # Funnel data from GHL
+    ghl_sales = await db.ghl_sales.find(
+        {"month": month}, {"_id": 0}
+    ).to_list(100)
+    funnel = {
+        "leads": kpi.get("funnel_leads") or kpi.get("leads", 0) or 0,
+        "appointments": kpi.get("funnel_appointments") or kpi.get("appointments", 0) or 0,
+        "show": kpi.get("funnel_show") or kpi.get("show", 0) or 0,
+        "converted": kpi.get("funnel_converted") or kpi.get("close", 0) or 0,
+        "cash": kpi.get("funnel_cash") or 0,
+    }
+    if ghl_sales:
+        funnel["details"] = ghl_sales
+
+    # New members this month
+    new_members = await db.customer_members.find(
+        {"contract_signed_date": {"$regex": f"^{month}"}},
+        {"_id": 0, "id": 1, "name": 1, "membership": 1, "contract_signed_date": 1, "cash_collected": 1}
+    ).to_list(100)
+
     return {
         "kpi": kpi,
         "revenue_breakdown": revenue_breakdown,
@@ -239,6 +259,8 @@ async def get_monthly_kpi_details(month: str):
         "recurring_expense": recurring_expense,
         "recurring_validations": validations,
         "transactions_count": len(txs),
+        "funnel": funnel,
+        "new_members": new_members,
     }
 
 
@@ -254,34 +276,29 @@ async def recalculate_month(month: str):
     existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
 
     # Calculate totals per kpi_column from transactions
+    # Use the TRANSACTION's own type field, not the category type
     totals_by_col = {}
+    total_revenue_direct = 0
+    total_expenses_direct = 0
     for tx in txs:
+        tx_type = tx.get("type", "")
         cat_info = cat_map.get(tx.get("category"))
         if cat_info and cat_info.get("kpi_column"):
             col = cat_info["kpi_column"]
             totals_by_col[col] = totals_by_col.get(col, 0) + tx["amount"]
+        # Sum revenue/expenses using the transaction's own type
+        if tx_type == "revenue":
+            total_revenue_direct += tx.get("amount", 0)
+        elif tx_type == "expense":
+            total_expenses_direct += tx.get("amount", 0)
 
     merged = dict(existing)
     for col, val in totals_by_col.items():
         merged[col] = val
 
-    # Dynamically sum revenue and expense columns based on category types
-    revenue_cols = set()
-    expense_cols = set()
-    for c in cats:
-        kpi_col = c.get("kpi_column")
-        if kpi_col:
-            if c["type"] == "revenue":
-                revenue_cols.add(kpi_col)
-            elif c["type"] == "expense":
-                expense_cols.add(kpi_col)
-
-    total_revenue_from_tx = sum(merged.get(col, 0) for col in revenue_cols)
-    total_expenses_from_tx = sum(merged.get(col, 0) for col in expense_cols)
-
-    # Revenue: use transactions if available, else fallback to fast_cash_revenue
-    fast_cash = merged.get("fast_cash_revenue", 0)
-    total_revenue = total_revenue_from_tx if total_revenue_from_tx > 0 else fast_cash
+    # Revenue: use direct transaction type sums (most accurate)
+    total_revenue = total_revenue_direct if total_revenue_direct > 0 else merged.get("fast_cash_revenue", 0)
+    total_expenses_from_tx = total_expenses_direct
 
 
     # Zero out kpi_columns that have no transactions anymore
@@ -309,43 +326,44 @@ async def recalculate_month(month: str):
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    # --- Funnel: Use GHL sync data if available, do NOT override ---
-    # Check if GHL has already set funnel data for this month
-    existing_leads = merged.get("leads", 0)
-    existing_close = merged.get("close", 0)
+    # --- Funnel: Populate from GHL data ---
+    ghl_sales = await db.ghl_sales.find({"month": month}, {"_id": 0}).to_list(100)
+    if ghl_sales:
+        # Calculate funnel from GHL
+        ghl_cash = sum(s.get("cash_collected", 0) or 0 for s in ghl_sales)
+        update["funnel_converted"] = len(ghl_sales)
+        update["funnel_cash"] = ghl_cash
+    # Use existing values for leads/appointments/show if set
+    update["funnel_leads"] = merged.get("funnel_leads") or merged.get("leads", 0) or 0
+    update["funnel_appointments"] = merged.get("funnel_appointments") or merged.get("appointments", 0) or 0
+    update["funnel_show"] = merged.get("funnel_show") or merged.get("show", 0) or 0
+    if "funnel_converted" not in update:
+        update["funnel_converted"] = merged.get("funnel_converted") or merged.get("close", 0) or 0
+    if "funnel_cash" not in update:
+        update["funnel_cash"] = merged.get("funnel_cash") or merged.get("cash_collected", 0) or 0
 
-    # Only fill funnel from new sign-ups if GHL hasn't provided data at all
-    if existing_leads == 0 and existing_close == 0:
-        new_members_this_month = await db.customer_members.find(
-            {"contract_signed_date": {"$regex": f"^{month}"}},
-            {"_id": 0, "name": 1, "billing_amount": 1}
-        ).to_list(1000)
+    # New members count
+    new_members_this_month = await db.customer_members.find(
+        {"contract_signed_date": {"$regex": f"^{month}"}},
+        {"_id": 0, "name": 1}
+    ).to_list(1000)
+    update["new_members"] = len(new_members_this_month)
 
-        if new_members_this_month:
-            new_member_names = [m.get("name") for m in new_members_this_month if m.get("name")]
-            first_tx_total = 0
-            for name in new_member_names:
-                first_tx = await db.accounting_transactions.find_one(
-                    {"client_name": name, "date": {"$regex": f"^{month}"}, "amount": {"$gt": 0}},
-                    {"_id": 0, "amount": 1}
-                )
-                if first_tx:
-                    first_tx_total += first_tx.get("amount", 0)
-            update["new_members"] = len(new_members_this_month)
-        else:
-            update["cash_collected"] = 0
-    # If GHL data exists, don't touch funnel fields (leads, close, cash_collected, etc.)
-
-    # --- Recurring: Calculate from active billing members ---
+    # --- Recurring: Calculate from active billing members (exclude coaches) ---
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    coach_kw_rec = ["THE COACH", "VIRTUAL COACH"]
     active_recurring = await db.customer_members.find(
         {"billing_enabled": True, "billing_amount": {"$gt": 0},
          "$or": [
              {"exit_date": None}, {"exit_date": ""},
              {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
          ]},
-        {"_id": 0, "billing_amount": 1}
+        {"_id": 0, "billing_amount": 1, "is_coach": 1, "membership": 1}
     ).to_list(5000)
+
+    # Exclude coaches
+    active_recurring = [m for m in active_recurring if not m.get("is_coach") and
+                        not any(kw in (m.get("membership") or "").upper() for kw in coach_kw_rec)]
 
     recurring_count = len(active_recurring)
     recurring_rev = sum(m.get("billing_amount", 0) for m in active_recurring)

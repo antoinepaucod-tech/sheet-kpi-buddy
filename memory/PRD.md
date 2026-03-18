@@ -6,53 +6,39 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - **Integrations:** GoHighLevel (GHL), Resend (email)
 - **Login:** test@crossfit.ch / test123
 
-## Regles Metier Principales
+## Donnees Validees Mars 2026
+- Revenue: 5062 CHF | Expenses: 2170 CHF | Net: 2892 CHF
+- Recurring: 6202 CHF/mois (47 membres billing_enabled, hors coachs)
+- Funnel GHL: 84 leads -> 0 appts -> 2 show -> 1 converted (Caroline) -> 300 CHF
+- Membres actifs: 97 | Coachs: 30 | Nouveaux: 10 | Partis: 188
+- Paiements: 94 total (47 mars + 47 avril), 0 inconnu
+- Bilans: 95 planifies (toggle activation requis pour auto-generation)
 
-### Paiements
-- Source: membres avec `billing_enabled=True` ET `billing_amount > 0`
-- Exclut: coachs, membres partis
-- Synchronises avec noms membres (plus jamais "Inconnu")
-- Generation mensuelle: `/api/payments/generate/{year}/{month}`
-- 75 plannings actifs, 47 paiements generes pour mars 2026
+## Regles Metier
+- **Revenue/Expenses**: Basees sur le type de chaque TRANSACTION (pas le type de categorie)
+- **Recurring**: Membres billing_enabled=True, billing_amount>0, non-coach, non-partis
+- **Funnel**: Calcule depuis GHL sales + KPI existants
+- **Paiements**: Generes depuis billing_enabled members (pas payment_schedules)
+- **Bilans**: Activation manuelle par membre, frequence configurable, email au staff
+- **Coachs exclus**: Seances, KPIs Clients, Recurring revenue, Paiements
+- **HUBFIT exclus**: Bilans
 
-### Revenus Recurrents
-- Source: membres avec `billing_enabled=True` (47 membres, ~6202 CHF/mois)
-- Exclut: coachs, membres partis
-
-### Bilans / Suivis
-- Activation manuelle par membre (toggle + date du 1er bilan)
-- Frequence configurable (mensuel par defaut)
-- Email rappel envoye au staff, CTA vers fiche client
-- Exclusions: HUBFIT, coachs, partis
-
-### Classification
-- Revenus/Depenses: base sur le champ `type` de chaque transaction
-- Coachs exclus de Seances + KPIs Clients
-- Membres expires exclus de KPIs Clients
-- Renouvellement: options dedupliquees
-
-## Completed Work
-- Import 6 CSV + coachs + deduplication + DUO
-- Dashboard temps reel + alertes + churn + entonnoir GHL
-- Systeme Bilans/Suivis avec activation manuelle
-- Revenus recurrents bases sur billing_enabled
-- Fix onboarding (optimistic update)
-- Fix dialog membre (billing + review + duo scrollable)
-- Fix Caroline en revenu
-- Coachs exclus Seances + KPIs Clients
-- Neal Zaharna cree comme partenaire DUO
+## Completed Work (2026-03-18)
+- Import CSV + Dashboard temps reel + DUO + Renouvellement
+- KPIs recalcules avec types transactions (fix Caroline revenue)
+- Funnel GHL populate dans KPI (leads/converted/cash)
+- Recurring revenue coherent (47 membres, 6202 CHF) partout
+- Paiements synchronises (0 inconnu, noms corrects)
+- Bilans/Suivis avec activation manuelle + date 1er bilan
+- Onboarding fix (optimistic update)
+- Dialog membre ameliore (billing + review scrollable)
 - Email bilan envoye au staff avec CTA fiche client
-- **Paiements synchronises (2026-03-18):**
-  - Suppression 3 schedules obsoletes + 7 paiements orphelins
-  - 75 plannings enrichis avec noms membres
-  - Generation paiements basee sur billing_enabled (plus payment_schedules)
-  - 47 paiements mars 2026 avec tous les noms corrects
+- Assessment global: toutes les donnees coherentes
 
 ## Backlog
-- **P1**: Explication complete des workflows
+- **P1**: Notifications avancees + donnees GHL via API
 - **P2**: Alertes WhatsApp via Twilio
 - **P2**: Interface migration donnees CSV
 - **P2**: Calcul CPL, CPR, LTV
 - **P3**: Refactoring recalculate_month
-- **P3**: Logique DUO cote backend
-- **P3**: Verification donnees sources CSV
+- **P3**: Nettoyage donnees sources CSV
