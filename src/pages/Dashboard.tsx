@@ -158,28 +158,28 @@ const Dashboard = () => {
       description: "Nouveau membre au parcours client",
       icon: UserPlus,
       onClick: () => navigate("/customer-journey"),
-      color: "text-blue-600 dark:text-blue-400"
+      color: "text-primary"
     },
     {
       title: "Ajouter une transaction",
       description: "Revenu ou dépense",
       icon: Plus,
       onClick: () => navigate("/accounting"),
-      color: "text-green-600 dark:text-green-400"
+      color: "text-success"
     },
     {
       title: "Gérer les cours",
       description: "Planning de base",
       icon: CalendarPlus,
       onClick: () => navigate("/course-kpi?tab=schedule-templates"),
-      color: "text-purple-600 dark:text-purple-400"
+      color: "text-primary"
     },
     {
       title: "KPI Client",
       description: "Analyser l'activité",
       icon: FileText,
       onClick: () => navigate("/kpi-client"),
-      color: "text-orange-600 dark:text-orange-400"
+      color: "text-warning"
     },
   ];
 
