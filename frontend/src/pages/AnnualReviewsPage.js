@@ -22,6 +22,8 @@ import {
   BarChart3,
   Mail,
   RefreshCw,
+  Activity,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -92,6 +94,8 @@ export default function AnnualReviewsPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyMemberId, setHistoryMemberId] = useState(null);
+  const [memberSummary, setMemberSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
   const [formData, setFormData] = useState({
     weight_start: "",
     weight_current: "",
@@ -280,6 +284,13 @@ export default function AnnualReviewsPage() {
       next_review_date: "",
     });
     setModalOpen(true);
+    // Fetch member summary
+    setLoadingSummary(true);
+    setMemberSummary(null);
+    axios.get(`${API}/annual-reviews/member-summary/${review.member_id}`)
+      .then((r) => setMemberSummary(r.data))
+      .catch(() => setMemberSummary(null))
+      .finally(() => setLoadingSummary(false));
   };
 
   const openDetailModal = (review) => {
@@ -615,6 +626,74 @@ export default function AnnualReviewsPage() {
                 <p className="text-[var(--color-text-secondary)] text-sm">
                   Bilan prévu le: {format(parseISO(selectedReview.review_date), "dd MMMM yyyy", { locale: fr })}
                 </p>
+              </div>
+
+              {/* Auto-summary: Attendance & Payments */}
+              <div className="bg-[rgba(10,132,255,0.06)] border border-[rgba(10,132,255,0.15)] rounded-[var(--radius-lg)] p-4" data-testid="member-summary-section">
+                <h3 className="text-[var(--color-accent)] text-sm font-medium flex items-center gap-2 mb-3">
+                  <Activity size={16} />
+                  Résumé automatique du membre
+                </h3>
+                {loadingSummary ? (
+                  <p className="text-[var(--color-text-tertiary)] text-sm">Chargement...</p>
+                ) : memberSummary ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Attendance */}
+                    <div className="bg-[var(--color-bg-secondary)] rounded-lg p-3">
+                      <p className="text-xs text-[var(--color-text-tertiary)] mb-2 flex items-center gap-1">
+                        <Dumbbell size={12} /> Présences (12 dernières sem.)
+                      </p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-xs text-[var(--color-text-secondary)]">Total séances</span>
+                          <span className="text-sm font-bold text-white">{memberSummary.attendance.total_sessions}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-xs text-[var(--color-text-secondary)]">Moy./semaine</span>
+                          <span className="text-sm font-bold text-white">{memberSummary.attendance.avg_per_week}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-xs text-[var(--color-text-secondary)]">Engagement</span>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            memberSummary.attendance.engagement === "Excellent" ? "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]" :
+                            memberSummary.attendance.engagement === "Bon" ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]" :
+                            memberSummary.attendance.engagement === "Moyen" ? "bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)]" :
+                            "bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)]"
+                          }`}>{memberSummary.attendance.engagement}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Payments */}
+                    <div className="bg-[var(--color-bg-secondary)] rounded-lg p-3">
+                      <p className="text-xs text-[var(--color-text-tertiary)] mb-2 flex items-center gap-1">
+                        <CreditCard size={12} /> Paiements
+                      </p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-xs text-[var(--color-text-secondary)]">Abonnement actif</span>
+                          <span className="text-sm font-bold text-white">{memberSummary.payments.active_schedules}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-xs text-[var(--color-text-secondary)]">Montant mensuel</span>
+                          <span className="text-sm font-bold text-white">{memberSummary.payments.monthly_amount} CHF</span>
+                        </div>
+                        {memberSummary.payments.late_count > 0 ? (
+                          <div className="flex justify-between">
+                            <span className="text-xs text-[var(--color-danger)]">Impayés</span>
+                            <span className="text-xs font-bold text-[var(--color-danger)]">{memberSummary.payments.late_count} ({memberSummary.payments.late_total} CHF)</span>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between">
+                            <span className="text-xs text-[var(--color-text-secondary)]">Statut</span>
+                            <span className="text-xs font-bold text-[var(--color-success)]">À jour</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[var(--color-text-tertiary)] text-sm">Résumé non disponible</p>
+                )}
               </div>
 
               {/* Weight Section */}

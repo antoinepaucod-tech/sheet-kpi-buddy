@@ -11,6 +11,7 @@ import { GHLFunnelSection } from "../components/GHLFunnelSection";
 import {
   TrendingUp, TrendingDown, Users, DollarSign, Target, Loader2, Pencil,
   ChevronLeft, ChevronRight, FileDown, UserCheck, UserX, AlertTriangle,
+  ClipboardList, Calendar,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useTranslations } from "../hooks/useTranslations";
@@ -73,11 +74,13 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
   const [showN1, setShowN1] = useState(false);
   const [memberStats, setMemberStats] = useState(null);
   const [expiringMembers, setExpiringMembers] = useState([]);
+  const [reviewAlerts, setReviewAlerts] = useState(null);
 
-  // Fetch real-time member stats + expiring members
+  // Fetch real-time member stats + expiring members + review alerts
   useEffect(() => {
     axios.get(`${API}/members/stats`).then(r => setMemberStats(r.data)).catch(() => {});
     axios.get(`${API}/members/expiring?days=60`).then(r => setExpiringMembers(r.data)).catch(() => {});
+    axios.get(`${API}/annual-reviews/dashboard-alerts`).then(r => setReviewAlerts(r.data)).catch(() => {});
   }, []);
 
   // Auto-recalculate KPIs for selected month to keep data in sync with transactions
@@ -398,6 +401,67 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Review Alerts */}
+      {reviewAlerts && reviewAlerts.total_scheduled > 0 && (
+        <div className="tf-card" style={{ borderLeft: '3px solid var(--color-accent)', background: 'rgba(10,132,255,0.04)' }} data-testid="review-alerts-zone">
+          <div className="flex items-center justify-between mb-3">
+            <p className="tf-label flex items-center gap-2" style={{ color: 'var(--color-accent)' }}>
+              <ClipboardList size={16} />
+              Bilans / Suivis
+            </p>
+            <a href="/annual-reviews" className="text-xs text-[var(--color-accent)] hover:underline" data-testid="review-alerts-view-all">
+              Voir tous les bilans
+            </a>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <div className="rounded-lg p-3" style={{ background: 'var(--color-bg-secondary)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Total planifiés</p>
+              <p className="text-lg font-bold text-white">{reviewAlerts.total_scheduled}</p>
+            </div>
+            <div className="rounded-lg p-3" style={{ background: reviewAlerts.overdue_count > 0 ? 'rgba(255,69,58,0.08)' : 'var(--color-bg-secondary)' }}>
+              <p className="text-xs" style={{ color: reviewAlerts.overdue_count > 0 ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>En retard</p>
+              <p className="text-lg font-bold" style={{ color: reviewAlerts.overdue_count > 0 ? 'var(--color-danger)' : 'white' }}>{reviewAlerts.overdue_count}</p>
+            </div>
+            <div className="rounded-lg p-3" style={{ background: reviewAlerts.this_week_count > 0 ? 'rgba(255,214,10,0.08)' : 'var(--color-bg-secondary)' }}>
+              <p className="text-xs" style={{ color: reviewAlerts.this_week_count > 0 ? 'var(--color-warning)' : 'var(--color-text-tertiary)' }}>Cette semaine</p>
+              <p className="text-lg font-bold" style={{ color: reviewAlerts.this_week_count > 0 ? 'var(--color-warning)' : 'white' }}>{reviewAlerts.this_week_count}</p>
+            </div>
+            <div className="rounded-lg p-3" style={{ background: 'var(--color-bg-secondary)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>30 prochains jours</p>
+              <p className="text-lg font-bold text-white">{reviewAlerts.next_30_count}</p>
+            </div>
+          </div>
+          {(reviewAlerts.overdue_items?.length > 0 || reviewAlerts.this_week_items?.length > 0) && (
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {[...reviewAlerts.overdue_items, ...reviewAlerts.this_week_items].map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg"
+                  style={{ background: 'var(--color-bg-secondary)' }}
+                  data-testid={`review-alert-${r.id}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{r.member_name}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>{r.review_date}</p>
+                    </div>
+                  </div>
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
+                    style={{
+                      background: r.review_date < new Date().toISOString().slice(0,10) ? 'rgba(255,69,58,0.15)' : 'rgba(255,214,10,0.15)',
+                      color: r.review_date < new Date().toISOString().slice(0,10) ? 'var(--color-danger)' : 'var(--color-warning)',
+                    }}
+                  >
+                    {r.review_date < new Date().toISOString().slice(0,10) ? 'En retard' : 'Cette semaine'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

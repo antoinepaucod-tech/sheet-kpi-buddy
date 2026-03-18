@@ -3,11 +3,13 @@ from fastapi import APIRouter, HTTPException
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from dateutil.relativedelta import relativedelta
+import logging
 
 from core.config import db
 from models.members import AnnualReview, AnnualReviewCreate
 
 router = APIRouter(prefix="/annual-reviews", tags=["reviews"])
+logger = logging.getLogger(__name__)
 
 FREQUENCY_MAP = {
     "monthly": relativedelta(months=1),
@@ -106,17 +108,112 @@ async def get_overdue_reviews():
     return docs
 
 
-@router.get("/{review_id}")
-async def get_review(review_id: str):
-    doc = await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Bilan introuvable")
+@router.get("/dashboard-alerts")
+async def get_dashboard_alerts():
+    """Get review alerts for the main dashboard: upcoming (7d), overdue, total scheduled"""
+    today = datetime.now(timezone.utc).date()
+    today_str = today.isoformat()
+    week_later = (today + timedelta(days=7)).isoformat()
+    month_later = (today + timedelta(days=30)).isoformat()
 
-    member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0})
-    if member:
-        doc["member"] = member
+    all_scheduled = await db.annual_reviews.find(
+        {"status": "scheduled"}, {"_id": 0}
+    ).to_list(500)
 
-    return doc
+    overdue = []
+    this_week = []
+    next_30 = []
+
+    for r in all_scheduled:
+        rd = r.get("review_date", "")
+        if rd < today_str:
+            overdue.append(r)
+        elif rd <= week_later:
+            this_week.append(r)
+        elif rd <= month_later:
+            next_30.append(r)
+
+    # Enrich with member names (for top items)
+    items_to_show = (overdue[:5] + this_week[:5])
+    for item in items_to_show:
+        member = await db.customer_members.find_one(
+            {"id": item["member_id"]}, {"_id": 0, "name": 1, "email": 1}
+        )
+        if member:
+            item["member_name"] = member.get("name", "")
+            item["member_email"] = member.get("email", "")
+
+    return {
+        "overdue_count": len(overdue),
+        "this_week_count": len(this_week),
+        "next_30_count": len(next_30),
+        "total_scheduled": len(all_scheduled),
+        "overdue_items": overdue[:5],
+        "this_week_items": this_week[:5],
+    }
+
+
+@router.get("/member-summary/{member_id}")
+async def get_member_review_summary(member_id: str):
+    """Get attendance & payment summary for a member, used in the review completion form"""
+    member = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+
+    # Attendance: last 12 weeks of training data
+    trainings = await db.weekly_trainings.find(
+        {"member_id": member_id}, {"_id": 0}
+    ).sort("calendar_year", -1).to_list(100)
+
+    # Take latest 12 entries
+    recent_trainings = trainings[:12]
+    total_sessions = sum(t.get("trainings_count", 0) for t in recent_trainings)
+    weeks_tracked = len(recent_trainings)
+    avg_per_week = round(total_sessions / weeks_tracked, 1) if weeks_tracked > 0 else 0
+
+    # Payment status
+    payment_schedules = await db.payment_schedules.find(
+        {"member_id": member_id, "is_active": True}, {"_id": 0}
+    ).to_list(10)
+
+    payments = await db.payments.find(
+        {"member_id": member_id}, {"_id": 0}
+    ).sort("due_date", -1).to_list(20)
+
+    late_payments = [p for p in payments if p.get("status") in ("pending", "late")]
+    paid_payments = [p for p in payments if p.get("status") == "paid"]
+
+    # Previous reviews for this member
+    past_reviews = await db.annual_reviews.find(
+        {"member_id": member_id, "status": "completed"},
+        {"_id": 0, "review_date": 1, "weight_current": 1, "weight_start": 1,
+         "weight_change": 1, "training_frequency": 1, "new_goals": 1}
+    ).sort("review_date", -1).to_list(5)
+
+    return {
+        "member_name": member.get("name", ""),
+        "membership": member.get("membership", ""),
+        "contract_signed_date": member.get("contract_signed_date"),
+        "attendance": {
+            "total_sessions": total_sessions,
+            "weeks_tracked": weeks_tracked,
+            "avg_per_week": avg_per_week,
+            "engagement": (
+                "Excellent" if avg_per_week >= 4 else
+                "Bon" if avg_per_week >= 3 else
+                "Moyen" if avg_per_week >= 2 else
+                "Faible"
+            ),
+        },
+        "payments": {
+            "active_schedules": len(payment_schedules),
+            "monthly_amount": sum(ps.get("amount", 0) for ps in payment_schedules),
+            "late_count": len(late_payments),
+            "late_total": sum(p.get("amount", 0) for p in late_payments),
+            "paid_count": len(paid_payments),
+        },
+        "previous_reviews": past_reviews,
+    }
 
 
 @router.get("/history/{member_id}")
@@ -134,6 +231,17 @@ async def get_review_history(member_id: str):
     }
 
 
+@router.get("/{review_id}")
+async def get_review(review_id: str):
+    doc = await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Bilan introuvable")
+    member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0})
+    if member:
+        doc["member"] = member
+    return doc
+
+
 @router.post("")
 async def create_review(data: AnnualReviewCreate):
     review = AnnualReview(**data.model_dump())
@@ -145,26 +253,40 @@ async def create_review(data: AnnualReviewCreate):
 
 @router.post("/auto-generate")
 async def auto_generate_reviews():
-    """Scan all members with review_enabled and create missing scheduled reviews."""
+    """Scan ALL active members and create missing scheduled reviews."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # Get all members with annual_review_enabled
+    # Get ALL members (not just those with annual_review_enabled)
     members = await db.customer_members.find(
-        {"annual_review_enabled": True},
+        {},
         {"_id": 0, "id": 1, "name": 1, "contract_signed_date": 1,
-         "review_frequency": 1, "annual_review_date": 1, "exit_date": 1}
+         "review_frequency": 1, "bilan_frequency": 1,
+         "annual_review_date": 1, "exit_date": 1,
+         "annual_review_enabled": 1, "membership": 1}
     ).to_list(5000)
 
-    # Filter out departed members (exit_date in the past)
-    eligible = [m for m in members if not m.get("exit_date") or m["exit_date"] >= today]
+    # Filter: active members only (no exit_date or exit_date in the future)
+    # Exclude coaches (THE COACH / VIRTUAL COACH)
+    coach_kw = ["THE COACH", "VIRTUAL COACH"]
+
+    def is_active_member(m):
+        exit_d = m.get("exit_date")
+        if exit_d and exit_d not in (None, "", "None") and exit_d < today:
+            return False
+        membership = (m.get("membership") or "").upper()
+        if any(kw in membership for kw in coach_kw):
+            return False
+        return True
+
+    eligible = [m for m in members if is_active_member(m)]
 
     created = 0
     skipped = 0
 
     for member in eligible:
         member_id = member["id"]
-        freq = member.get("review_frequency", "annually")
-        delta = FREQUENCY_MAP.get(freq, relativedelta(years=1))
+        freq = member.get("bilan_frequency") or member.get("review_frequency", "quarterly")
+        delta = FREQUENCY_MAP.get(freq, relativedelta(months=3))
 
         # Check if there's already a scheduled review
         existing_scheduled = await db.annual_reviews.find_one({

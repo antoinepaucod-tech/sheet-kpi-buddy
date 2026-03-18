@@ -84,6 +84,13 @@ def review_reminder_template(club_name, member_name, review_date, review_type):
       <p style="margin: 0 0 4px 0; color: #999; font-size: 13px;">Type</p>
       <p style="margin: 0; color: #fff; font-weight: 600;">Bilan {type_label}</p>
     </div>
+    <p style="color: #ccc; line-height: 1.6;">Merci de prendre rendez-vous pour votre bilan en répondant directement à cet email ou en nous contactant.</p>
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="mailto:{SENDER_EMAIL}?subject=Rendez-vous bilan {type_label} - {member_name}" 
+         style="display: inline-block; background: #8B5CF6; color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+        Prendre rendez-vous
+      </a>
+    </div>
     <p style="color: #ccc; line-height: 1.6;">Préparez vos notes et objectifs pour cette session.</p>
     <p style="color: #666; font-size: 13px; margin-top: 24px;">Cordialement,<br/><strong style="color: #999;">{club_name}</strong></p>
     """
