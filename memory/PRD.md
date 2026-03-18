@@ -6,29 +6,29 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - **Integrations:** GoHighLevel (GHL), Resend (email)
 - **Login:** test@crossfit.ch / test123
 
-## Data
-- `customer_members`: 327 membres (incl. Neal Zaharna ajouté comme partenaire DUO)
-- `accounting_transactions`: 3425 transactions
-- `monthly_kpis`: 32 mois (recalcules depuis transactions + GHL)
-- `payment_schedules`: 75 (73 actifs)
-- `annual_reviews`: 95 bilans mensuels auto-generes pour membres actifs eligibles
+## Regles Metier Principales
 
-## Regles Bilans / Suivis
-- **Frequence:** Mensuelle pour tous les membres
-- **Exclusions:** HUBFIT, coachs (THE COACH/VIRTUAL COACH), membres partis
-- **Auto-generation:** Calcul date depuis contract_signed_date + 1 mois
-- **Resume auto:** Presences + paiements dans le modal de completion
-- **Email rappel:** CTA "Prendre rendez-vous" (mailto)
-- **Alertes dashboard:** Widget avec total planifies, en retard, cette semaine, 30 prochains jours
+### Revenus Recurrents
+- Source: membres avec `billing_enabled=True` ET `billing_amount > 0`
+- Exclut: coachs (THE COACH/VIRTUAL COACH), membres partis (exit_date passe)
+- 47 membres actuellement, total ~6202 CHF/mois
 
-## Regles Metier
-- **Classification revenus/depenses:** Basee sur le champ `type` de chaque transaction (pas sur la categorie)
+### Bilans / Suivis
+- **Activation manuelle:** Toggle `annual_review_enabled` par membre
+- **Date du 1er bilan:** Configurable par membre via `first_review_date`
+- **Frequence:** Configurable (mensuel/trimestriel/semestriel/annuel), defaut mensuel
+- **Exclusions:** HUBFIT, coachs, membres partis
+- **Auto-generation:** Uniquement pour membres avec toggle active
+- **Email rappel:** Envoye a l'EQUIPE (pas au membre), CTA vers fiche client
+
+### Classification
+- **Revenus/Depenses:** Base sur le champ `type` de chaque transaction
 - **Coachs:** Exclus de Saisie Seances et KPIs Clients
-- **Membres expires:** Exclus du KPI Clients (exit_date passe = exclus)
-- **DUO:** Partenaire lie via duo_partner_id et subscription_group_id
-- **Renouvellement:** Options de duree dedupliquees (pas de doublons)
+- **Membres expires:** Exclus du KPI Clients
+- **DUO:** Partenaire lie via duo_partner_id
+- **Renouvellement:** Options de duree dedupliquees
 
-## Completed Work
+## Completed Work (2026-03-18)
 - Import 6 CSV + coachs + deduplication + DUO
 - Dashboard temps reel + alertes + churn
 - Regroupement DUO + avertissement edition
@@ -36,15 +36,15 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - KPIs auto-recalcules depuis transactions
 - Transactions cliquables vers membres
 - Entonnoir GHL synchro
-- Transactions recurrentes peuplees
-- Systeme complet Bilans/Suivis (2026-03-18)
-- **Corrections 6 bugs (2026-03-18):**
-  - DUO partenaire Neal Zaharna cree et lie a Nathalie
-  - Caroline correctement classee en revenu (fix classification par type transaction)
-  - Coachs exclus de Saisie Seances et KPIs Clients
-  - Membres partis exclus de KPIs Clients
-  - Options de renouvellement dedupliquees (plus de doublons)
-  - Alexandra Dankova visible dans onglet "Expires" (subscription_end_date passee)
+- Systeme Bilans/Suivis avec activation manuelle
+- Revenus recurrents bases sur billing_enabled
+- Fix onboarding (optimistic update, plus de saut)
+- Fix dialog membre (billing + review + duo scrollable)
+- Fix Caroline en revenu (classification par type transaction)
+- Coachs exclus Seances + KPIs Clients
+- Fix renouvellement doublons
+- Neal Zaharna cree comme partenaire DUO
+- Email bilan envoye au staff avec CTA fiche client
 
 ## Backlog
 - **P1**: Explication complete des workflows
