@@ -21,7 +21,13 @@ async def get_payment_schedules(member_id: Optional[str] = None, active_only: Op
         query["member_id"] = member_id
     if active_only:
         query["is_active"] = True
-    return await db.payment_schedules.find(query, {"_id": 0}).to_list(1000)
+    schedules = await db.payment_schedules.find(query, {"_id": 0}).to_list(1000)
+    # Enrich with member names if missing
+    for s in schedules:
+        if not s.get("member_name"):
+            member = await db.customer_members.find_one({"id": s.get("member_id")}, {"_id": 0, "name": 1})
+            s["member_name"] = member.get("name", "Inconnu") if member else "Inconnu"
+    return schedules
 
 
 @router.post("/payment-schedules")
@@ -179,53 +185,67 @@ async def delete_payment(payment_id: str):
 
 @router.post("/payments/generate/{year}/{month}")
 async def generate_monthly_payments(year: int, month: int):
-    """Generate payments for a month based on payment schedules"""
+    """Generate payments for a month based on active billing-enabled members"""
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
     
-    schedules = await db.payment_schedules.find({"is_active": True}, {"_id": 0}).to_list(1000)
-    if not schedules:
-        return {"message": "Aucun planning de paiement actif", "created": 0}
-    
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     month_str = f"{year}-{month:02d}"
     days_in_month = monthrange(year, month)[1]
+    
+    # Get billing-enabled members (active, non-coach, non-departed)
+    coach_kw = ["THE COACH", "VIRTUAL COACH"]
+    all_members = await db.customer_members.find(
+        {"billing_enabled": True, "billing_amount": {"$gt": 0}},
+        {"_id": 0}
+    ).to_list(5000)
+    
+    members = []
+    for m in all_members:
+        exit_d = m.get("exit_date")
+        if exit_d and exit_d not in (None, "", "None") and exit_d < today_str:
+            continue
+        ms = (m.get("membership") or "").upper()
+        if any(kw in ms for kw in coach_kw):
+            continue
+        if m.get("is_coach"):
+            continue
+        members.append(m)
+    
+    if not members:
+        return {"message": "Aucun membre avec facturation active", "created": 0}
+    
     created = []
     
-    for sched in schedules:
+    for member in members:
+        # Check if payment already exists for this member this month
         existing = await db.payments.find_one({
-            "schedule_id": sched["id"],
+            "member_id": member["id"],
             "due_date": {"$regex": f"^{month_str}"}
         })
         if existing:
             continue
         
-        if sched["recurrence_type"] == "monthly_day":
-            day = min(sched["recurrence_value"], days_in_month)
+        # Calculate due date from billing cycle
+        cycle_type = member.get("billing_cycle_type", "monthly_day")
+        cycle_value = member.get("billing_cycle_value", 1)
+        
+        if cycle_type == "monthly_day":
+            day = min(cycle_value or 1, days_in_month)
             due_date = f"{month_str}-{day:02d}"
         else:
-            start = datetime.fromisoformat(sched["start_date"]).date()
-            interval = sched["recurrence_value"]
-            
-            current = start
-            while current.month != month or current.year != year:
-                current = current + timedelta(days=interval)
-                if current.year > year or (current.year == year and current.month > month):
-                    current = None
-                    break
-            
-            if current is None:
-                continue
-            due_date = current.isoformat()
+            due_date = f"{month_str}-01"
         
         payment = Payment(
-            member_id=sched["member_id"],
-            schedule_id=sched["id"],
-            amount=sched["amount"],
+            member_id=member["id"],
+            schedule_id=member["id"],  # Use member_id as reference
+            amount=member["billing_amount"],
             due_date=due_date,
             status="pending",
-            payment_method=sched.get("payment_method")
+            payment_method=member.get("billing_payment_method", "prelevement")
         )
         doc = payment.model_dump()
+        doc["member_name"] = member["name"]
         await db.payments.insert_one(doc)
         doc.pop('_id', None)
         created.append(doc)
