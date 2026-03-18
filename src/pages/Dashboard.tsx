@@ -387,9 +387,9 @@ const Dashboard = () => {
                 data={revenueChartData}
                 title=""
                 dataKeys={[
-                  { key: "revenue", name: "Revenus", color: "hsl(var(--primary))" },
-                  { key: "expenses", name: "Dépenses", color: "hsl(var(--destructive))" },
-                  { key: "profit", name: "Profit", color: "hsl(var(--success))" },
+                  { key: "revenue", name: "Revenus", color: "var(--color-accent)" },
+                  { key: "expenses", name: "Dépenses", color: "var(--color-danger)" },
+                  { key: "profit", name: "Profit", color: "var(--color-success)" },
                 ]}
                 type="line"
                 showFilter={false}
