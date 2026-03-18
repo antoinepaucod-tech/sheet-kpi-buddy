@@ -124,7 +124,7 @@ async def get_monthly_kpi_details(month: str):
         {"date": {"$regex": f"^{month}"}}, {"_id": 0}
     ).to_list(1000)
 
-    # Build breakdown by category
+    # Build breakdown by category using the TRANSACTION's own type field
     revenue_breakdown = []
     expense_breakdown = []
     for cat_name, cat_info in cat_map.items():
@@ -142,10 +142,40 @@ async def get_monthly_kpi_details(month: str):
                 for tx in cat_txs
             ],
         }
-        if cat_info["type"] == "revenue":
+        # Use individual transaction types; if mixed, use majority
+        tx_types = [tx.get("type", cat_info["type"]) for tx in cat_txs]
+        is_revenue = tx_types.count("revenue") >= tx_types.count("expense")
+        if is_revenue:
             revenue_breakdown.append(entry)
         else:
             expense_breakdown.append(entry)
+
+    # Also handle transactions with categories NOT in accounting_categories
+    categorized_cats = set(cat_map.keys())
+    uncategorized_txs = [tx for tx in txs if tx.get("category") not in categorized_cats]
+    if uncategorized_txs:
+        # Group by category
+        uncat_groups = {}
+        for tx in uncategorized_txs:
+            cat = tx.get("category", "Autre")
+            uncat_groups.setdefault(cat, []).append(tx)
+        for cat, group_txs in uncat_groups.items():
+            total = sum(tx["amount"] for tx in group_txs)
+            entry = {
+                "category": cat,
+                "kpi_column": "",
+                "total": total,
+                "count": len(group_txs),
+                "transactions": [
+                    {"date": tx["date"], "description": tx["description"], "amount": tx["amount"], "client_name": tx.get("client_name", "")}
+                    for tx in group_txs
+                ],
+            }
+            tx_types = [tx.get("type", "revenue") for tx in group_txs]
+            if tx_types.count("revenue") >= tx_types.count("expense"):
+                revenue_breakdown.append(entry)
+            else:
+                expense_breakdown.append(entry)
 
     # Get active recurring billing from payment_schedules and members
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")

@@ -188,7 +188,7 @@ export default function MembersPage() {
     queryFn: () => axios.get(`${API}/settings/member-types?active_only=true`).then((r) => r.data),
   });
 
-  // Build renewal duration options from membership types
+  // Build renewal duration options from membership types (deduplicated)
   const RENEWAL_DURATION_OPTIONS = useMemo(() => {
     if (membershipTypes.length === 0) {
       return [
@@ -199,7 +199,9 @@ export default function MembersPage() {
         { value: "12 mois", label: "12 mois" },
       ];
     }
-    return membershipTypes.map(t => {
+    const seen = new Set();
+    const options = [];
+    for (const t of membershipTypes) {
       let label;
       if (t.duration_days) {
         label = `${t.duration_days} jours`;
@@ -208,11 +210,17 @@ export default function MembersPage() {
         label = "1 mois";
       } else if (t.duration_months === 12) {
         label = "12 mois";
+      } else if (t.duration_months === 0) {
+        continue; // Skip 0-month options (e.g., session packs)
       } else {
         label = `${t.duration_months} mois`;
       }
-      return { value: label, label: `${t.name} (${label})` };
-    });
+      if (!seen.has(label)) {
+        seen.add(label);
+        options.push({ value: label, label });
+      }
+    }
+    return options;
   }, [membershipTypes]);
 
   const MEMBERSHIP_OPTIONS = membershipTypes.length > 0

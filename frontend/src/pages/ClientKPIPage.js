@@ -104,9 +104,16 @@ export default function ClientKPIPage() {
     },
   });
 
-  // Calculate member stats
+  // Calculate member stats (exclude coaches and expired)
   const memberStats = useMemo(() => {
-    const stats = members.map((member) => {
+    const today = new Date().toISOString().split('T')[0];
+    const activeMembers = members.filter(m => {
+      if (m.is_coach) return false;
+      const exitDate = m.exit_date;
+      if (exitDate && exitDate < today) return false;
+      return true;
+    });
+    const stats = activeMembers.map((member) => {
       const memberTrainings = trainings.filter((t) => t.member_id === member.id);
       const totalTrainings = memberTrainings.reduce((sum, t) => sum + (t.trainings_count || 0), 0);
       const weeksTracked = memberTrainings.length;

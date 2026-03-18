@@ -112,28 +112,28 @@ export default function AttendancePage() {
   }, [trainings]);
 
   const filteredMembers = useMemo(() => {
-    if (!search) return members;
+    if (!search) return members.filter(m => !m.is_coach);
     const s = search.toLowerCase();
     return members.filter(
-      (m) => m.name?.toLowerCase().includes(s) || m.email?.toLowerCase().includes(s)
+      (m) => !m.is_coach && (m.name?.toLowerCase().includes(s) || m.email?.toLowerCase().includes(s))
     );
   }, [members, search]);
 
   const weekTotals = useMemo(() => {
     const totals = {};
     weeks.forEach((w) => {
-      totals[w] = members.reduce((sum, m) => sum + (trainingMap[`${m.id}_${w}`] || 0), 0);
+      totals[w] = filteredMembers.reduce((sum, m) => sum + (trainingMap[`${m.id}_${w}`] || 0), 0);
     });
     return totals;
-  }, [weeks, members, trainingMap]);
+  }, [weeks, filteredMembers, trainingMap]);
 
   const memberTotals = useMemo(() => {
     const totals = {};
-    members.forEach((m) => {
+    filteredMembers.forEach((m) => {
       totals[m.id] = weeks.reduce((sum, w) => sum + (trainingMap[`${m.id}_${w}`] || 0), 0);
     });
     return totals;
-  }, [members, weeks, trainingMap]);
+  }, [filteredMembers, weeks, trainingMap]);
 
   const handleCellBlur = useCallback(
     (memberId, week, value) => {
