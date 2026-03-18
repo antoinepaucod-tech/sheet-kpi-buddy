@@ -193,7 +193,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold">Tableau de Bord</h1>
+            <h1 className="text-page-header">Tableau de Bord</h1>
             <p className="text-muted-foreground mt-1">
               Vue d'ensemble de votre activité · {MONTHS[new Date().getMonth()]} {currentYear}
             </p>
