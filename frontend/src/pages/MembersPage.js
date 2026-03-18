@@ -126,6 +126,8 @@ export default function MembersPage() {
     billing_payment_method: "prelevement",
     // Annual review
     annual_review_enabled: false,
+    review_frequency: "monthly",
+    first_review_date: "",
     // Duo
     is_duo: false,
     duo_partner_name: "",
@@ -412,8 +414,9 @@ export default function MembersPage() {
       billing_cycle_value: member.billing_cycle_value || 1,
       billing_payment_method: member.billing_payment_method || "prelevement",
       review_enabled: member.annual_review_enabled || member.review_enabled || false,
-      review_frequency: member.review_frequency || "annually",
+      review_frequency: member.review_frequency || "monthly",
       annual_review_enabled: member.annual_review_enabled || false,
+      first_review_date: member.first_review_date || "",
       is_duo: member.is_duo || false,
       duo_partner_name: "",
       duo_partner_email: "",
@@ -978,17 +981,23 @@ export default function MembersPage() {
               />
             </div>
 
-            {/* Billing Section - Read-only when membership type is selected */}
+            {/* Billing Section - Clear layout */}
             <div className="border-t border-[var(--color-border)] pt-4 mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
+              <div className="flex items-center justify-between mb-3 bg-[rgba(48,209,88,0.08)] border border-[rgba(48,209,88,0.15)] rounded-[var(--radius-lg)] p-3">
+                <label className="text-white text-sm font-medium flex items-center gap-2">
                   <CreditCard size={14} className="text-[var(--color-success)]" />
                   Facturation récurrente
                 </label>
-                <Switch
-                  checked={formData.billing_enabled}
-                  onCheckedChange={(v) => setFormData({ ...formData, billing_enabled: v })}
-                />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: formData.billing_enabled ? 'var(--color-success)' : 'var(--color-text-tertiary)' }}>
+                    {formData.billing_enabled ? 'Activée' : 'Désactivée'}
+                  </span>
+                  <Switch
+                    checked={formData.billing_enabled}
+                    onCheckedChange={(v) => setFormData({ ...formData, billing_enabled: v })}
+                    data-testid="billing-switch"
+                  />
+                </div>
               </div>
               
               {formData.billing_enabled && (
@@ -1077,87 +1086,103 @@ export default function MembersPage() {
                   <ClipboardCheck size={16} className="text-[var(--color-info)]" />
                   Activer le Suivi / Bilan
                 </label>
-                <Switch
-                  checked={formData.review_enabled}
-                  onCheckedChange={(v) => setFormData({ ...formData, review_enabled: v, annual_review_enabled: v })}
-                  data-testid="review-switch"
-                />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: formData.annual_review_enabled ? 'var(--color-accent)' : 'var(--color-text-tertiary)' }}>
+                    {formData.annual_review_enabled ? 'Activé' : 'Désactivé'}
+                  </span>
+                  <Switch
+                    checked={formData.annual_review_enabled}
+                    onCheckedChange={(v) => setFormData({ ...formData, annual_review_enabled: v, review_enabled: v })}
+                    data-testid="review-switch"
+                  />
+                </div>
               </div>
-              {formData.review_enabled && (
+              {formData.annual_review_enabled && (
                 <div className="space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
-                  <div>
-                    <label className="text-[var(--color-text-secondary)] text-xs">Fréquence du bilan</label>
-                    <Select 
-                      value={formData.review_frequency || "annually"} 
-                      onValueChange={(v) => setFormData({ ...formData, review_frequency: v, annual_review_enabled: true })}
-                    >
-                      <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-                        <SelectItem value="challenge" className="text-white">Challenge (6 semaines)</SelectItem>
-                        <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
-                        <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
-                        <SelectItem value="semi-annually" className="text-white">Semestriel</SelectItem>
-                        <SelectItem value="annually" className="text-white">Annuel</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Fréquence du bilan</label>
+                      <Select 
+                        value={formData.review_frequency || "monthly"} 
+                        onValueChange={(v) => setFormData({ ...formData, review_frequency: v })}
+                      >
+                        <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                          <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
+                          <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
+                          <SelectItem value="semi-annually" className="text-white">Semestriel</SelectItem>
+                          <SelectItem value="annually" className="text-white">Annuel</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-[var(--color-text-secondary)] text-xs">Date du 1er bilan</label>
+                      <Input
+                        type="date"
+                        value={formData.first_review_date || ""}
+                        onChange={(e) => setFormData({ ...formData, first_review_date: e.target.value })}
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1 h-8"
+                        data-testid="first-review-date-input"
+                      />
+                    </div>
                   </div>
                   <p className="text-[var(--color-text-tertiary)] text-xs">
-                    {formData.review_frequency === "challenge" && "Un bilan sera planifié 6 semaines après la date de signature"}
                     {formData.review_frequency === "monthly" && "Un bilan sera planifié chaque mois"}
                     {formData.review_frequency === "quarterly" && "Un bilan sera planifié tous les 3 mois"}
                     {formData.review_frequency === "semi-annually" && "Un bilan sera planifié tous les 6 mois"}
-                    {(!formData.review_frequency || formData.review_frequency === "annually") && "Un bilan sera planifié 1 an après la date de signature"}
+                    {(!formData.review_frequency || formData.review_frequency === "annually") && "Un bilan sera planifié chaque année"}
+                    {formData.first_review_date && ` — Premier bilan le ${formData.first_review_date}`}
                   </p>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Duo Subscription */}
-          <div className="border-t border-[var(--color-border)] pt-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.is_duo || false}
-                onChange={(e) => setFormData({ ...formData, is_duo: e.target.checked })}
-                className="rounded"
-                data-testid="duo-checkbox"
-              />
-              <label className="text-white text-sm">Abonnement Duo (2 personnes, 1 prix)</label>
-            </div>
-            {formData.is_duo && (
-              <div className="mt-3 space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
-                <p className="tf-stat-label">Partenaire Duo</p>
-                <div className="grid grid-cols-1 gap-2">
-                  <Input
-                    placeholder="Nom du partenaire *"
-                    value={formData.duo_partner_name || ""}
-                    onChange={(e) => setFormData({ ...formData, duo_partner_name: e.target.value })}
-                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
-                    data-testid="duo-partner-name"
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Email"
-                      value={formData.duo_partner_email || ""}
-                      onChange={(e) => setFormData({ ...formData, duo_partner_email: e.target.value })}
-                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
-                      data-testid="duo-partner-email"
-                    />
-                    <Input
-                      placeholder="Téléphone"
-                      value={formData.duo_partner_phone || ""}
-                      onChange={(e) => setFormData({ ...formData, duo_partner_phone: e.target.value })}
-                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
-                      data-testid="duo-partner-phone"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-[var(--color-text-tertiary)]">Le partenaire sera créé automatiquement comme un membre distinct lié à celui-ci.</p>
+            {/* Duo Subscription */}
+            <div className="border-t border-[var(--color-border)] pt-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.is_duo || false}
+                  onChange={(e) => setFormData({ ...formData, is_duo: e.target.checked })}
+                  className="rounded"
+                  data-testid="duo-checkbox"
+                />
+                <label className="text-white text-sm">Abonnement Duo (2 personnes, 1 prix)</label>
               </div>
-            )}
+              {formData.is_duo && (
+                <div className="mt-3 space-y-3 bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-3">
+                  <p className="tf-stat-label">Partenaire Duo</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Input
+                      placeholder="Nom du partenaire *"
+                      value={formData.duo_partner_name || ""}
+                      onChange={(e) => setFormData({ ...formData, duo_partner_name: e.target.value })}
+                      className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
+                      data-testid="duo-partner-name"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Email"
+                        value={formData.duo_partner_email || ""}
+                        onChange={(e) => setFormData({ ...formData, duo_partner_email: e.target.value })}
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
+                        data-testid="duo-partner-email"
+                      />
+                      <Input
+                        placeholder="Téléphone"
+                        value={formData.duo_partner_phone || ""}
+                        onChange={(e) => setFormData({ ...formData, duo_partner_phone: e.target.value })}
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-8 text-sm"
+                        data-testid="duo-partner-phone"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-[var(--color-text-tertiary)]">Le partenaire sera créé automatiquement comme un membre distinct lié à celui-ci.</p>
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setModalOpen(false)}>Annuler</Button>

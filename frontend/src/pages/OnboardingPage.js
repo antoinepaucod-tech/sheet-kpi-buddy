@@ -221,16 +221,34 @@ export default function OnboardingPage() {
   }), [pendingOnboarding, completedOnboarding, upcomingFollowups, missedFollowups, allFollowups]);
 
   const toggleOnboardingStep = (memberId, stepKey, currentValue) => {
-    // Set editing member to prevent reordering
     setEditingMemberId(memberId);
     
+    // Optimistic update: update the cache immediately to prevent reorder
+    queryClient.setQueryData(["onboarding", "pending"], (old) => {
+      if (!old) return old;
+      return old.map(m => 
+        m.id === memberId ? { ...m, [stepKey]: !currentValue, 
+          onboarding_progress: m.onboarding_progress + (!currentValue ? 1 : -1),
+          onboarding_percentage: Math.round(((m.onboarding_progress + (!currentValue ? 1 : -1)) / 5) * 100)
+        } : m
+      );
+    });
+
     updateOnboardingMutation.mutate({
       memberId,
       data: { [stepKey]: !currentValue }
     }, {
+      onSuccess: () => {
+        // Refetch in background without clearing cache
+        queryClient.invalidateQueries(["onboarding"]);
+        queryClient.invalidateQueries(["members"]);
+      },
+      onError: () => {
+        // Rollback optimistic update on error
+        queryClient.invalidateQueries(["onboarding"]);
+      },
       onSettled: () => {
-        // Clear editing state after a delay to allow animation
-        setTimeout(() => setEditingMemberId(null), 1500);
+        setTimeout(() => setEditingMemberId(null), 500);
       }
     });
   };
@@ -309,10 +327,7 @@ export default function OnboardingPage() {
                 </p>
               </div>
             ) : (
-              pendingOnboarding.filter(m => {
-                const q = search.toLowerCase();
-                return !q || m.name?.toLowerCase().includes(q);
-              }).map((member) => {
+              filteredOnboarding.map((member) => {
                 const isEditing = editingMemberId === member.id;
                 
                 return (

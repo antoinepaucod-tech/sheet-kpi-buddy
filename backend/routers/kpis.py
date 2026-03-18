@@ -177,44 +177,38 @@ async def get_monthly_kpi_details(month: str):
             else:
                 expense_breakdown.append(entry)
 
-    # Get active recurring billing from payment_schedules and members
+    # Get active recurring billing from members with billing_enabled
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    schedules = await db.payment_schedules.find(
-        {"is_active": True,
-         "start_date": {"$lte": f"{month}-31"},
+    billing_members = await db.customer_members.find(
+        {"billing_enabled": True, "billing_amount": {"$gt": 0},
          "$or": [
-             {"end_date": {"$gte": f"{month}-01"}},
-             {"end_date": None}, {"end_date": ""},
-             {"end_date": {"$exists": False}}
+             {"exit_date": None}, {"exit_date": ""},
+             {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
          ]},
-        {"_id": 0}
+        {"_id": 0, "id": 1, "name": 1, "billing_amount": 1, "membership": 1,
+         "billing_cycle_type": 1, "billing_cycle_value": 1, "billing_payment_method": 1,
+         "is_coach": 1}
     ).to_list(5000)
 
-    # If no payment_schedules match, fall back to billing-enabled members
-    if not schedules:
-        billing_members = await db.customer_members.find(
-            {"billing_enabled": True, "billing_amount": {"$gt": 0},
-             "$or": [
-                 {"exit_date": None}, {"exit_date": ""},
-                 {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
-             ]},
-            {"_id": 0, "id": 1, "name": 1, "billing_amount": 1, "membership": 1,
-             "billing_cycle_type": 1, "billing_cycle_value": 1, "billing_payment_method": 1}
-        ).to_list(5000)
-        schedules = [{
-            "id": m["id"],
-            "member_name": m.get("name", ""),
-            "membership": m.get("membership", ""),
-            "amount": m.get("billing_amount", 0),
-            "billing_cycle_type": m.get("billing_cycle_type", "monthly_day"),
-            "billing_cycle_value": m.get("billing_cycle_value", 1),
-            "billing_payment_method": m.get("billing_payment_method", "prelevement"),
-            "type": "revenue",
-            "description": m.get("membership", ""),
-            "is_active": True,
-        } for m in billing_members]
+    # Exclude coaches
+    coach_kw = ["THE COACH", "VIRTUAL COACH"]
+    billing_members = [m for m in billing_members if not m.get("is_coach") and
+                       not any(kw in (m.get("membership") or "").upper() for kw in coach_kw)]
 
-    recurring_revenue = [s for s in schedules if s.get("amount", 0) > 0]
+    recurring_revenue = [{
+        "id": m["id"],
+        "member_id": m["id"],
+        "member_name": m.get("name", ""),
+        "membership": m.get("membership", ""),
+        "amount": m.get("billing_amount", 0),
+        "billing_cycle_type": m.get("billing_cycle_type", "monthly_day"),
+        "billing_cycle_value": m.get("billing_cycle_value", 1),
+        "billing_payment_method": m.get("billing_payment_method", "prelevement"),
+        "type": "revenue",
+        "description": m.get("membership", ""),
+        "is_active": True,
+    } for m in billing_members if m.get("billing_amount", 0) > 0]
+
     recurring_expense = []
 
     # Also get recurring expense templates

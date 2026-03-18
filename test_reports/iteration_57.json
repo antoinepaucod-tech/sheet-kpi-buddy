@@ -1,0 +1,74 @@
+{
+  "summary": "Iteration 57 - Verified 6 bug fixes for TRANSFORM app. Backend: 12/12 tests passed. Frontend: All bugs verified fixed via Playwright. Fixed onboarding reorder bug during testing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_bugs_iter57.py",
+    "/app/test_reports/pytest/pytest_results_iter57.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "kpis.py: Lines 182-210 - recurring_revenue now correctly sourced from billing_enabled members (not payment_schedules)",
+    "kpis.py: Lines 193-196 - Coaches excluded from recurring revenue via is_coach flag and COACH keyword filter",
+    "annual_reviews.py: Lines 284-302 - auto-generate now checks annual_review_enabled=True before creating bilans",
+    "notifications.py: Lines 100-125 - review_reminder_staff_template sends to STAFF with member profile CTA",
+    "members.py: Line 35-38 - first_review_date field added to CustomerMember model",
+    "MembersPage.js: Lines 984-1139 - Billing and Review sections have clear toggles (green billing, blue review)",
+    "OnboardingPage.js: Line 330 - Fixed: now uses filteredOnboarding (sorted alphabetically) instead of pendingOnboarding"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_bugs_iter57.py",
+    "/app/frontend/src/pages/OnboardingPage.js"
+  ],
+  "success_rate": {"backend": "100% (12/12 tests)", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 57 verified all 6 bug fixes: (1) GET /api/monthly-kpis/2026-03/details returns 47 recurring_revenue items totaling ~6202 CHF from billing_enabled members, no coaches; (2) Onboarding page now uses filteredOnboarding with alphabetical sort - member order preserved when toggling steps; (3) Member edit modal scrolls properly showing all 3 bottom sections; (3b) Enabling review toggle shows frequency dropdown and first_review_date picker; (4) POST /api/annual-reviews/auto-generate creates 0 bilans since no members have annual_review_enabled=True; (5) All recurring_revenue items have member_name populated; (6) Dialog scrolling works correctly showing billing toggle (green), review toggle (blue), and duo checkbox.",
+  "bugs_verified": {
+    "FIX_1_Recurring_Revenue_Source": {
+      "status": "FIXED",
+      "evidence": "GET /api/monthly-kpis/2026-03/details returns recurring_revenue from billing_enabled members: 47 items, total 6202 CHF, no coaches",
+      "backend_tests": ["test_recurring_revenue_count_is_around_47", "test_recurring_revenue_total_around_6202", "test_recurring_revenue_no_coaches"]
+    },
+    "FIX_2_Onboarding_No_Reorder": {
+      "status": "FIXED (during testing)",
+      "evidence": "Member order preserved after toggle: 'Alex Giraud' still first after clicking step - uses filteredOnboarding with stable alphabetical sort",
+      "code_fix": "OnboardingPage.js line 330: changed from pendingOnboarding.filter() to filteredOnboarding"
+    },
+    "FIX_3_Member_Edit_Scroll": {
+      "status": "FIXED",
+      "evidence": "Playwright found all 3 sections: billing switch (data-testid=billing-switch), review switch (data-testid=review-switch), duo checkbox (data-testid=duo-checkbox)",
+      "ui_elements": ["Facturation récurrente toggle (green)", "Activer le Suivi / Bilan toggle (blue)", "Abonnement Duo checkbox"]
+    },
+    "FIX_3b_Review_Toggle_Fields": {
+      "status": "FIXED",
+      "evidence": "When review toggle enabled, shows: Fréquence du bilan dropdown (Mensuel/Trimestriel/etc) + Date du 1er bilan date picker (data-testid=first-review-date-input)"
+    },
+    "FIX_4_Auto_Generate_Only_Enabled": {
+      "status": "FIXED",
+      "evidence": "POST /api/annual-reviews/auto-generate returns created=0, total_eligible=0 because no members have annual_review_enabled=True",
+      "backend_tests": ["test_no_members_have_annual_review_enabled_by_default", "test_auto_generate_creates_zero_when_no_enabled_members"]
+    },
+    "FIX_5_No_Empty_Names": {
+      "status": "FIXED",
+      "evidence": "All 47 recurring_revenue items have member_name populated, 0 items with empty/unknown names",
+      "backend_test": "test_recurring_revenue_all_have_member_names"
+    },
+    "FIX_6_Dialog_Scrolling": {
+      "status": "FIXED",
+      "evidence": "Modal scrolls properly, all 3 bottom sections visible and interactive via Playwright tests",
+      "screenshots": [".screenshots/member_edit_modal_top.png", ".screenshots/member_edit_modal_scrolled.png"]
+    }
+  },
+  "test_date": "2026-03-18",
+  "test_month": "2026-03"
+}

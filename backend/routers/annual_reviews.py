@@ -255,10 +255,11 @@ async def create_review(data: AnnualReviewCreate):
 async def auto_generate_reviews():
     """Scan ALL active members and create missing scheduled reviews.
     Rules:
+    - Only members with annual_review_enabled=True
     - Exclude departed members (exit_date in the past)
     - Exclude HUBFIT memberships
     - Exclude anyone who has ANY coach membership (THE COACH / VIRTUAL COACH)
-    - Frequency: monthly for all
+    - Frequency: monthly for all (unless member has a specific review_frequency)
     """
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -266,7 +267,9 @@ async def auto_generate_reviews():
     members = await db.customer_members.find(
         {},
         {"_id": 0, "id": 1, "name": 1, "contract_signed_date": 1,
-         "annual_review_date": 1, "exit_date": 1, "membership": 1}
+         "annual_review_date": 1, "exit_date": 1, "membership": 1,
+         "annual_review_enabled": 1, "first_review_date": 1,
+         "review_frequency": 1}
     ).to_list(5000)
 
     # Step 1: Build set of names that have ANY coach membership
@@ -279,6 +282,9 @@ async def auto_generate_reviews():
 
     # Step 2: Filter eligible members
     def is_eligible(m):
+        # Must have bilan enabled
+        if not m.get("annual_review_enabled"):
+            return False
         # Departed?
         exit_d = m.get("exit_date")
         if exit_d and exit_d not in (None, "", "None") and exit_d < today:
@@ -297,15 +303,17 @@ async def auto_generate_reviews():
 
     eligible = [m for m in members if is_eligible(m)]
 
-    # Frequency: monthly for all
-    freq = "monthly"
-    delta = FREQUENCY_MAP["monthly"]
+    # Frequency: monthly for all (default)
+    default_freq = "monthly"
+    default_delta = FREQUENCY_MAP["monthly"]
 
     created = 0
     skipped = 0
 
     for member in eligible:
         member_id = member["id"]
+        freq = member.get("review_frequency", default_freq)
+        delta = FREQUENCY_MAP.get(freq, default_delta)
 
         # Check if there's already a scheduled review
         existing_scheduled = await db.annual_reviews.find_one({
@@ -319,7 +327,7 @@ async def auto_generate_reviews():
             continue
 
         # Calculate next review date
-        # Try from last completed review, then from annual_review_date, then from contract_signed_date
+        # Priority: first_review_date (if set and no completed reviews) > last completed > contract_signed_date
         last_completed = await db.annual_reviews.find_one(
             {"member_id": member_id, "status": "completed"},
             {"_id": 0, "review_date": 1},
@@ -329,9 +337,10 @@ async def auto_generate_reviews():
         if last_completed:
             base_date = datetime.strptime(last_completed["review_date"], "%Y-%m-%d")
             next_date = base_date + delta
-            # If calculated date is in the past, keep adding frequency until future
             while next_date.strftime("%Y-%m-%d") < today:
                 next_date = next_date + delta
+        elif member.get("first_review_date") and member["first_review_date"] >= today:
+            next_date = datetime.strptime(member["first_review_date"], "%Y-%m-%d")
         elif member.get("annual_review_date") and member["annual_review_date"] >= today:
             next_date = datetime.strptime(member["annual_review_date"], "%Y-%m-%d")
         elif member.get("contract_signed_date"):
@@ -345,7 +354,6 @@ async def auto_generate_reviews():
 
         review_date_str = next_date.strftime("%Y-%m-%d")
 
-        # Create review
         new_review = AnnualReview(
             member_id=member_id,
             review_date=review_date_str,
@@ -354,7 +362,6 @@ async def auto_generate_reviews():
         )
         await db.annual_reviews.insert_one(new_review.model_dump())
 
-        # Update member's annual_review_date
         await db.customer_members.update_one(
             {"id": member_id},
             {"$set": {"annual_review_date": review_date_str}}

@@ -97,6 +97,34 @@ def review_reminder_template(club_name, member_name, review_date, review_type):
     return base_template(club_name, f"Bilan {type_label} à venir", body)
 
 
+def review_reminder_staff_template(club_name, member_name, member_email, member_phone, review_date, review_type, member_url):
+    """Email sent to STAFF with CTA to open member profile"""
+    type_labels = {
+        "monthly": "mensuel", "quarterly": "trimestriel",
+        "semi-annually": "semestriel", "annually": "annuel"
+    }
+    type_label = type_labels.get(review_type, "de suivi")
+    body = f"""
+    <p style="color: #ccc; line-height: 1.6;">Un bilan {type_label} est à planifier pour :</p>
+    <div style="background: #1C1C1E; border-radius: 8px; padding: 16px; margin: 16px 0; border-left: 3px solid #8B5CF6;">
+      <p style="margin: 0 0 8px 0; color: #8B5CF6; font-size: 18px; font-weight: 700;">{member_name}</p>
+      <p style="margin: 0 0 4px 0; color: #999; font-size: 13px;">Email: <span style="color: #fff;">{member_email or 'Non renseigné'}</span></p>
+      <p style="margin: 0 0 4px 0; color: #999; font-size: 13px;">Téléphone: <span style="color: #fff;">{member_phone or 'Non renseigné'}</span></p>
+      <p style="margin: 0 0 4px 0; color: #999; font-size: 13px;">Date du bilan: <span style="color: #8B5CF6; font-weight: 600;">{review_date}</span></p>
+      <p style="margin: 0; color: #999; font-size: 13px;">Type: <span style="color: #fff;">Bilan {type_label}</span></p>
+    </div>
+    <p style="color: #ccc; line-height: 1.6;">Contactez ce membre pour fixer un rendez-vous.</p>
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="{member_url}" 
+         style="display: inline-block; background: #8B5CF6; color: #fff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+        Voir la fiche du membre
+      </a>
+    </div>
+    <p style="color: #666; font-size: 13px; margin-top: 24px;">— {club_name}</p>
+    """
+    return base_template(club_name, f"Bilan {type_label} à planifier", body)
+
+
 def followup_reminder_template(club_name, member_name, followup_date, followup_type):
     body = f"""
     <p style="color: #ccc; line-height: 1.6;">Bonjour <strong style="color: #fff;">{member_name}</strong>,</p>
@@ -203,25 +231,40 @@ async def send_payment_reminder(payment_id: str):
 
 @router.post("/send-review-reminder/{review_id}")
 async def send_review_reminder(review_id: str):
-    """Send review/bilan reminder"""
+    """Send review/bilan reminder to STAFF with link to member profile"""
     review = await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
     if not review:
         raise HTTPException(status_code=404, detail="Bilan introuvable")
 
     member = await db.customer_members.find_one({"id": review["member_id"]}, {"_id": 0})
-    if not member or not member.get("email"):
-        raise HTTPException(status_code=400, detail="Membre sans email")
+    if not member:
+        raise HTTPException(status_code=400, detail="Membre introuvable")
 
     club_name = await get_club_name()
-    review_type = review.get("review_type", "annually")
-    html = review_reminder_template(club_name, member["name"], review["review_date"], review_type)
-    subject = f"[{club_name}] Bilan à venir - {review['review_date']}"
+    review_type = review.get("review_type", "monthly")
 
-    await send_email_async(member["email"], subject, html)
+    # Get staff email from settings or use sender email
+    settings = await db.settings.find_one({}, {"_id": 0})
+    staff_email = SENDER_EMAIL  # Send to the club's own email (staff)
+
+    # Build CTA URL pointing to member profile in the app
+    app_base_url = os.environ.get("FRONTEND_URL", "")
+    if not app_base_url:
+        # Try to infer from CORS or use a default
+        app_base_url = "https://club-follow-ups.preview.emergentagent.com"
+    member_url = f"{app_base_url}/members?search={member.get('name', '').replace(' ', '+')}"
+
+    html = review_reminder_staff_template(
+        club_name, member["name"], member.get("email", ""),
+        member.get("phone", ""), review["review_date"], review_type, member_url
+    )
+    subject = f"[{club_name}] Bilan à planifier - {member['name']}"
+
+    await send_email_async(staff_email, subject, html)
 
     await db.notification_logs.insert_one({
         "type": "review_reminder",
-        "recipient": member["email"],
+        "recipient": staff_email,
         "subject": subject,
         "reference_id": review_id,
         "member_id": member["id"],
@@ -229,7 +272,7 @@ async def send_review_reminder(review_id: str):
         "sent_at": datetime.now(timezone.utc).isoformat(),
     })
 
-    return {"status": "success", "message": f"Rappel de bilan envoyé à {member['name']} ({member['email']})"}
+    return {"status": "success", "message": f"Rappel envoyé à l'équipe pour le bilan de {member['name']}"}
 
 
 @router.post("/send-bulk")
@@ -267,14 +310,22 @@ async def send_bulk_notifications(data: BulkNotificationRequest):
             "status": "scheduled"
         }, {"_id": 0}).to_list(100)
 
+        staff_email = SENDER_EMAIL
+        app_base_url = os.environ.get("FRONTEND_URL", "https://club-follow-ups.preview.emergentagent.com")
+
         for r in upcoming:
             member = await db.customer_members.find_one({"id": r["member_id"]}, {"_id": 0})
-            if not member or not member.get("email"):
+            if not member:
                 continue
-            html = review_reminder_template(club_name, member["name"], r["review_date"], r.get("review_type", "annually"))
-            subject = f"[{club_name}] Bilan à venir"
+            member_url = f"{app_base_url}/members?search={member.get('name', '').replace(' ', '+')}"
+            html = review_reminder_staff_template(
+                club_name, member["name"], member.get("email", ""),
+                member.get("phone", ""), r["review_date"],
+                r.get("review_type", "monthly"), member_url
+            )
+            subject = f"[{club_name}] Bilan à planifier - {member['name']}"
             try:
-                await send_email_async(member["email"], subject, html)
+                await send_email_async(staff_email, subject, html)
                 sent.append(member["name"])
             except Exception as e:
                 failed.append({"member": member["name"], "error": str(e)})

@@ -34,7 +34,8 @@ class CustomerMember(BaseModel):
     annual_review_enabled: bool = False
     annual_review_date: Optional[str] = None  # Date du prochain bilan
     last_annual_review_date: Optional[str] = None
-    review_frequency: str = "annually"  # "weekly", "monthly", "quarterly", "semi-annually", "annually"
+    review_frequency: str = "monthly"  # "monthly", "quarterly", "semi-annually", "annually"
+    first_review_date: Optional[str] = None  # Date du 1er bilan (configurable par l'utilisateur)
     bilan_frequency: str = "monthly"  # Default bilan frequency for auto-generation
     # Monthly follow-up
     last_followup_date: Optional[str] = None
@@ -71,7 +72,8 @@ class CustomerMemberCreate(BaseModel):
     billing_payment_method: str = "prelevement"
     # Annual review
     annual_review_enabled: bool = False
-    review_frequency: str = "annually"
+    review_frequency: str = "monthly"
+    first_review_date: Optional[str] = None
     # Onboarding
     onboarding_bsport: bool = False
     onboarding_hubfit: bool = False
