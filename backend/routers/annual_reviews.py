@@ -253,40 +253,59 @@ async def create_review(data: AnnualReviewCreate):
 
 @router.post("/auto-generate")
 async def auto_generate_reviews():
-    """Scan ALL active members and create missing scheduled reviews."""
+    """Scan ALL active members and create missing scheduled reviews.
+    Rules:
+    - Exclude departed members (exit_date in the past)
+    - Exclude HUBFIT memberships
+    - Exclude anyone who has ANY coach membership (THE COACH / VIRTUAL COACH)
+    - Frequency: monthly for all
+    """
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # Get ALL members (not just those with annual_review_enabled)
+    # Get ALL members
     members = await db.customer_members.find(
         {},
         {"_id": 0, "id": 1, "name": 1, "contract_signed_date": 1,
-         "review_frequency": 1, "bilan_frequency": 1,
-         "annual_review_date": 1, "exit_date": 1,
-         "annual_review_enabled": 1, "membership": 1}
+         "annual_review_date": 1, "exit_date": 1, "membership": 1}
     ).to_list(5000)
 
-    # Filter: active members only (no exit_date or exit_date in the future)
-    # Exclude coaches (THE COACH / VIRTUAL COACH)
+    # Step 1: Build set of names that have ANY coach membership
     coach_kw = ["THE COACH", "VIRTUAL COACH"]
+    coach_names = set()
+    for m in members:
+        membership = (m.get("membership") or "").upper()
+        if any(kw in membership for kw in coach_kw):
+            coach_names.add(m.get("name", ""))
 
-    def is_active_member(m):
+    # Step 2: Filter eligible members
+    def is_eligible(m):
+        # Departed?
         exit_d = m.get("exit_date")
         if exit_d and exit_d not in (None, "", "None") and exit_d < today:
             return False
         membership = (m.get("membership") or "").upper()
+        # Exclude HUBFIT
+        if "HUBFIT" in membership:
+            return False
+        # Exclude coach memberships
         if any(kw in membership for kw in coach_kw):
+            return False
+        # Exclude anyone whose NAME has a coach membership elsewhere
+        if m.get("name", "") in coach_names:
             return False
         return True
 
-    eligible = [m for m in members if is_active_member(m)]
+    eligible = [m for m in members if is_eligible(m)]
+
+    # Frequency: monthly for all
+    freq = "monthly"
+    delta = FREQUENCY_MAP["monthly"]
 
     created = 0
     skipped = 0
 
     for member in eligible:
         member_id = member["id"]
-        freq = member.get("bilan_frequency") or member.get("review_frequency", "quarterly")
-        delta = FREQUENCY_MAP.get(freq, relativedelta(months=3))
 
         # Check if there's already a scheduled review
         existing_scheduled = await db.annual_reviews.find_one({
@@ -390,24 +409,17 @@ async def complete_review(review_id: str, body: dict):
         }}
     )
 
-    # Auto-schedule next review based on frequency
+    # Auto-schedule next review: always monthly
     next_date = body.get("next_review_date")
     if not next_date:
-        member = await db.customer_members.find_one(
-            {"id": existing["member_id"]}, {"_id": 0}
-        )
-        if member and member.get("annual_review_enabled"):
-            freq = member.get("review_frequency", existing.get("review_type", "annually"))
-            delta = FREQUENCY_MAP.get(freq, relativedelta(years=1))
-            completed_date = datetime.strptime(update["completed_date"], "%Y-%m-%d")
-            next_date = (completed_date + delta).strftime("%Y-%m-%d")
+        completed_date = datetime.strptime(update["completed_date"], "%Y-%m-%d")
+        next_date = (completed_date + relativedelta(months=1)).strftime("%Y-%m-%d")
 
     if next_date:
-        review_type = existing.get("review_type", "annually")
         next_review = AnnualReview(
             member_id=existing["member_id"],
             review_date=next_date,
-            review_type=review_type,
+            review_type="monthly",
             status="scheduled"
         )
         await db.annual_reviews.insert_one(next_review.model_dump())

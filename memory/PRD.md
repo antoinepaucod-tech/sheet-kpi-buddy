@@ -11,7 +11,19 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - `accounting_transactions`: 3425 transactions
 - `monthly_kpis`: 32 mois (recalcules depuis transactions + GHL)
 - `payment_schedules`: 75 (73 actifs)
-- `annual_reviews`: 108+ bilans auto-generes pour membres actifs
+- `annual_reviews`: 95 bilans mensuels auto-generes pour membres actifs eligibles
+
+## Regles Bilans / Suivis
+- **Frequence:** Mensuelle pour tous les membres
+- **Exclusions:**
+  - Membres HUBFIT (jamais de bilan)
+  - Toute personne ayant un abonnement coach (THE COACH / VIRTUAL COACH), meme si elle a aussi un abonnement membre
+  - Membres partis (exit_date dans le passe)
+- **Auto-generation:** Calcul date depuis contract_signed_date + 1 mois, ou dernier bilan complete + 1 mois
+- **Apres completion:** Prochain bilan auto-planifie 1 mois plus tard
+- **Resume auto:** Presences (12 dernieres semaines) + statut paiements affiches dans le modal de completion
+- **Email rappel:** Inclut bouton CTA "Prendre rendez-vous" (mailto)
+- **Alertes dashboard:** Widget avec total planifies, en retard, cette semaine, 30 prochains jours
 
 ## Dashboard Logic
 - **Entonnoir de Vente**: Donnees GHL reelles (leads=84, close=1 Caroline, cash=599 CHF pour mars 2026)
@@ -30,12 +42,12 @@ SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
 - Entonnoir GHL synchro: 84 leads, 1 close (Caroline), 599 CHF cash
 - Transactions recurrentes peuplees: 73 abonnements, 16024 CHF/mois
 - **Systeme complet Bilans/Suivis (2026-03-18):**
-  - Auto-generation pour tous les membres actifs (exclut coachs et partis)
+  - Auto-generation pour membres actifs (exclut coachs, HUBFIT, partis)
+  - Frequence mensuelle pour tous
   - Formulaire de completion avec resume auto presences + paiements
   - Widget alertes bilans sur le Dashboard principal
   - Email de rappel avec CTA "Prendre rendez-vous" (mailto)
   - Historique des bilans avec graphiques d'evolution
-  - Endpoint member-summary pour recapitulatif presences/paiements
 
 ## Backlog
 - **P1**: Explication complete des workflows
