@@ -91,13 +91,23 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
   - [x] Actions logguees: bilan_skipped, bilan_completed, member_created, member_updated
 - [x] Frequences bilans: hebdomadaire/mensuel/trimestriel/semestriel/annuel (default=mensuel)
 
+## Corrections 7 Bugs Utilisateur (19 mars 2026 - Session 2)
+- [x] Creneaux horaires CoursesPage: 1h -> 15 min (06:00, 06:15, 06:30... 21:00)
+- [x] Bouton Skip bilans: window.prompt -> Dialog modal avec raison + confirmation
+- [x] Client name dans mark-paid: champ client_name ajoute a la transaction creee
+- [x] SALAIRES COACHS 0 CHF: 20 transactions nettoyees + garde dans generate_salary_expenses et generate_monthly_transactions
+- [x] Donnees de test: aucune restante (Adrien Testa = vrai coach)
+- [x] Budget mensuel: verifie fonctionnel (42 categories, donnees correctes)
+- [x] UX Recurrences: texte explicatif ajoute dans la section Validation Mensuelle
+
 ## Backlog
+- (P0) Integration Revolut Business API (synchronisation depenses)
+- (P0) Mapping categories Revolut <-> TRANSFORM
 - (P0) Integration API GoHighLevel + Notifications avancees
-- (P1) Suppression page Plannings (/recurring) redondante -> NOTE: page /recurring desormais utile (affiche toutes recurrences)
 - (P2) Alertes WhatsApp via Twilio
 - (P2) Interface migration CSV
 - (P2) Metriques CPL, CPR, LTV
-- (P3) Refactoring MembersPage.js (>1400 lignes)
+- (P3) Refactoring MembersPage.js (>1500 lignes)
 
 ## Credentials
 - Email: test@crossfit.ch | Password: test123
