@@ -80,6 +80,16 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
   - [x] Bilans en retard: auto-generate calcule depuis contract_signed_date, avance jusqu'a periode courante (11 en retard visibles)
   - [x] Page /recurring: toutes recurrences (billing+templates+categories), 93 items
   - [x] Creation transaction: option is_recurring + creation template auto
+- [x] Skip bilan (19 mars 2026):
+  - [x] Bouton Skip + raison optionnelle sur bilans en retard/a venir/cette semaine
+  - [x] Auto-planification du prochain bilan (date + frequence)
+  - [x] Trace dans activity_logs du membre
+- [x] Historique des actions dans fiche membre (19 mars 2026):
+  - [x] Collection activity_logs avec member_id, action, description, user_name
+  - [x] Endpoint GET /api/members/{id}/activity-log
+  - [x] Modal Historique accessible depuis icone horloge sur chaque membre
+  - [x] Actions logguees: bilan_skipped, bilan_completed, member_created, member_updated
+- [x] Frequences bilans: hebdomadaire/mensuel/trimestriel/semestriel/annuel (default=mensuel)
 
 ## Backlog
 - (P0) Integration API GoHighLevel + Notifications avancees
