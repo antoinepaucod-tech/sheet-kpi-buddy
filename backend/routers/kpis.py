@@ -243,11 +243,24 @@ async def get_monthly_kpi_details(month: str):
     if ghl_sales:
         funnel["details"] = ghl_sales
 
-    # New members this month
-    new_members = await db.customer_members.find(
+    # New members this month (exclude coaches, HUBFIT, and renewals)
+    new_members_raw = await db.customer_members.find(
         {"contract_signed_date": {"$regex": f"^{month}"}},
         {"_id": 0, "id": 1, "name": 1, "membership": 1, "contract_signed_date": 1, "cash_collected": 1}
-    ).to_list(100)
+    ).to_list(1000)
+    exclude_kw = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
+    new_members_filtered = [m for m in new_members_raw
+                            if not any(kw in (m.get("membership") or "").upper() for kw in exclude_kw)]
+    # Exclude renewals: keep only members who had NO prior contract
+    month_start = f"{month}-01"
+    new_members = []
+    for m in new_members_filtered:
+        prior = await db.customer_members.find_one(
+            {"name": m["name"], "contract_signed_date": {"$lt": month_start, "$exists": True, "$ne": ""}},
+            {"_id": 1}
+        )
+        if not prior:
+            new_members.append(m)
 
     return {
         "kpi": kpi,
@@ -342,12 +355,25 @@ async def recalculate_month(month: str):
     if "funnel_cash" not in update:
         update["funnel_cash"] = merged.get("funnel_cash") or merged.get("cash_collected", 0) or 0
 
-    # New members count
-    new_members_this_month = await db.customer_members.find(
+    # New members count (exclude coaches, HUBFIT, and renewals)
+    new_members_raw = await db.customer_members.find(
         {"contract_signed_date": {"$regex": f"^{month}"}},
-        {"_id": 0, "name": 1}
+        {"_id": 0, "name": 1, "membership": 1, "contract_signed_date": 1}
     ).to_list(1000)
-    update["new_members"] = len(new_members_this_month)
+    exclude_kw_new = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
+    new_filtered = [m for m in new_members_raw
+                    if not any(kw in (m.get("membership") or "").upper() for kw in exclude_kw_new)]
+    # Exclude renewals
+    new_month_start = f"{month}-01"
+    new_count = 0
+    for m in new_filtered:
+        prior = await db.customer_members.find_one(
+            {"name": m["name"], "contract_signed_date": {"$lt": new_month_start, "$exists": True, "$ne": ""}},
+            {"_id": 1}
+        )
+        if not prior:
+            new_count += 1
+    update["new_members"] = new_count
 
     # --- Member counts: Calculate active members for this specific month ---
     year_int, month_int = int(month[:4]), int(month[5:7])
