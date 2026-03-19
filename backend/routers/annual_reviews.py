@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from dateutil.relativedelta import relativedelta
+from uuid import uuid4
 import logging
 
 from core.config import db
@@ -409,6 +410,16 @@ async def complete_review(review_id: str, body: dict):
 
     await db.annual_reviews.update_one({"id": review_id}, {"$set": update})
 
+    # Log activity
+    await db.activity_logs.insert_one({
+        "id": str(uuid4()),
+        "member_id": existing["member_id"],
+        "action": "bilan_completed",
+        "description": f"Bilan {existing.get('review_type', 'mensuel')} du {existing.get('review_date', '')} complété",
+        "user_name": body.get("user_name", "Utilisateur"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
     await db.customer_members.update_one(
         {"id": existing["member_id"]},
         {"$set": {
@@ -436,6 +447,63 @@ async def complete_review(review_id: str, body: dict):
             {"id": existing["member_id"]},
             {"$set": {"annual_review_date": next_date}}
         )
+
+    return await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
+
+
+@router.post("/{review_id}/skip")
+async def skip_review(review_id: str, body: dict = {}):
+    """Skip a review - mark as skipped, log activity, auto-schedule next one"""
+    existing = await db.annual_reviews.find_one({"id": review_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Bilan introuvable")
+
+    now = datetime.now(timezone.utc)
+    reason = body.get("reason", "")
+    user_name = body.get("user_name", "Utilisateur")
+
+    # Mark as skipped
+    await db.annual_reviews.update_one(
+        {"id": review_id},
+        {"$set": {
+            "status": "skipped",
+            "skip_reason": reason,
+            "skipped_by": user_name,
+            "skipped_date": now.strftime("%Y-%m-%d"),
+            "updated_at": now.isoformat(),
+        }}
+    )
+
+    # Log activity on the member
+    await db.activity_logs.insert_one({
+        "id": str(uuid4()),
+        "member_id": existing["member_id"],
+        "action": "bilan_skipped",
+        "description": f"Bilan {existing.get('review_type', 'mensuel')} du {existing.get('review_date', '')} skipé" + (f" — Raison : {reason}" if reason else ""),
+        "user_name": user_name,
+        "created_at": now.isoformat(),
+    })
+
+    # Auto-schedule next review based on frequency
+    member = await db.customer_members.find_one({"id": existing["member_id"]}, {"_id": 0})
+    freq = (member or {}).get("review_frequency", "monthly")
+    delta = FREQUENCY_MAP.get(freq, FREQUENCY_MAP["monthly"])
+
+    review_date = datetime.strptime(existing["review_date"], "%Y-%m-%d")
+    next_date = review_date + delta
+
+    next_review = AnnualReview(
+        member_id=existing["member_id"],
+        review_date=next_date.strftime("%Y-%m-%d"),
+        review_type=freq,
+        status="scheduled",
+    )
+    await db.annual_reviews.insert_one(next_review.model_dump())
+
+    await db.customer_members.update_one(
+        {"id": existing["member_id"]},
+        {"$set": {"annual_review_date": next_date.strftime("%Y-%m-%d")}}
+    )
 
     return await db.annual_reviews.find_one({"id": review_id}, {"_id": 0})
 

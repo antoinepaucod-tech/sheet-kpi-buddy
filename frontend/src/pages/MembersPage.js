@@ -21,6 +21,10 @@ import {
   CreditCard,
   ClipboardCheck,
   UserX,
+  History,
+  SkipForward,
+  UserPlus,
+  Activity,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -106,6 +110,8 @@ export default function MembersPage() {
   const [duoWarningAction, setDuoWarningAction] = useState(null); // "edit" | "delete"
   const [selectedMember, setSelectedMember] = useState(null);
   const [expandedMember, setExpandedMember] = useState(null);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyMemberId, setHistoryMemberId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -188,6 +194,13 @@ export default function MembersPage() {
   const { data: memberTypes = [] } = useQuery({
     queryKey: ["member-types"],
     queryFn: () => axios.get(`${API}/settings/member-types?active_only=true`).then((r) => r.data),
+  });
+
+  // Fetch activity log for history modal
+  const { data: activityLog = [] } = useQuery({
+    queryKey: ["activity-log", historyMemberId],
+    queryFn: () => historyMemberId ? axios.get(`${API}/members/${historyMemberId}/activity-log`).then((r) => r.data) : [],
+    enabled: !!historyMemberId && historyModalOpen,
   });
 
   // Build renewal duration options from membership types (deduplicated)
@@ -706,6 +719,16 @@ export default function MembersPage() {
                           data-testid={`edit-${member.id}`}
                         >
                           <Edit size={14} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-[var(--color-text-secondary)] hover:text-[var(--color-info)] hover:bg-[rgba(100,210,255,0.08)]"
+                          onClick={() => { setHistoryMemberId(member.id); setHistoryModalOpen(true); }}
+                          title="Historique"
+                          data-testid={`history-${member.id}`}
+                        >
+                          <History size={14} />
                         </Button>
                         <Button
                           size="sm"
@@ -1489,6 +1512,50 @@ export default function MembersPage() {
               {duoWarningAction === "dissociate" ? "Dissocier le DUO" : "Supprimer quand même"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Activity Log History Modal */}
+      <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+        <DialogContent className="bg-[var(--color-bg-primary)] border-[var(--color-border)] max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="history-modal">
+          <DialogHeader>
+            <DialogTitle className="text-white font-display text-xl flex items-center gap-2">
+              <History size={20} className="text-[var(--color-info)]" />
+              Historique des actions
+            </DialogTitle>
+            <p className="text-[var(--color-text-secondary)] text-sm">
+              {members.find((m) => m.id === historyMemberId)?.name || "Membre"}
+            </p>
+          </DialogHeader>
+          <div className="space-y-1 mt-2">
+            {activityLog.length === 0 ? (
+              <p className="text-center text-[var(--color-text-tertiary)] py-8 text-sm">Aucune action enregistrée</p>
+            ) : (
+              activityLog.map((log) => {
+                const actionConfig = {
+                  bilan_skipped: { icon: <SkipForward size={14} />, color: "text-[var(--color-warning)]", bg: "bg-[rgba(255,159,10,0.1)]" },
+                  bilan_completed: { icon: <CheckCircle2 size={14} />, color: "text-[var(--color-success)]", bg: "bg-[rgba(48,209,88,0.1)]" },
+                  member_created: { icon: <UserPlus size={14} />, color: "text-[var(--color-accent)]", bg: "bg-[rgba(10,132,255,0.1)]" },
+                  member_updated: { icon: <Edit size={14} />, color: "text-[var(--color-info)]", bg: "bg-[rgba(100,210,255,0.1)]" },
+                };
+                const cfg = actionConfig[log.action] || { icon: <Activity size={14} />, color: "text-[var(--color-text-secondary)]", bg: "bg-[rgba(255,255,255,0.05)]" };
+                return (
+                  <div key={log.id} className={`flex items-start gap-3 p-3 rounded-[var(--radius-lg)] ${cfg.bg}`}>
+                    <div className={`mt-0.5 ${cfg.color}`}>{cfg.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm">{log.description}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[var(--color-text-tertiary)] text-[10px] font-mono">
+                          {log.created_at ? new Date(log.created_at).toLocaleString("fr-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                        </span>
+                        <span className="text-[var(--color-text-tertiary)] text-[10px]">par {log.user_name || "Système"}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,0 +1,84 @@
+{
+  "summary": "Iteration 61 - All features tested and verified: Skip button on Bilans page, Activity log in Members page, all frequency options present. Backend: 14/14 tests passed. Frontend: All UI elements verified via Playwright.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration61_skip_activitylog.py",
+    "/app/test_reports/pytest/pytest_results_iter61.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Skip endpoint correctly marks review as skipped, logs activity, and auto-schedules next review based on frequency",
+    "Activity log endpoint returns entries sorted by created_at descending",
+    "All bilans show 'MENSUEL' type badge in the UI",
+    "Skip button prompts for reason using window.prompt and sends to API",
+    "History modal in Members page shows 'Historique des actions' with activity entries or 'Aucune action enregistrée'",
+    "Frequency dropdown in member edit form has all 5 options: Hebdomadaire, Mensuel, Trimestriel, Semestriel, Annuel",
+    "FREQUENCY_MAP in annual_reviews.py includes weekly option"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration61_skip_activitylog.py"
+  ],
+  "success_rate": {"backend": "100% (14/14 tests)", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "Skipped 3 bilans during testing (Arthur Wehrli's bilans), creating activity log entries",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 61 verified: (1) Skip button works on Bilans page - prompts for reason, calls POST /api/annual-reviews/{id}/skip, auto-schedules next review; (2) Activity log shows on Members page via History button (clock icon) - modal displays entries or 'Aucune action enregistrée'; (3) All bilans show MENSUEL type; (4) Member edit form has frequency dropdown with Hebdomadaire/Mensuel/Trimestriel/Semestriel/Annuel options; (5) 89 overdue bilans, 3 this week, 7 upcoming (60 days). Arthur Wehrli member has 2 skipped bilan entries in activity log.",
+  "features_verified": {
+    "Skip_Endpoint": {
+      "status": "PASS",
+      "evidence": "POST /api/annual-reviews/{id}/skip returns status=skipped, creates activity log, schedules next review"
+    },
+    "Activity_Log_Endpoint": {
+      "status": "PASS",
+      "evidence": "GET /api/members/{member_id}/activity-log returns array with action/description/user_name/created_at fields"
+    },
+    "Skip_Creates_Activity_Log": {
+      "status": "PASS",
+      "evidence": "Arthur Wehrli activity log shows: 'Bilan monthly du 2026-04-18 skipé' and 'Bilan monthly du 2026-03-18 skipé — Raison : Test skip'"
+    },
+    "Skip_Auto_Schedules_Next": {
+      "status": "PASS",
+      "evidence": "After skip, Total bilans increased from 100 to 101 - new scheduled review created"
+    },
+    "Frontend_Skip_Button": {
+      "status": "PASS",
+      "evidence": "Skip button with SkipForward icon visible next to Compléter button, data-testid='skip-{review_id}'"
+    },
+    "Frontend_History_Button": {
+      "status": "PASS",
+      "evidence": "History button (clock icon) visible on each member row, data-testid='history-{member_id}', 93 buttons found"
+    },
+    "Frontend_History_Modal": {
+      "status": "PASS",
+      "evidence": "Modal titled 'Historique des actions' shows activity entries with bilan_skipped action and reason"
+    },
+    "Bilans_Type_Monthly": {
+      "status": "PASS",
+      "evidence": "All scheduled reviews display 'MENSUEL' badge in TYPE column"
+    },
+    "Frequency_Options": {
+      "status": "PASS",
+      "evidence": "Member edit form frequency dropdown has: Hebdomadaire, Mensuel, Trimestriel, Semestriel, Annuel"
+    }
+  },
+  "bilans_counts": {
+    "total": 101,
+    "scheduled": 96,
+    "completed": 0,
+    "skipped": 5,
+    "overdue": 89,
+    "this_week": 3,
+    "upcoming_60d": 7
+  },
+  "test_date": "2026-03-19",
+  "test_time": "14:20 UTC"
+}

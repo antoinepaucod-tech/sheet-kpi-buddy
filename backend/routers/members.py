@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from dateutil.relativedelta import relativedelta
+from uuid import uuid4
 
 from core.config import db
 from models.members import (
@@ -331,6 +332,9 @@ async def create_member(data: CustomerMemberCreate):
         from routers.transactions import _auto_recalculate_kpis
         await _auto_recalculate_kpis(tx_doc["date"])
 
+    # Log creation
+    await log_member_activity(doc["id"], "member_created", f"Membre créé : {doc.get('name')}")
+
     return doc
 
 
@@ -401,6 +405,9 @@ async def update_member(member_id: str, data: CustomerMemberCreate):
     elif existing_schedule and not data.billing_enabled:
         await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": {"is_active": False}})
     
+    # Log modification
+    await log_member_activity(member_id, "member_updated", f"Fiche membre modifiée : {data.name}")
+
     return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
 
 
@@ -443,6 +450,7 @@ async def dissociate_duo(member_id: str):
 
 @router.delete("/{member_id}")
 async def delete_member(member_id: str):
+    member = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "name": 1})
     result = await db.customer_members.delete_one({"id": member_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Membre introuvable")
@@ -586,3 +594,24 @@ async def update_member_onboarding(member_id: str, body: dict):
 async def get_member_annual_reviews(member_id: str):
     """Get all annual reviews for a specific member"""
     return await db.annual_reviews.find({"member_id": member_id}, {"_id": 0}).sort("review_date", -1).to_list(50)
+
+
+
+@router.get("/{member_id}/activity-log")
+async def get_member_activity_log(member_id: str):
+    """Get full activity log for a member"""
+    return await db.activity_logs.find(
+        {"member_id": member_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(200)
+
+
+async def log_member_activity(member_id: str, action: str, description: str, user_name: str = "Utilisateur"):
+    """Helper to log an activity on a member"""
+    await db.activity_logs.insert_one({
+        "id": str(uuid4()),
+        "member_id": member_id,
+        "action": action,
+        "description": description,
+        "user_name": user_name,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })

@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Activity,
   CreditCard,
+  SkipForward,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -174,6 +175,17 @@ export default function AnnualReviewsPage() {
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
   });
 
+  // Skip review mutation
+  const skipMutation = useMutation({
+    mutationFn: ({ id, reason }) =>
+      axios.post(`${API}/annual-reviews/${id}/skip`, { reason, user_name: "Utilisateur" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["annual-reviews"]);
+      toast.success("Bilan skipé — prochain bilan planifié");
+    },
+    onError: () => toast.error("Erreur lors du skip"),
+  });
+
   // Auto-generate reviews for all eligible members
   const autoGenerateMutation = useMutation({
     mutationFn: () => axios.post(`${API}/annual-reviews/auto-generate`),
@@ -259,11 +271,14 @@ export default function AnnualReviewsPage() {
       return days >= 0 && days <= 60;
     });
 
+    const skipped = allReviews.filter((r) => r.status === "skipped");
+
     return {
       total: allReviews.length,
       scheduled: scheduled.length,
       completed: completed.length,
       missed: missed.length,
+      skipped: skipped.length,
       next7Days: next7Days.length,
       next30Days: next30Days.length,
       next60Days: next60Days.length,
@@ -316,6 +331,15 @@ export default function AnnualReviewsPage() {
         <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
           <CheckCircle2 size={12} className="mr-1" />
           Complété
+        </Badge>
+      );
+    }
+
+    if (review.status === "skipped") {
+      return (
+        <Badge className="bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)] border-0">
+          <SkipForward size={12} className="mr-1" />
+          Skipé
         </Badge>
       );
     }
@@ -572,15 +596,34 @@ export default function AnnualReviewsPage() {
                           Voir
                         </Button>
                       ) : (
-                        <Button
-                          size="sm"
-                          className="bg-[var(--color-info)] hover:bg-[var(--color-info)] hover:opacity-85"
-                          onClick={() => openCompleteModal(review)}
-                          data-testid={`complete-${review.id}`}
-                        >
-                          <CheckCircle2 size={14} className="mr-1" />
-                          Compléter
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            className="bg-[var(--color-info)] hover:bg-[var(--color-info)] hover:opacity-85"
+                            onClick={() => openCompleteModal(review)}
+                            data-testid={`complete-${review.id}`}
+                          >
+                            <CheckCircle2 size={14} className="mr-1" />
+                            Compléter
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.08)]"
+                            onClick={() => {
+                              const reason = window.prompt("Raison du skip (optionnel) :");
+                              if (reason !== null) {
+                                skipMutation.mutate({ id: review.id, reason });
+                              }
+                            }}
+                            disabled={skipMutation.isPending}
+                            title="Skip ce bilan"
+                            data-testid={`skip-${review.id}`}
+                          >
+                            <SkipForward size={14} className="mr-1" />
+                            Skip
+                          </Button>
+                        </>
                       )}
                       <Button
                         size="sm"
