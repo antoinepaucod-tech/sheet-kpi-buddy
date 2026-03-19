@@ -42,13 +42,14 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
 - **Membres expires** : subscription_end_date passee -> billing_enabled=False
 
 ## Etat Actuel (Mars 2026)
-- Revenue: 5,062 CHF | Depenses: 2,170 CHF | Net: 2,892 CHF
+- Revenue: 6,912 CHF | Depenses: 2,417 CHF | Net: 4,495 CHF
 - Membres actifs: 93 | Coachs: 29 | Expires: 4 | Partis: 195
-- Recurents (hors coachs): 60 membres / 8,645 CHF
+- Recurents TOUS (coachs+clients): 84 membres / 17,075 CHF
+- Recurents depenses: 9 categories / 500 CHF
 - Plannings: 91 | Paiements: 91 (alignes)
 - DUO: 40 fiches (20 couples, tous bidirectionnels)
 - Offerts: 7 membres avec paiements 0 CHF auto-valides
-- Nouveaux membres: 4 | CAC: 500 CHF
+- Nouveaux membres: 4 | CAC: 500 CHF | Cash entonnoir: 300 CHF
 
 ## Taches Completees
 - [x] Audit complet et corrections de donnees (exit_date, billing)
@@ -70,10 +71,19 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
   - [x] 18 couples DUO relies (+ 2 partenaires retrouves: Asma Fathi, Brice Maillard)
   - [x] Paiements 0 CHF crees pour offerts (91=91 aligne)
   - [x] Logique sync/generate payments mise a jour pour inclure offerts
+- [x] Corrections 8 bugs (19 mars 2026):
+  - [x] Caroline Maerten doublon supprime (GHL auto-tx)
+  - [x] SALAIRES COACH migre vers SALAIRES COACHS (10 tx migrees)
+  - [x] Recurrences KPI: coachs inclus + depenses categories
+  - [x] Entonnoir cash corrige (4762 -> 300 CHF)
+  - [x] Bilans compteur 60j corrige (next60Days)
+  - [x] Bilans en retard: auto-generate ne saute plus les dates passees
+  - [x] Page /recurring: toutes recurrences (billing+templates+categories), 93 items
+  - [x] Creation transaction: option is_recurring + creation template auto
 
 ## Backlog
 - (P0) Integration API GoHighLevel + Notifications avancees
-- (P1) Suppression page Plannings (/recurring) redondante
+- (P1) Suppression page Plannings (/recurring) redondante -> NOTE: page /recurring desormais utile (affiche toutes recurrences)
 - (P2) Alertes WhatsApp via Twilio
 - (P2) Interface migration CSV
 - (P2) Metriques CPL, CPR, LTV
