@@ -157,7 +157,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         loyer: k.loyer || k.rent,
         salaires: k.salaires || k.salaries,
         utilities: k.utilities,
-        marketing: (k.marketing_spend || 0) + (k.ad_spend || 0),
+        marketing: (k.ad_spend || k.marketing_spend || 0) + (k.marketing_cost || 0),
         other: k.other_expenses || k.other_expenses_misc,
       })),
     [kpis, lang]
@@ -785,7 +785,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               { label: t("profitMargin"), value: formatPct(current?.profit_margin) },
               { label: t("roas"), value: `${(current?.roas ?? 0).toFixed(2)}x` },
               { label: t("totalExpenses"), value: formatCHF(current?.total_expenses) },
-              { label: t("adSpend"), value: formatCHF(current?.ad_spend) },
+              { label: t("adSpend"), value: formatCHF((current?.ad_spend || 0) + (current?.marketing_cost || 0)) },
             ].map(({ label, value }) => (
               <div key={label} className="tf-stat">
                 <p className="tf-stat-label">{label}</p>
