@@ -37,15 +37,18 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
 - **DUO Primary** : Edition directe, propagation au partenaire
 - **DUO Partner** : Dialogue dissociation -> 2 abonnements individuels
 - **Plannings** = tous billing members (inclut coachs et offerts)
-- **Paiements** = billing members avec amount > 0
+- **Paiements** = tous billing members (inclut offerts 0 CHF avec status auto-paid)
+- **Membres partis** : exit_date passee -> billing_enabled=False automatique
+- **Membres expires** : subscription_end_date passee -> billing_enabled=False
 
 ## Etat Actuel (Mars 2026)
 - Revenue: 5,062 CHF | Depenses: 2,170 CHF | Net: 2,892 CHF
-- Membres actifs: 91-93 | Coachs: 29
+- Membres actifs: 93 | Coachs: 29 | Expires: 4 | Partis: 195
 - Recurents (hors coachs): 60 membres / 8,645 CHF
-- Plannings: 92 | Paiements: 85
-- Nouveaux membres: 4
-- CAC: 500 CHF
+- Plannings: 91 | Paiements: 91 (alignes)
+- DUO: 40 fiches (20 couples, tous bidirectionnels)
+- Offerts: 7 membres avec paiements 0 CHF auto-valides
+- Nouveaux membres: 4 | CAC: 500 CHF
 
 ## Taches Completees
 - [x] Audit complet et corrections de donnees (exit_date, billing)
@@ -62,6 +65,11 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
 - [x] Fix page Seances (annee 2026, S1, navigation)
 - [x] Bilans sync avec membres (partis supprimes, actifs actives)
 - [x] ABONNEMENT OFFERT category + 7 membres offerts
+- [x] Audit final P0 (19 mars 2026):
+  - [x] 11 membres partis billing desactive + Alexandra Dankova
+  - [x] 18 couples DUO relies (+ 2 partenaires retrouves: Asma Fathi, Brice Maillard)
+  - [x] Paiements 0 CHF crees pour offerts (91=91 aligne)
+  - [x] Logique sync/generate payments mise a jour pour inclure offerts
 
 ## Backlog
 - (P0) Integration API GoHighLevel + Notifications avancees
