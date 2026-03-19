@@ -75,8 +75,8 @@ export default function AttendancePage() {
   const currentWeek = getISOWeek(now);
   const currentYear = now.getFullYear();
 
-  const [selectedYear, setSelectedYear] = useState(2024);
-  const [startWeek, setStartWeek] = useState(Math.max(1, currentYear === 2024 ? 45 : currentWeek - 7));
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [startWeek, setStartWeek] = useState(1);
   const weeksToShow = 8;
   const [search, setSearch] = useState("");
 
@@ -173,7 +173,11 @@ export default function AttendancePage() {
 
   const shiftWeeks = (direction) => {
     const newStart = startWeek + direction * weeksToShow;
-    if (newStart >= 1 && newStart <= 52) setStartWeek(newStart);
+    if (direction < 0) {
+      setStartWeek(Math.max(1, newStart));
+    } else if (newStart <= 52) {
+      setStartWeek(newStart);
+    }
   };
 
   return (
@@ -234,7 +238,7 @@ export default function AttendancePage() {
             data-testid="attendance-search"
           />
         </div>
-        <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+        <Select value={selectedYear.toString()} onValueChange={(v) => { setSelectedYear(parseInt(v)); setStartWeek(1); }}>
           <SelectTrigger className="w-[120px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="attendance-year">
             <Calendar size={14} className="mr-2 text-[var(--color-text-secondary)]" />
             <SelectValue />
