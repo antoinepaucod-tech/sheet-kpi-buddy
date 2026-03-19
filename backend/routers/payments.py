@@ -58,6 +58,85 @@ async def delete_payment_schedule(schedule_id: str):
     return {"message": "Planning de paiement supprimé"}
 
 
+@router.post("/payments/sync-with-members")
+async def sync_payments_with_members():
+    """Full sync: regenerate payment_schedules and payments from billing_enabled members."""
+    now = datetime.now(timezone.utc)
+    today_str = now.strftime("%Y-%m-%d")
+    current_year = now.year
+    current_month = now.month
+    days_in_month = monthrange(current_year, current_month)[1]
+    month_str = f"{current_year}-{current_month:02d}"
+
+    # 1. Get all billing_enabled active members (including coaches)
+    all_members = await db.customer_members.find(
+        {"billing_enabled": True},
+        {"_id": 0}
+    ).to_list(5000)
+
+    active_billing = []
+    for m in all_members:
+        exit_d = m.get("exit_date")
+        if exit_d and exit_d not in (None, "", "None") and exit_d < today_str:
+            continue
+        active_billing.append(m)
+
+    # 2. Sync payment_schedules: clear and recreate (ALL billing members, including amount=0)
+    await db.payment_schedules.delete_many({})
+    schedules_created = 0
+    for m in active_billing:
+        cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
+        schedule = {
+            "id": m["id"],
+            "member_id": m["id"],
+            "member_name": m.get("name", ""),
+            "amount": m.get("billing_amount", 0) or 0,
+            "frequency": "monthly",
+            "billing_day": cycle_value,
+            "payment_method": m.get("billing_payment_method", "prelevement"),
+            "is_active": True,
+            "start_date": m.get("contract_signed_date", today_str),
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+        }
+        await db.payment_schedules.insert_one(schedule)
+        schedules_created += 1
+
+    # 3. Sync payments for current month: only for amount > 0
+    await db.payments.delete_many({"status": {"$in": ["pending", "late"]}})
+    payments_created = 0
+    for m in active_billing:
+        amt = m.get("billing_amount", 0) or 0
+        if amt <= 0:
+            continue
+        cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
+        day = min(int(cycle_value), days_in_month)
+        due_date = f"{month_str}-{day:02d}"
+
+        import uuid
+        payment = {
+            "id": str(uuid.uuid4()),
+            "member_id": m["id"],
+            "schedule_id": m["id"],
+            "member_name": m.get("name", ""),
+            "amount": amt,
+            "due_date": due_date,
+            "status": "late" if due_date < today_str else "pending",
+            "payment_method": m.get("billing_payment_method", "prelevement"),
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+        }
+        await db.payments.insert_one(payment)
+        payments_created += 1
+
+    return {
+        "message": "Synchronisation terminée",
+        "schedules_created": schedules_created,
+        "payments_created": payments_created,
+        "month": month_str,
+    }
+
+
 # Payment Routes
 @router.get("/payments")
 async def get_payments(
@@ -193,8 +272,7 @@ async def generate_monthly_payments(year: int, month: int):
     month_str = f"{year}-{month:02d}"
     days_in_month = monthrange(year, month)[1]
     
-    # Get billing-enabled members (active, non-coach, non-departed)
-    coach_kw = ["THE COACH", "VIRTUAL COACH"]
+    # Get billing-enabled members (active, including coaches, non-departed)
     all_members = await db.customer_members.find(
         {"billing_enabled": True, "billing_amount": {"$gt": 0}},
         {"_id": 0}
@@ -204,11 +282,6 @@ async def generate_monthly_payments(year: int, month: int):
     for m in all_members:
         exit_d = m.get("exit_date")
         if exit_d and exit_d not in (None, "", "None") and exit_d < today_str:
-            continue
-        ms = (m.get("membership") or "").upper()
-        if any(kw in ms for kw in coach_kw):
-            continue
-        if m.get("is_coach"):
             continue
         members.append(m)
     

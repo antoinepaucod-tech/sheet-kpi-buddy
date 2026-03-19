@@ -22,6 +22,29 @@ async def get_courses(year: Optional[int] = None, month: Optional[int] = None):
     return await db.course_kpis.find(query, {"_id": 0}).sort([("day_of_week", 1), ("time_slot", 1)]).to_list(500)
 
 
+@router.get("/course-types")
+async def get_course_types():
+    """Get all course type categories."""
+    return await db.course_types.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+
+
+@router.post("/course-types")
+async def create_course_type(data: dict):
+    """Create a new course type category."""
+    import uuid
+    name = data.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Nom requis")
+    existing = await db.course_types.find_one({"name": name})
+    if existing:
+        raise HTTPException(status_code=400, detail="Ce type de cours existe déjà")
+    doc = {"id": str(uuid.uuid4()), "name": name, "created_at": datetime.now(timezone.utc).isoformat()}
+    await db.course_types.insert_one(doc)
+    return {"id": doc["id"], "name": name}
+
+
+
+
 @router.get("/courses/{course_id}")
 async def get_course(course_id: str):
     doc = await db.course_kpis.find_one({"id": course_id}, {"_id": 0})

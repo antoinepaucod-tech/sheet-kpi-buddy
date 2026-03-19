@@ -107,6 +107,21 @@ export default function CoursesPage() {
     queryFn: () => axios.get(`${API}/instructors?active_only=true`).then((r) => r.data),
   });
 
+  // Fetch course types
+  const { data: courseTypes = [] } = useQuery({
+    queryKey: ["course-types"],
+    queryFn: () => axios.get(`${API}/course-types`).then((r) => r.data),
+  });
+
+  // Create course type
+  const createCourseTypeMutation = useMutation({
+    mutationFn: (data) => axios.post(`${API}/course-types`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["course-types"]);
+      toast.success("Type de cours ajouté");
+    },
+  });
+
   // Fetch summary
   const { data: summary } = useQuery({
     queryKey: ["courses", "summary", selectedYear, selectedMonth],
@@ -593,13 +608,27 @@ export default function CoursesPage() {
           <div className="space-y-4 py-4">
             <div>
               <label className="tf-stat-label">Nom du cours *</label>
-              <Input
-                value={formData.course_name}
-                onChange={(e) => setFormData({ ...formData, course_name: e.target.value })}
-                placeholder="Ex: CrossFit Morning"
-                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
-                data-testid="course-name-input"
-              />
+              <Select value={formData.course_name} onValueChange={(v) => {
+                if (v === "__new__") {
+                  const name = prompt("Nom du nouveau type de cours :");
+                  if (name && name.trim()) {
+                    createCourseTypeMutation.mutate({ name: name.trim() });
+                    setFormData({ ...formData, course_name: name.trim() });
+                  }
+                } else {
+                  setFormData({ ...formData, course_name: v });
+                }
+              }}>
+                <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1" data-testid="course-name-input">
+                  <SelectValue placeholder="Sélectionner un cours" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courseTypes.map((ct) => (
+                    <SelectItem key={ct.name} value={ct.name}>{ct.name}</SelectItem>
+                  ))}
+                  <SelectItem value="__new__" className="text-[var(--color-accent)]">+ Nouveau type de cours</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -879,13 +908,27 @@ export default function CoursesPage() {
                     {TIME_SLOTS.map(t => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Input
-                  value={row.course_name}
-                  onChange={(e) => updateBulkRow(idx, "course_name", e.target.value)}
-                  placeholder="Nom du cours..."
-                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm"
-                  data-testid={`bulk-course-name-${idx}`}
-                />
+                <Select value={row.course_name} onValueChange={(v) => {
+                  if (v === "__new__") {
+                    const name = prompt("Nom du nouveau type de cours :");
+                    if (name && name.trim()) {
+                      createCourseTypeMutation.mutate({ name: name.trim() });
+                      updateBulkRow(idx, "course_name", name.trim());
+                    }
+                  } else {
+                    updateBulkRow(idx, "course_name", v);
+                  }
+                }}>
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm" data-testid={`bulk-course-name-${idx}`}>
+                    <SelectValue placeholder="Cours..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courseTypes.map((ct) => (
+                      <SelectItem key={ct.name} value={ct.name}>{ct.name}</SelectItem>
+                    ))}
+                    <SelectItem value="__new__" className="text-[var(--color-accent)]">+ Nouveau</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select value={row.instructor} onValueChange={(v) => updateBulkRow(idx, "instructor", v)}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white h-9 text-sm">
                     <SelectValue placeholder="Coach..." />
