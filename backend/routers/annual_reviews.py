@@ -315,11 +315,10 @@ async def auto_generate_reviews():
         freq = member.get("review_frequency", default_freq)
         delta = FREQUENCY_MAP.get(freq, default_delta)
 
-        # Check if there's already a scheduled review
+        # Check if there's already a scheduled review (any date, not just future)
         existing_scheduled = await db.annual_reviews.find_one({
             "member_id": member_id,
             "status": "scheduled",
-            "review_date": {"$gte": today}
         })
 
         if existing_scheduled:
@@ -337,17 +336,14 @@ async def auto_generate_reviews():
         if last_completed:
             base_date = datetime.strptime(last_completed["review_date"], "%Y-%m-%d")
             next_date = base_date + delta
-            while next_date.strftime("%Y-%m-%d") < today:
-                next_date = next_date + delta
-        elif member.get("first_review_date") and member["first_review_date"] >= today:
+            # Don't skip past dates - allow overdue reviews to be created
+        elif member.get("first_review_date"):
             next_date = datetime.strptime(member["first_review_date"], "%Y-%m-%d")
-        elif member.get("annual_review_date") and member["annual_review_date"] >= today:
+        elif member.get("annual_review_date"):
             next_date = datetime.strptime(member["annual_review_date"], "%Y-%m-%d")
         elif member.get("contract_signed_date"):
             base_date = datetime.strptime(member["contract_signed_date"], "%Y-%m-%d")
             next_date = base_date + delta
-            while next_date.strftime("%Y-%m-%d") < today:
-                next_date = next_date + delta
         else:
             skipped += 1
             continue

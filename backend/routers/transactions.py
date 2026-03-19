@@ -75,7 +75,6 @@ async def _auto_recalculate_kpis(tx_date: str):
         "net_profit": total_revenue - total_expenses,
         "profit": total_revenue - total_expenses,
         "active_members": active_count,
-        "cash_collected": total_rev_tx,
         "revenue_members": totals_by_col.get("general_eft_revenue", 0),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -106,7 +105,15 @@ async def create_transaction(data: TransactionCreate):
     })
     if excluded:
         raise HTTPException(status_code=400, detail="Cette transaction a été exclue précédemment")
-    tx = AccountingTransaction(**data.model_dump())
+
+    # Extract is_recurring and recurrence_day before creating transaction
+    is_recurring = data.is_recurring
+    recurrence_day = data.recurrence_day
+
+    tx_data = data.model_dump()
+    tx_data.pop("is_recurring", None)
+    tx_data.pop("recurrence_day", None)
+    tx = AccountingTransaction(**tx_data)
     doc = tx.model_dump()
     # Auto-fill year/month from date
     if doc.get("date") and len(doc["date"]) >= 7:
@@ -118,6 +125,32 @@ async def create_transaction(data: TransactionCreate):
     await db.accounting_transactions.insert_one(doc)
     doc.pop('_id', None)
     await _auto_recalculate_kpis(doc.get("date", ""))
+
+    # If marked as recurring, also create a recurring_transaction template
+    if is_recurring:
+        day = recurrence_day
+        if not day:
+            try:
+                day = int(data.date[8:10])
+            except (ValueError, IndexError):
+                day = 1
+        existing_rec = await db.recurring_transactions.find_one({
+            "category": data.category, "description": data.description
+        })
+        if not existing_rec:
+            rec = RecurringTransaction(
+                type=data.type,
+                category=data.category,
+                description=data.description,
+                amount=data.amount,
+                sub_type=data.sub_type,
+                recurrence_day=day,
+                is_active=True,
+            )
+            rec_doc = rec.model_dump()
+            await db.recurring_transactions.insert_one(rec_doc)
+            rec_doc.pop('_id', None)
+
     return doc
 
 
@@ -129,6 +162,8 @@ class TransactionUpdate(BaseModel):
     client_name: Optional[str] = None
     payment_method: Optional[str] = None
     notes: Optional[str] = None
+    is_recurring: Optional[bool] = None
+    recurrence_day: Optional[int] = None
 
 
 @router.put("/transactions/{transaction_id}")
@@ -136,7 +171,11 @@ async def update_transaction(transaction_id: str, data: TransactionUpdate):
     tx = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction introuvable")
-    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+
+    is_recurring = data.is_recurring
+    recurrence_day = data.recurrence_day
+    updates = {k: v for k, v in data.model_dump().items() if v is not None and k not in ("is_recurring", "recurrence_day")}
+
     if "date" in updates and len(updates["date"]) >= 7:
         try:
             updates["year"] = int(updates["date"][:4])
@@ -145,6 +184,32 @@ async def update_transaction(transaction_id: str, data: TransactionUpdate):
             pass
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.accounting_transactions.update_one({"id": transaction_id}, {"$set": updates})
+
+    # Handle recurring flag
+    if is_recurring is True:
+        desc = updates.get("description", tx.get("description", ""))
+        cat = updates.get("category", tx.get("category", ""))
+        amt = updates.get("amount", tx.get("amount", 0))
+        tx_type = tx.get("type", "expense")
+        day = recurrence_day
+        if not day:
+            try:
+                day = int((updates.get("date") or tx.get("date", ""))[-2:])
+            except (ValueError, IndexError):
+                day = 1
+        existing_rec = await db.recurring_transactions.find_one({"category": cat, "description": desc})
+        if not existing_rec:
+            rec = RecurringTransaction(
+                type=tx_type, category=cat, description=desc,
+                amount=amt, recurrence_day=day, is_active=True,
+            )
+            rec_doc = rec.model_dump()
+            await db.recurring_transactions.insert_one(rec_doc)
+    elif is_recurring is False:
+        desc = updates.get("description", tx.get("description", ""))
+        cat = updates.get("category", tx.get("category", ""))
+        await db.recurring_transactions.delete_one({"category": cat, "description": desc})
+
     # Recalculate KPIs for old and new months
     old_date = tx.get("date", "")
     new_date = updates.get("date", old_date)
@@ -274,6 +339,67 @@ async def remove_from_exclusions(excluded_id: str):
 @router.get("/recurring-transactions")
 async def get_recurring_transactions():
     return await db.recurring_transactions.find({}, {"_id": 0}).to_list(1000)
+
+
+@router.get("/recurring-transactions/all")
+async def get_all_recurring():
+    """Get ALL recurring items: manual templates + billing members (revenue) + recurring expense categories."""
+    result = []
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # 1. Manual recurring templates
+    templates = await db.recurring_transactions.find({}, {"_id": 0}).to_list(1000)
+    for t in templates:
+        t["source"] = "template"
+    result.extend(templates)
+
+    # 2. Billing members as recurring revenue
+    billing_members = await db.customer_members.find(
+        {"billing_enabled": True, "billing_amount": {"$gt": 0},
+         "$or": [
+             {"exit_date": None}, {"exit_date": ""},
+             {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
+         ]},
+        {"_id": 0, "id": 1, "name": 1, "billing_amount": 1, "membership": 1,
+         "billing_cycle_type": 1, "billing_cycle_value": 1, "billing_payment_method": 1,
+         "is_coach": 1}
+    ).to_list(5000)
+
+    for m in billing_members:
+        if (m.get("billing_amount", 0) or 0) <= 0:
+            continue
+        result.append({
+            "id": f"billing-{m['id']}",
+            "type": "revenue",
+            "category": m.get("membership", "ABONNEMENT"),
+            "description": m.get("name", ""),
+            "amount": m.get("billing_amount", 0),
+            "recurrence_day": m.get("billing_cycle_value") or 1,
+            "is_active": True,
+            "source": "billing",
+            "member_id": m["id"],
+            "is_coach": m.get("is_coach", False),
+        })
+
+    # 3. Recurring expense categories not already in templates
+    template_cats = {t.get("category", "") for t in templates if t.get("type") == "expense"}
+    recurring_cats = await db.accounting_categories.find(
+        {"is_recurring": True, "type": "expense"}, {"_id": 0}
+    ).to_list(100)
+    for cat in recurring_cats:
+        if cat["name"] not in template_cats:
+            result.append({
+                "id": f"cat-{cat['id']}",
+                "type": "expense",
+                "category": cat["name"],
+                "description": cat["name"],
+                "amount": cat.get("default_amount", 0),
+                "recurrence_day": cat.get("recurrence_day", 1),
+                "is_active": True,
+                "source": "category",
+            })
+
+    return result
 
 
 @router.post("/recurring-transactions")

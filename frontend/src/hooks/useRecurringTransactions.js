@@ -10,7 +10,7 @@ export function useRecurringTransactions() {
   const fetchRecurring = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/recurring-transactions`);
+      const res = await axios.get(`${API}/recurring-transactions/all`);
       setRecurring(res.data);
     } catch (e) {
       console.error("Error fetching recurring transactions", e);

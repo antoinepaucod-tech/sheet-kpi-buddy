@@ -1,0 +1,80 @@
+{
+  "summary": "Iteration 60 - All 8 user-reported bugs verified as FIXED. Backend: 13/13 tests passed. Frontend: All fixes verified via Playwright testing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration60_bugfixes.py",
+    "/app/test_reports/pytest/pytest_results_iter60.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix 1: Caroline Maerten duplicate removed - Only 1 transaction for 6 WEEKS CHALLENGE in March (300 CHF on 2026-03-07)",
+    "Fix 2: SALAIRES COACH category migrated to SALAIRES COACHS - 8 transactions now use correct category, old category deleted",
+    "Fix 3: Recurring revenue includes all billing members (84 items) including coaches; recurring expense has 9 category items",
+    "Fix 4: Funnel cash_collected corrected to 300 CHF (was 4762)",
+    "Fix 5: Bilans 60j counter uses stats.next60Days - shows correct count on dashboard",
+    "Fix 6: Late bilans visible - Bouchra Talaat (2025-10-01) shows 'En retard' status on dashboard",
+    "Fix 7: /api/recurring-transactions/all returns 93 items (84 billing + 9 category sources)",
+    "Fix 8: AddTransactionModal has is_recurring toggle that creates recurring_transactions template"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration60_bugfixes.py"
+  ],
+  "success_rate": {"backend": "100% (13/13 tests)", "frontend": "100%"},
+  "test_credentials": "email: test@crossfit.ch, password: test123",
+  "seed_data_creation": "Created TEST_RECURRING_TX_60 transaction and recurring template during testing",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 60 verified all 8 user-reported bug fixes: (1) Caroline Maerten appears only once in March transactions with 6 WEEKS CHALLENGE; (2) SALAIRES COACH migrated to SALAIRES COACHS - no old category exists; (3) KPI details recurring_revenue has 84 billing members, recurring_expense has 9 categories; (4) funnel cash = 300 CHF; (5) Bilans page uses stats.next60Days for counter; (6) Overdue bilans show 'En retard' (1 overdue: Bouchra Talaat); (7) /recurring-transactions/all returns 93 items from billing+category sources; (8) AddTransactionModal has 'Dépense récurrente' toggle.",
+  "features_verified": {
+    "Fix1_Caroline_No_Duplicate": {
+      "status": "PASS",
+      "evidence": "Found 1 Caroline Maerten/6 WEEKS CHALLENGE transaction in March: 2026-03-07, 300 CHF"
+    },
+    "Fix2_SALAIRES_COACH_Migrated": {
+      "status": "PASS",
+      "evidence": "SALAIRES COACH not in categories, SALAIRES COACHS exists with 8 transactions"
+    },
+    "Fix3_Recurring_Revenue_Count": {
+      "status": "PASS",
+      "evidence": "recurring_revenue: 84 items, recurring_expense: 9 items"
+    },
+    "Fix4_Cash_Collected_300": {
+      "status": "PASS",
+      "evidence": "funnel.cash = 300 (was 4762)"
+    },
+    "Fix5_Bilans_60j_Counter": {
+      "status": "PASS",
+      "evidence": "Upcoming reviews (60 days): 4, dashboard shows correct count"
+    },
+    "Fix6_Late_Bilans_Visible": {
+      "status": "PASS",
+      "evidence": "Overdue reviews: 1 (Bouchra Talaat: 2025-10-01), shows 'En retard' on dashboard"
+    },
+    "Fix7_Recurring_All_Endpoint": {
+      "status": "PASS",
+      "evidence": "Total: 93 (Billing: 84, Category: 9, Template: 0)"
+    },
+    "Fix8_Recurring_Toggle_Modal": {
+      "status": "PASS",
+      "evidence": "data-testid='tx-recurring-toggle' found, modal shows 'Dépense récurrente' option"
+    }
+  },
+  "kpi_data_march_2026": {
+    "total_revenue": 6912.0,
+    "total_expenses": 2416.9,
+    "net_profit": 4495.1,
+    "funnel_cash": 300,
+    "recurring_revenue_items": 84,
+    "recurring_expense_items": 9
+  },
+  "test_date": "2026-03-19",
+  "test_month": "2026-03"
+}

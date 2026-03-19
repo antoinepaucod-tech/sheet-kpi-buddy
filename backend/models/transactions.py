@@ -74,6 +74,8 @@ class TransactionCreate(BaseModel):
     product_description: Optional[str] = None
     is_validated: bool = True
     sub_type: Optional[str] = None
+    is_recurring: bool = False
+    recurrence_day: Optional[int] = None
 
 
 class ExcludedRecurringExpense(BaseModel):

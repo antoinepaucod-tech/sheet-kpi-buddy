@@ -25,6 +25,8 @@ const EMPTY = {
   type: "expense",
   category: "",
   sub_type: "",
+  is_recurring: false,
+  recurrence_day: 1,
 };
 
 export function AddTransactionModal({ open, onClose, onSave, categories }) {
@@ -61,6 +63,8 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
         ...form,
         amount: parseFloat(form.amount),
         sub_type: form.sub_type || null,
+        is_recurring: form.is_recurring || false,
+        recurrence_day: form.is_recurring ? (form.recurrence_day || 1) : undefined,
       });
       setForm(EMPTY);
       onClose();
@@ -206,6 +210,52 @@ export function AddTransactionModal({ open, onClose, onSave, categories }) {
                   <SelectItem value="coaching" className="text-white focus:bg-[rgba(255,255,255,0.1)]">
                     {t("coachingType")}
                   </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Recurring toggle */}
+          <div className="flex items-center justify-between p-3 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)]">
+            <div>
+              <Label className="text-white text-sm font-display font-bold">
+                {form.type === "expense" ? "Dépense récurrente" : "Revenu récurrent"}
+              </Label>
+              <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5">
+                Créer un modèle récurrent pour cette transaction
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleChange("is_recurring", !form.is_recurring)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.is_recurring ? 'bg-[var(--color-accent)]' : 'bg-[rgba(255,255,255,0.15)]'}`}
+              data-testid="tx-recurring-toggle"
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${form.is_recurring ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+
+          {form.is_recurring && (
+            <div className="space-y-1.5">
+              <Label className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider">
+                Jour de récurrence
+              </Label>
+              <Select
+                value={(form.recurrence_day || 1).toString()}
+                onValueChange={(v) => handleChange("recurrence_day", parseInt(v))}
+              >
+                <SelectTrigger
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
+                  data-testid="tx-recurrence-day-select"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] max-h-48">
+                  {Array.from({length: 28}, (_, i) => i + 1).map((d) => (
+                    <SelectItem key={d} value={d.toString()} className="text-white focus:bg-[rgba(255,255,255,0.1)]">
+                      {d}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

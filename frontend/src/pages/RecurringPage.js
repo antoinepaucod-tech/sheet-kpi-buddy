@@ -251,21 +251,39 @@ export default function RecurringPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
           <p className="tf-stat-label">Total</p>
           <p className="text-xl font-display font-extrabold text-white mt-1">{recurring.length}</p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
-          <p className="tf-stat-label">{t("active")}</p>
+          <p className="tf-stat-label">Revenus</p>
           <p className="text-xl font-display font-extrabold text-[var(--color-success)] mt-1">
-            {recurring.filter(r => r.is_active).length}
+            {recurring.filter(r => r.type === "revenue" && r.is_active).length}
+          </p>
+          <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 font-mono">
+            +{formatCHF(recurring.filter(r => r.type === "revenue" && r.is_active).reduce((s, r) => s + (r.amount || 0), 0))}
           </p>
         </div>
         <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
-          <p className="tf-stat-label">{t("inactive")}</p>
-          <p className="text-xl font-display font-extrabold text-[var(--color-text-tertiary)] mt-1">
-            {recurring.filter(r => !r.is_active).length}
+          <p className="tf-stat-label">{lang === "fr" ? "Dépenses" : "Expenses"}</p>
+          <p className="text-xl font-display font-extrabold text-[var(--color-danger)] mt-1">
+            {recurring.filter(r => r.type === "expense" && r.is_active).length}
+          </p>
+          <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 font-mono">
+            -{formatCHF(recurring.filter(r => r.type === "expense" && r.is_active).reduce((s, r) => s + (r.amount || 0), 0))}
+          </p>
+        </div>
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
+          <p className="tf-stat-label">{lang === "fr" ? "Billing Membres" : "Billing Members"}</p>
+          <p className="text-xl font-display font-extrabold text-[var(--color-accent)] mt-1">
+            {recurring.filter(r => r.source === "billing").length}
+          </p>
+        </div>
+        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4 rounded-[var(--radius-lg)]">
+          <p className="tf-stat-label">{lang === "fr" ? "Templates manuels" : "Manual Templates"}</p>
+          <p className="text-xl font-display font-extrabold text-white mt-1">
+            {recurring.filter(r => r.source === "template").length}
           </p>
         </div>
       </div>
@@ -284,7 +302,7 @@ export default function RecurringPage() {
           <Table>
             <TableHeader>
               <TableRow className="border-[var(--color-border)] hover:bg-transparent">
-                {[t("description"), t("category"), t("type"), t("recurrenceDay"), t("amount"), "Status", t("actions")].map((h) => (
+                {[t("description"), t("category"), t("type"), "Source", t("recurrenceDay"), t("amount"), "Status", t("actions")].map((h) => (
                   <TableHead key={h} className="text-[var(--color-text-secondary)] uppercase tracking-wider text-xs font-text">
                     {h}
                   </TableHead>
@@ -292,15 +310,19 @@ export default function RecurringPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recurring.map((item) => (
+              {recurring.map((item) => {
+                const isTemplate = item.source === "template";
+                const isBilling = item.source === "billing";
+                const isCategory = item.source === "category";
+                return (
                 <TableRow
                   key={item.id}
                   className={`border-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)] transition-colors ${!item.is_active ? 'opacity-40' : ''}`}
                   data-testid={`recurring-row-${item.id}`}
                 >
                   <TableCell 
-                    className="text-white text-sm cursor-pointer hover:text-[var(--color-accent)]"
-                    onClick={() => openEdit(item)}
+                    className={`text-white text-sm ${isTemplate ? 'cursor-pointer hover:text-[var(--color-accent)]' : ''}`}
+                    onClick={() => isTemplate && openEdit(item)}
                   >
                     {item.description}
                   </TableCell>
@@ -310,19 +332,31 @@ export default function RecurringPage() {
                       className={
                         item.type === "revenue"
                           ? "bg-[rgba(48,209,88,0.12)] text-[var(--color-success)] border-0 text-xs"
-                          : "bg-[rgba(10,132,255,0.12)] text-[var(--color-accent)] border-0 text-xs"
+                          : "bg-[rgba(255,69,58,0.12)] text-[var(--color-danger)] border-0 text-xs"
                       }
                     >
                       {item.type === "revenue" ? t("revenueType") : t("expense")}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        isBilling ? "bg-[rgba(10,132,255,0.12)] text-[var(--color-accent)] border-0 text-[9px]" :
+                        isCategory ? "bg-[rgba(255,214,10,0.12)] text-[var(--color-warning)] border-0 text-[9px]" :
+                        "bg-[rgba(255,255,255,0.08)] text-[var(--color-text-secondary)] border-0 text-[9px]"
+                      }
+                    >
+                      {isBilling ? "Billing" : isCategory ? "Catégorie" : "Manuel"}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="font-mono text-sm text-[var(--color-text-secondary)]">
                     {item.recurrence_day || 1}
                   </TableCell>
-                  <TableCell className={`font-mono text-sm font-bold ${item.type === "revenue" ? "text-[var(--color-success)]" : "text-[var(--color-text-primary)]"}`}>
+                  <TableCell className={`font-mono text-sm font-bold ${item.type === "revenue" ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}`}>
                     {item.type === "revenue" ? "+" : "-"} {formatCHF(item.amount)}
                   </TableCell>
                   <TableCell>
+                    {isTemplate && (
                     <button
                       onClick={() => handleToggleActive(item)}
                       className={`p-1 rounded transition-colors ${item.is_active ? 'text-[var(--color-success)] hover:text-[var(--color-success)]' : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'}`}
@@ -331,8 +365,10 @@ export default function RecurringPage() {
                     >
                       <Power size={14} />
                     </button>
+                    )}
                   </TableCell>
                   <TableCell>
+                    {isTemplate && (
                     <button
                       onClick={() => setDeleteId(item.id)}
                       className="text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors p-1"
@@ -340,9 +376,11 @@ export default function RecurringPage() {
                     >
                       <Trash2 size={14} />
                     </button>
+                    )}
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}

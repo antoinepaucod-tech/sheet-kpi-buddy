@@ -177,7 +177,7 @@ async def get_monthly_kpi_details(month: str):
             else:
                 expense_breakdown.append(entry)
 
-    # Get active recurring billing from members with billing_enabled
+    # Get ALL active recurring billing from members (including coaches)
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     billing_members = await db.customer_members.find(
         {"billing_enabled": True, "billing_amount": {"$gt": 0},
@@ -189,11 +189,6 @@ async def get_monthly_kpi_details(month: str):
          "billing_cycle_type": 1, "billing_cycle_value": 1, "billing_payment_method": 1,
          "is_coach": 1}
     ).to_list(5000)
-
-    # Exclude coaches
-    coach_kw = ["THE COACH", "VIRTUAL COACH"]
-    billing_members = [m for m in billing_members if not m.get("is_coach") and
-                       not any(kw in (m.get("membership") or "").upper() for kw in coach_kw)]
 
     recurring_revenue = [{
         "id": m["id"],
@@ -207,14 +202,42 @@ async def get_monthly_kpi_details(month: str):
         "type": "revenue",
         "description": m.get("membership", ""),
         "is_active": True,
+        "source": "billing",
     } for m in billing_members if m.get("billing_amount", 0) > 0]
 
-    recurring_expense = []
+    # Also get recurring revenue templates from recurring_transactions
+    recurring_rev_docs = await db.recurring_transactions.find(
+        {"is_active": True, "type": "revenue"}, {"_id": 0}
+    ).to_list(1000)
+    for doc in recurring_rev_docs:
+        doc["source"] = "template"
+    recurring_revenue.extend(recurring_rev_docs)
 
-    # Also get recurring expense templates
+    # Get recurring expense templates from recurring_transactions
     recurring_exp_docs = await db.recurring_transactions.find(
         {"is_active": True, "type": "expense"}, {"_id": 0}
     ).to_list(1000)
+    for doc in recurring_exp_docs:
+        doc["source"] = "template"
+
+    # Also add recurring expense categories that have is_recurring=True
+    recurring_cats = await db.accounting_categories.find(
+        {"is_recurring": True, "type": "expense"}, {"_id": 0}
+    ).to_list(100)
+    existing_expense_descs = {d.get("description", "") for d in recurring_exp_docs}
+    for cat in recurring_cats:
+        if cat["name"] not in existing_expense_descs:
+            recurring_exp_docs.append({
+                "id": cat["id"],
+                "description": cat["name"],
+                "category": cat["name"],
+                "amount": cat.get("default_amount", 0),
+                "recurrence_day": cat.get("recurrence_day", 1),
+                "type": "expense",
+                "is_active": True,
+                "source": "category",
+            })
+
     recurring_expense = recurring_exp_docs
 
     # Mark generated and validated status

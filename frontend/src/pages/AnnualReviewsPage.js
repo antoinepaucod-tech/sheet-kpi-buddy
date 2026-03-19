@@ -251,6 +251,10 @@ export default function AnnualReviewsPage() {
       const days = differenceInDays(parseISO(r.review_date), today);
       return days >= 0 && days <= 30;
     });
+    const next60Days = scheduled.filter((r) => {
+      const days = differenceInDays(parseISO(r.review_date), today);
+      return days >= 0 && days <= 60;
+    });
 
     return {
       total: allReviews.length,
@@ -259,6 +263,7 @@ export default function AnnualReviewsPage() {
       missed: missed.length,
       next7Days: next7Days.length,
       next30Days: next30Days.length,
+      next60Days: next60Days.length,
     };
   }, [allReviews]);
 
@@ -397,7 +402,7 @@ export default function AnnualReviewsPage() {
             <Clock size={12} />
             À venir (60j)
           </p>
-          <p className="tf-number-large" style={{color:"var(--color-info)"}}>{stats.next30Days}</p>
+          <p className="tf-number-large" style={{color:"var(--color-info)"}}>{stats.next60Days}</p>
         </div>
         <div
           className={`bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4 border cursor-pointer transition-colors ${
