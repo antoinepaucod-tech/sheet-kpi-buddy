@@ -91,7 +91,7 @@ const CategoryBreakdown = ({ items, type, lang, onClickMember }) => {
   );
 };
 
-const RecurringSection = ({ items, type, lang, month, onValidate, validatedIds }) => {
+const RecurringSection = ({ items, type, lang }) => {
   if (!items || items.length === 0) {
     return (
       <p className="text-[var(--color-text-tertiary)] text-sm py-2 text-center italic">
@@ -102,45 +102,57 @@ const RecurringSection = ({ items, type, lang, month, onValidate, validatedIds }
   const isRevenue = type === "revenue";
   return (
     <div className="space-y-1">
-      {items.map((r) => {
-        const isValidated = r.validated_this_month || validatedIds?.has(r.id);
-        return (
-          <div key={r.id} className="flex items-center justify-between p-2.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)]">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <RefreshCw size={12} className="text-[var(--color-text-tertiary)] shrink-0" />
-              <span className="text-sm text-white truncate">{r.member_name || r.description || "—"}</span>
-              <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono truncate hidden md:inline">{r.membership || r.category || ""}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`font-mono text-sm font-bold ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
-                {isRevenue ? '+' : '-'}{formatCHF(r.amount)}
-              </span>
-              {isValidated ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] font-mono uppercase">
-                  {lang === "fr" ? "valide" : "validated"}
-                </span>
-              ) : r.generated_this_month ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] font-mono uppercase">
-                  {lang === "fr" ? "generee" : "generated"}
-                </span>
-              ) : (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] font-mono uppercase">
-                  {lang === "fr" ? "en attente" : "pending"}
-                </span>
-              )}
-              {onValidate && !isValidated && (
-                <button
-                  onClick={() => onValidate(r.id)}
-                  className="text-[10px] px-2 py-0.5 rounded bg-[rgba(48,209,88,0.1)] text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.2)] transition-colors font-mono uppercase"
-                  data-testid={`validate-recurring-${r.id}`}
-                >
-                  {lang === "fr" ? "Valider" : "Validate"}
-                </button>
-              )}
-            </div>
+      {items.map((r) => (
+        <div key={r.id} className="flex items-center justify-between p-2.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)]">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <RefreshCw size={12} className="text-[var(--color-text-tertiary)] shrink-0" />
+            <span className="text-sm text-white truncate">{r.member_name || r.description || "—"}</span>
+            <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono truncate hidden md:inline">{r.membership || r.category || ""}</span>
           </div>
-        );
-      })}
+          <span className={`font-mono text-sm font-bold ${isRevenue ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+            {isRevenue ? '+' : '-'}{formatCHF(r.amount)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const CollapsibleRecurring = ({ recurringRevenue, recurringExpense, lang }) => {
+  const [open, setOpen] = useState(false);
+  const totalItems = (recurringRevenue?.length || 0) + (recurringExpense?.length || 0);
+  return (
+    <div className="border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-3 hover:bg-[rgba(255,255,255,0.03)] transition-colors"
+        data-testid="toggle-recurring-details"
+      >
+        <span className="text-xs text-[var(--color-text-secondary)] font-display font-bold uppercase tracking-wider">
+          {lang === "fr" ? `Voir le detail des ${totalItems} recurrences` : `View ${totalItems} recurring details`}
+        </span>
+        {open ? <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" /> : <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />}
+      </button>
+      {open && (
+        <div className="p-3 pt-0 space-y-3">
+          {recurringRevenue?.length > 0 && (
+            <div>
+              <p className="text-[10px] text-[var(--color-success)] uppercase tracking-wider font-bold mb-1.5">
+                {lang === "fr" ? "Revenus recurrents" : "Recurring revenue"}
+              </p>
+              <RecurringSection items={recurringRevenue} type="revenue" lang={lang} />
+            </div>
+          )}
+          {recurringExpense?.length > 0 && (
+            <div>
+              <p className="text-[10px] text-[var(--color-danger)] uppercase tracking-wider font-bold mb-1.5">
+                {lang === "fr" ? "Depenses recurrentes" : "Recurring expenses"}
+              </p>
+              <RecurringSection items={recurringExpense} type="expense" lang={lang} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -150,7 +162,6 @@ export function KPIDetailedView({ kpi, lang }) {
   const navigate = useNavigate();
   const [details, setDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const [validatedIds, setValidatedIds] = useState(new Set());
   const [memberStats, setMemberStats] = useState(null);
 
   const handleClickMember = (clientName) => {
@@ -168,8 +179,6 @@ export function KPIDetailedView({ kpi, lang }) {
     axios.get(`${API}/monthly-kpis/${kpi.month}/details`)
       .then(res => {
         setDetails(res.data);
-        const vIds = new Set((res.data.recurring_validations || []).map(v => v.recurring_id));
-        setValidatedIds(vIds);
       })
       .catch(() => {})
       .finally(() => setLoadingDetails(false));
@@ -178,16 +187,6 @@ export function KPIDetailedView({ kpi, lang }) {
   useEffect(() => {
     fetchDetails();
   }, [fetchDetails]);
-
-  const handleValidate = async (recurringId) => {
-    try {
-      await axios.post(`${API}/recurring-validations`, {
-        recurring_id: recurringId,
-        month: kpi.month,
-      });
-      setValidatedIds(prev => new Set([...prev, recurringId]));
-    } catch {}
-  };
 
   if (!kpi) return null;
 
@@ -279,24 +278,11 @@ export function KPIDetailedView({ kpi, lang }) {
             />
           </div>
           {(details.recurring_revenue?.length > 0 || details.recurring_expense?.length > 0) && (
-            <div className="space-y-3">
-              {details.recurring_revenue?.length > 0 && (
-                <div>
-                  <p className="text-[10px] text-[var(--color-success)] uppercase tracking-wider font-bold mb-1.5">
-                    {lang === "fr" ? "Revenus recurrents" : "Recurring revenue"}
-                  </p>
-                  <RecurringSection items={details.recurring_revenue} type="revenue" lang={lang} month={kpi?.month} onValidate={handleValidate} validatedIds={validatedIds} />
-                </div>
-              )}
-              {details.recurring_expense?.length > 0 && (
-                <div>
-                  <p className="text-[10px] text-[var(--color-danger)] uppercase tracking-wider font-bold mb-1.5">
-                    {lang === "fr" ? "Depenses recurrentes" : "Recurring expenses"}
-                  </p>
-                  <RecurringSection items={details.recurring_expense} type="expense" lang={lang} month={kpi?.month} onValidate={handleValidate} validatedIds={validatedIds} />
-                </div>
-              )}
-            </div>
+            <CollapsibleRecurring
+              recurringRevenue={details.recurring_revenue}
+              recurringExpense={details.recurring_expense}
+              lang={lang}
+            />
           )}
         </>
       ) : null}

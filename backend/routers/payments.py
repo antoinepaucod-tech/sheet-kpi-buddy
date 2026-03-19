@@ -237,21 +237,59 @@ async def update_payment(payment_id: str, data: PaymentUpdate):
 
 @router.post("/payments/{payment_id}/mark-paid")
 async def mark_payment_paid(payment_id: str, body: dict = {}):
-    """Quick action to mark a payment as paid"""
+    """Quick action to mark a payment as paid and create a revenue transaction."""
     existing = await db.payments.find_one({"id": payment_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Paiement introuvable")
     
+    paid_date = body.get("paid_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    
     update = {
         "status": "paid",
-        "paid_date": body.get("paid_date", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+        "paid_date": paid_date,
         "payment_method": body.get("payment_method", existing.get("payment_method")),
         "reference": body.get("reference", ""),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.payments.update_one({"id": payment_id}, {"$set": update})
-    return await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    
+    # Create corresponding accounting transaction (revenue)
+    member = await db.customer_members.find_one(
+        {"id": existing["member_id"]},
+        {"_id": 0, "name": 1, "membership": 1}
+    )
+    member_name = member.get("name", "Inconnu") if member else "Inconnu"
+    membership = (member.get("membership", "") or "") if member else ""
+    
+    # Determine category based on membership
+    coach_kw = ["THE COACH", "VIRTUAL COACH"]
+    is_coach = any(kw in membership.upper() for kw in coach_kw)
+    category = "THE COACH PASS MENSUEL" if is_coach else "ABONNEMENTS"
+    
+    import uuid
+    tx = {
+        "id": str(uuid.uuid4()),
+        "date": paid_date,
+        "type": "revenue",
+        "amount": existing.get("amount", 0),
+        "category": category,
+        "description": f"Paiement validé - {member_name}",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "source": "payment_validation",
+        "payment_id": payment_id,
+    }
+    await db.accounting_transactions.insert_one(tx)
+    
+    # Recalculate KPI for the month
+    month_str = paid_date[:7]
+    from routers.kpis import recalculate_month
+    await recalculate_month(month_str)
+    
+    result = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    result["transaction_created"] = True
+    return result
 
 
 @router.delete("/payments/{payment_id}")
