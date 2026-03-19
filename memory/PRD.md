@@ -77,7 +77,7 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
   - [x] Recurrences KPI: coachs inclus + depenses categories
   - [x] Entonnoir cash corrige (4762 -> 300 CHF)
   - [x] Bilans compteur 60j corrige (next60Days)
-  - [x] Bilans en retard: auto-generate ne saute plus les dates passees
+  - [x] Bilans en retard: auto-generate calcule depuis contract_signed_date, avance jusqu'a periode courante (11 en retard visibles)
   - [x] Page /recurring: toutes recurrences (billing+templates+categories), 93 items
   - [x] Creation transaction: option is_recurring + creation template auto
 

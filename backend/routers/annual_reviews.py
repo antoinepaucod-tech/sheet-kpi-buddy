@@ -309,13 +309,14 @@ async def auto_generate_reviews():
 
     created = 0
     skipped = 0
+    today_dt = datetime.strptime(today, "%Y-%m-%d")
 
     for member in eligible:
         member_id = member["id"]
         freq = member.get("review_frequency", default_freq)
         delta = FREQUENCY_MAP.get(freq, default_delta)
 
-        # Check if there's already a scheduled review (any date, not just future)
+        # Check if there's already a scheduled review (any date)
         existing_scheduled = await db.annual_reviews.find_one({
             "member_id": member_id,
             "status": "scheduled",
@@ -325,8 +326,7 @@ async def auto_generate_reviews():
             skipped += 1
             continue
 
-        # Calculate next review date
-        # Priority: first_review_date (if set and no completed reviews) > last completed > contract_signed_date
+        # Calculate next review date - ALWAYS from contract_signed_date + frequency
         last_completed = await db.annual_reviews.find_one(
             {"member_id": member_id, "status": "completed"},
             {"_id": 0, "review_date": 1},
@@ -336,17 +336,20 @@ async def auto_generate_reviews():
         if last_completed:
             base_date = datetime.strptime(last_completed["review_date"], "%Y-%m-%d")
             next_date = base_date + delta
-            # Don't skip past dates - allow overdue reviews to be created
-        elif member.get("first_review_date"):
+        elif member.get("first_review_date") and member["first_review_date"].strip():
             next_date = datetime.strptime(member["first_review_date"], "%Y-%m-%d")
-        elif member.get("annual_review_date"):
-            next_date = datetime.strptime(member["annual_review_date"], "%Y-%m-%d")
         elif member.get("contract_signed_date"):
             base_date = datetime.strptime(member["contract_signed_date"], "%Y-%m-%d")
             next_date = base_date + delta
         else:
             skipped += 1
             continue
+
+        # Advance to the most recent due period (stop when NEXT period > today)
+        # This way: if review day is 5th and today is 19th -> review = March 5 (OVERDUE)
+        # If review day is 25th and today is 19th -> review = Feb 25 (OVERDUE, not done)
+        while next_date + delta <= today_dt:
+            next_date = next_date + delta
 
         review_date_str = next_date.strftime("%Y-%m-%d")
 
