@@ -1,44 +1,75 @@
 # TRANSFORM - Product Requirements Document
 
-## Overview
-SaaS de pilotage financier pour clubs de sport. Marque "TRANSFORM".
-- **Stack:** React frontend + FastAPI backend + MongoDB
-- **Integrations:** GoHighLevel (GHL), Resend (email)
-- **Login:** test@crossfit.ch / test123
+## Application
+SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
 
-## Donnees Validees Mars 2026
-- Revenue: 5062 CHF | Expenses: 2170 CHF | Net: 2892 CHF
-- Recurring: 6202 CHF/mois (47 membres billing_enabled, hors coachs)
-- Funnel GHL: 84 leads -> 0 appts -> 2 show -> 1 converted (Caroline) -> 300 CHF
-- Membres actifs: 97 | Coachs: 30 | Nouveaux: 10 | Partis: 188
-- Paiements: 94 total (47 mars + 47 avril), 0 inconnu
-- Bilans: 95 planifies (toggle activation requis pour auto-generation)
+## Architecture
+```
+/app/
+├── backend/
+│   ├── routers/
+│   │   ├── annual_reviews.py   # Bilans/suivis, generation auto, alertes
+│   │   ├── kpis.py             # KPIs Dashboard, calculs temps reel, details
+│   │   ├── members.py          # CRUD membres, DUO, dissociation
+│   │   ├── notifications.py    # Emails (Resend)
+│   │   ├── payments.py         # Paiements, sync, mark-paid->transaction
+│   │   └── courses.py          # Planning cours, types de cours
+│   └── models/
+│       └── kpi.py              # compute_metrics: CAC=(PUBLICITE+MARKETING)/new
+└── frontend/src/
+    ├── pages/
+    │   ├── Dashboard.js        # KPIs, graphiques, membres
+    │   ├── MembersPage.js      # Membres, DUO primary/partner logic
+    │   ├── PaymentsPage.js     # Paiements synchronises
+    │   ├── AttendancePage.js   # Seances, commence S1 2026
+    │   ├── CoursesPage.js      # Planning cours, dropdown categories
+    │   ├── OnboardingPage.js   # Taches d'onboarding
+    │   └── ClientKPIPage.js    # KPIs clients
+    └── components/
+        └── KPIDetailedView.js  # Collapsible recurring, sans validation
+```
 
-## Regles Metier
-- **Revenue/Expenses**: Basees sur le type de chaque TRANSACTION (pas le type de categorie)
-- **Recurring**: Membres billing_enabled=True, billing_amount>0, non-coach, non-partis
-- **Funnel**: Calcule depuis GHL sales + KPI existants
-- **Paiements**: Generes depuis billing_enabled members (pas payment_schedules)
-- **Bilans**: Activation manuelle par membre, frequence configurable, email au staff
-- **Coachs exclus**: Seances, KPIs Clients, Recurring revenue, Paiements
-- **HUBFIT exclus**: Bilans
+## Regles Metier Cles
+- **Source de verite recurents** : `billing_enabled=true` sur fiche membre
+- **CAC** = (PUBLICITE + MARKETING) / nouveaux membres
+- **Nouveaux membres** : Exclu coachs, HUBFIT, renouvellements
+- **Paiement valide -> Revenue** : mark-paid cree une transaction revenue + recalcule KPI
+- **DUO Primary** : Edition directe, propagation au partenaire
+- **DUO Partner** : Dialogue dissociation -> 2 abonnements individuels
+- **Plannings** = tous billing members (inclut coachs et offerts)
+- **Paiements** = billing members avec amount > 0
 
-## Completed Work (2026-03-18)
-- Import CSV + Dashboard temps reel + DUO + Renouvellement
-- KPIs recalcules avec types transactions (fix Caroline revenue)
-- Funnel GHL populate dans KPI (leads/converted/cash)
-- Recurring revenue coherent (47 membres, 6202 CHF) partout
-- Paiements synchronises (0 inconnu, noms corrects)
-- Bilans/Suivis avec activation manuelle + date 1er bilan
-- Onboarding fix (optimistic update)
-- Dialog membre ameliore (billing + review scrollable)
-- Email bilan envoye au staff avec CTA fiche client
-- Assessment global: toutes les donnees coherentes
+## Etat Actuel (Mars 2026)
+- Revenue: 5,062 CHF | Depenses: 2,170 CHF | Net: 2,892 CHF
+- Membres actifs: 91-93 | Coachs: 29
+- Recurents (hors coachs): 60 membres / 8,645 CHF
+- Plannings: 92 | Paiements: 85
+- Nouveaux membres: 4
+- CAC: 500 CHF
+
+## Taches Completees
+- [x] Audit complet et corrections de donnees (exit_date, billing)
+- [x] Suppression Jonathan Bret
+- [x] Fix KPI member counts historiques (etaient figes a 80)
+- [x] Nettoyage KPIs 2027 fantomes
+- [x] Nouvelle logique nouveaux membres (exclu coachs/HUBFIT/renouvellements)
+- [x] CAC = PUBLICITE + MARKETING
+- [x] DUO: Primary=edition directe+propagation, Partner=dissociation
+- [x] Sync paiements avec membres (endpoint POST /api/payments/sync-with-members)
+- [x] Paiement valide -> transaction revenue -> recalcul KPI
+- [x] Dashboard details: toggle repliable, pas de validation
+- [x] Categories de cours (dropdown KPI Cours)
+- [x] Fix page Seances (annee 2026, S1, navigation)
+- [x] Bilans sync avec membres (partis supprimes, actifs actives)
+- [x] ABONNEMENT OFFERT category + 7 membres offerts
 
 ## Backlog
-- **P1**: Notifications avancees + donnees GHL via API
-- **P2**: Alertes WhatsApp via Twilio
-- **P2**: Interface migration donnees CSV
-- **P2**: Calcul CPL, CPR, LTV
-- **P3**: Refactoring recalculate_month
-- **P3**: Nettoyage donnees sources CSV
+- (P0) Integration API GoHighLevel + Notifications avancees
+- (P1) Suppression page Plannings (/recurring) redondante
+- (P2) Alertes WhatsApp via Twilio
+- (P2) Interface migration CSV
+- (P2) Metriques CPL, CPR, LTV
+- (P3) Refactoring MembersPage.js (>1400 lignes)
+
+## Credentials
+- Email: test@crossfit.ch | Password: test123
