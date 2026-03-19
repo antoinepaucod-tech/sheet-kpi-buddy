@@ -12,6 +12,7 @@ router = APIRouter(prefix="/annual-reviews", tags=["reviews"])
 logger = logging.getLogger(__name__)
 
 FREQUENCY_MAP = {
+    "weekly": relativedelta(weeks=1),
     "monthly": relativedelta(months=1),
     "quarterly": relativedelta(months=3),
     "semi-annually": relativedelta(months=6),
@@ -19,6 +20,7 @@ FREQUENCY_MAP = {
 }
 
 FREQUENCY_LABELS = {
+    "weekly": "Hebdomadaire",
     "monthly": "Mensuel",
     "quarterly": "Trimestriel",
     "semi-annually": "Semestriel",

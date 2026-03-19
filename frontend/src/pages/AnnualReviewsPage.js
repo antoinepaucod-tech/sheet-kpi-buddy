@@ -62,6 +62,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const REVIEW_TYPES = [
   { value: "all", label: "Tous les types" },
+  { value: "weekly", label: "Hebdomadaire" },
   { value: "monthly", label: "Mensuel" },
   { value: "quarterly", label: "Trimestriel" },
   { value: "semi-annually", label: "Semestriel" },
@@ -69,13 +70,15 @@ const REVIEW_TYPES = [
 ];
 
 const TYPE_COLORS = {
+  weekly: "bg-[rgba(255,159,10,0.15)] text-[var(--color-warning)]",
   monthly: "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]",
   quarterly: "bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)]",
   "semi-annually": "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]",
-  annually: "bg-[rgba(100,210,255,0.15)] text-[var(--color-info)]",
+  annually: "bg-[rgba(48,209,88,0.15)] text-[var(--color-success)]",
 };
 
 const TYPE_LABELS = {
+  weekly: "Hebdo",
   monthly: "Mensuel",
   quarterly: "Trimestriel",
   "semi-annually": "Semestriel",
@@ -218,7 +221,7 @@ export default function AnnualReviewsPage() {
     }
 
     if (filterType !== "all") {
-      result = result.filter((r) => (r.review_type || "annually") === filterType);
+      result = result.filter((r) => (r.review_type || "monthly") === filterType);
     }
 
     if (search) {

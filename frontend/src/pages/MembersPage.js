@@ -388,7 +388,7 @@ export default function MembersPage() {
       billing_cycle_value: 1,
       billing_payment_method: "prelevement",
       review_enabled: false,
-      review_frequency: "annually",
+      review_frequency: "monthly",
       annual_review_enabled: false,
     });
     setModalOpen(true);
@@ -1123,6 +1123,7 @@ export default function MembersPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                          <SelectItem value="weekly" className="text-white">Hebdomadaire</SelectItem>
                           <SelectItem value="monthly" className="text-white">Mensuel</SelectItem>
                           <SelectItem value="quarterly" className="text-white">Trimestriel</SelectItem>
                           <SelectItem value="semi-annually" className="text-white">Semestriel</SelectItem>
@@ -1142,10 +1143,11 @@ export default function MembersPage() {
                     </div>
                   </div>
                   <p className="text-[var(--color-text-tertiary)] text-xs">
+                    {formData.review_frequency === "weekly" && "Un bilan sera planifié chaque semaine"}
                     {formData.review_frequency === "monthly" && "Un bilan sera planifié chaque mois"}
                     {formData.review_frequency === "quarterly" && "Un bilan sera planifié tous les 3 mois"}
                     {formData.review_frequency === "semi-annually" && "Un bilan sera planifié tous les 6 mois"}
-                    {(!formData.review_frequency || formData.review_frequency === "annually") && "Un bilan sera planifié chaque année"}
+                    {formData.review_frequency === "annually" && "Un bilan sera planifié chaque année"}
                     {formData.first_review_date && ` — Premier bilan le ${formData.first_review_date}`}
                   </p>
                 </div>
