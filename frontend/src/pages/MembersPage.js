@@ -693,11 +693,13 @@ export default function MembersPage() {
                           variant="ghost"
                           className="text-[var(--color-accent)] hover:text-[var(--color-accent)] hover:bg-[rgba(10,132,255,0.08)]"
                           onClick={() => {
-                            if (member.is_duo) {
+                            if (member.is_duo && !member.duo_primary) {
+                              // Partner: show dissociation dialog
                               setDuoWarningMember(member);
-                              setDuoWarningAction("edit");
+                              setDuoWarningAction("dissociate");
                               setDuoWarningOpen(true);
                             } else {
+                              // Primary DUO or non-DUO: direct edit
                               openEditModal(member);
                             }
                           }}
@@ -790,6 +792,17 @@ export default function MembersPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 130px)' }}>
+            {selectedMember?.duo_primary && (
+              <div className="bg-[rgba(191,90,242,0.08)] border border-[rgba(191,90,242,0.2)] rounded-lg p-3 flex items-start gap-2">
+                <Users size={16} className="text-[#BF5AF2] mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[#BF5AF2] text-sm font-medium">Abonnement DUO</p>
+                  <p className="text-[var(--color-text-secondary)] text-xs mt-0.5">
+                    Les modifications d'abonnement, dates et facturation seront automatiquement propagées au partenaire.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="tf-stat-label">Nom *</label>
@@ -1416,28 +1429,27 @@ export default function MembersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DUO Warning Modal */}
+      {/* DUO Dissociation / Warning Modal */}
       <Dialog open={duoWarningOpen} onOpenChange={setDuoWarningOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[var(--color-warning)]">
               <AlertTriangle size={20} />
-              Membre DUO
+              {duoWarningAction === "dissociate" ? "Dissocier le DUO" : "Membre DUO"}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-3">
             <p className="text-white text-sm">
               <strong>{duoWarningMember?.name}</strong> fait partie d'un abonnement DUO.
             </p>
-            {duoWarningAction === "edit" ? (
+            {duoWarningAction === "dissociate" ? (
               <div className="bg-[rgba(255,214,10,0.08)] border border-[rgba(255,214,10,0.2)] rounded-lg p-3">
-                <p className="text-[var(--color-warning)] text-sm font-medium">Attention</p>
+                <p className="text-[var(--color-warning)] text-sm font-medium">Dissociation du DUO</p>
                 <p className="text-[var(--color-text-secondary)] text-xs mt-1">
-                  Modifier ce membre individuellement peut <strong className="text-white">délier les deux membres DUO</strong>. 
-                  Si vous changez l'abonnement, les dates ou le nom, le partenaire ne sera pas mis à jour automatiquement.
+                  En dissociant ce partenaire, l'abonnement DUO sera <strong className="text-white">séparé en deux abonnements individuels</strong>.
                 </p>
-                <p className="text-[var(--color-text-tertiary)] text-xs mt-2">
-                  Pour modifier l'abonnement DUO entier, éditez le membre principal.
+                <p className="text-[var(--color-text-secondary)] text-xs mt-1">
+                  Les deux membres conserveront leurs données mais ne seront plus liés.
                 </p>
               </div>
             ) : (
@@ -1455,10 +1467,16 @@ export default function MembersPage() {
               Annuler
             </Button>
             <Button
-              className={duoWarningAction === "delete" ? "bg-[var(--color-danger)] hover:opacity-85" : "bg-[var(--color-accent)] hover:opacity-85"}
-              onClick={() => {
-                if (duoWarningAction === "edit") {
-                  openEditModal(duoWarningMember);
+              className={duoWarningAction === "delete" ? "bg-[var(--color-danger)] hover:opacity-85" : "bg-[var(--color-warning)] text-black hover:opacity-85"}
+              onClick={async () => {
+                if (duoWarningAction === "dissociate") {
+                  try {
+                    await fetch(`${API}/members/${duoWarningMember.id}/dissociate-duo`, { method: "POST" });
+                    queryClient.invalidateQueries({ queryKey: ["members"] });
+                    toast.success("DUO dissocié en deux abonnements individuels");
+                  } catch (e) {
+                    toast.error("Erreur lors de la dissociation");
+                  }
                 } else {
                   deleteMutation.mutate(duoWarningMember.id);
                 }
@@ -1466,7 +1484,7 @@ export default function MembersPage() {
               }}
               data-testid="duo-warning-confirm"
             >
-              {duoWarningAction === "edit" ? "Modifier quand même" : "Supprimer quand même"}
+              {duoWarningAction === "dissociate" ? "Dissocier le DUO" : "Supprimer quand même"}
             </Button>
           </DialogFooter>
         </DialogContent>

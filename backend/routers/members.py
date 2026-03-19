@@ -352,6 +352,27 @@ async def update_member(member_id: str, data: CustomerMemberCreate):
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.customer_members.update_one({"id": member_id}, {"$set": update_data})
     
+    # If DUO primary, propagate key changes to partner
+    if existing.get("duo_primary") and existing.get("duo_partner_id"):
+        partner_update = {}
+        propagate_fields = ["membership", "member_type", "subscription_end_date", "contract_signed_date"]
+        for field in propagate_fields:
+            new_val = update_data.get(field)
+            if new_val is not None and new_val != existing.get(field):
+                partner_update[field] = new_val
+        # Propagate billing changes too
+        billing_fields = ["billing_enabled", "billing_amount", "billing_day",
+                          "billing_cycle_type", "billing_cycle_value", "billing_payment_method"]
+        for field in billing_fields:
+            new_val = update_data.get(field)
+            if new_val is not None and new_val != existing.get(field):
+                partner_update[field] = new_val
+        if partner_update:
+            partner_update["updated_at"] = datetime.now(timezone.utc).isoformat()
+            await db.customer_members.update_one(
+                {"id": existing["duo_partner_id"]}, {"$set": partner_update}
+            )
+    
     # Update payment schedule if billing changed
     existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "is_active": True})
     
@@ -381,6 +402,43 @@ async def update_member(member_id: str, data: CustomerMemberCreate):
         await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": {"is_active": False}})
     
     return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+
+
+
+@router.post("/{member_id}/dissociate-duo")
+async def dissociate_duo(member_id: str):
+    """Dissociate a DUO pair into two individual subscriptions."""
+    member = await db.customer_members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if not member.get("is_duo"):
+        raise HTTPException(status_code=400, detail="Ce membre n'est pas un DUO")
+
+    partner_id = member.get("duo_partner_id")
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Remove DUO flags from this member
+    duo_clear = {
+        "is_duo": False,
+        "duo_partner_id": None,
+        "duo_primary": False,
+        "updated_at": now,
+    }
+    await db.customer_members.update_one({"id": member_id}, {"$set": duo_clear})
+
+    # Remove DUO flags from partner
+    if partner_id:
+        await db.customer_members.update_one({"id": partner_id}, {"$set": duo_clear})
+        # Also clear reverse link if partner points back
+        await db.customer_members.update_one(
+            {"duo_partner_id": member_id}, {"$set": duo_clear}
+        )
+
+    return {
+        "message": "DUO dissocié. Les deux membres ont maintenant des abonnements individuels.",
+        "member_id": member_id,
+        "partner_id": partner_id,
+    }
 
 
 @router.delete("/{member_id}")
