@@ -102,30 +102,45 @@ async def sync_payments_with_members():
         await db.payment_schedules.insert_one(schedule)
         schedules_created += 1
 
-    # 3. Sync payments for current month: only for amount > 0
+    # 3. Sync payments for current month (including 0 CHF for offerts)
     await db.payments.delete_many({"status": {"$in": ["pending", "late"]}})
     payments_created = 0
+    import uuid
     for m in active_billing:
         amt = m.get("billing_amount", 0) or 0
-        if amt <= 0:
-            continue
         cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
         day = min(int(cycle_value), days_in_month)
         due_date = f"{month_str}-{day:02d}"
 
-        import uuid
-        payment = {
-            "id": str(uuid.uuid4()),
-            "member_id": m["id"],
-            "schedule_id": m["id"],
-            "member_name": m.get("name", ""),
-            "amount": amt,
-            "due_date": due_date,
-            "status": "late" if due_date < today_str else "pending",
-            "payment_method": m.get("billing_payment_method", "prelevement"),
-            "created_at": now.isoformat(),
-            "updated_at": now.isoformat(),
-        }
+        # For 0 CHF (offerts): auto-mark as paid
+        if amt <= 0:
+            payment = {
+                "id": str(uuid.uuid4()),
+                "member_id": m["id"],
+                "schedule_id": m["id"],
+                "member_name": m.get("name", ""),
+                "amount": 0,
+                "due_date": due_date,
+                "status": "paid",
+                "paid_date": due_date,
+                "payment_method": m.get("billing_payment_method", "offert"),
+                "notes": "Abonnement offert - 0 CHF",
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+            }
+        else:
+            payment = {
+                "id": str(uuid.uuid4()),
+                "member_id": m["id"],
+                "schedule_id": m["id"],
+                "member_name": m.get("name", ""),
+                "amount": amt,
+                "due_date": due_date,
+                "status": "late" if due_date < today_str else "pending",
+                "payment_method": m.get("billing_payment_method", "prelevement"),
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+            }
         await db.payments.insert_one(payment)
         payments_created += 1
 
@@ -310,9 +325,9 @@ async def generate_monthly_payments(year: int, month: int):
     month_str = f"{year}-{month:02d}"
     days_in_month = monthrange(year, month)[1]
     
-    # Get billing-enabled members (active, including coaches, non-departed)
+    # Get billing-enabled members (active, including coaches and offerts, non-departed)
     all_members = await db.customer_members.find(
-        {"billing_enabled": True, "billing_amount": {"$gt": 0}},
+        {"billing_enabled": True},
         {"_id": 0}
     ).to_list(5000)
     
@@ -347,16 +362,37 @@ async def generate_monthly_payments(year: int, month: int):
         else:
             due_date = f"{month_str}-01"
         
-        payment = Payment(
-            member_id=member["id"],
-            schedule_id=member["id"],  # Use member_id as reference
-            amount=member["billing_amount"],
-            due_date=due_date,
-            status="pending",
-            payment_method=member.get("billing_payment_method", "prelevement")
-        )
-        doc = payment.model_dump()
-        doc["member_name"] = member["name"]
+        amt = member.get("billing_amount", 0) or 0
+        
+        # For offerts (0 CHF): auto-mark as paid
+        if amt <= 0:
+            import uuid
+            doc = {
+                "id": str(uuid.uuid4()),
+                "member_id": member["id"],
+                "schedule_id": member["id"],
+                "member_name": member.get("name", ""),
+                "amount": 0,
+                "due_date": due_date,
+                "status": "paid",
+                "paid_date": due_date,
+                "payment_method": member.get("billing_payment_method", "offert"),
+                "notes": "Abonnement offert - 0 CHF",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        else:
+            payment = Payment(
+                member_id=member["id"],
+                schedule_id=member["id"],
+                amount=amt,
+                due_date=due_date,
+                status="pending",
+                payment_method=member.get("billing_payment_method", "prelevement")
+            )
+            doc = payment.model_dump()
+            doc["member_name"] = member["name"]
+        
         await db.payments.insert_one(doc)
         doc.pop('_id', None)
         created.append(doc)
