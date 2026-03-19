@@ -272,6 +272,9 @@ async def generate_salary_expenses(year: int, month: int):
             salary_by_coach[instr_name]["hours"] += 1
             salary_by_coach[instr_name]["total"] += r
 
+    # Filter out coaches with 0 CHF total (avoid creating useless transactions)
+    salary_by_coach = {k: v for k, v in salary_by_coach.items() if v["total"] > 0}
+
     if not salary_by_coach:
         return {"message": "Aucune rémunération à générer", "transactions": []}
 

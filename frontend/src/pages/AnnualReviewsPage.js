@@ -100,6 +100,9 @@ export default function AnnualReviewsPage() {
   const [historyMemberId, setHistoryMemberId] = useState(null);
   const [memberSummary, setMemberSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [skipDialogOpen, setSkipDialogOpen] = useState(false);
+  const [skipReviewTarget, setSkipReviewTarget] = useState(null);
+  const [skipReason, setSkipReason] = useState("");
   const [formData, setFormData] = useState({
     weight_start: "",
     weight_current: "",
@@ -611,10 +614,9 @@ export default function AnnualReviewsPage() {
                             variant="ghost"
                             className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.08)]"
                             onClick={() => {
-                              const reason = window.prompt("Raison du skip (optionnel) :");
-                              if (reason !== null) {
-                                skipMutation.mutate({ id: review.id, reason });
-                              }
+                              setSkipReviewTarget(review);
+                              setSkipReason("");
+                              setSkipDialogOpen(true);
                             }}
                             disabled={skipMutation.isPending}
                             title="Skip ce bilan"
@@ -1137,6 +1139,59 @@ export default function AnnualReviewsPage() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDetailModalOpen(false)}>
               Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Skip Review Dialog */}
+      <Dialog open={skipDialogOpen} onOpenChange={(open) => { setSkipDialogOpen(open); if (!open) setSkipReviewTarget(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SkipForward className="text-[var(--color-warning)]" size={20} />
+              Skipper ce bilan
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-[var(--color-text-secondary)] text-sm">
+              {skipReviewTarget && `Bilan de ${skipReviewTarget.member_name} prévu le ${skipReviewTarget.review_date}`}
+            </p>
+            <div>
+              <label className="text-[var(--color-text-secondary)] text-xs">Raison du skip (optionnel)</label>
+              <Input
+                value={skipReason}
+                onChange={(e) => setSkipReason(e.target.value)}
+                placeholder="Ex: Membre en vacances..."
+                className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
+                data-testid="skip-reason-input"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSkipDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                if (skipReviewTarget) {
+                  skipMutation.mutate(
+                    { id: skipReviewTarget.id, reason: skipReason },
+                    {
+                      onSuccess: () => {
+                        setSkipDialogOpen(false);
+                        setSkipReviewTarget(null);
+                        setSkipReason("");
+                      }
+                    }
+                  );
+                }
+              }}
+              disabled={skipMutation.isPending}
+              className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85 text-black font-bold"
+              data-testid="confirm-skip-btn"
+            >
+              {skipMutation.isPending ? "..." : "Confirmer le skip"}
             </Button>
           </DialogFooter>
         </DialogContent>

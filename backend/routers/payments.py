@@ -290,6 +290,7 @@ async def mark_payment_paid(payment_id: str, body: dict = {}):
         "amount": existing.get("amount", 0),
         "category": category,
         "description": f"Paiement validé - {member_name}",
+        "client_name": member_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "source": "payment_validation",

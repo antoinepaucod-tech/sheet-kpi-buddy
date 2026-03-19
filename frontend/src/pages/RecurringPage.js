@@ -403,6 +403,14 @@ export default function RecurringPage() {
           </div>
         </div>
 
+        <div className="bg-[rgba(10,132,255,0.06)] border border-[rgba(10,132,255,0.15)] rounded-[var(--radius-lg)] p-3" data-testid="validation-explanation">
+          <p className="text-[var(--color-text-secondary)] text-xs leading-relaxed">
+            {lang === "fr" 
+              ? "Cette section vous permet de vérifier manuellement que chaque dépense ou revenu récurrent a bien été encaissé/payé pour le mois sélectionné. C'est un outil de contrôle comptable : les abonnements sont configurés automatiquement, mais cette validation confirme que le paiement a effectivement eu lieu."
+              : "This section lets you manually verify that each recurring expense or revenue was actually received/paid for the selected month. It's an accounting control tool: subscriptions are configured automatically, but this validation confirms the payment actually occurred."}
+          </p>
+        </div>
+
         {loadingVal ? (
           <div className="flex items-center justify-center h-20">
             <Loader2 className="animate-spin text-[var(--color-accent)]" size={20} />

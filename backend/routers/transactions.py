@@ -445,6 +445,10 @@ async def generate_monthly_transactions(year: int, month: int):
         if (rec["category"], rec["description"]) in excluded_keys:
             skipped.append(rec["description"])
             continue
+        # Skip 0 CHF recurring transactions
+        if (rec.get("amount", 0) or 0) <= 0:
+            skipped.append(rec["description"])
+            continue
         day = min(rec.get("recurrence_day", 1), days_in_month)
         tx = AccountingTransaction(
             date=f"{month_str}-{day:02d}",
