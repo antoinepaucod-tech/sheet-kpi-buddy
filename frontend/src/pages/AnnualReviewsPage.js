@@ -129,12 +129,6 @@ export default function AnnualReviewsPage() {
     queryFn: () => axios.get(`${API}/annual-reviews`).then((r) => r.data),
   });
 
-  // Fetch upcoming reviews (30 days)
-  const { data: upcomingReviews = [] } = useQuery({
-    queryKey: ["annual-reviews", "upcoming"],
-    queryFn: () => axios.get(`${API}/annual-reviews/upcoming?days=60`).then((r) => r.data),
-  });
-
   // Fetch members for creating new reviews
   const { data: members = [] } = useQuery({
     queryKey: ["members"],
@@ -208,37 +202,42 @@ export default function AnnualReviewsPage() {
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
   });
 
-  // Filter reviews
+  // Filter reviews — always computed from allReviews to match stats cards
   const filteredReviews = useMemo(() => {
-    let result;
-    
+    const today = new Date();
+    let result = [...allReviews];
+
+    // Period filter (same logic as stats)
     if (filterPeriod === "upcoming") {
-      result = upcomingReviews;
+      result = result.filter((r) => {
+        if (r.status !== "scheduled") return false;
+        const days = differenceInDays(parseISO(r.review_date), today);
+        return days >= 0 && days <= 60;
+      });
     } else if (filterPeriod === "thisweek") {
-      const today = new Date();
-      result = allReviews.filter((r) => {
+      result = result.filter((r) => {
         if (r.status !== "scheduled") return false;
         const days = differenceInDays(parseISO(r.review_date), today);
         return days >= 0 && days <= 7;
       });
     } else if (filterPeriod === "late") {
-      const today = new Date();
-      result = allReviews.filter((r) => {
+      result = result.filter((r) => {
         if (r.status !== "scheduled") return false;
         return parseISO(r.review_date) < today;
       });
-    } else {
-      result = allReviews;
     }
 
+    // Status filter
     if (filterStatus !== "all") {
       result = result.filter((r) => r.status === filterStatus);
     }
 
+    // Type filter
     if (filterType !== "all") {
       result = result.filter((r) => (r.review_type || "monthly") === filterType);
     }
 
+    // Search filter
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(
@@ -248,8 +247,11 @@ export default function AnnualReviewsPage() {
       );
     }
 
+    // Sort by date ascending
+    result.sort((a, b) => (a.review_date || "").localeCompare(b.review_date || ""));
+
     return result;
-  }, [allReviews, upcomingReviews, filterPeriod, filterStatus, filterType, search]);
+  }, [allReviews, filterPeriod, filterStatus, filterType, search]);
 
   // Stats
   const stats = useMemo(() => {
