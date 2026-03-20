@@ -152,6 +152,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         churn: k.churn_rate,
         cac: k.cac,
         roas: k.roas,
+        cpl: k.cpl || 0,
+        cpr: k.cpr || 0,
         profitMargin: Math.max(-200, Math.min(200, k.profit_margin)),
         revMembers: k.revenue_members || k.general_eft_revenue,
         revCoaching: k.revenue_coaching || k.pt_revenue,
@@ -325,7 +327,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               ? { pct: Math.abs(((current.cac - previous.cac) / previous.cac) * 100).toFixed(1), up: current.cac < previous.cac }
               : null
           }
-          vsLabel={t("vsLastMonth")}
+          vsLabel={lang === "fr" ? "(Marketing+Pub) / Ventes" : "(Marketing+Ads) / Sales"}
           icon={Target}
           data-testid="kpi-cac"
         />
@@ -812,14 +814,16 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
           </div>
 
           {/* Summary metrics row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 tf-stagger">
             {[
               { label: t("profitMargin"), value: formatPct(current?.profit_margin) },
-              { label: t("roas"), value: `${(current?.roas ?? 0).toFixed(2)}x` },
+              { label: t("roas"), value: `${(current?.roas ?? 0).toFixed(2)}x`, tooltip: lang === "fr" ? "Revenue GHL / Ad Spend" : "GHL Revenue / Ad Spend" },
+              { label: "CPL", value: formatCHF(current?.cpl), tooltip: lang === "fr" ? "Ad Spend / Leads" : "Ad Spend / Leads" },
+              { label: "CPR", value: formatCHF(current?.cpr), tooltip: lang === "fr" ? "Ad Spend / Show RDV" : "Ad Spend / Show Appointments" },
               { label: t("totalExpenses"), value: formatCHF(current?.total_expenses) },
               { label: t("adSpend"), value: formatCHF((current?.ad_spend || 0) + (current?.marketing_cost || 0)) },
-            ].map(({ label, value }) => (
-              <div key={label} className="tf-stat">
+            ].map(({ label, value, tooltip }) => (
+              <div key={label} className="tf-stat" title={tooltip || ""}>
                 <p className="tf-stat-label">{label}</p>
                 <p className="tf-stat-value">{value}</p>
               </div>

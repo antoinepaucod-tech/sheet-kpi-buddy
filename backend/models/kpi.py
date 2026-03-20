@@ -153,27 +153,38 @@ def compute_metrics(kpi: dict) -> dict:
     """Compute derived metrics for a KPI record"""
     members_start = kpi.get('total_members', 0) + kpi.get('lost_members', 0)
     churn_rate = round((kpi.get('lost_members', 0) / members_start * 100) if members_start > 0 else 0, 2)
-    new_m = kpi.get('new_members', 0)
-    total_marketing = kpi.get('marketing_spend', 0) + kpi.get('marketing_cost', 0)
-    cac = round((total_marketing / new_m) if new_m > 0 else 0, 2)
-    ad = kpi.get('ad_spend', 0)
-    roas = round((kpi.get('total_revenue', 0) / ad) if ad > 0 else 0, 2)
+
+    # CAC = (Marketing + Publicité) / Ventes (close)
+    ad = kpi.get('ad_spend', 0) or 0
+    marketing = kpi.get('marketing_cost', 0) or 0
+    close = kpi.get('close', 0) or 0
+    total_acq_spend = ad + marketing
+    cac = round((total_acq_spend / close) if close > 0 else 0, 2)
+
+    # ROAS = Revenue GHL funnel (cash_collected) / Ad Spend
+    cash_collected = kpi.get('cash_collected', 0) or 0
+    roas = round((cash_collected / ad) if ad > 0 else 0, 2)
+
+    # CPL = Ad Spend / Leads
+    leads = kpi.get('leads', 0) or 0
+    cpl = round((ad / leads) if leads > 0 else 0, 2)
+
+    # CPR = Ad Spend / Show RDV
+    show = kpi.get('show', 0) or 0
+    cpr = round((ad / show) if show > 0 else 0, 2)
+
     rev = kpi.get('total_revenue', 0)
     profit_margin = round((kpi.get('net_profit', 0) / rev * 100) if rev > 0 else 0, 2)
 
     # Recalculate funnel percentages from raw counts
-    leads = kpi.get('leads', 0) or 0
     calls = kpi.get('calls_made', 0) or 0
     scheduled = kpi.get('scheduled', 0) or 0
-    show = kpi.get('show', 0) or 0
-    close = kpi.get('close', 0) or 0
     call_percentage = round((calls / leads * 100), 1) if leads > 0 else 0
     sched_percentage = round((scheduled / calls * 100), 1) if calls > 0 else 0
     show_percentage = round((show / scheduled * 100), 1) if scheduled > 0 else 0
     close_percentage = round((close / show * 100), 1) if show > 0 else 0
 
     # Recalculate avg_per_sale from cash_collected and close
-    cash_collected = kpi.get('cash_collected', 0) or 0
     avg_per_sale = round((cash_collected / close), 2) if close > 0 else 0
 
     return {
@@ -181,6 +192,8 @@ def compute_metrics(kpi: dict) -> dict:
         'churn_rate': churn_rate,
         'cac': cac,
         'roas': roas,
+        'cpl': cpl,
+        'cpr': cpr,
         'profit_margin': profit_margin,
         'call_percentage': call_percentage,
         'sched_percentage': sched_percentage,
