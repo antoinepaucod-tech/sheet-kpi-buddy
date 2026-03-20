@@ -154,7 +154,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         roas: k.roas,
         cpl: k.cpl || 0,
         cpr: k.cpr || 0,
-        arpm: k.general_acrm || 0,
+        acrm_expected: k.acrm_expected || 0,
+        collection_rate: k.collection_rate || 0,
         ltv: k.general_ltv || 0,
         profitMargin: Math.max(-200, Math.min(200, k.profit_margin)),
         revMembers: k.revenue_members || k.general_eft_revenue,
@@ -817,28 +818,33 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
           {/* ARPM & LTV Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ChartCard title={lang === "fr" ? "ACRM (Revenu moyen / Membre)" : "ACRM (Avg Revenue per Member)"}>
+            <ChartCard title={lang === "fr" ? "ACRM Réel vs Expected" : "ACRM Actual vs Expected"}>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={currentYearData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} CHF`} />
                   <Tooltip content={<ChartTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }} />
                   {selectedLabel && <ReferenceLine x={selectedLabel} stroke="#30D158" strokeDasharray="4 4" />}
-                  <Area type="monotone" dataKey="arpm" name="ACRM" stroke="#30D158" fill="#30D158" fillOpacity={0.1} strokeWidth={2} dot={{ r: 3, fill: "#30D158" }} activeDot={{ r: 5 }} />
+                  <Area type="monotone" dataKey="arpm" name={lang === "fr" ? "ACRM Réel" : "ACRM Actual"} stroke="#30D158" fill="#30D158" fillOpacity={0.1} strokeWidth={2} dot={{ r: 3, fill: "#30D158" }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="acrm_expected" name={lang === "fr" ? "ACRM Expected" : "ACRM Expected"} stroke="#FF9F0A" strokeWidth={2} strokeDasharray="6 3" dot={{ r: 3, fill: "#FF9F0A" }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title={lang === "fr" ? "LTV (Valeur vie client)" : "LTV (Customer Lifetime Value)"}>
+            <ChartCard title={lang === "fr" ? "Collection Rate & LTV" : "Collection Rate & LTV"}>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={currentYearData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`} />
+                  <YAxis yAxisId="left" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`} />
                   <Tooltip content={<ChartTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }} />
                   {selectedLabel && <ReferenceLine x={selectedLabel} stroke="#BF5AF2" strokeDasharray="4 4" />}
-                  <Area type="monotone" dataKey="ltv" name="LTV" stroke="#BF5AF2" fill="#BF5AF2" fillOpacity={0.1} strokeWidth={2} dot={{ r: 3, fill: "#BF5AF2" }} activeDot={{ r: 5 }} />
+                  <Bar yAxisId="left" dataKey="collection_rate" name="Collection Rate %" fill="#64D2FF" opacity={0.5} barSize={20} radius={[2, 2, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="ltv" name="LTV" stroke="#BF5AF2" strokeWidth={2} dot={{ r: 3, fill: "#BF5AF2" }} activeDot={{ r: 5 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -852,6 +858,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               { label: "CPL", value: formatCHF(current?.cpl), tooltip: lang === "fr" ? "Ad Spend / Leads" : "Ad Spend / Leads" },
               { label: "CPR", value: formatCHF(current?.cpr), tooltip: lang === "fr" ? "Ad Spend / Show RDV" : "Ad Spend / Show Appointments" },
               { label: "ACRM", value: formatCHF(current?.general_acrm), tooltip: lang === "fr" ? "Revenu Total / Membres actifs" : "Revenue / Active Members" },
+              { label: "ACRM Expected", value: formatCHF(current?.acrm_expected), tooltip: lang === "fr" ? "Souscriptions mensualisées / Membres actifs" : "Monthly subscriptions / Active Members" },
+              { label: "Collection Rate", value: `${(current?.collection_rate ?? 0).toFixed(1)}%`, tooltip: lang === "fr" ? "Cash encaissé / Revenue attendu" : "Cash collected / Expected revenue" },
               { label: "LTV", value: formatCHF(current?.general_ltv), tooltip: lang === "fr" ? "ACRM / Taux de churn" : "ACRM / Churn Rate" },
               { label: t("totalExpenses"), value: formatCHF(current?.total_expenses) },
               { label: t("adSpend"), value: formatCHF((current?.ad_spend || 0) + (current?.marketing_cost || 0)) },

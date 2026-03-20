@@ -409,7 +409,9 @@ async def recalculate_month(month: str):
     all_members_for_count = await db.customer_members.find(
         {"contract_signed_date": {"$lt": month_end_str}},
         {"_id": 0, "name": 1, "membership": 1, "exit_date": 1,
-         "subscription_end_date": 1, "is_duo": 1}
+         "subscription_end_date": 1, "is_duo": 1, "is_coach": 1,
+         "billing_amount": 1, "billing_cycle_type": 1, "billing_cycle_value": 1,
+         "billing_enabled": 1}
     ).to_list(10000)
 
     # Filter: not departed before start of month, and subscription not ended before start of month
@@ -496,6 +498,29 @@ async def recalculate_month(month: str):
     update["recurring_revenue"] = recurring_rev
     update["recurring_expenses"] = recurring_exp
     update["recurring_net_impact"] = recurring_rev - recurring_exp
+
+    # --- Expected revenue & Collection Rate ---
+    expected_revenue = 0.0
+    for m in current_members:
+        if m.get("is_coach"):
+            continue
+        ms = (m.get("membership") or "").upper()
+        if any(kw in ms for kw in coach_kw_count):
+            continue
+        amt = m.get("billing_amount", 0) or 0
+        if amt <= 0:
+            continue
+        cycle_type = m.get("billing_cycle_type", "monthly")
+        cycle_val = m.get("billing_cycle_value", 30) or 30
+        if cycle_type == "interval_days" and cycle_val > 0:
+            monthly_amt = amt * (30.44 / cycle_val)
+        else:
+            monthly_amt = amt
+        expected_revenue += monthly_amt
+
+    update["expected_revenue"] = round(expected_revenue, 2)
+    update["acrm_expected"] = round(expected_revenue / active_members_count, 2) if active_members_count > 0 else 0
+    update["collection_rate"] = round((update.get("total_revenue", 0) / expected_revenue * 100), 1) if expected_revenue > 0 else 0
 
     # Set aliases
     for eng, fr in ALIASES.items():
