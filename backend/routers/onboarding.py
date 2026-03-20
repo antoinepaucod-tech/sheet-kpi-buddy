@@ -1,19 +1,28 @@
 """Onboarding and Alerts routes"""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from typing import Optional
 from datetime import datetime, timezone, timedelta
 
 from core.config import db
+from core.security import get_club_id
 
 router = APIRouter(tags=["onboarding"])
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 @router.get("/onboarding/pending")
-async def get_pending_onboarding():
+async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
     """Get members with incomplete onboarding"""
-    docs = await db.customer_members.find({
+    docs = await db.customer_members.find(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "exit_date": None
-    }, {"_id": 0}).to_list(500)
+    }), {"_id": 0}).to_list(500)
     
     for doc in docs:
         steps = [
@@ -32,24 +41,24 @@ async def get_pending_onboarding():
 
 
 @router.get("/alerts/summary")
-async def get_alerts_summary():
+async def get_alerts_summary(club_id: Optional[str] = Depends(get_club_id)):
     """Get summary of all alerts (late payments, missed followups, expiring subscriptions)"""
     today = datetime.now(timezone.utc).date()
     thirty_days = today + timedelta(days=30)
     
-    late_payments = await db.payments.count_documents({
+    late_payments = await db.payments.count_documents(_cq(club_id, {
         "due_date": {"$lt": today.isoformat()},
         "status": {"$in": ["pending", "late"]}
-    })
+    }))
     
-    missed_followups = await db.member_followups.count_documents({
+    missed_followups = await db.member_followups.count_documents(_cq(club_id, {
         "followup_date": {"$lt": today.isoformat()},
         "status": {"$in": ["scheduled", "rescheduled"]}
-    })
+    }))
     
-    members = await db.customer_members.find({
+    members = await db.customer_members.find(_cq(club_id, {
         "exit_date": None
-    }, {"_id": 0, "subscription_end_date": 1}).to_list(1000)
+    }), {"_id": 0, "subscription_end_date": 1}).to_list(1000)
     
     expiring_count = 0
     for m in members:
@@ -61,16 +70,16 @@ async def get_alerts_summary():
             except:
                 pass
     
-    incomplete_onboarding = await db.customer_members.count_documents({
+    incomplete_onboarding = await db.customer_members.count_documents(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "exit_date": None
-    })
+    }))
     
     seven_days = today + timedelta(days=7)
-    upcoming_followups = await db.member_followups.count_documents({
+    upcoming_followups = await db.member_followups.count_documents(_cq(club_id, {
         "followup_date": {"$gte": today.isoformat(), "$lte": seven_days.isoformat()},
         "status": {"$in": ["scheduled", "rescheduled"]}
-    })
+    }))
     
     return {
         "late_payments": late_payments,

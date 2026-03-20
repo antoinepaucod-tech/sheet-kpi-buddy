@@ -1,17 +1,20 @@
 """Training routes"""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
 from core.config import db
+from core.security import get_club_id
 from models.members import WeeklyTraining, WeeklyTrainingUpdate
 
 router = APIRouter(prefix="/trainings", tags=["trainings"])
 
 
 @router.get("")
-async def get_trainings(member_id: Optional[str] = None, year: Optional[int] = None, week: Optional[int] = None):
+async def get_trainings(member_id: Optional[str] = None, year: Optional[int] = None, week: Optional[int] = None, club_id: Optional[str] = Depends(get_club_id)):
     query = {}
+    if club_id:
+        query["club_id"] = club_id
     if member_id:
         query["member_id"] = member_id
     if year:

@@ -1,0 +1,116 @@
+{
+  "summary": "Iteration 63 - Multi-Club/Franchise Migration Testing Complete. All 18 backend tests passed. Frontend working correctly for both Super Admin and Manager roles.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Month Selector Header",
+        "issue": "Month text duplicated as 'mars 2026mars 2026' in header selector",
+        "selector": "[data-testid='month-selector']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [],
+    "console_warnings": [
+      {
+        "type": "React Warning",
+        "message": "Encountered two children with the same key '2026-03'. Non-unique keys may cause issues.",
+        "impact": "Minor - no functional impact"
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_multiclub_iteration63.py",
+    "/app/test_reports/pytest/pytest_results_iter63.xml"
+  ],
+  "action_items": [
+    "Fix duplicate month text in header selector (LOW priority)"
+  ],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_multiclub_iteration63.py"
+  ],
+  "success_rate": {"backend": "100% (18/18 tests)", "frontend": "100%"},
+  "test_credentials": {
+    "super_admin": {"email": "antoine.paucod@the-coach.pro", "password": "test123"},
+    "manager": {"email": "test@crossfit.ch", "password": "test123"}
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Multi-club migration verified. 4 clubs: Transform Versoix (325 members, 27 KPIs, 3424 transactions), Transform Grand Saconnex (empty), Transform Servette (empty), Transform Lausanne (empty). Super Admin can see/switch all 4 clubs. Manager only sees Transform Versoix. X-Club-Id header filters all data correctly.",
+  "features_verified": {
+    "login_super_admin": {
+      "status": "PASS",
+      "evidence": "Returns role='super_admin', 4 club_ids, active_club_id=Versoix"
+    },
+    "login_manager": {
+      "status": "PASS",
+      "evidence": "Returns role='manager', 1 club_id (Versoix only)"
+    },
+    "get_clubs_super_admin": {
+      "status": "PASS",
+      "evidence": "Returns 4 clubs: Transform Versoix, Grand Saconnex, Servette, Lausanne"
+    },
+    "get_clubs_manager": {
+      "status": "PASS",
+      "evidence": "Returns only 1 club: Transform Versoix"
+    },
+    "members_filter_versoix": {
+      "status": "PASS",
+      "evidence": "GET /api/members with X-Club-Id Versoix returns 325 members"
+    },
+    "members_filter_empty_club": {
+      "status": "PASS",
+      "evidence": "GET /api/members with X-Club-Id Grand Saconnex returns 0 members"
+    },
+    "kpis_filter_versoix": {
+      "status": "PASS",
+      "evidence": "GET /api/monthly-kpis with X-Club-Id Versoix returns 27 KPIs"
+    },
+    "kpis_filter_empty_club": {
+      "status": "PASS",
+      "evidence": "GET /api/monthly-kpis with X-Club-Id Grand Saconnex returns 0 KPIs"
+    },
+    "club_switch": {
+      "status": "PASS",
+      "evidence": "PUT /api/clubs/switch works for super_admin, returns 403 for manager switching to other club"
+    },
+    "categories_filter": {
+      "status": "PASS",
+      "evidence": "Versoix has 41 categories, empty clubs have 0"
+    },
+    "transactions_filter": {
+      "status": "PASS",
+      "evidence": "Versoix has 3424 transactions, empty clubs have 0"
+    },
+    "frontend_club_selector_super_admin": {
+      "status": "PASS",
+      "evidence": "Club selector dropdown visible with 4 options"
+    },
+    "frontend_club_selector_manager": {
+      "status": "PASS",
+      "evidence": "Club selector NOT visible for manager (as expected)"
+    },
+    "frontend_dashboard_versoix": {
+      "status": "PASS",
+      "evidence": "Dashboard shows data: 93 active members, 10793 CHF revenue, 29 coaches"
+    },
+    "frontend_dashboard_empty_club": {
+      "status": "PASS",
+      "evidence": "Dashboard shows 0 values when switched to empty club"
+    }
+  },
+  "club_ids": {
+    "Transform Versoix": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+    "Transform Grand Saconnex": "3933cca5-ed80-42b9-ac91-6120f8f06ed4",
+    "Transform Servette": "9bfdb209-066d-4d11-b195-a6b9533b8cb8",
+    "Transform Lausanne": "c6a2bd8b-24ad-4bf5-8de1-50bbf69e2e5c"
+  },
+  "test_date": "2026-03-20",
+  "test_time": "17:12 UTC"
+}

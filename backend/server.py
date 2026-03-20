@@ -2,7 +2,8 @@
 TRANSFORM - Financial Management Platform
 FastAPI backend with fully modular architecture
 """
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Depends
+from typing import Optional
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 import logging
@@ -15,7 +16,7 @@ from models.kpi import ClubSettings
 from routers import (
     auth, members, payments, annual_reviews, followups, onboarding,
     settings, coaches, challenges, kpis, transactions, trainings,
-    courses, alerts, reports, notifications, ghl
+    courses, alerts, reports, notifications, ghl, clubs
 )
 
 # App setup
@@ -43,25 +44,41 @@ api_router.include_router(alerts.router)
 api_router.include_router(reports.router)
 api_router.include_router(notifications.router)
 api_router.include_router(ghl.router)
+api_router.include_router(clubs.router)
+
+
+from core.security import get_club_id as _get_club_id
 
 
 # ── Settings Routes (Club Settings) ──────────────────────────────────────────
 
 @api_router.get("/settings")
-async def get_settings():
-    doc = await db.club_settings.find_one({"id": "default"}, {"_id": 0})
+async def get_settings(x_club_id: Optional[str] = Depends(_get_club_id)):
+    query = {"id": "default"}
+    if x_club_id:
+        query = {"club_id": x_club_id}
+    doc = await db.club_settings.find_one(query, {"_id": 0})
     if not doc:
         default = ClubSettings()
-        await db.club_settings.insert_one({"id": "default", **default.model_dump()})
-        return {"id": "default", **default.model_dump()}
+        payload = {"id": "default", **default.model_dump()}
+        if x_club_id:
+            payload["club_id"] = x_club_id
+        await db.club_settings.insert_one(payload)
+        payload.pop("_id", None)
+        return payload
     return doc
 
 
 @api_router.put("/settings")
-async def update_settings(data: ClubSettings):
+async def update_settings(data: ClubSettings, x_club_id: Optional[str] = Depends(_get_club_id)):
     data.updated_at = datetime.now(timezone.utc).isoformat()
     payload = {"id": "default", **data.model_dump()}
-    await db.club_settings.replace_one({"id": "default"}, payload, upsert=True)
+    if x_club_id:
+        payload["club_id"] = x_club_id
+        await db.club_settings.replace_one({"club_id": x_club_id}, payload, upsert=True)
+    else:
+        await db.club_settings.replace_one({"id": "default"}, payload, upsert=True)
+    payload.pop("_id", None)
     return payload
 
 

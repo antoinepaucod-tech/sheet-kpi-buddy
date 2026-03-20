@@ -1,17 +1,26 @@
 """PDF Report route"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
+from typing import Optional
 from datetime import datetime
 from io import BytesIO
 
 from core.config import db, MONTHS_FR
+from core.security import get_club_id
 from models.kpi import compute_metrics
 
 router = APIRouter(tags=["reports"])
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 @router.get("/report/pdf/{month}")
-async def generate_pdf_report(month: str):
+async def generate_pdf_report(month: str, club_id: Optional[str] = Depends(get_club_id)):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import mm
     from reportlab.lib.colors import HexColor
@@ -19,12 +28,12 @@ async def generate_pdf_report(month: str):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 
-    kpi = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    kpi = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0})
     if not kpi:
         raise HTTPException(status_code=404, detail="Mois introuvable")
     kpi = compute_metrics(kpi)
 
-    settings = await db.club_settings.find_one({"id": "default"}, {"_id": 0})
+    settings = await db.club_settings.find_one(_cq(club_id) or {"id": "default"}, {"_id": 0})
     club_name = settings.get("club_name", "Mon Club") if settings else "Mon Club"
 
     year, m = month.split("-")

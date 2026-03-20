@@ -1,20 +1,29 @@
 """GoHighLevel sync routes"""
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 import logging
 
 from core.config import db
+from core.security import get_club_id
 from services.ghl import sync_pipeline_data
 
 router = APIRouter(prefix="/ghl", tags=["ghl"])
 logger = logging.getLogger(__name__)
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 @router.post("/sync")
 async def sync_ghl(
     start_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
     end_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
+    club_id: Optional[str] = Depends(get_club_id),
 ):
     """Trigger a manual sync from GoHighLevel pipelines with optional date filter"""
     try:
@@ -149,10 +158,10 @@ async def get_last_sync():
 
 
 @router.get("/sync-history")
-async def get_sync_history():
+async def get_sync_history(club_id: Optional[str] = Depends(get_club_id)):
     """Get sync history (last 20)"""
     docs = await db.ghl_syncs.find(
-        {}, {"_id": 0}
+        _cq(club_id), {"_id": 0}
     ).sort("synced_at", -1).to_list(20)
     return docs
 

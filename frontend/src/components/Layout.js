@@ -24,6 +24,8 @@ import {
   ListChecks,
   Mail,
   Table2,
+  Building2,
+  ChevronDown,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -101,6 +103,10 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const [latePaymentsCount, setLatePaymentsCount] = useState(0);
   const [upcomingReviewsCount, setUpcomingReviewsCount] = useState(0);
   const [overdueReviewsCount, setOverdueReviewsCount] = useState(0);
+
+  // Multi-club context
+  const { clubs, activeClubId, switchClub } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
 
   const sections = NAV_SECTIONS(lang);
 
@@ -248,6 +254,25 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
             <div className="mb-3 px-2">
               <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }} className="truncate">{user.email}</p>
               <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', fontWeight: 'var(--font-medium)' }} className="truncate">{user.club_name}</p>
+              {user.role === "super_admin" && (
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 'var(--font-bold)',
+                    color: 'var(--color-accent)',
+                    background: 'var(--color-accent-subtle)',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'inline-block',
+                    marginTop: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                  data-testid="super-admin-badge"
+                >
+                  Super Admin
+                </span>
+              )}
             </div>
           )}
           <button
@@ -271,9 +296,33 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
         {/* Topbar */}
         <header className="h-16 flex items-center justify-between px-6 sticky top-0 z-10" style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           <div className="flex items-center gap-4">
-            {user && (
+            {/* Club Selector - Super Admin only */}
+            {isSuperAdmin && clubs.length > 1 && (
+              <Select value={activeClubId || ""} onValueChange={switchClub}>
+                <SelectTrigger
+                  className="w-56 h-9 tf-input"
+                  data-testid="club-selector"
+                >
+                  <Building2 size={14} className="mr-2" style={{ color: 'var(--color-accent)' }} />
+                  <SelectValue placeholder="Sélectionner un club" />
+                </SelectTrigger>
+                <SelectContent style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
+                  {clubs.map((club) => (
+                    <SelectItem
+                      key={club.id}
+                      value={club.id}
+                      className="text-white focus:bg-[rgba(255,255,255,0.1)] focus:text-white"
+                      data-testid={`club-option-${club.slug}`}
+                    >
+                      {club.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {!isSuperAdmin && user && (
               <div className="flex items-center gap-2" style={{ color: 'var(--color-text-secondary)' }}>
-                <User size={14} />
+                <Building2 size={14} />
                 <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>{user.club_name}</span>
               </div>
             )}

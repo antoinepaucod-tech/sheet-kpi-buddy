@@ -1,5 +1,5 @@
 """Reviews (Bilans/Suivis) routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta, date
 from dateutil.relativedelta import relativedelta
@@ -7,10 +7,18 @@ from uuid import uuid4
 import logging
 
 from core.config import db
+from core.security import get_club_id
 from models.members import AnnualReview, AnnualReviewCreate
 
 router = APIRouter(prefix="/annual-reviews", tags=["reviews"])
 logger = logging.getLogger(__name__)
+
+
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
 
 FREQUENCY_MAP = {
     "weekly": relativedelta(weeks=1),
@@ -34,9 +42,10 @@ async def get_reviews(
     member_id: Optional[str] = None,
     status: Optional[str] = None,
     review_type: Optional[str] = None,
-    year: Optional[int] = None
+    year: Optional[int] = None,
+    club_id: Optional[str] = Depends(get_club_id)
 ):
-    query = {}
+    query = _cq(club_id)
     if member_id:
         query["member_id"] = member_id
     if status:
@@ -64,15 +73,15 @@ async def get_reviews(
 
 
 @router.get("/upcoming")
-async def get_upcoming_reviews(days: int = 30):
+async def get_upcoming_reviews(days: int = 30, club_id: Optional[str] = Depends(get_club_id)):
     """Get reviews scheduled in the next N days"""
     today = datetime.now(timezone.utc).date()
     end_date = today + timedelta(days=days)
 
-    docs = await db.annual_reviews.find({
-        "review_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
-        "status": "scheduled"
-    }, {"_id": 0}).sort("review_date", 1).to_list(100)
+    q = {"review_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()}, "status": "scheduled"}
+    if club_id:
+        q["club_id"] = club_id
+    docs = await db.annual_reviews.find(q, {"_id": 0}).sort("review_date", 1).to_list(100)
 
     for doc in docs:
         member = await db.customer_members.find_one(
@@ -93,13 +102,13 @@ async def get_upcoming_reviews(days: int = 30):
 
 
 @router.get("/stats")
-async def get_review_stats():
+async def get_review_stats(club_id: Optional[str] = Depends(get_club_id)):
     """Get review counts for sidebar badges — matches frontend differenceInDays logic"""
     now = datetime.now()
     today_date = now.date()
 
     all_scheduled = await db.annual_reviews.find(
-        {"status": "scheduled"}, {"_id": 0, "review_date": 1}
+        _cq(club_id, {"status": "scheduled"}), {"_id": 0, "review_date": 1}
     ).to_list(None)
 
     overdue = 0
@@ -125,14 +134,14 @@ async def get_review_stats():
 
 
 @router.get("/overdue")
-async def get_overdue_reviews():
+async def get_overdue_reviews(club_id: Optional[str] = Depends(get_club_id)):
     """Get reviews that are past due date and still scheduled"""
     today = datetime.now(timezone.utc).date().isoformat()
 
-    docs = await db.annual_reviews.find({
+    docs = await db.annual_reviews.find(_cq(club_id, {
         "review_date": {"$lt": today},
         "status": "scheduled"
-    }, {"_id": 0}).sort("review_date", 1).to_list(100)
+    }), {"_id": 0}).sort("review_date", 1).to_list(100)
 
     for doc in docs:
         member = await db.customer_members.find_one(
@@ -145,12 +154,12 @@ async def get_overdue_reviews():
 
 
 @router.get("/dashboard-alerts")
-async def get_dashboard_alerts():
+async def get_dashboard_alerts(club_id: Optional[str] = Depends(get_club_id)):
     """Get review alerts for the main dashboard — matches frontend differenceInDays logic"""
     now = datetime.now()
 
     all_scheduled = await db.annual_reviews.find(
-        {"status": "scheduled"}, {"_id": 0}
+        _cq(club_id, {"status": "scheduled"}), {"_id": 0}
     ).to_list(500)
 
     overdue = []
@@ -283,16 +292,18 @@ async def get_review(review_id: str):
 
 
 @router.post("")
-async def create_review(data: AnnualReviewCreate):
+async def create_review(data: AnnualReviewCreate, club_id: Optional[str] = Depends(get_club_id)):
     review = AnnualReview(**data.model_dump())
     doc = review.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.annual_reviews.insert_one(doc)
     doc.pop("_id", None)
     return doc
 
 
 @router.post("/auto-generate")
-async def auto_generate_reviews():
+async def auto_generate_reviews(club_id: Optional[str] = Depends(get_club_id)):
     """Scan ALL active members and create missing scheduled reviews.
     Rules:
     - Only members with annual_review_enabled=True
@@ -305,7 +316,7 @@ async def auto_generate_reviews():
 
     # Get ALL members
     members = await db.customer_members.find(
-        {},
+        _cq(club_id),
         {"_id": 0, "id": 1, "name": 1, "contract_signed_date": 1,
          "annual_review_date": 1, "exit_date": 1, "membership": 1,
          "annual_review_enabled": 1, "first_review_date": 1,

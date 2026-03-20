@@ -16,18 +16,34 @@ async def register(data: UserCreate):
     existing = await db.users.find_one({"email": data.email.lower()})
     if existing:
         raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
-    
+
+    # Find or create club for this user
+    # New registrations become managers of a new club
+    club = await db.clubs.find_one({"name": data.club_name}, {"_id": 0})
+    if not club:
+        from models.auth import Club
+        slug = data.club_name.lower().replace(" ", "-").replace(".", "")
+        club = Club(name=data.club_name, slug=slug).model_dump()
+        await db.clubs.insert_one(club)
+        club.pop("_id", None)
+
     user = User(
         email=data.email.lower(),
         club_name=data.club_name,
-        hashed_password=hash_password(data.password)
+        hashed_password=hash_password(data.password),
+        role="manager",
+        club_ids=[club["id"]],
+        active_club_id=club["id"],
     )
     await db.users.insert_one(user.model_dump())
     token = create_access_token(user.id, user.email)
-    
+
     return TokenResponse(
         access_token=token,
-        user=UserResponse(id=user.id, email=user.email, club_name=user.club_name)
+        user=UserResponse(
+            id=user.id, email=user.email, club_name=user.club_name,
+            role=user.role, club_ids=user.club_ids, active_club_id=user.active_club_id,
+        )
     )
 
 
@@ -36,11 +52,16 @@ async def login(data: UserLogin):
     user = await db.users.find_one({"email": data.email.lower()})
     if not user or not verify_password(data.password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
-    
+
     token = create_access_token(user["id"], user["email"])
     return TokenResponse(
         access_token=token,
-        user=UserResponse(id=user["id"], email=user["email"], club_name=user["club_name"])
+        user=UserResponse(
+            id=user["id"], email=user["email"], club_name=user.get("club_name", ""),
+            role=user.get("role", "manager"),
+            club_ids=user.get("club_ids", []),
+            active_club_id=user.get("active_club_id"),
+        )
     )
 
 
@@ -54,6 +75,6 @@ async def update_club_name(body: dict, current_user: dict = Depends(get_current_
     new_name = body.get("club_name", "").strip()
     if not new_name:
         raise HTTPException(status_code=400, detail="Nom du club requis")
-    
+
     await db.users.update_one({"id": current_user["id"]}, {"$set": {"club_name": new_name}})
     return {"message": "Nom du club mis à jour", "club_name": new_name}

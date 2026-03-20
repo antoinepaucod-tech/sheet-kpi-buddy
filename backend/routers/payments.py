@@ -1,10 +1,11 @@
 """Payment routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from calendar import monthrange
 
 from core.config import db, MONTHS_FR
+from core.security import get_club_id
 from models.payments import (
     PaymentSchedule, PaymentScheduleCreate,
     Payment, PaymentCreate, PaymentUpdate
@@ -13,10 +14,17 @@ from models.payments import (
 router = APIRouter(tags=["payments"])
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 # Payment Schedule Routes
 @router.get("/payment-schedules")
-async def get_payment_schedules(member_id: Optional[str] = None, active_only: Optional[bool] = None):
-    query = {}
+async def get_payment_schedules(member_id: Optional[str] = None, active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
+    query = _cq(club_id)
     if member_id:
         query["member_id"] = member_id
     if active_only:
@@ -59,7 +67,7 @@ async def delete_payment_schedule(schedule_id: str):
 
 
 @router.post("/payments/sync-with-members")
-async def sync_payments_with_members():
+async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_id)):
     """Full sync: regenerate payment_schedules and payments from billing_enabled members."""
     now = datetime.now(timezone.utc)
     today_str = now.strftime("%Y-%m-%d")
@@ -70,7 +78,7 @@ async def sync_payments_with_members():
 
     # 1. Get all billing_enabled active members (including coaches)
     all_members = await db.customer_members.find(
-        {"billing_enabled": True},
+        _cq(club_id, {"billing_enabled": True}),
         {"_id": 0}
     ).to_list(5000)
 
@@ -82,7 +90,10 @@ async def sync_payments_with_members():
         active_billing.append(m)
 
     # 2. Sync payment_schedules: clear and recreate (ALL billing members, including amount=0)
-    await db.payment_schedules.delete_many({})
+    if club_id:
+        await db.payment_schedules.delete_many({"club_id": club_id})
+    else:
+        await db.payment_schedules.delete_many({})
     schedules_created = 0
     for m in active_billing:
         cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
@@ -99,11 +110,16 @@ async def sync_payments_with_members():
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
         }
+        if club_id:
+            schedule["club_id"] = club_id
         await db.payment_schedules.insert_one(schedule)
         schedules_created += 1
 
     # 3. Sync payments for current month (including 0 CHF for offerts)
-    await db.payments.delete_many({"status": {"$in": ["pending", "late"]}})
+    if club_id:
+        await db.payments.delete_many({"club_id": club_id, "status": {"$in": ["pending", "late"]}})
+    else:
+        await db.payments.delete_many({"status": {"$in": ["pending", "late"]}})
     payments_created = 0
     import uuid
     for m in active_billing:
@@ -141,6 +157,8 @@ async def sync_payments_with_members():
                 "created_at": now.isoformat(),
                 "updated_at": now.isoformat(),
             }
+        if club_id:
+            payment["club_id"] = club_id
         await db.payments.insert_one(payment)
         payments_created += 1
 
@@ -158,9 +176,10 @@ async def get_payments(
     member_id: Optional[str] = None,
     status: Optional[str] = None,
     due_from: Optional[str] = None,
-    due_to: Optional[str] = None
+    due_to: Optional[str] = None,
+    club_id: Optional[str] = Depends(get_club_id)
 ):
-    query = {}
+    query = _cq(club_id)
     if member_id:
         query["member_id"] = member_id
     if status:
@@ -183,13 +202,13 @@ async def get_payments(
 
 
 @router.get("/payments/late")
-async def get_late_payments():
+async def get_late_payments(club_id: Optional[str] = Depends(get_club_id)):
     """Get all late payments (past due and not paid)"""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    docs = await db.payments.find({
-        "due_date": {"$lt": today},
-        "status": {"$in": ["pending", "late"]}
-    }, {"_id": 0}).sort("due_date", 1).to_list(500)
+    q = {"due_date": {"$lt": today}, "status": {"$in": ["pending", "late"]}}
+    if club_id:
+        q["club_id"] = club_id
+    docs = await db.payments.find(q, {"_id": 0}).sort("due_date", 1).to_list(500)
     
     for doc in docs:
         if doc["status"] == "pending":
@@ -209,15 +228,15 @@ async def get_late_payments():
 
 
 @router.get("/payments/upcoming")
-async def get_upcoming_payments(days: int = 7):
+async def get_upcoming_payments(days: int = 7, club_id: Optional[str] = Depends(get_club_id)):
     """Get payments due in the next N days"""
     today = datetime.now(timezone.utc).date()
     end_date = today + timedelta(days=days)
-    
-    docs = await db.payments.find({
-        "due_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
-        "status": "pending"
-    }, {"_id": 0}).sort("due_date", 1).to_list(500)
+
+    q = {"due_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()}, "status": "pending"}
+    if club_id:
+        q["club_id"] = club_id
+    docs = await db.payments.find(q, {"_id": 0}).sort("due_date", 1).to_list(500)
     
     for doc in docs:
         member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1})
@@ -317,7 +336,7 @@ async def delete_payment(payment_id: str):
 
 
 @router.post("/payments/generate/{year}/{month}")
-async def generate_monthly_payments(year: int, month: int):
+async def generate_monthly_payments(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
     """Generate payments for a month based on active billing-enabled members"""
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
@@ -328,7 +347,7 @@ async def generate_monthly_payments(year: int, month: int):
     
     # Get billing-enabled members (active, including coaches and offerts, non-departed)
     all_members = await db.customer_members.find(
-        {"billing_enabled": True},
+        _cq(club_id, {"billing_enabled": True}),
         {"_id": 0}
     ).to_list(5000)
     

@@ -1,5 +1,5 @@
 """Email notification routes using Resend"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
@@ -11,6 +11,7 @@ import resend
 from dotenv import load_dotenv
 
 from core.config import db
+from core.security import get_club_id
 
 load_dotenv()
 resend.api_key = os.environ.get("RESEND_API_KEY", "")
@@ -18,6 +19,13 @@ SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 logger = logging.getLogger(__name__)
+
+
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
 
 
 class EmailRequest(BaseModel):

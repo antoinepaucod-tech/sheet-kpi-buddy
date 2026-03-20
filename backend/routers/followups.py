@@ -1,12 +1,20 @@
 """Follow-up routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 
 from core.config import db
+from core.security import get_club_id
 from models.members import MemberFollowUp, MemberFollowUpCreate
 
 router = APIRouter(prefix="/followups", tags=["followups"])
+
+
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
 
 
 @router.get("")
@@ -15,9 +23,10 @@ async def get_followups(
     status: Optional[str] = None,
     followup_type: Optional[str] = None,
     from_date: Optional[str] = None,
-    to_date: Optional[str] = None
+    to_date: Optional[str] = None,
+    club_id: Optional[str] = Depends(get_club_id)
 ):
-    query = {}
+    query = _cq(club_id)
     if member_id:
         query["member_id"] = member_id
     if status:
@@ -81,9 +90,11 @@ async def get_missed_followups():
 
 
 @router.post("")
-async def create_followup(data: MemberFollowUpCreate):
+async def create_followup(data: MemberFollowUpCreate, club_id: Optional[str] = Depends(get_club_id)):
     followup = MemberFollowUp(**data.model_dump())
     doc = followup.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.member_followups.insert_one(doc)
     doc.pop('_id', None)
     return doc

@@ -1,9 +1,10 @@
 """Challenge routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
 from core.config import db
+from core.security import get_club_id
 from models.challenges import (
     SixWeeksChallenge, SixWeeksChallengeCreate,
     ChallengeParticipant, ChallengeParticipantCreate
@@ -12,9 +13,16 @@ from models.challenges import (
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 @router.get("")
-async def get_challenges(active_only: Optional[bool] = None):
-    query = {"is_active": True} if active_only else {}
+async def get_challenges(active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
+    query = _cq(club_id, {"is_active": True} if active_only else None)
     return await db.six_weeks_challenges.find(query, {"_id": 0}).sort("start_date", -1).to_list(100)
 
 
@@ -71,9 +79,11 @@ async def get_challenge(challenge_id: str):
 
 
 @router.post("")
-async def create_challenge(data: SixWeeksChallengeCreate):
+async def create_challenge(data: SixWeeksChallengeCreate, club_id: Optional[str] = Depends(get_club_id)):
     challenge = SixWeeksChallenge(**data.model_dump())
     doc = challenge.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.six_weeks_challenges.insert_one(doc)
     doc.pop("_id", None)
     return doc

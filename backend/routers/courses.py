@@ -1,20 +1,28 @@
 """Course, Instructor, and Salary Generation routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
 from core.config import db, MONTHS_FR
+from core.security import get_club_id
 from models.courses import Instructor, CourseKPI, CourseKPICreate
 from models.transactions import AccountingCategory, AccountingTransaction
 
 router = APIRouter(tags=["courses"])
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 # ── Courses ───────────────────────────────────────────────────────────────────
 
 @router.get("/courses")
-async def get_courses(year: Optional[int] = None, month: Optional[int] = None):
-    query = {}
+async def get_courses(year: Optional[int] = None, month: Optional[int] = None, club_id: Optional[str] = Depends(get_club_id)):
+    query = _cq(club_id)
     if year:
         query["year"] = year
     if month:
@@ -23,22 +31,24 @@ async def get_courses(year: Optional[int] = None, month: Optional[int] = None):
 
 
 @router.get("/course-types")
-async def get_course_types():
+async def get_course_types(club_id: Optional[str] = Depends(get_club_id)):
     """Get all course type categories."""
-    return await db.course_types.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return await db.course_types.find(_cq(club_id), {"_id": 0}).sort("name", 1).to_list(100)
 
 
 @router.post("/course-types")
-async def create_course_type(data: dict):
+async def create_course_type(data: dict, club_id: Optional[str] = Depends(get_club_id)):
     """Create a new course type category."""
     import uuid
     name = data.get("name", "").strip()
     if not name:
         raise HTTPException(status_code=400, detail="Nom requis")
-    existing = await db.course_types.find_one({"name": name})
+    existing = await db.course_types.find_one(_cq(club_id, {"name": name}))
     if existing:
         raise HTTPException(status_code=400, detail="Ce type de cours existe déjà")
     doc = {"id": str(uuid.uuid4()), "name": name, "created_at": datetime.now(timezone.utc).isoformat()}
+    if club_id:
+        doc["club_id"] = club_id
     await db.course_types.insert_one(doc)
     return {"id": doc["id"], "name": name}
 
@@ -54,10 +64,12 @@ async def get_course(course_id: str):
 
 
 @router.post("/courses")
-async def create_course(data: CourseKPICreate):
+async def create_course(data: CourseKPICreate, club_id: Optional[str] = Depends(get_club_id)):
     month_name = MONTHS_FR[data.month - 1] if 1 <= data.month <= 12 else ""
     course = CourseKPI(**data.model_dump(), month_name=month_name)
     doc = course.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.course_kpis.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -109,8 +121,8 @@ async def delete_course(course_id: str):
 
 
 @router.get("/courses/summary/{year}/{month}")
-async def get_courses_summary(year: int, month: int):
-    docs = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+async def get_courses_summary(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
+    docs = await db.course_kpis.find(_cq(club_id, {"year": year, "month": month}), {"_id": 0}).to_list(500)
     if not docs:
         return {
             "year": year, "month": month,
@@ -137,20 +149,20 @@ async def get_courses_summary(year: int, month: int):
 
 
 @router.post("/courses/copy-planning/{year}/{month}")
-async def copy_planning_from_previous_month(year: int, month: int):
+async def copy_planning_from_previous_month(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
     if month == 1:
         prev_month, prev_year = 12, year - 1
     else:
         prev_month, prev_year = month - 1, year
 
-    existing = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+    existing = await db.course_kpis.find(_cq(club_id, {"year": year, "month": month}), {"_id": 0}).to_list(500)
     if existing:
         return {
             "message": f"Le mois {MONTHS_FR[month-1]} {year} contient déjà {len(existing)} cours.",
             "existing_count": len(existing), "copied": 0
         }
 
-    prev_courses = await db.course_kpis.find({"year": prev_year, "month": prev_month}, {"_id": 0}).to_list(500)
+    prev_courses = await db.course_kpis.find(_cq(club_id, {"year": prev_year, "month": prev_month}), {"_id": 0}).to_list(500)
     if not prev_courses:
         return {"message": f"Aucun cours trouvé pour {MONTHS_FR[prev_month-1]} {prev_year}", "copied": 0}
 
@@ -187,13 +199,13 @@ async def copy_planning_from_previous_month(year: int, month: int):
 # ── Instructors ───────────────────────────────────────────────────────────────
 
 @router.get("/instructors")
-async def get_instructors(active_only: Optional[bool] = None):
-    query = {"is_active": True} if active_only else {}
+async def get_instructors(active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
+    query = _cq(club_id, {"is_active": True} if active_only else None)
     return await db.instructors.find(query, {"_id": 0}).sort("name", 1).to_list(100)
 
 
 @router.post("/instructors")
-async def create_instructor(body: dict):
+async def create_instructor(body: dict, club_id: Optional[str] = Depends(get_club_id)):
     instructor = Instructor(
         name=body.get("name", ""),
         email=body.get("email"),
@@ -201,6 +213,8 @@ async def create_instructor(body: dict):
         is_active=body.get("is_active", True)
     )
     doc = instructor.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.instructors.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -226,16 +240,16 @@ async def delete_instructor(instructor_id: str):
 # ── Salary Generation ─────────────────────────────────────────────────────────
 
 @router.post("/courses/generate-salary-expenses/{year}/{month}")
-async def generate_salary_expenses(year: int, month: int):
-    courses = await db.course_kpis.find({"year": year, "month": month}, {"_id": 0}).to_list(500)
+async def generate_salary_expenses(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
+    courses = await db.course_kpis.find(_cq(club_id, {"year": year, "month": month}), {"_id": 0}).to_list(500)
     if not courses:
         raise HTTPException(status_code=404, detail="Aucun cours trouvé pour ce mois")
 
     # Build lookup maps by both name and id
-    coaches_list = await db.coaches.find({}, {"_id": 0}).to_list(100)
+    coaches_list = await db.coaches.find(_cq(club_id), {"_id": 0}).to_list(100)
     coaches_by_name = {c["name"]: c for c in coaches_list}
     coaches_by_id = {c["id"]: c for c in coaches_list}
-    instructors_map = {i["name"]: i for i in await db.instructors.find({}, {"_id": 0}).to_list(100)}
+    instructors_map = {i["name"]: i for i in await db.instructors.find(_cq(club_id), {"_id": 0}).to_list(100)}
 
     salary_by_coach = {}
     for course in courses:

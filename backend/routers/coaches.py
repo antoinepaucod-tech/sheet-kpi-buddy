@@ -1,18 +1,26 @@
 """Coach routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
 from core.config import db
+from core.security import get_club_id
 from models.coaches import Coach, CoachCreate, CoachReplacement
 
 router = APIRouter(prefix="/coaches", tags=["coaches"])
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 @router.get("")
-async def get_coaches(active_only: Optional[bool] = None):
+async def get_coaches(active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
     """Get all coaches"""
-    query = {}
+    query = _cq(club_id)
     if active_only:
         query["is_active"] = True
     docs = await db.coaches.find(query, {"_id": 0}).sort("name", 1).to_list(100)
@@ -28,9 +36,11 @@ async def get_coach(coach_id: str):
 
 
 @router.post("")
-async def create_coach(data: CoachCreate):
+async def create_coach(data: CoachCreate, club_id: Optional[str] = Depends(get_club_id)):
     coach = Coach(**data.model_dump())
     doc = coach.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.coaches.insert_one(doc)
     doc.pop('_id', None)
     return doc

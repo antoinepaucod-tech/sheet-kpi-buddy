@@ -51,3 +51,8 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
         raise HTTPException(status_code=401, detail="Token expiré")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token invalide")
+
+
+async def get_club_id(x_club_id: Optional[str] = Header(None)) -> Optional[str]:
+    """Extract club_id from X-Club-Id header. Returns None if not provided (backward compat)."""
+    return x_club_id

@@ -1,21 +1,30 @@
 """KPI routes"""
-from fastapi import APIRouter, HTTPException
-from typing import List
+from fastapi import APIRouter, HTTPException, Depends
+from typing import List, Optional
 from datetime import datetime, timezone
 
 from core.config import db
+from core.security import get_club_id
 from models.kpi import MonthlyKPI, MonthlyKPICreate, compute_metrics
 
 router = APIRouter(prefix="/monthly-kpis", tags=["kpis"])
 
 
+def _cq(club_id, base=None):
+    """Build a club-filtered query"""
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 @router.get("")
-async def get_monthly_kpis():
-    docs = await db.monthly_kpis.find({}, {"_id": 0}).sort("month", 1).to_list(1000)
+async def get_monthly_kpis(club_id: Optional[str] = Depends(get_club_id)):
+    docs = await db.monthly_kpis.find(_cq(club_id), {"_id": 0}).sort("month", 1).to_list(1000)
 
     # Enrich with real churn from member exit_dates
     members = await db.customer_members.find(
-        {}, {"_id": 0, "exit_date": 1, "subscription_end_date": 1, "is_duplicate": 1}
+        _cq(club_id), {"_id": 0, "exit_date": 1, "subscription_end_date": 1, "is_duplicate": 1}
     ).to_list(10000)
 
     for doc in docs:
@@ -35,21 +44,23 @@ async def get_monthly_kpis():
 
 
 @router.get("/{month}")
-async def get_monthly_kpi(month: str):
-    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+async def get_monthly_kpi(month: str, club_id: Optional[str] = Depends(get_club_id)):
+    doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Mois introuvable")
     return compute_metrics(doc)
 
 
 @router.post("")
-async def upsert_monthly_kpi(data: MonthlyKPICreate):
-    existing = await db.monthly_kpis.find_one({"month": data.month})
+async def upsert_monthly_kpi(data: MonthlyKPICreate, club_id: Optional[str] = Depends(get_club_id)):
+    existing = await db.monthly_kpis.find_one(_cq(club_id, {"month": data.month}))
     payload = data.model_dump()
+    if club_id:
+        payload["club_id"] = club_id
     if existing:
         payload['updated_at'] = datetime.now(timezone.utc).isoformat()
-        await db.monthly_kpis.update_one({"month": data.month}, {"$set": payload})
-        doc = await db.monthly_kpis.find_one({"month": data.month}, {"_id": 0})
+        await db.monthly_kpis.update_one(_cq(club_id, {"month": data.month}), {"$set": payload})
+        doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": data.month}), {"_id": 0})
     else:
         kpi = MonthlyKPI(**payload)
         doc = kpi.model_dump()
@@ -59,7 +70,7 @@ async def upsert_monthly_kpi(data: MonthlyKPICreate):
 
 
 @router.post("/bulk")
-async def bulk_import_kpis(data: List[dict]):
+async def bulk_import_kpis(data: List[dict], club_id: Optional[str] = Depends(get_club_id)):
     imported, updated = 0, 0
     for kpi_data in data:
         month = kpi_data.get("month")
@@ -84,10 +95,12 @@ async def bulk_import_kpis(data: List[dict]):
             "other_expenses": kpi_data.get("other_expenses", 0),
             "note": kpi_data.get("note", ""),
         }
-        existing = await db.monthly_kpis.find_one({"month": month})
+        if club_id:
+            mapped["club_id"] = club_id
+        existing = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}))
         if existing:
             mapped['updated_at'] = datetime.now(timezone.utc).isoformat()
-            await db.monthly_kpis.update_one({"month": month}, {"$set": mapped})
+            await db.monthly_kpis.update_one(_cq(club_id, {"month": month}), {"$set": mapped})
             updated += 1
         else:
             kpi = MonthlyKPI(**{k: v for k, v in mapped.items() if v is not None})
@@ -97,31 +110,31 @@ async def bulk_import_kpis(data: List[dict]):
 
 
 @router.patch("/{month}/note")
-async def update_note(month: str, body: dict):
+async def update_note(month: str, body: dict, club_id: Optional[str] = Depends(get_club_id)):
     note = body.get("note", "")
     await db.monthly_kpis.update_one(
-        {"month": month},
+        _cq(club_id, {"month": month}),
         {"$set": {"note": note, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
-    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0})
     return compute_metrics(doc) if doc else {"error": "Mois introuvable"}
 
 
 @router.get("/{month}/details")
-async def get_monthly_kpi_details(month: str):
+async def get_monthly_kpi_details(month: str, club_id: Optional[str] = Depends(get_club_id)):
     """Return KPI data enriched with transaction breakdown and recurring info."""
-    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Mois introuvable")
     kpi = compute_metrics(doc)
 
     # Get categories
-    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+    cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
     cat_map = {c["name"]: c for c in cats}
 
     # Get actual transactions for this month
     txs = await db.accounting_transactions.find(
-        {"date": {"$regex": f"^{month}"}}, {"_id": 0}
+        _cq(club_id, {"date": {"$regex": f"^{month}"}}), {"_id": 0}
     ).to_list(1000)
 
     # Build breakdown by category using the TRANSACTION's own type field
@@ -179,12 +192,15 @@ async def get_monthly_kpi_details(month: str):
 
     # Get ALL active recurring billing from members (including coaches)
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    billing_members = await db.customer_members.find(
-        {"billing_enabled": True, "billing_amount": {"$gt": 0},
+    bm_q = {"billing_enabled": True, "billing_amount": {"$gt": 0},
          "$or": [
              {"exit_date": None}, {"exit_date": ""},
              {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
-         ]},
+         ]}
+    if club_id:
+        bm_q["club_id"] = club_id
+    billing_members = await db.customer_members.find(
+        bm_q,
         {"_id": 0, "id": 1, "name": 1, "billing_amount": 1, "membership": 1,
          "billing_cycle_type": 1, "billing_cycle_value": 1, "billing_payment_method": 1,
          "is_coach": 1}
@@ -207,7 +223,7 @@ async def get_monthly_kpi_details(month: str):
 
     # Also get recurring revenue templates from recurring_transactions
     recurring_rev_docs = await db.recurring_transactions.find(
-        {"is_active": True, "type": "revenue"}, {"_id": 0}
+        _cq(club_id, {"is_active": True, "type": "revenue"}), {"_id": 0}
     ).to_list(1000)
     for doc in recurring_rev_docs:
         doc["source"] = "template"
@@ -215,14 +231,14 @@ async def get_monthly_kpi_details(month: str):
 
     # Get recurring expense templates from recurring_transactions
     recurring_exp_docs = await db.recurring_transactions.find(
-        {"is_active": True, "type": "expense"}, {"_id": 0}
+        _cq(club_id, {"is_active": True, "type": "expense"}), {"_id": 0}
     ).to_list(1000)
     for doc in recurring_exp_docs:
         doc["source"] = "template"
 
     # Also add recurring expense categories that have is_recurring=True
     recurring_cats = await db.accounting_categories.find(
-        {"is_recurring": True, "type": "expense"}, {"_id": 0}
+        _cq(club_id, {"is_recurring": True, "type": "expense"}), {"_id": 0}
     ).to_list(100)
     existing_expense_descs = {d.get("description", "") for d in recurring_exp_docs}
     for cat in recurring_cats:
@@ -246,7 +262,7 @@ async def get_monthly_kpi_details(month: str):
         r["generated_this_month"] = r.get("description", "") in generated_descriptions or r.get("membership", "") in generated_descriptions
 
     validations = await db.recurring_validations.find(
-        {"month": month}, {"_id": 0}
+        _cq(club_id, {"month": month}), {"_id": 0}
     ).to_list(1000)
     validated_ids = {v["recurring_id"] for v in validations}
     for r in recurring_revenue + recurring_expense:
@@ -254,7 +270,7 @@ async def get_monthly_kpi_details(month: str):
 
     # Funnel data from GHL
     ghl_sales = await db.ghl_sales.find(
-        {"month": month}, {"_id": 0}
+        _cq(club_id, {"month": month}), {"_id": 0}
     ).to_list(100)
     funnel = {
         "leads": kpi.get("funnel_leads") or kpi.get("leads", 0) or 0,
@@ -268,7 +284,7 @@ async def get_monthly_kpi_details(month: str):
 
     # New members this month (exclude coaches, HUBFIT, and renewals)
     new_members_raw = await db.customer_members.find(
-        {"contract_signed_date": {"$regex": f"^{month}"}},
+        _cq(club_id, {"contract_signed_date": {"$regex": f"^{month}"}}),
         {"_id": 0, "id": 1, "name": 1, "membership": 1, "contract_signed_date": 1, "cash_collected": 1}
     ).to_list(1000)
     exclude_kw = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
@@ -301,15 +317,15 @@ async def get_monthly_kpi_details(month: str):
 
 
 @router.post("/{month}/recalculate")
-async def recalculate_month(month: str):
-    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+async def recalculate_month(month: str, club_id: Optional[str] = Depends(get_club_id)):
+    cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
     cat_map = {c["name"]: c for c in cats}
 
     txs = await db.accounting_transactions.find(
-        {"date": {"$regex": f"^{month}"}}, {"_id": 0}
+        _cq(club_id, {"date": {"$regex": f"^{month}"}}), {"_id": 0}
     ).to_list(10000)
 
-    existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
+    existing = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0}) or {}
 
     # Calculate totals per kpi_column from transactions
     # Use the TRANSACTION's own type field, not the category type
@@ -363,7 +379,7 @@ async def recalculate_month(month: str):
     }
 
     # --- Funnel: Populate from GHL data ---
-    ghl_sales = await db.ghl_sales.find({"month": month}, {"_id": 0}).to_list(100)
+    ghl_sales = await db.ghl_sales.find(_cq(club_id, {"month": month}), {"_id": 0}).to_list(100)
     if ghl_sales:
         # Calculate funnel from GHL
         ghl_cash = sum(s.get("cash_collected", 0) or 0 for s in ghl_sales)
@@ -380,7 +396,7 @@ async def recalculate_month(month: str):
 
     # New members count (exclude coaches, HUBFIT, and renewals)
     new_members_raw = await db.customer_members.find(
-        {"contract_signed_date": {"$regex": f"^{month}"}},
+        _cq(club_id, {"contract_signed_date": {"$regex": f"^{month}"}}),
         {"_id": 0, "name": 1, "membership": 1, "contract_signed_date": 1}
     ).to_list(1000)
     exclude_kw_new = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
@@ -407,7 +423,7 @@ async def recalculate_month(month: str):
     month_start_str = f"{month}-01"
 
     all_members_for_count = await db.customer_members.find(
-        {"contract_signed_date": {"$lt": month_end_str}},
+        _cq(club_id, {"contract_signed_date": {"$lt": month_end_str}}),
         {"_id": 0, "name": 1, "membership": 1, "exit_date": 1,
          "subscription_end_date": 1, "is_duo": 1, "is_coach": 1,
          "billing_amount": 1, "billing_cycle_type": 1, "billing_cycle_value": 1,
@@ -470,12 +486,15 @@ async def recalculate_month(month: str):
     # --- Recurring: Calculate from active billing members (exclude coaches) ---
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     coach_kw_rec = ["THE COACH", "VIRTUAL COACH"]
-    active_recurring = await db.customer_members.find(
-        {"billing_enabled": True, "billing_amount": {"$gt": 0},
+    rec_q = {"billing_enabled": True, "billing_amount": {"$gt": 0},
          "$or": [
              {"exit_date": None}, {"exit_date": ""},
              {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
-         ]},
+         ]}
+    if club_id:
+        rec_q["club_id"] = club_id
+    active_recurring = await db.customer_members.find(
+        rec_q,
         {"_id": 0, "billing_amount": 1, "is_coach": 1, "membership": 1}
     ).to_list(5000)
 
@@ -487,9 +506,12 @@ async def recalculate_month(month: str):
     recurring_rev = sum(m.get("billing_amount", 0) for m in active_recurring)
 
     # Recurring expenses from expense categories marked as recurring
+    rec_exp_q = {"date": {"$regex": f"^{month}"}, "amount": {"$lt": 0},
+         "$or": [{"is_recurring": True}, {"description": {"$regex": "MENSUEL|LOYER|ABONNEMENT|SALAIRE", "$options": "i"}}]}
+    if club_id:
+        rec_exp_q["club_id"] = club_id
     recurring_expense_txs = await db.accounting_transactions.find(
-        {"date": {"$regex": f"^{month}"}, "amount": {"$lt": 0},
-         "$or": [{"is_recurring": True}, {"description": {"$regex": "MENSUEL|LOYER|ABONNEMENT|SALAIRE", "$options": "i"}}]},
+        rec_exp_q,
         {"_id": 0, "amount": 1}
     ).to_list(5000)
     recurring_exp = abs(sum(tx.get("amount", 0) for tx in recurring_expense_txs))
@@ -527,14 +549,14 @@ async def recalculate_month(month: str):
         if eng in totals_by_col:
             update[fr] = totals_by_col[eng]
 
-    await db.monthly_kpis.update_one({"month": month}, {"$set": update}, upsert=True)
-    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    await db.monthly_kpis.update_one(_cq(club_id, {"month": month}), {"$set": update}, upsert=True)
+    doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0})
     return compute_metrics(doc) if doc else {"error": "Mois introuvable"}
 
 
 @router.post("/recalculate-all")
-async def recalculate_all():
-    months = await db.monthly_kpis.find({}, {"_id": 0, "month": 1}).to_list(1000)
+async def recalculate_all(club_id: Optional[str] = Depends(get_club_id)):
+    months = await db.monthly_kpis.find(_cq(club_id), {"_id": 0, "month": 1}).to_list(1000)
     results = []
     for m in months:
         try:

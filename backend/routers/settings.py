@@ -1,9 +1,10 @@
 """Settings routes - Membership types, Member types, etc."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
 from core.config import db
+from core.security import get_club_id
 from models.settings import (
     MembershipType, MembershipTypeCreate,
     MemberType, MemberTypeCreate
@@ -12,12 +13,19 @@ from models.settings import (
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
 # ── Membership Types (Abonnements) ───────────────────────────────────────────
 
 @router.get("/membership-types")
-async def get_membership_types(active_only: Optional[bool] = None):
+async def get_membership_types(active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
     """Get all membership types (Mensuel, Trimestriel, Annuel, etc.)"""
-    query = {}
+    query = _cq(club_id)
     if active_only:
         query["is_active"] = True
     docs = await db.membership_types.find(query, {"_id": 0}).sort("display_order", 1).to_list(100)
@@ -33,14 +41,15 @@ async def get_membership_type(type_id: str):
 
 
 @router.post("/membership-types")
-async def create_membership_type(data: MembershipTypeCreate):
-    # Check for duplicate name
-    existing = await db.membership_types.find_one({"name": data.name})
+async def create_membership_type(data: MembershipTypeCreate, club_id: Optional[str] = Depends(get_club_id)):
+    existing = await db.membership_types.find_one(_cq(club_id, {"name": data.name}))
     if existing:
         raise HTTPException(status_code=400, detail="Ce type d'abonnement existe déjà")
     
     membership_type = MembershipType(**data.model_dump())
     doc = membership_type.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.membership_types.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -70,9 +79,9 @@ async def delete_membership_type(type_id: str):
 # ── Member Types (Types de membres) ──────────────────────────────────────────
 
 @router.get("/member-types")
-async def get_member_types(active_only: Optional[bool] = None):
-    """Get all member types (Généraux Récurrents, PIF, PT, etc.)"""
-    query = {}
+async def get_member_types(active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
+    """Get all member types"""
+    query = _cq(club_id)
     if active_only:
         query["is_active"] = True
     docs = await db.member_types.find(query, {"_id": 0}).sort("display_order", 1).to_list(100)
@@ -88,14 +97,15 @@ async def get_member_type(type_id: str):
 
 
 @router.post("/member-types")
-async def create_member_type(data: MemberTypeCreate):
-    # Check for duplicate code
-    existing = await db.member_types.find_one({"code": data.code})
+async def create_member_type(data: MemberTypeCreate, club_id: Optional[str] = Depends(get_club_id)):
+    existing = await db.member_types.find_one(_cq(club_id, {"code": data.code}))
     if existing:
         raise HTTPException(status_code=400, detail="Ce code de type existe déjà")
     
     member_type = MemberType(**data.model_dump())
     doc = member_type.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.member_types.insert_one(doc)
     doc.pop('_id', None)
     return doc

@@ -1,11 +1,12 @@
 """Transaction, Category, Excluded, Recurring Transaction routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from datetime import datetime, timezone
 from calendar import monthrange
 from pydantic import BaseModel
 
 from core.config import db, MONTHS_FR
+from core.security import get_club_id
 from models.transactions import (
     AccountingCategory, CategoryCreate,
     AccountingTransaction, TransactionCreate,
@@ -15,20 +16,27 @@ from models.transactions import (
 router = APIRouter(tags=["transactions"])
 
 
-async def _auto_recalculate_kpis(tx_date: str):
+def _cq(club_id, base=None):
+    q = dict(base or {})
+    if club_id:
+        q["club_id"] = club_id
+    return q
+
+
+async def _auto_recalculate_kpis(tx_date: str, club_id: str = None):
     """Auto-recalculate KPIs for the month of the given transaction date."""
     if not tx_date or len(tx_date) < 7:
         return
     month = tx_date[:7]  # "YYYY-MM"
 
-    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+    cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
     cat_map = {c["name"]: c for c in cats}
 
     txs = await db.accounting_transactions.find(
-        {"date": {"$regex": f"^{month}"}}, {"_id": 0}
+        _cq(club_id, {"date": {"$regex": f"^{month}"}}), {"_id": 0}
     ).to_list(10000)
 
-    existing = await db.monthly_kpis.find_one({"month": month}, {"_id": 0}) or {}
+    existing = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0}) or {}
 
     # Sum by kpi_column
     totals_by_col = {}
@@ -85,21 +93,21 @@ async def _auto_recalculate_kpis(tx_date: str):
         elif eng in update:
             update[fr] = update[eng]
     
-    await db.monthly_kpis.update_one({"month": month}, {"$set": update}, upsert=True)
+    await db.monthly_kpis.update_one(_cq(club_id, {"month": month}), {"$set": update}, upsert=True)
 
 
 # ── Transactions ──────────────────────────────────────────────────────────────
 
 @router.get("/transactions")
-async def get_transactions(month: Optional[str] = None):
-    query = {}
+async def get_transactions(month: Optional[str] = None, club_id: Optional[str] = Depends(get_club_id)):
+    query = _cq(club_id)
     if month:
         query["date"] = {"$regex": f"^{month}"}
     return await db.accounting_transactions.find(query, {"_id": 0}).sort("date", -1).to_list(10000)
 
 
 @router.post("/transactions")
-async def create_transaction(data: TransactionCreate):
+async def create_transaction(data: TransactionCreate, club_id: Optional[str] = Depends(get_club_id)):
     excluded = await db.excluded_recurring_expenses.find_one({
         "category": data.category, "description": data.description
     })
@@ -115,6 +123,8 @@ async def create_transaction(data: TransactionCreate):
     tx_data.pop("recurrence_day", None)
     tx = AccountingTransaction(**tx_data)
     doc = tx.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     # Auto-fill year/month from date
     if doc.get("date") and len(doc["date"]) >= 7:
         try:
@@ -124,7 +134,7 @@ async def create_transaction(data: TransactionCreate):
             pass
     await db.accounting_transactions.insert_one(doc)
     doc.pop('_id', None)
-    await _auto_recalculate_kpis(doc.get("date", ""))
+    await _auto_recalculate_kpis(doc.get("date", ""), club_id)
 
     # If marked as recurring, also create a recurring_transaction template
     if is_recurring:
@@ -148,6 +158,8 @@ async def create_transaction(data: TransactionCreate):
                 is_active=True,
             )
             rec_doc = rec.model_dump()
+            if club_id:
+                rec_doc["club_id"] = club_id
             await db.recurring_transactions.insert_one(rec_doc)
             rec_doc.pop('_id', None)
 
@@ -167,7 +179,7 @@ class TransactionUpdate(BaseModel):
 
 
 @router.put("/transactions/{transaction_id}")
-async def update_transaction(transaction_id: str, data: TransactionUpdate):
+async def update_transaction(transaction_id: str, data: TransactionUpdate, club_id: Optional[str] = Depends(get_club_id)):
     tx = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction introuvable")
@@ -213,16 +225,16 @@ async def update_transaction(transaction_id: str, data: TransactionUpdate):
     # Recalculate KPIs for old and new months
     old_date = tx.get("date", "")
     new_date = updates.get("date", old_date)
-    await _auto_recalculate_kpis(old_date)
+    await _auto_recalculate_kpis(old_date, club_id)
     if new_date[:7] != old_date[:7]:
-        await _auto_recalculate_kpis(new_date)
+        await _auto_recalculate_kpis(new_date, club_id)
     updated = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
     return updated
 
 
 
 @router.delete("/transactions/{transaction_id}")
-async def delete_transaction(transaction_id: str):
+async def delete_transaction(transaction_id: str, club_id: Optional[str] = Depends(get_club_id)):
     tx = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction introuvable")
@@ -243,12 +255,12 @@ async def delete_transaction(transaction_id: str):
         )
         await db.excluded_recurring_expenses.insert_one(excl.model_dump())
     await db.accounting_transactions.delete_one({"id": transaction_id})
-    await _auto_recalculate_kpis(tx.get("date", ""))
+    await _auto_recalculate_kpis(tx.get("date", ""), club_id)
     return {"message": "Transaction supprimée"}
 
 
 @router.post("/transactions/bulk")
-async def bulk_import_transactions(transactions: List[TransactionCreate]):
+async def bulk_import_transactions(transactions: List[TransactionCreate], club_id: Optional[str] = Depends(get_club_id)):
     imported, skipped = [], []
     for data in transactions:
         excluded = await db.excluded_recurring_expenses.find_one({
@@ -259,6 +271,8 @@ async def bulk_import_transactions(transactions: List[TransactionCreate]):
             continue
         tx = AccountingTransaction(**data.model_dump())
         doc = tx.model_dump()
+        if club_id:
+            doc["club_id"] = club_id
         await db.accounting_transactions.insert_one(doc)
         doc.pop('_id', None)
         imported.append(doc)
@@ -268,14 +282,16 @@ async def bulk_import_transactions(transactions: List[TransactionCreate]):
 # ── Categories ────────────────────────────────────────────────────────────────
 
 @router.get("/categories")
-async def get_categories():
-    return await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+async def get_categories(club_id: Optional[str] = Depends(get_club_id)):
+    return await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
 
 
 @router.post("/categories")
-async def create_category(data: CategoryCreate):
+async def create_category(data: CategoryCreate, club_id: Optional[str] = Depends(get_club_id)):
     cat = AccountingCategory(**data.model_dump())
     doc = cat.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.accounting_categories.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -305,12 +321,12 @@ async def update_category(category_id: str, data: CategoryCreate):
 # ── Excluded ──────────────────────────────────────────────────────────────────
 
 @router.get("/excluded")
-async def get_excluded():
-    return await db.excluded_recurring_expenses.find({}, {"_id": 0}).to_list(1000)
+async def get_excluded(club_id: Optional[str] = Depends(get_club_id)):
+    return await db.excluded_recurring_expenses.find(_cq(club_id), {"_id": 0}).to_list(1000)
 
 
 @router.delete("/excluded/{excluded_id}")
-async def remove_from_exclusions(excluded_id: str):
+async def remove_from_exclusions(excluded_id: str, club_id: Optional[str] = Depends(get_club_id)):
     # Find the excluded record first
     excl = await db.excluded_recurring_expenses.find_one({"id": excluded_id}, {"_id": 0})
     if not excl:
@@ -325,41 +341,46 @@ async def remove_from_exclusions(excluded_id: str):
         category=excl.get("category", ""),
     )
     doc = restored_tx.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.accounting_transactions.insert_one(doc)
     doc.pop("_id", None)
 
     # Remove from exclusions
     await db.excluded_recurring_expenses.delete_one({"id": excluded_id})
-    await _auto_recalculate_kpis(doc.get("date", ""))
+    await _auto_recalculate_kpis(doc.get("date", ""), club_id)
     return {"message": "Transaction restaurée", "transaction": doc}
 
 
 # ── Recurring Transactions ────────────────────────────────────────────────────
 
 @router.get("/recurring-transactions")
-async def get_recurring_transactions():
-    return await db.recurring_transactions.find({}, {"_id": 0}).to_list(1000)
+async def get_recurring_transactions(club_id: Optional[str] = Depends(get_club_id)):
+    return await db.recurring_transactions.find(_cq(club_id), {"_id": 0}).to_list(1000)
 
 
 @router.get("/recurring-transactions/all")
-async def get_all_recurring():
+async def get_all_recurring(club_id: Optional[str] = Depends(get_club_id)):
     """Get ALL recurring items: manual templates + billing members (revenue) + recurring expense categories."""
     result = []
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     # 1. Manual recurring templates
-    templates = await db.recurring_transactions.find({}, {"_id": 0}).to_list(1000)
+    templates = await db.recurring_transactions.find(_cq(club_id), {"_id": 0}).to_list(1000)
     for t in templates:
         t["source"] = "template"
     result.extend(templates)
 
     # 2. Billing members as recurring revenue
-    billing_members = await db.customer_members.find(
-        {"billing_enabled": True, "billing_amount": {"$gt": 0},
+    bm_q = {"billing_enabled": True, "billing_amount": {"$gt": 0},
          "$or": [
              {"exit_date": None}, {"exit_date": ""},
              {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
-         ]},
+         ]}
+    if club_id:
+        bm_q["club_id"] = club_id
+    billing_members = await db.customer_members.find(
+        bm_q,
         {"_id": 0, "id": 1, "name": 1, "billing_amount": 1, "membership": 1,
          "billing_cycle_type": 1, "billing_cycle_value": 1, "billing_payment_method": 1,
          "is_coach": 1}
@@ -384,7 +405,7 @@ async def get_all_recurring():
     # 3. Recurring expense categories not already in templates
     template_cats = {t.get("category", "") for t in templates if t.get("type") == "expense"}
     recurring_cats = await db.accounting_categories.find(
-        {"is_recurring": True, "type": "expense"}, {"_id": 0}
+        _cq(club_id, {"is_recurring": True, "type": "expense"}), {"_id": 0}
     ).to_list(100)
     for cat in recurring_cats:
         if cat["name"] not in template_cats:
@@ -403,9 +424,11 @@ async def get_all_recurring():
 
 
 @router.post("/recurring-transactions")
-async def create_recurring_transaction(data: RecurringTransactionCreate):
+async def create_recurring_transaction(data: RecurringTransactionCreate, club_id: Optional[str] = Depends(get_club_id)):
     rec = RecurringTransaction(**data.model_dump())
     doc = rec.model_dump()
+    if club_id:
+        doc["club_id"] = club_id
     await db.recurring_transactions.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -430,13 +453,13 @@ async def delete_recurring_transaction(rec_id: str):
 
 
 @router.post("/recurring-transactions/generate/{year}/{month}")
-async def generate_monthly_transactions(year: int, month: int):
+async def generate_monthly_transactions(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
-    recurring = await db.recurring_transactions.find({"is_active": True}, {"_id": 0}).to_list(1000)
+    recurring = await db.recurring_transactions.find(_cq(club_id, {"is_active": True}), {"_id": 0}).to_list(1000)
     if not recurring:
         raise HTTPException(status_code=404, detail="Aucune transaction récurrente active")
-    excluded = await db.excluded_recurring_expenses.find({}, {"_id": 0}).to_list(1000)
+    excluded = await db.excluded_recurring_expenses.find(_cq(club_id), {"_id": 0}).to_list(1000)
     excluded_keys = {(e["category"], e["description"]) for e in excluded}
     month_str = f"{year}-{month:02d}"
     days_in_month = monthrange(year, month)[1]
@@ -459,12 +482,14 @@ async def generate_monthly_transactions(year: int, month: int):
             sub_type=rec.get("sub_type")
         )
         doc = tx.model_dump()
+        if club_id:
+            doc["club_id"] = club_id
         await db.accounting_transactions.insert_one(doc)
         doc.pop('_id', None)
         created.append(doc)
     # Auto-recalculate KPIs for the generated month
     if created:
-        await _auto_recalculate_kpis(created[0]["date"])
+        await _auto_recalculate_kpis(created[0]["date"], club_id)
 
     return {
         "month": month_str,
@@ -479,10 +504,10 @@ async def generate_monthly_transactions(year: int, month: int):
 # ── Recurring Validations ─────────────────────────────────────────────────────
 
 @router.get("/recurring-validations/{year_month}")
-async def get_recurring_validations(year_month: str):
+async def get_recurring_validations(year_month: str, club_id: Optional[str] = Depends(get_club_id)):
     """Get all validations for a given month."""
     docs = await db.recurring_validations.find(
-        {"month": year_month}, {"_id": 0}
+        _cq(club_id, {"month": year_month}), {"_id": 0}
     ).to_list(1000)
     return docs
 
@@ -540,9 +565,9 @@ MONTH_NAMES = {
 
 
 @router.get("/transactions/monthly-grid")
-async def get_monthly_grid(year: int, type: Optional[str] = None):
+async def get_monthly_grid(year: int, type: Optional[str] = None, club_id: Optional[str] = Depends(get_club_id)):
     """Get transactions summarized by category and month for a given year."""
-    cats = await db.accounting_categories.find({}, {"_id": 0}).to_list(1000)
+    cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
     cat_filter = {}
     if type:
         cat_filter = {"type": type}
@@ -550,7 +575,7 @@ async def get_monthly_grid(year: int, type: Optional[str] = None):
 
     # Get all transactions for the year
     txs = await db.accounting_transactions.find(
-        {"date": {"$regex": f"^{year}"}}, {"_id": 0}
+        _cq(club_id, {"date": {"$regex": f"^{year}"}}), {"_id": 0}
     ).to_list(50000)
 
     # Build grid: category → month → total amount
@@ -598,17 +623,17 @@ class MonthlyAmountUpdate(BaseModel):
 
 
 @router.put("/transactions/update-monthly-amount")
-async def update_monthly_amount(data: MonthlyAmountUpdate):
+async def update_monthly_amount(data: MonthlyAmountUpdate, club_id: Optional[str] = Depends(get_club_id)):
     """Update or create a transaction for a specific category/month."""
     month_str = f"{data.year}-{data.month:02d}"
 
     # Find existing transactions for this category/month
     existing = await db.accounting_transactions.find(
-        {"category": data.category, "date": {"$regex": f"^{month_str}"}}, {"_id": 0}
+        _cq(club_id, {"category": data.category, "date": {"$regex": f"^{month_str}"}}), {"_id": 0}
     ).to_list(1000)
 
     # Determine category type
-    cat = await db.accounting_categories.find_one({"name": data.category}, {"_id": 0})
+    cat = await db.accounting_categories.find_one(_cq(club_id, {"name": data.category}), {"_id": 0})
     if not cat:
         raise HTTPException(status_code=404, detail="Catégorie introuvable")
 
@@ -641,6 +666,8 @@ async def update_monthly_amount(data: MonthlyAmountUpdate):
             month_name=MONTH_NAMES.get(data.month, ""),
         )
         doc = tx.model_dump()
+        if club_id:
+            doc["club_id"] = club_id
         await db.accounting_transactions.insert_one(doc)
         doc.pop("_id", None)
     else:
@@ -661,5 +688,5 @@ async def update_monthly_amount(data: MonthlyAmountUpdate):
         tx_date = existing[0]["date"]
 
     # Recalculate KPIs
-    await _auto_recalculate_kpis(f"{month_str}-01")
+    await _auto_recalculate_kpis(f"{month_str}-01", club_id)
     return {"status": "ok", "category": data.category, "month": month_str, "amount": data.amount}

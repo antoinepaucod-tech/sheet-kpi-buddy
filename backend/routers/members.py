@@ -1,11 +1,12 @@
 """Members routes"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from dateutil.relativedelta import relativedelta
 from uuid import uuid4
 
 from core.config import db
+from core.security import get_club_id
 from models.members import (
     CustomerMember, CustomerMemberCreate,
     MemberRenewalHistory, WeeklyTraining, WeeklyTrainingUpdate,
@@ -46,8 +47,10 @@ def _is_coach(membership: str) -> bool:
 
 
 @router.get("")
-async def get_members(expiring_soon: Optional[bool] = None, member_type: Optional[str] = None):
+async def get_members(expiring_soon: Optional[bool] = None, member_type: Optional[str] = None, club_id: Optional[str] = Depends(get_club_id)):
     query = {}
+    if club_id:
+        query["club_id"] = club_id
     if member_type:
         query["member_type"] = member_type
     
@@ -102,9 +105,12 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
 
 
 @router.get("/stats")
-async def get_member_stats():
+async def get_member_stats(club_id: Optional[str] = Depends(get_club_id)):
     """Real-time member statistics computed from raw data."""
-    docs = await db.customer_members.find({}, {"_id": 0}).to_list(5000)
+    query = {}
+    if club_id:
+        query["club_id"] = club_id
+    docs = await db.customer_members.find(query, {"_id": 0}).to_list(5000)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     thirty_days = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
 
@@ -174,9 +180,12 @@ async def get_member_stats():
 
 
 @router.get("/memberships")
-async def get_unique_memberships():
+async def get_unique_memberships(club_id: Optional[str] = Depends(get_club_id)):
     """Return all unique membership names from the members collection."""
-    docs = await db.customer_members.find({}, {"_id": 0, "membership": 1}).to_list(5000)
+    query = {}
+    if club_id:
+        query["club_id"] = club_id
+    docs = await db.customer_members.find(query, {"_id": 0, "membership": 1}).to_list(5000)
     memberships = sorted(set(d.get("membership", "") for d in docs if d.get("membership")))
     return memberships
 
@@ -184,11 +193,14 @@ async def get_unique_memberships():
 
 
 @router.get("/expiring")
-async def get_expiring_members(days: int = 30):
+async def get_expiring_members(days: int = 30, club_id: Optional[str] = Depends(get_club_id)):
     today = datetime.now(timezone.utc).date()
     end_date = today + timedelta(days=days)
     
-    docs = await db.customer_members.find({}, {"_id": 0}).to_list(1000)
+    query = {}
+    if club_id:
+        query["club_id"] = club_id
+    docs = await db.customer_members.find(query, {"_id": 0}).to_list(1000)
     expiring = []
     for d in docs:
         if d.get("subscription_end_date") and not d.get("exit_date"):
@@ -217,8 +229,12 @@ async def get_member(member_id: str):
 
 
 @router.post("")
-async def create_member(data: CustomerMemberCreate):
+async def create_member(data: CustomerMemberCreate, club_id: Optional[str] = Depends(get_club_id)):
     member_data = data.model_dump()
+    
+    # Add club_id to the member
+    if club_id:
+        member_data["club_id"] = club_id
     
     # Auto-detect challenge membership type
     is_challenge = data.membership and "challenge" in data.membership.lower()
@@ -253,7 +269,10 @@ async def create_member(data: CustomerMemberCreate):
             payment_method=data.billing_payment_method,
             is_active=True
         )
-        await db.payment_schedules.insert_one(schedule.model_dump())
+        schedule_doc = schedule.model_dump()
+        if club_id:
+            schedule_doc["club_id"] = club_id
+        await db.payment_schedules.insert_one(schedule_doc)
     
     # Create review if enabled or if challenge (auto-enabled)
     if (data.annual_review_enabled or is_challenge) and doc.get("annual_review_date"):
@@ -264,7 +283,10 @@ async def create_member(data: CustomerMemberCreate):
             review_type=freq,
             status="scheduled"
         )
-        await db.annual_reviews.insert_one(annual_review.model_dump())
+        review_doc = annual_review.model_dump()
+        if club_id:
+            review_doc["club_id"] = club_id
+        await db.annual_reviews.insert_one(review_doc)
 
     # Create duo partner if duo subscription
     if data.is_duo and data.duo_partner_name:
@@ -283,6 +305,8 @@ async def create_member(data: CustomerMemberCreate):
             notes=f"Partenaire duo de {data.name}",
         )
         partner_doc = partner.model_dump()
+        if club_id:
+            partner_doc["club_id"] = club_id
         await db.customer_members.insert_one(partner_doc)
         partner_doc.pop("_id", None)
 
@@ -325,6 +349,8 @@ async def create_member(data: CustomerMemberCreate):
             "category": cat_name,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
+        if club_id:
+            tx_doc["club_id"] = club_id
         existing_tx = await db.accounting_transactions.find_one({"id": tx_doc["id"]})
         if not existing_tx:
             await db.accounting_transactions.insert_one(tx_doc)
@@ -334,13 +360,13 @@ async def create_member(data: CustomerMemberCreate):
         await _auto_recalculate_kpis(tx_doc["date"])
 
     # Log creation
-    await log_member_activity(doc["id"], "member_created", f"Membre créé : {doc.get('name')}")
+    await log_member_activity(doc["id"], "member_created", f"Membre créé : {doc.get('name')}", club_id=club_id)
 
     return doc
 
 
 @router.put("/{member_id}")
-async def update_member(member_id: str, data: CustomerMemberCreate):
+async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Optional[str] = Depends(get_club_id)):
     existing = await db.customer_members.find_one({"id": member_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Membre introuvable")
@@ -457,7 +483,7 @@ async def update_member(member_id: str, data: CustomerMemberCreate):
         await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": {"is_active": False}})
     
     # Log modification
-    await log_member_activity(member_id, "member_updated", f"Fiche membre modifiée : {data.name}")
+    await log_member_activity(member_id, "member_updated", f"Fiche membre modifiée : {data.name}", club_id=club_id)
 
     return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
 
@@ -656,13 +682,16 @@ async def get_member_activity_log(member_id: str):
     ).sort("created_at", -1).to_list(200)
 
 
-async def log_member_activity(member_id: str, action: str, description: str, user_name: str = "Utilisateur"):
+async def log_member_activity(member_id: str, action: str, description: str, user_name: str = "Utilisateur", club_id: str = None):
     """Helper to log an activity on a member"""
-    await db.activity_logs.insert_one({
+    doc = {
         "id": str(uuid4()),
         "member_id": member_id,
         "action": action,
         "description": description,
         "user_name": user_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
-    })
+    }
+    if club_id:
+        doc["club_id"] = club_id
+    await db.activity_logs.insert_one(doc)
