@@ -817,7 +817,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
 
           {/* ARPM & LTV Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ChartCard title={lang === "fr" ? "ARPM (Revenu moyen / Membre)" : "ARPM (Avg Revenue per Member)"}>
+            <ChartCard title={lang === "fr" ? "ACRM (Revenu moyen / Membre)" : "ACRM (Avg Revenue per Member)"}>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={currentYearData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
@@ -825,7 +825,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                   <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} CHF`} />
                   <Tooltip content={<ChartTooltip />} />
                   {selectedLabel && <ReferenceLine x={selectedLabel} stroke="#30D158" strokeDasharray="4 4" />}
-                  <Area type="monotone" dataKey="arpm" name="ARPM" stroke="#30D158" fill="#30D158" fillOpacity={0.1} strokeWidth={2} dot={{ r: 3, fill: "#30D158" }} activeDot={{ r: 5 }} />
+                  <Area type="monotone" dataKey="arpm" name="ACRM" stroke="#30D158" fill="#30D158" fillOpacity={0.1} strokeWidth={2} dot={{ r: 3, fill: "#30D158" }} activeDot={{ r: 5 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -851,8 +851,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
               { label: t("roas"), value: `${(current?.roas ?? 0).toFixed(2)}x`, tooltip: lang === "fr" ? "Revenue GHL / Ad Spend" : "GHL Revenue / Ad Spend" },
               { label: "CPL", value: formatCHF(current?.cpl), tooltip: lang === "fr" ? "Ad Spend / Leads" : "Ad Spend / Leads" },
               { label: "CPR", value: formatCHF(current?.cpr), tooltip: lang === "fr" ? "Ad Spend / Show RDV" : "Ad Spend / Show Appointments" },
-              { label: "ARPM", value: formatCHF(current?.general_acrm), tooltip: lang === "fr" ? "Revenu / Membres actifs" : "Revenue / Active Members" },
-              { label: "LTV", value: formatCHF(current?.general_ltv), tooltip: lang === "fr" ? "ARPM / Taux de churn" : "ARPM / Churn Rate" },
+              { label: "ACRM", value: formatCHF(current?.general_acrm), tooltip: lang === "fr" ? "Revenu Total / Membres actifs" : "Revenue / Active Members" },
+              { label: "LTV", value: formatCHF(current?.general_ltv), tooltip: lang === "fr" ? "ACRM / Taux de churn" : "ACRM / Churn Rate" },
               { label: t("totalExpenses"), value: formatCHF(current?.total_expenses) },
               { label: t("adSpend"), value: formatCHF((current?.ad_spend || 0) + (current?.marketing_cost || 0)) },
             ].map(({ label, value, tooltip }) => (

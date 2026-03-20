@@ -11,14 +11,19 @@ import {
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue }) => (
-  <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)] overflow-hidden min-w-0">
+const StatBox = ({ label, value, icon: Icon, color = "text-white", subValue, tooltip }) => (
+  <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-3 rounded-[var(--radius-lg)] min-w-0 relative group">
     <div className="flex items-center gap-2 mb-1">
       {Icon && <Icon size={12} className="text-[var(--color-text-tertiary)] shrink-0" />}
       <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider truncate">{label}</span>
     </div>
     <p className={`text-sm font-display font-bold ${color} truncate`} style={{ fontFeatureSettings: '"tnum" 1' }}>{value}</p>
     {subValue && <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 truncate">{subValue}</p>}
+    {tooltip && (
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#1c1c1e] border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+        {tooltip}
+      </div>
+    )}
   </div>
 );
 
@@ -325,19 +330,19 @@ export function KPIDetailedView({ kpi, lang }) {
         <StatBox label={lang === "fr" ? "Membres Actifs" : "Active Members"} value={formatNum(memberStats?.active_members ?? kpi.active_members ?? 0)} icon={Users} color="text-[var(--color-accent)]" />
         <StatBox label={lang === "fr" ? "Coachs Actifs" : "Active Coaches"} value={formatNum(memberStats?.active_coaches ?? kpi.active_coaches ?? 0)} icon={Users} color="text-[var(--color-success)]" />
         <StatBox label={lang === "fr" ? "Expires" : "Expired"} value={formatNum(memberStats?.expired_members ?? kpi.expired_members ?? 0)} icon={UserMinus} color="text-[var(--color-warning)]" />
-        <StatBox label={lang === "fr" ? "Taux Churn" : "Churn Rate"} value={`${(kpi.churn_rate ?? 0).toFixed(1)}%`} icon={TrendingDown} color={(kpi.churn_rate ?? 0) < 5 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"} />
+        <StatBox label={lang === "fr" ? "Taux Churn" : "Churn Rate"} value={`${(kpi.churn_rate ?? 0).toFixed(1)}%`} icon={TrendingDown} color={(kpi.churn_rate ?? 0) < 5 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"} tooltip={lang === "fr" ? "% de membres perdus par rapport au total en début de mois" : "% of members lost vs total at start of month"} />
         <StatBox label={lang === "fr" ? "Partis" : "Departed"} value={formatNum(memberStats?.departed ?? 0)} icon={UserMinus} color="text-[var(--color-danger)]" />
       </div>
 
       {/* Advanced Metrics */}
       <SectionTitle>{lang === "fr" ? "Metriques Avancees" : "Advanced Metrics"}</SectionTitle>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-        <StatBox label={lang === "fr" ? "ACRM General" : "General ACRM"} value={formatCHF(kpi.general_acrm)} icon={DollarSign} color="text-[var(--color-info)]" />
-        <StatBox label={lang === "fr" ? "LTV General" : "General LTV"} value={formatCHF(kpi.general_ltv)} icon={TrendingUp} color="text-[var(--color-info)]" />
-        <StatBox label="PT ACRM" value={formatCHF(kpi.pt_acrm)} icon={DollarSign} color="text-[var(--color-info)]" />
-        <StatBox label="PT LTV" value={formatCHF(kpi.pt_ltv)} icon={TrendingUp} color="text-[var(--color-info)]" />
-        <StatBox label="CPL" value={formatCHF(kpi.cpl)} icon={Target} subValue="Cost Per Lead" />
-        <StatBox label="CPR" value={formatCHF(kpi.cpr)} icon={Target} subValue="Cost Per Result" />
+        <StatBox label={lang === "fr" ? "ACRM General" : "General ACRM"} value={formatCHF(kpi.general_acrm)} icon={DollarSign} color="text-[var(--color-info)]" tooltip={lang === "fr" ? "Revenu mensuel moyen par membre actif (Revenu Total / Membres Actifs)" : "Average monthly revenue per active member"} />
+        <StatBox label={lang === "fr" ? "LTV General" : "General LTV"} value={formatCHF(kpi.general_ltv)} icon={TrendingUp} color="text-[var(--color-info)]" tooltip={lang === "fr" ? "Valeur vie client = ACRM / Taux de churn mensuel" : "Customer Lifetime Value = ACRM / Monthly Churn Rate"} />
+        <StatBox label="PT ACRM" value={formatCHF(kpi.pt_acrm)} icon={DollarSign} color="text-[var(--color-info)]" tooltip={lang === "fr" ? "Revenu moyen par membre en Personal Training" : "Avg revenue per PT member"} />
+        <StatBox label="PT LTV" value={formatCHF(kpi.pt_ltv)} icon={TrendingUp} color="text-[var(--color-info)]" tooltip={lang === "fr" ? "Valeur vie client Personal Training" : "PT Customer Lifetime Value"} />
+        <StatBox label="CPL" value={formatCHF(kpi.cpl)} icon={Target} subValue="Cost Per Lead" tooltip={lang === "fr" ? "Coût par lead = Ad Spend / Nombre de leads" : "Cost per lead = Ad Spend / Number of leads"} />
+        <StatBox label="CPR" value={formatCHF(kpi.cpr)} icon={Target} subValue="Cost Per Result" tooltip={lang === "fr" ? "Coût par résultat = Ad Spend / Nombre de show RDV" : "Cost per result = Ad Spend / Number of show appointments"} />
       </div>
     </div>
   );
