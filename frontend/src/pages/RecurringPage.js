@@ -67,7 +67,9 @@ export default function RecurringPage() {
     description: "",
     amount: "",
     sub_type: "",
+    billing_cycle: "monthly",
     recurrence_day: 1,
+    cycle_days: 30,
     is_active: true,
   });
 
@@ -121,7 +123,9 @@ export default function RecurringPage() {
       description: "",
       amount: "",
       sub_type: "",
+      billing_cycle: "monthly",
       recurrence_day: 1,
+      cycle_days: 30,
       is_active: true,
     });
     setShowModal(true);
@@ -135,7 +139,9 @@ export default function RecurringPage() {
       description: item.description,
       amount: item.amount.toString(),
       sub_type: item.sub_type || "",
+      billing_cycle: item.billing_cycle || "monthly",
       recurrence_day: item.recurrence_day || 1,
+      cycle_days: item.cycle_days || 30,
       is_active: item.is_active,
     });
     setShowModal(true);
@@ -151,6 +157,8 @@ export default function RecurringPage() {
       ...form,
       amount: parseFloat(form.amount),
       sub_type: form.sub_type || null,
+      billing_cycle: form.billing_cycle,
+      cycle_days: form.billing_cycle === "every_x_days" ? (form.cycle_days || 30) : null,
     };
     
     try {
@@ -350,7 +358,10 @@ export default function RecurringPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono text-sm text-[var(--color-text-secondary)]">
-                    {item.recurrence_day || 1}
+                    {item.billing_cycle === "every_x_days" 
+                      ? `${item.cycle_days || 30}j`
+                      : `J${item.recurrence_day || 1}`
+                    }
                   </TableCell>
                   <TableCell className={`font-mono text-sm font-bold ${item.type === "revenue" ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}`}>
                     {item.type === "revenue" ? "+" : "-"} {formatCHF(item.amount)}
@@ -441,7 +452,10 @@ export default function RecurringPage() {
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">{item.category}</span>
                         <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">
-                          J{item.recurrence_day || 1}
+                          {item.billing_cycle === "every_x_days" 
+                            ? `${item.cycle_days || 30}j`
+                            : `J${item.recurrence_day || 1}`
+                          }
                         </span>
                         <Badge className={`text-[9px] border-0 ${isRevenue ? 'bg-[rgba(48,209,88,0.12)] text-[var(--color-success)]' : 'bg-[rgba(255,69,58,0.12)] text-[var(--color-danger)]'}`}>
                           {isRevenue ? (lang === "fr" ? "Revenu" : "Revenue") : (lang === "fr" ? "Dépense" : "Expense")}
@@ -549,6 +563,27 @@ export default function RecurringPage() {
                 />
               </div>
               <div className="space-y-1.5">
+                <Label className="text-[var(--color-text-secondary)] text-xs uppercase">
+                  {lang === "fr" ? "Cycle de facturation" : "Billing cycle"}
+                </Label>
+                <Select value={form.billing_cycle} onValueChange={(v) => setForm({ ...form, billing_cycle: v })}>
+                  <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white" data-testid="billing-cycle-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    <SelectItem value="monthly" className="text-white focus:bg-[rgba(255,255,255,0.1)]">
+                      {lang === "fr" ? "Mensuel" : "Monthly"}
+                    </SelectItem>
+                    <SelectItem value="every_x_days" className="text-white focus:bg-[rgba(255,255,255,0.1)]">
+                      {lang === "fr" ? "Tous les X jours" : "Every X days"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {form.billing_cycle === "monthly" ? (
+              <div className="space-y-1.5">
                 <Label className="text-[var(--color-text-secondary)] text-xs uppercase">{t("recurrenceDay")}</Label>
                 <Select value={form.recurrence_day.toString()} onValueChange={(v) => setForm({ ...form, recurrence_day: parseInt(v) })}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
@@ -563,7 +598,28 @@ export default function RecurringPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label className="text-[var(--color-text-secondary)] text-xs uppercase">
+                  {lang === "fr" ? "Nombre de jours" : "Number of days"}
+                </Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={form.cycle_days}
+                  onChange={(e) => setForm({ ...form, cycle_days: parseInt(e.target.value) || 1 })}
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
+                  placeholder="30"
+                  data-testid="cycle-days-input"
+                />
+                <p className="text-[var(--color-text-tertiary)] text-xs">
+                  {lang === "fr" 
+                    ? `Facturation tous les ${form.cycle_days || 30} jours`
+                    : `Billed every ${form.cycle_days || 30} days`}
+                </p>
+              </div>
+            )}
             
             {form.type === "revenue" && (
               <div className="space-y-1.5">

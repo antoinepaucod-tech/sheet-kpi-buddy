@@ -97,9 +97,11 @@ class RecurringTransaction(BaseModel):
     description: str
     amount: float
     sub_type: Optional[str] = None
-    recurrence_day: int = 1  # Day of month (1-28)
-    recurrence_end_date: Optional[str] = None  # Date de fin de récurrence
-    is_indefinite_recurrence: bool = True  # Sans date de fin
+    billing_cycle: str = "monthly"  # "monthly" | "every_x_days"
+    recurrence_day: int = 1  # Day of month (1-28) for monthly cycle
+    cycle_days: Optional[int] = None  # Number of days for every_x_days cycle
+    recurrence_end_date: Optional[str] = None
+    is_indefinite_recurrence: bool = True
     is_active: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -111,7 +113,9 @@ class RecurringTransactionCreate(BaseModel):
     description: str
     amount: float
     sub_type: Optional[str] = None
+    billing_cycle: str = "monthly"  # "monthly" | "every_x_days"
     recurrence_day: int = 1
+    cycle_days: Optional[int] = None
     recurrence_end_date: Optional[str] = None
     is_indefinite_recurrence: bool = True
     is_active: bool = True
