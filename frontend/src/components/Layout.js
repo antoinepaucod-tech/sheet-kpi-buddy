@@ -115,7 +115,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
       .then(r => r.json())
       .then(data => setLatePaymentsCount(Array.isArray(data) ? data.length : 0))
       .catch(() => {});
-    fetch(`${API}/annual-reviews/upcoming?days=14`)
+    fetch(`${API}/annual-reviews/upcoming?days=7`)
       .then(r => r.json())
       .then(data => setUpcomingReviewsCount(Array.isArray(data) ? data.length : 0))
       .catch(() => {});
@@ -198,8 +198,9 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                           {upcomingReviewsCount > 0 && (
                             <span
                               className="min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold"
-                              style={{ background: 'var(--color-accent)', color: '#fff', fontSize: '10px', padding: '0 5px' }}
+                              style={{ background: 'var(--color-warning)', color: '#000', fontSize: '10px', padding: '0 5px' }}
                               data-testid="upcoming-reviews-badge"
+                              title="Bilans cette semaine"
                             >
                               {upcomingReviewsCount}
                             </span>
@@ -209,6 +210,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
                               className="min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold"
                               style={{ background: 'var(--color-danger)', color: '#fff', fontSize: '10px', padding: '0 5px' }}
                               data-testid="overdue-reviews-badge"
+                              title="Bilans en retard"
                             >
                               {overdueReviewsCount}
                             </span>
