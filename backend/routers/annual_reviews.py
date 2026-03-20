@@ -146,11 +146,8 @@ async def get_overdue_reviews():
 
 @router.get("/dashboard-alerts")
 async def get_dashboard_alerts():
-    """Get review alerts for the main dashboard: upcoming (7d), overdue, total scheduled"""
-    today = datetime.now(timezone.utc).date()
-    today_str = today.isoformat()
-    week_later = (today + timedelta(days=7)).isoformat()
-    month_later = (today + timedelta(days=30)).isoformat()
+    """Get review alerts for the main dashboard — matches frontend differenceInDays logic"""
+    now = datetime.now()
 
     all_scheduled = await db.annual_reviews.find(
         {"status": "scheduled"}, {"_id": 0}
@@ -161,16 +158,23 @@ async def get_dashboard_alerts():
     next_30 = []
 
     for r in all_scheduled:
-        rd = r.get("review_date", "")
-        if rd < today_str:
+        rd_str = r.get("review_date", "")
+        if not rd_str:
+            continue
+        try:
+            rd = datetime.strptime(rd_str, "%Y-%m-%d")
+        except ValueError:
+            continue
+        days = int((rd - now).total_seconds() / 86400)
+        if days < 0:
             overdue.append(r)
-        elif rd <= week_later:
+        elif days <= 7:
             this_week.append(r)
-        elif rd <= month_later:
+        elif days <= 30:
             next_30.append(r)
 
     # Enrich with member names (for top items)
-    items_to_show = (overdue[:5] + this_week[:5])
+    items_to_show = (overdue[:5] + this_week[:10])
     for item in items_to_show:
         member = await db.customer_members.find_one(
             {"id": item["member_id"]}, {"_id": 0, "name": 1, "email": 1}
@@ -185,7 +189,7 @@ async def get_dashboard_alerts():
         "next_30_count": len(next_30),
         "total_scheduled": len(all_scheduled),
         "overdue_items": overdue[:5],
-        "this_week_items": this_week[:5],
+        "this_week_items": this_week[:10],
     }
 
 
