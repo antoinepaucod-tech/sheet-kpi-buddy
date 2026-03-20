@@ -17,6 +17,7 @@ from models.challenges import ChallengeParticipant
 router = APIRouter(prefix="/members", tags=["members"])
 
 FREQUENCY_DELTA = {
+    "weekly": relativedelta(weeks=1),
     "monthly": relativedelta(months=1),
     "quarterly": relativedelta(months=3),
     "semi-annually": relativedelta(months=6),
@@ -355,7 +356,57 @@ async def update_member(member_id: str, data: CustomerMemberCreate):
     
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.customer_members.update_one({"id": member_id}, {"$set": update_data})
-    
+
+    # Sync bilans when review_frequency changes
+    old_freq = existing.get("review_frequency", "monthly")
+    new_freq = update_data.get("review_frequency", old_freq)
+    if new_freq != old_freq:
+        # Delete all scheduled reviews for this member
+        deleted = await db.annual_reviews.delete_many({
+            "member_id": member_id,
+            "status": "scheduled",
+        })
+        # Create a new scheduled review with the correct frequency
+        delta = FREQUENCY_DELTA.get(new_freq, relativedelta(months=1))
+        # Base: last completed review, or contract_signed_date
+        last_completed = await db.annual_reviews.find_one(
+            {"member_id": member_id, "status": "completed"},
+            {"_id": 0, "review_date": 1},
+            sort=[("review_date", -1)]
+        )
+        if last_completed:
+            base_date = datetime.strptime(last_completed["review_date"], "%Y-%m-%d")
+        elif update_data.get("contract_signed_date"):
+            base_date = datetime.strptime(update_data["contract_signed_date"], "%Y-%m-%d")
+        else:
+            base_date = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        next_date = base_date + delta
+        today_dt = datetime.now(timezone.utc).replace(tzinfo=None)
+        # Advance to current or next period
+        while next_date + delta <= today_dt:
+            next_date = next_date + delta
+        new_review = AnnualReview(
+            member_id=member_id,
+            review_date=next_date.strftime("%Y-%m-%d"),
+            review_type=new_freq,
+            status="scheduled",
+        )
+        await db.annual_reviews.insert_one(new_review.model_dump())
+        update_data["annual_review_date"] = next_date.strftime("%Y-%m-%d")
+        await db.customer_members.update_one(
+            {"id": member_id},
+            {"$set": {"annual_review_date": next_date.strftime("%Y-%m-%d")}}
+        )
+        # Log activity
+        await db.activity_logs.insert_one({
+            "id": str(uuid4()),
+            "member_id": member_id,
+            "action": "review_frequency_changed",
+            "description": f"Fréquence bilan changée: {old_freq} → {new_freq}. {deleted.deleted_count} bilan(s) planifié(s) supprimé(s), nouveau bilan {new_freq} créé le {next_date.strftime('%Y-%m-%d')}.",
+            "user_name": "Utilisateur",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+
     # If DUO primary, propagate key changes to partner
     if existing.get("duo_primary") and existing.get("duo_partner_id"):
         partner_update = {}

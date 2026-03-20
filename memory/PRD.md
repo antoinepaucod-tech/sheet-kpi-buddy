@@ -89,7 +89,7 @@ SaaS de pilotage financier pour clubs de sport. React + FastAPI + MongoDB.
   - [x] Endpoint GET /api/members/{id}/activity-log
   - [x] Modal Historique accessible depuis icone horloge sur chaque membre
   - [x] Actions logguees: bilan_skipped, bilan_completed, member_created, member_updated
-- [x] Frequences bilans: hebdomadaire/mensuel/trimestriel/semestriel/annuel (default=mensuel)
+- [x] Sync bilans quand review_frequency change: supprime bilans planifies, cree nouveau avec bon type+date, log activity
 
 ## Corrections 7 Bugs Utilisateur (19 mars 2026 - Session 2)
 - [x] Creneaux horaires CoursesPage: 1h -> 15 min (06:00, 06:15, 06:30... 21:00)
