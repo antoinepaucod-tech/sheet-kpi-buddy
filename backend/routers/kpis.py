@@ -412,11 +412,14 @@ async def recalculate_month(month: str):
          "subscription_end_date": 1, "is_duo": 1}
     ).to_list(10000)
 
-    # Filter: not departed before start of month
+    # Filter: not departed before start of month, and subscription not ended before start of month
     current_members = []
     for m in all_members_for_count:
         exit_d = m.get("exit_date")
         if exit_d and exit_d not in (None, "", "None") and exit_d < month_start_str:
+            continue
+        sub_end = m.get("subscription_end_date")
+        if sub_end and sub_end not in (None, "", "None") and sub_end < month_start_str:
             continue
         current_members.append(m)
 
@@ -457,6 +460,7 @@ async def recalculate_month(month: str):
     )
 
     update["active_members"] = active_members_count
+    update["coach_members"] = coach_members_count
     update["total_members"] = active_members_count + coach_members_count
     update["total_active_members"] = active_members_count + coach_members_count
     update["lost_members"] = lost_this_month

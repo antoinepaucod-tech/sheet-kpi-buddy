@@ -145,7 +145,8 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         revenue: k.total_revenue,
         expenses: k.total_expenses,
         profit: k.net_profit,
-        members: k.active_members || k.total_active_members || k.total_members,
+        members: k.active_members || 0,
+        coaches: k.coach_members || 0,
         newMembers: k.new_members,
         lostMembers: k.lost_members,
         churn: k.churn_rate,
@@ -703,7 +704,7 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
         {/* Members Tab */}
         <TabsContent value="members" className="space-y-4" data-testid="tab-members-content">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ChartCard title={t("membersEvolution")}>
+            <ChartCard title={lang === "fr" ? "Évolution des Membres" : "Members Evolution"}>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={currentYearData}>
                   <defs>
@@ -720,11 +721,42 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
                   {selectedLabel && <ReferenceLine x={selectedLabel} stroke={CHART_COLORS.members} strokeDasharray="4 4" />}
                   <Bar dataKey="lostMembers" name={lang === "fr" ? "Perdus" : "Lost"} fill={CHART_COLORS.expenses} opacity={0.6} barSize={12} radius={[2, 2, 0, 0]} />
                   <Bar dataKey="newMembers" name={lang === "fr" ? "Nouveaux" : "New"} fill={CHART_COLORS.members} opacity={0.8} barSize={12} radius={[2, 2, 0, 0]} />
-                  <Line type="monotone" dataKey="members" name={t("totalMembers")} stroke={CHART_COLORS.members} fill="url(#membGrad)" strokeWidth={2} dot={{ r: 3, fill: CHART_COLORS.members }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="members" name={lang === "fr" ? "Membres Actifs" : "Active Members"} stroke={CHART_COLORS.members} fill="url(#membGrad)" strokeWidth={2} dot={{ r: 3, fill: CHART_COLORS.members }} activeDot={{ r: 5 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </ChartCard>
 
+            <ChartCard title={lang === "fr" ? "Évolution des Coachs" : "Coaches Evolution"}>
+              <ResponsiveContainer width="100%" height={240}>
+                <ComposedChart data={currentYearData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ChartTooltip isCurrency={false} />} />
+                  <Legend wrapperStyle={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }} />
+                  {selectedLabel && <ReferenceLine x={selectedLabel} stroke="#FF9F0A" strokeDasharray="4 4" />}
+                  <Line type="monotone" dataKey="coaches" name={lang === "fr" ? "Coachs Actifs" : "Active Coaches"} stroke="#FF9F0A" strokeWidth={2} dot={{ r: 3, fill: "#FF9F0A" }} activeDot={{ r: 5 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+
+          {/* Summary metrics for members & coaches */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 tf-stagger">
+            {[
+              { label: lang === "fr" ? "Membres Actifs" : "Active Members", value: current?.active_members ?? 0 },
+              { label: lang === "fr" ? "Coachs Actifs" : "Active Coaches", value: current?.coach_members ?? 0 },
+              { label: lang === "fr" ? "Nouveaux" : "New", value: current?.new_members ?? 0 },
+              { label: lang === "fr" ? "Perdus" : "Lost", value: current?.lost_members ?? 0 },
+            ].map(({ label, value }) => (
+              <div key={label} className="tf-stat">
+                <p className="tf-stat-label">{label}</p>
+                <p className="tf-stat-value">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard title={t("churnEvolution")}>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={currentYearData}>
