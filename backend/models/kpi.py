@@ -187,6 +187,14 @@ def compute_metrics(kpi: dict) -> dict:
     # Recalculate avg_per_sale from cash_collected and close
     avg_per_sale = round((cash_collected / close), 2) if close > 0 else 0
 
+    # ARPM (Average Revenue per Member per month)
+    active = kpi.get('active_members', 0) or 0
+    general_acrm = round((rev / active), 2) if active > 0 else 0
+
+    # LTV = ARPM / monthly churn rate (as decimal)
+    monthly_churn = churn_rate / 100 if churn_rate > 0 else 0
+    general_ltv = round((general_acrm / monthly_churn), 2) if monthly_churn > 0 else 0
+
     return {
         **kpi,
         'churn_rate': churn_rate,
@@ -195,6 +203,8 @@ def compute_metrics(kpi: dict) -> dict:
         'cpl': cpl,
         'cpr': cpr,
         'profit_margin': profit_margin,
+        'general_acrm': general_acrm,
+        'general_ltv': general_ltv,
         'call_percentage': call_percentage,
         'sched_percentage': sched_percentage,
         'show_percentage': show_percentage,
