@@ -115,13 +115,12 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
       .then(r => r.json())
       .then(data => setLatePaymentsCount(Array.isArray(data) ? data.length : 0))
       .catch(() => {});
-    fetch(`${API}/annual-reviews/upcoming?days=7`)
+    fetch(`${API}/annual-reviews/stats`)
       .then(r => r.json())
-      .then(data => setUpcomingReviewsCount(Array.isArray(data) ? data.length : 0))
-      .catch(() => {});
-    fetch(`${API}/annual-reviews/overdue`)
-      .then(r => r.json())
-      .then(data => setOverdueReviewsCount(Array.isArray(data) ? data.length : 0))
+      .then(data => {
+        setUpcomingReviewsCount(data.this_week || 0);
+        setOverdueReviewsCount(data.overdue || 0);
+      })
       .catch(() => {});
   }, [location.pathname]);
 

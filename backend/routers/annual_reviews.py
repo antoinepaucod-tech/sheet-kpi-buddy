@@ -1,7 +1,7 @@
 """Reviews (Bilans/Suivis) routes"""
 from fastapi import APIRouter, HTTPException
 from typing import Optional
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from dateutil.relativedelta import relativedelta
 from uuid import uuid4
 import logging
@@ -89,6 +89,39 @@ async def get_upcoming_reviews(days: int = 30):
         doc["days_until"] = (datetime.fromisoformat(doc["review_date"]).date() - today).days
 
     return docs
+
+
+
+@router.get("/stats")
+async def get_review_stats():
+    """Get review counts for sidebar badges — matches frontend differenceInDays logic"""
+    now = datetime.now()
+    today_date = now.date()
+
+    all_scheduled = await db.annual_reviews.find(
+        {"status": "scheduled"}, {"_id": 0, "review_date": 1}
+    ).to_list(None)
+
+    overdue = 0
+    this_week = 0
+    for r in all_scheduled:
+        rd_str = r.get("review_date", "")
+        if not rd_str:
+            continue
+        try:
+            rd = datetime.strptime(rd_str, "%Y-%m-%d")
+        except ValueError:
+            continue
+        # Match date-fns differenceInDays: truncate toward zero
+        diff_ms = (rd - now).total_seconds()
+        days = int(diff_ms / 86400)  # truncate toward zero like Math.trunc
+        if days < 0:
+            overdue += 1
+        elif days <= 7:
+            this_week += 1
+
+    return {"overdue": overdue, "this_week": this_week}
+
 
 
 @router.get("/overdue")
