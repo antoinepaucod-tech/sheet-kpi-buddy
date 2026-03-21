@@ -169,46 +169,60 @@ export default function FranchiseDashboard() {
       </div>
 
       {/* Global KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <KpiCard
           label="CA Total"
           value={formatCHF(t.total_revenue)}
-          icon={<DollarSign size={18} />}
+          icon={<DollarSign size={16} />}
           color="#22c55e"
           testId="franchise-total-revenue"
         />
         <KpiCard
           label="Dépenses"
           value={formatCHF(t.total_expenses)}
-          icon={<TrendingDown size={18} />}
+          icon={<TrendingDown size={16} />}
           color="#ef4444"
           testId="franchise-total-expenses"
         />
         <KpiCard
           label="Ad Spend"
           value={formatCHF(t.ad_spend)}
-          icon={<Megaphone size={18} />}
+          icon={<Megaphone size={16} />}
           color="#f59e0b"
           testId="franchise-ad-spend"
         />
         <KpiCard
           label="Membres"
           value={t.total_members}
-          icon={<Users size={18} />}
+          icon={<Users size={16} />}
           color="#3b82f6"
           testId="franchise-total-members"
         />
         <KpiCard
+          label="Coachs"
+          value={t.coach_members || 0}
+          icon={<BarChart3 size={16} />}
+          color="#06b6d4"
+          testId="franchise-coach-members"
+        />
+        <KpiCard
           label="ACRM"
           value={formatCHF(t.acrm)}
-          icon={<TrendingUp size={18} />}
+          icon={<TrendingUp size={16} />}
           color="#8b5cf6"
           testId="franchise-acrm"
         />
         <KpiCard
+          label="ROAS"
+          value={t.roas ? `${t.roas}x` : "-"}
+          icon={<Target size={16} />}
+          color="#22c55e"
+          testId="franchise-roas"
+        />
+        <KpiCard
           label="Résultat Net"
           value={formatCHF(t.net_profit)}
-          icon={<Target size={18} />}
+          icon={<DollarSign size={16} />}
           color={t.net_profit >= 0 ? "#22c55e" : "#ef4444"}
           testId="franchise-net-profit"
         />
@@ -345,9 +359,7 @@ export default function FranchiseDashboard() {
             </thead>
             <tbody>
               {clubs.map((club) => {
-                const roas = club.ad_spend > 0
-                  ? (club.total_revenue / club.ad_spend).toFixed(2)
-                  : "-";
+                const roas = club.roas > 0 ? club.roas : (club.ad_spend > 0 ? (club.total_revenue / club.ad_spend).toFixed(2) : 0);
                 return (
                   <tr
                     key={club.club_id}
@@ -360,16 +372,16 @@ export default function FranchiseDashboard() {
                       {formatCHF(club.ad_spend)}
                     </td>
                     <td className="text-right py-2 px-3" style={{ color: "var(--color-text-secondary)" }}>
-                      -
+                      {club.meta_impressions > 0 ? club.meta_impressions.toLocaleString("fr-CH") : "-"}
                     </td>
                     <td className="text-right py-2 px-3" style={{ color: "var(--color-text-secondary)" }}>
-                      -
+                      {club.meta_clicks > 0 ? club.meta_clicks.toLocaleString("fr-CH") : "-"}
                     </td>
                     <td className="text-right py-2 px-3" style={{ color: "var(--color-text-secondary)" }}>
-                      -
+                      {club.meta_cpc > 0 ? formatCHF(club.meta_cpc) : "-"}
                     </td>
-                    <td className="text-right py-2 px-3" style={{ color: roas !== "-" ? "#22c55e" : "var(--color-text-tertiary)", fontWeight: "var(--font-semibold)" }}>
-                      {roas !== "-" ? `${roas}x` : "-"}
+                    <td className="text-right py-2 px-3" style={{ color: roas > 0 ? "#22c55e" : "var(--color-text-tertiary)", fontWeight: "var(--font-semibold)" }}>
+                      {roas > 0 ? `${roas}x` : "-"}
                     </td>
                   </tr>
                 );
@@ -384,15 +396,18 @@ export default function FranchiseDashboard() {
 
 function KpiCard({ label, value, icon, color, testId }) {
   return (
-    <div className="tf-card" style={{ padding: "1rem" }} data-testid={testId}>
-      <div className="flex items-center gap-2 mb-2">
-        <div style={{ color }}>{icon}</div>
+    <div className="tf-card" style={{ padding: "0.75rem 1rem", overflow: "hidden" }} data-testid={testId}>
+      <div className="flex items-center gap-2 mb-1">
+        <div style={{ color, flexShrink: 0 }}>{icon}</div>
         <span
           style={{
-            fontSize: "var(--text-xs)",
+            fontSize: "11px",
             color: "var(--color-text-secondary)",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {label}
@@ -400,9 +415,12 @@ function KpiCard({ label, value, icon, color, testId }) {
       </div>
       <div
         style={{
-          fontSize: "var(--text-xl)",
+          fontSize: "var(--text-lg)",
           fontWeight: "var(--font-bold)",
           color: "var(--color-text-primary)",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {value}
@@ -450,8 +468,11 @@ function ClubRow({ club, maxRevenue }) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-4" style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-          <span><Users size={12} className="inline mr-1" />{club.active_members} membres</span>
+        <div className="flex items-center gap-3 flex-wrap" style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
+          <span><Users size={12} className="inline mr-1" />{club.active_members} mbr</span>
+          {club.coach_members > 0 && (
+            <span style={{ color: "#06b6d4" }}><BarChart3 size={12} className="inline mr-1" />{club.coach_members} coachs</span>
+          )}
           <span style={{ color: "#f59e0b" }}><Megaphone size={12} className="inline mr-1" />{formatCHF(club.ad_spend)}</span>
           <span style={{ fontWeight: "var(--font-semibold)", color: "var(--color-text-primary)" }}>
             {formatCHF(club.total_revenue)}

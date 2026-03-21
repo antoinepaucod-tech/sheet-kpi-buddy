@@ -1,0 +1,66 @@
+{
+  "summary": "Iteration 65 - Franchise Dashboard Bug Fixes Testing Complete. All 4 reported bugs verified as FIXED. Backend: 9/9 tests passed. Frontend: All KPI cards, club comparison, and ad budget table displaying correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration65_franchise_bugs.py",
+    "/app/test_reports/pytest/pytest_results_iter65.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration65_franchise_bugs.py"
+  ],
+  "success_rate": {"backend": "100% (9/9 tests)", "frontend": "100%"},
+  "test_credentials": {
+    "super_admin": {"email": "antoine.paucod@the-coach.pro", "password": "TheCoach1290."}
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 4 franchise dashboard bugs are now fixed and verified. Members (96) and Coaches (24) are displayed separately. ROAS shows 9.09x. Meta metrics (impressions: 95413, clicks: 2024, CPC: 0.59 CHF) are visible in the ad budget table for Transform Versoix.",
+  "bugs_verified_fixed": {
+    "bug_1_text_overflow": {
+      "status": "FIXED",
+      "description": "KPI cards now have overflow:hidden and text-overflow:ellipsis CSS properties",
+      "evidence": "Visual inspection shows text contained within card bounds"
+    },
+    "bug_2_members_coaches_combined": {
+      "status": "FIXED",
+      "description": "Members and Coaches are now shown separately (was 120 combined)",
+      "evidence": "API returns total_members=96, coach_members=24. UI shows 'Membres: 96' and 'Coachs: 24' cards"
+    },
+    "bug_3_roas_incorrect": {
+      "status": "FIXED",
+      "description": "ROAS calculation now correct (revenue/ad_spend)",
+      "evidence": "API returns roas=9.09 (10793/1187). UI shows 'ROAS: 9.09x'"
+    },
+    "bug_4_missing_meta_metrics": {
+      "status": "FIXED",
+      "description": "Meta metrics (impressions, clicks, CPC) now visible in ad budget table",
+      "evidence": "Transform Versoix row shows: Impressions=95413, Clicks=2024, CPC=0.59 CHF"
+    }
+  },
+  "api_response_sample": {
+    "endpoint": "GET /api/franchise/dashboard?month=2026-03",
+    "totals": {
+      "total_members": 96,
+      "coach_members": 24,
+      "roas": 9.09,
+      "meta_impressions": 95413,
+      "meta_clicks": 2024,
+      "meta_cpc": 0.59,
+      "total_revenue": 10793,
+      "ad_spend": 1187
+    }
+  },
+  "test_date": "2026-03-21",
+  "test_time": "16:20 UTC"
+}
