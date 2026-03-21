@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useAuth } from "../contexts/AuthContext";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -7,8 +8,14 @@ export function useMonthlyKPIData() {
   const [kpis, setKpis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { activeClubId, isAuthenticated } = useAuth();
 
   const fetchKpis = useCallback(async () => {
+    if (!isAuthenticated || !activeClubId) {
+      setKpis([]);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await axios.get(`${API}/monthly-kpis`);
       setKpis(res.data);
@@ -18,7 +25,7 @@ export function useMonthlyKPIData() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, activeClubId]);
 
   useEffect(() => {
     fetchKpis();
