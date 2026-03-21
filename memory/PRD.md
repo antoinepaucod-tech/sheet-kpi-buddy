@@ -8,10 +8,11 @@ SaaS de pilotage financier multi-clubs pour franchises de clubs de sport. L'appl
 - **Backend**: FastAPI + Motor (async MongoDB)
 - **Database**: MongoDB (kpibuddy)
 - **Multi-Tenant**: Isolation par `club_id` via header `X-Club-Id`
+- **Meta API**: Facebook Marketing API v20.0 pour Ad Spend automatisé
 
 ## Utilisateurs
-- **Super Admin** (`antoine.paucod@the-coach.pro`): Accès à tous les clubs, sélecteur de club dans le header
-- **Manager**: Accès restreint à leur(s) club(s) uniquement
+- **Super Admin** (`antoine.paucod@the-coach.pro` / `TheCoach1290.`): Accès à tous les clubs + Dashboard Franchise
+- **Manager** (`test@crossfit.ch` / `test123`): Accès restreint à Transform Versoix uniquement
 
 ## Clubs
 1. Transform Versoix (toutes les données existantes)
@@ -24,58 +25,58 @@ SaaS de pilotage financier multi-clubs pour franchises de clubs de sport. L'appl
 ### Gestion Multi-Clubs (P0) - DONE (Mars 2026)
 - 4 clubs créés avec isolation des données
 - Script de migration: 4752 documents migrés vers Transform Versoix
-- Tous les routers filtrés par `club_id` via header `X-Club-Id`
+- Tous les routers filtrés par `club_id`
 - Sélecteur de club dans le header (Super Admin uniquement)
 - Rôles: Super Admin / Manager
-- Tests: 18/18 backend + 100% frontend (iteration_63)
+- Tests: iteration_63 (18/18 backend + 100% frontend)
+
+### Dashboard Franchise - DONE (Mars 2026)
+- Vue agrégée de tous les clubs (CA Total, Dépenses, Ad Spend, Membres, ACRM, Résultat Net)
+- Comparatif visuel par club avec barres de progression
+- Evolution mensuelle du CA avec Ad Spend
+- Tableau Budget Publicitaire par Club (Ad Spend, ROAS)
+- Accessible uniquement au Super Admin
+- Tests: iteration_64 (13/13 backend + 100% frontend)
+
+### Intégration Meta Ads API - DONE (Mars 2026)
+- Connexion live au compte Meta Ads (act_1180089966353771 / Hybrid Gym)
+- Token 60 jours avec échange automatique
+- Endpoints: /meta/status, /meta/ad-spend/{year}/{month}, /meta/sync-ad-spend
+- Synchronisation automatique du Ad Spend dans les KPIs mensuels
+- Bannière de statut Meta dans le Dashboard Franchise
+- Tests: iteration_64 (PASS)
 
 ### KPIs Financiers Avancés - DONE
-- ACRM (Average Club Revenue per Member)
-- LTV (Lifetime Value)
-- ROAS (Return on Ad Spend) - basé sur GHL/Ad Spend
-- CAC (Customer Acquisition Cost)
-- CPL (Cost per Lead)
-- CPR (Cost per Result)
-- Collection Rate
-- ACRM Expected
+- ACRM, LTV, ROAS, CAC, CPL, CPR, Collection Rate, ACRM Expected
 
 ### Gestion des Membres - DONE
-- CRUD complet avec types (Généraux, PIF, PT, Coaching)
-- Dissociation Membres vs Coachs
-- Suivi des abonnements et renouvellements
-- Système de facturation récurrente
+- CRUD complet, dissociation Membres/Coachs, facturation récurrente
 
 ### Comptabilité - DONE
-- Transactions (revenue/expense) avec catégories
-- Budget mensuel par catégorie
-- Récurrence (mensuelle, personnalisée)
-- Auto-recalcul des KPIs
+- Transactions, budget mensuel, récurrence, auto-recalcul KPIs
 
 ### Bilans / Suivis - DONE
-- Planification automatique des bilans
-- Fréquences configurables
-- Notifications sidebar synchronisées
+- Planification automatique, fréquences configurables, notifications
 
-### Activité (Cours) - DONE
-- Types de cours, KPIs par cours
-- Gestion des instructeurs
-- Génération des salaires
-
-## Credentials de Test
-- Super Admin: antoine.paucod@the-coach.pro / test123
+## Credentials
+- Super Admin: antoine.paucod@the-coach.pro / TheCoach1290.
 - Manager: test@crossfit.ch / test123
+- Meta App ID: 2184333752310459
+- Meta Ad Account: 1180089966353771
 
 ## Prochaines Tâches
 
 ### P1
-- Intégration API bsport (en attente des clés)
+- Intégration API bsport (en attente des clés client)
 - Intégration Revolut Business API
 
 ### P2
 - Intégration GoHighLevel + Notifications avancées
 - Alertes WhatsApp via Twilio
 - Interface migration CSV
+- Impressions/Clicks/CPC Meta par club dans le tableau franchise
 
 ### P3
 - Refactoring Dashboard.js (>900 lignes)
 - Refactoring MembersPage.js (>1300 lignes)
+- Renouvellement automatique du token Meta avant expiration
