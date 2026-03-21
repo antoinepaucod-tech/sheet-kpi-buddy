@@ -23,6 +23,8 @@ async def get_franchise_dashboard(month: Optional[str] = None, current_user: dic
 
     clubs = await db.clubs.find({"is_active": True}, {"_id": 0}).to_list(50)
 
+    COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH"]
+
     club_data = []
     totals = {
         "total_revenue": 0,
@@ -32,6 +34,9 @@ async def get_franchise_dashboard(month: Optional[str] = None, current_user: dic
         "new_members": 0,
         "lost_members": 0,
         "coach_members": 0,
+        "meta_impressions": 0,
+        "meta_clicks": 0,
+        "meta_cpc": 0,
     }
 
     for club in clubs:
@@ -42,30 +47,32 @@ async def get_franchise_dashboard(month: Optional[str] = None, current_user: dic
             {"club_id": cid, "month": month}, {"_id": 0}
         )
 
-        # Get member counts
-        active_members = await db.customer_members.count_documents({
-            "club_id": cid,
-            "member_type": {"$nin": ["coach"]},
-            "$or": [
-                {"exit_date": None}, {"exit_date": ""},
-                {"exit_date": {"$exists": False}},
-            ]
-        })
+        # Get active members (exclude coaches by membership keyword, exclude duplicates)
+        all_active = await db.customer_members.find(
+            {"club_id": cid, "is_duplicate": {"$ne": True},
+             "$or": [
+                 {"exit_date": None}, {"exit_date": ""},
+                 {"exit_date": {"$exists": False}},
+             ]},
+            {"_id": 0, "membership": 1}
+        ).to_list(5000)
 
-        coach_count = await db.customer_members.count_documents({
-            "club_id": cid,
-            "member_type": "coach",
-            "$or": [
-                {"exit_date": None}, {"exit_date": ""},
-                {"exit_date": {"$exists": False}},
-            ]
-        })
+        active_members = len([m for m in all_active if not any(
+            kw in (m.get("membership", "") or "").upper() for kw in COACH_KEYWORDS
+        )])
+        coach_count = len([m for m in all_active if any(
+            kw in (m.get("membership", "") or "").upper() for kw in COACH_KEYWORDS
+        )])
 
         revenue = kpi.get("total_revenue", 0) if kpi else 0
         expenses = kpi.get("total_expenses", 0) if kpi else 0
         ad_spend = kpi.get("ad_spend", 0) if kpi else 0
         new = kpi.get("new_members", 0) if kpi else 0
         lost = kpi.get("lost_members", 0) if kpi else 0
+        roas = kpi.get("roas", 0) if kpi else 0
+        meta_impressions = kpi.get("meta_impressions", 0) if kpi else 0
+        meta_clicks = kpi.get("meta_clicks", 0) if kpi else 0
+        meta_cpc = kpi.get("meta_cpc", 0) if kpi else 0
 
         club_entry = {
             "club_id": cid,
@@ -80,6 +87,10 @@ async def get_franchise_dashboard(month: Optional[str] = None, current_user: dic
             "new_members": new,
             "lost_members": lost,
             "acrm": round(revenue / active_members, 2) if active_members > 0 else 0,
+            "roas": roas,
+            "meta_impressions": meta_impressions,
+            "meta_clicks": meta_clicks,
+            "meta_cpc": round(meta_cpc, 2),
         }
         club_data.append(club_entry)
 
@@ -90,12 +101,16 @@ async def get_franchise_dashboard(month: Optional[str] = None, current_user: dic
         totals["new_members"] += new
         totals["lost_members"] += lost
         totals["coach_members"] += coach_count
+        totals["meta_impressions"] += meta_impressions
+        totals["meta_clicks"] += meta_clicks
 
     totals["net_profit"] = totals["total_revenue"] - totals["total_expenses"]
     totals["acrm"] = round(totals["total_revenue"] / totals["total_members"], 2) if totals["total_members"] > 0 else 0
     totals["churn_rate"] = round(
         (totals["lost_members"] / (totals["total_members"] + totals["lost_members"])) * 100, 1
     ) if (totals["total_members"] + totals["lost_members"]) > 0 else 0
+    totals["meta_cpc"] = round(totals["ad_spend"] / totals["meta_clicks"], 2) if totals["meta_clicks"] > 0 else 0
+    totals["roas"] = round(totals["total_revenue"] / totals["ad_spend"], 2) if totals["ad_spend"] > 0 else 0
 
     return {
         "month": month,
