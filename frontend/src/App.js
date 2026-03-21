@@ -23,6 +23,7 @@ import CoachesPage from "./pages/CoachesPage";
 import AttendancePage from "./pages/AttendancePage";
 import NotificationsPage from "./pages/NotificationsPage";
 import MonthlyBudgetPage from "./pages/MonthlyBudgetPage";
+import FranchiseDashboard from "./pages/FranchiseDashboard";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -127,6 +128,7 @@ function AppInner() {
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/settings/types" element={<SettingsTypesPage />} />
                   <Route path="/coaches" element={<CoachesPage />} />
+                  <Route path="/franchise" element={<FranchiseDashboard />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

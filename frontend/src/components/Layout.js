@@ -108,7 +108,12 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
   const { clubs, activeClubId, switchClub } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
 
-  const sections = NAV_SECTIONS(lang);
+  // Build navigation with Franchise as first item for super_admin
+  const navSections = isSuperAdmin
+    ? [{ label: "Franchise", items: [{ path: "/franchise", icon: Building2, label: "Dashboard Franchise" }] }, ...NAV_SECTIONS(lang)]
+    : NAV_SECTIONS(lang);
+
+  const sections = navSections;
 
   // Fetch notification counts for badges
   useEffect(() => {

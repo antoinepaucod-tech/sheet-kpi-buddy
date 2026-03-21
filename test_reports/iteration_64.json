@@ -1,0 +1,111 @@
+{
+  "summary": "Iteration 64 - Franchise Dashboard & Meta API Integration Testing Complete. All 13 backend tests passed. All frontend features verified working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration64_franchise_meta.py",
+    "/app/test_reports/pytest/pytest_results_iter64.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration64_franchise_meta.py"
+  ],
+  "success_rate": {"backend": "100% (13/13 tests)", "frontend": "100%"},
+  "test_credentials": {
+    "super_admin": {"email": "antoine.paucod@the-coach.pro", "password": "TheCoach1290."},
+    "manager": {"email": "test@crossfit.ch", "password": "test123"}
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Franchise Dashboard and Meta API integration fully verified. Super Admin login with new password (TheCoach1290.) works. Dashboard Franchise shows aggregated KPIs for 4 clubs, club comparison, monthly trends, and ad budget table. Meta API is LIVE connected to Facebook account (act_1180089966353771) with real ad spend data (1187.82 CHF for March 2026). Manager role correctly cannot see Franchise features.",
+  "features_verified": {
+    "super_admin_login_new_password": {
+      "status": "PASS",
+      "evidence": "Login with TheCoach1290. returns role=super_admin, 4 club_ids"
+    },
+    "super_admin_login_old_password_rejected": {
+      "status": "PASS",
+      "evidence": "Login with test123 returns 401 Unauthorized"
+    },
+    "franchise_dashboard_endpoint": {
+      "status": "PASS",
+      "evidence": "GET /api/franchise/dashboard?month=2026-03 returns totals with revenue, ad_spend, members across 4 clubs"
+    },
+    "franchise_trends_endpoint": {
+      "status": "PASS",
+      "evidence": "GET /api/franchise/trends?months=12 returns monthly trend data"
+    },
+    "franchise_ad_budgets_endpoint": {
+      "status": "PASS",
+      "evidence": "GET /api/franchise/ad-budgets returns ad budget info per club"
+    },
+    "franchise_dashboard_manager_forbidden": {
+      "status": "PASS",
+      "evidence": "Manager gets error 'Accès réservé au Super Admin'"
+    },
+    "meta_status_endpoint": {
+      "status": "PASS",
+      "evidence": "GET /api/meta/status returns connected=true, current_month_spend=1187.82"
+    },
+    "meta_ad_spend_endpoint": {
+      "status": "PASS",
+      "evidence": "GET /api/meta/ad-spend/2026/3 returns spend data from Meta API"
+    },
+    "meta_sync_endpoint": {
+      "status": "PASS",
+      "evidence": "POST /api/meta/sync-ad-spend syncs Meta data to KPIs"
+    },
+    "frontend_franchise_dashboard_page": {
+      "status": "PASS",
+      "evidence": "Page shows KPIs, club comparison, trends chart, ad budget table"
+    },
+    "frontend_meta_status_banner": {
+      "status": "PASS",
+      "evidence": "Banner shows 'Meta Ads API : Connecté' with 'Ad Spend ce mois : 1187.82 CHF'"
+    },
+    "frontend_franchise_link_super_admin": {
+      "status": "PASS",
+      "evidence": "Sidebar shows 'Dashboard Franchise' under 'FRANCHISE' section"
+    },
+    "frontend_franchise_link_hidden_manager": {
+      "status": "PASS",
+      "evidence": "Manager does not see FRANCHISE section in sidebar"
+    },
+    "frontend_club_selector_4_clubs": {
+      "status": "PASS",
+      "evidence": "Dropdown shows all 4 clubs: Transform Versoix, Grand Saconnex, Servette, Lausanne"
+    },
+    "frontend_super_admin_badge": {
+      "status": "PASS",
+      "evidence": "Super Admin badge visible in sidebar for super_admin user"
+    },
+    "frontend_meta_sync_button": {
+      "status": "PASS",
+      "evidence": "Sync Meta Ads button visible and functional"
+    }
+  },
+  "meta_api_data": {
+    "connected": true,
+    "ad_account_id": "1180089966353771",
+    "current_month_spend": 1187.82,
+    "currency": "CHF"
+  },
+  "franchise_dashboard_data": {
+    "club_count": 4,
+    "total_revenue": 10793,
+    "total_members": 120,
+    "ad_spend": 1187.82,
+    "net_profit": 9606
+  },
+  "test_date": "2026-03-20",
+  "test_time": "17:45 UTC"
+}
