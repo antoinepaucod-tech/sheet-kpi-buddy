@@ -31,12 +31,12 @@ SaaS de pilotage financier multi-clubs pour franchises de clubs de sport. L'appl
 - Tests: iteration_63 (18/18 backend + 100% frontend)
 
 ### Dashboard Franchise - DONE (Mars 2026)
-- Vue agrégée de tous les clubs (CA Total, Dépenses, Ad Spend, Membres, ACRM, Résultat Net)
-- Comparatif visuel par club avec barres de progression
+- Vue agrégée de tous les clubs (CA Total, Dépenses, Ad Spend, Membres, Coachs, ACRM, ROAS, Résultat Net)
+- Comparatif visuel par club avec barres de progression (membres et coachs séparés)
 - Evolution mensuelle du CA avec Ad Spend
-- Tableau Budget Publicitaire par Club (Ad Spend, ROAS)
+- Tableau Budget Publicitaire par Club (Ad Spend, Impressions, Clicks, CPC, ROAS)
 - Accessible uniquement au Super Admin
-- Tests: iteration_64 (13/13 backend + 100% frontend)
+- Tests: iteration_64 + iteration_65 (bug fixes CSS + data mapping, 100% pass)
 
 ### Intégration Meta Ads API - DONE (Mars 2026)
 - Connexion live au compte Meta Ads (act_1180089966353771 / Hybrid Gym)
@@ -74,7 +74,6 @@ SaaS de pilotage financier multi-clubs pour franchises de clubs de sport. L'appl
 - Intégration GoHighLevel + Notifications avancées
 - Alertes WhatsApp via Twilio
 - Interface migration CSV
-- Impressions/Clicks/CPC Meta par club dans le tableau franchise
 
 ### P3
 - Refactoring Dashboard.js (>900 lignes)
