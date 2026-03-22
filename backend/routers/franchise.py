@@ -39,6 +39,24 @@ async def get_franchise_dashboard(month: Optional[str] = None, current_user: dic
         "meta_cpc": 0,
     }
 
+    # Fetch ALL active members in a single query (avoid N+1 pattern)
+    all_active_members = await db.customer_members.find(
+        {"is_duplicate": {"$ne": True},
+         "$or": [
+             {"exit_date": None}, {"exit_date": ""},
+             {"exit_date": {"$exists": False}},
+         ]},
+        {"_id": 0, "club_id": 1, "membership": 1}
+    ).to_list(10000)
+
+    # Group by club_id
+    members_by_club = {}
+    for m in all_active_members:
+        cid = m.get("club_id")
+        if cid not in members_by_club:
+            members_by_club[cid] = []
+        members_by_club[cid].append(m)
+
     for club in clubs:
         cid = club["id"]
 
@@ -47,20 +65,12 @@ async def get_franchise_dashboard(month: Optional[str] = None, current_user: dic
             {"club_id": cid, "month": month}, {"_id": 0}
         )
 
-        # Get active members (exclude coaches by membership keyword, exclude duplicates)
-        all_active = await db.customer_members.find(
-            {"club_id": cid, "is_duplicate": {"$ne": True},
-             "$or": [
-                 {"exit_date": None}, {"exit_date": ""},
-                 {"exit_date": {"$exists": False}},
-             ]},
-            {"_id": 0, "membership": 1}
-        ).to_list(5000)
-
-        active_members = len([m for m in all_active if not any(
+        # Count members/coaches from pre-fetched data
+        club_members = members_by_club.get(cid, [])
+        active_members = len([m for m in club_members if not any(
             kw in (m.get("membership", "") or "").upper() for kw in COACH_KEYWORDS
         )])
-        coach_count = len([m for m in all_active if any(
+        coach_count = len([m for m in club_members if any(
             kw in (m.get("membership", "") or "").upper() for kw in COACH_KEYWORDS
         )])
 
@@ -130,11 +140,18 @@ async def get_franchise_trends(months: int = 6, current_user: dict = Depends(get
 
     clubs = await db.clubs.find({"is_active": True}, {"_id": 0}).to_list(50)
 
-    # Get all KPIs sorted by month
+    # Calculate start month for date range filter
+    from dateutil.relativedelta import relativedelta
+    now = datetime.now(timezone.utc)
+    start_date = now - relativedelta(months=months)
+    start_month = start_date.strftime("%Y-%m")
+
+    # Get KPIs with date range filter
     all_kpis = await db.monthly_kpis.find(
-        {}, {"_id": 0, "month": 1, "club_id": 1, "total_revenue": 1, "total_expenses": 1,
+        {"month": {"$gte": start_month}},
+        {"_id": 0, "month": 1, "club_id": 1, "total_revenue": 1, "total_expenses": 1,
              "ad_spend": 1, "new_members": 1, "lost_members": 1, "total_members": 1}
-    ).sort("month", -1).to_list(1000)
+    ).sort("month", -1).to_list(500)
 
     # Group by month
     from collections import defaultdict

@@ -22,10 +22,11 @@ def _cq(club_id, base=None):
 async def get_monthly_kpis(club_id: Optional[str] = Depends(get_club_id)):
     docs = await db.monthly_kpis.find(_cq(club_id), {"_id": 0}).sort("month", 1).to_list(1000)
 
-    # Enrich with real churn from member exit_dates
+    # Enrich with real churn from member exit_dates (only fetch members with exit dates)
     members = await db.customer_members.find(
-        _cq(club_id), {"_id": 0, "exit_date": 1, "subscription_end_date": 1, "is_duplicate": 1}
-    ).to_list(10000)
+        {**_cq(club_id), "exit_date": {"$exists": True, "$ne": None, "$ne": ""}, "is_duplicate": {"$ne": True}},
+        {"_id": 0, "exit_date": 1}
+    ).to_list(5000)
 
     for doc in docs:
         month = doc.get("month", "")  # e.g. "2026-03"
@@ -35,7 +36,6 @@ async def get_monthly_kpis(club_id: Optional[str] = Depends(get_club_id)):
         lost = sum(
             1 for m in members
             if m.get("exit_date") and m["exit_date"].startswith(month)
-            and not m.get("is_duplicate")
         )
         if lost > 0 and doc.get("lost_members", 0) == 0:
             doc["lost_members"] = lost
