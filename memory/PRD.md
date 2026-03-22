@@ -38,6 +38,14 @@ SaaS de pilotage financier multi-clubs pour franchises de clubs de sport. L'appl
 - Accessible uniquement au Super Admin
 - Tests: iteration_64 + iteration_65 (bug fixes CSS + data mapping, 100% pass)
 
+### Page Config Meta Ads - DONE (Mars 2026)
+- Page d'aide complète pour le renouvellement du token Meta
+- Statut du token en temps réel (actif/expiré, jours restants, date d'expiration)
+- 4 liens rapides directs (Graph API Explorer, Token Debugger, Paramètres App, Ads Manager)
+- Guide étape par étape en 6 étapes avec liens cliquables
+- Alerte automatique quand le token expire dans moins de 14 jours
+- Accessible via sidebar (section Franchise) + icône dans le Dashboard Franchise
+
 ### Intégration Meta Ads API - DONE (Mars 2026)
 - Connexion live au compte Meta Ads (act_1180089966353771 / Hybrid Gym)
 - Token 60 jours avec échange automatique
@@ -71,6 +79,7 @@ SaaS de pilotage financier multi-clubs pour franchises de clubs de sport. L'appl
 - Intégration Revolut Business API
 
 ### P2
+- Renouvellement auto du token Meta avant expiration
 - Intégration GoHighLevel + Notifications avancées
 - Alertes WhatsApp via Twilio
 - Interface migration CSV

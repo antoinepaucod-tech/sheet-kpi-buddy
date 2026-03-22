@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
+import { Link } from "react-router-dom";
 import {
   Building2,
   Users,
@@ -13,6 +14,7 @@ import {
   Megaphone,
   Wifi,
   WifiOff,
+  HelpCircle,
 } from "lucide-react";
 import { formatCHF } from "../utils/format";
 
@@ -162,9 +164,14 @@ export default function FranchiseDashboard() {
           </span>
         </div>
         {metaStatus?.connected && (
-          <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)" }}>
-            Ad Spend ce mois : <strong style={{ color: "var(--color-accent)" }}>{formatCHF(metaStatus.current_month_spend)}</strong>
-          </span>
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)" }}>
+              Ad Spend ce mois : <strong style={{ color: "var(--color-accent)" }}>{formatCHF(metaStatus.current_month_spend)}</strong>
+            </span>
+            <Link to="/meta-help" style={{ color: "var(--color-text-tertiary)", display: "flex" }} title="Configuration Meta Ads">
+              <HelpCircle size={16} />
+            </Link>
+          </div>
         )}
       </div>
 

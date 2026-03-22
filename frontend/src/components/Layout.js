@@ -26,6 +26,7 @@ import {
   Table2,
   Building2,
   ChevronDown,
+  HelpCircle,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -110,7 +111,7 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
 
   // Build navigation with Franchise as first item for super_admin
   const navSections = isSuperAdmin
-    ? [{ label: "Franchise", items: [{ path: "/franchise", icon: Building2, label: "Dashboard Franchise" }] }, ...NAV_SECTIONS(lang)]
+    ? [{ label: "Franchise", items: [{ path: "/franchise", icon: Building2, label: "Dashboard Franchise" }, { path: "/meta-help", icon: HelpCircle, label: "Config Meta Ads" }] }, ...NAV_SECTIONS(lang)]
     : NAV_SECTIONS(lang);
 
   const sections = navSections;

@@ -63,3 +63,54 @@ async def get_meta_status():
         }
     except Exception as e:
         return {"connected": False, "message": str(e)}
+
+
+@router.get("/token-info")
+async def get_meta_token_info(current_user: dict = Depends(get_current_user)):
+    """Get Meta token debug info including expiration date."""
+    import os
+    import httpx
+
+    if current_user.get("role") != "super_admin":
+        return {"error": "Accès réservé au Super Admin"}
+
+    token = os.environ.get("META_ACCESS_TOKEN", "")
+    app_id = os.environ.get("META_APP_ID", "")
+    ad_account_id = os.environ.get("META_AD_ACCOUNT_ID", "")
+
+    if not token:
+        return {"configured": False, "message": "Aucun token Meta configuré"}
+
+    # Debug the token via Graph API
+    try:
+        url = f"https://graph.facebook.com/v20.0/debug_token"
+        params = {"input_token": token, "access_token": token}
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(url, params=params)
+            data = resp.json().get("data", {})
+
+        expires_at = data.get("expires_at", 0)
+        is_valid = data.get("is_valid", False)
+        scopes = data.get("scopes", [])
+
+        now_ts = int(datetime.now(timezone.utc).timestamp())
+        days_remaining = max(0, (expires_at - now_ts) // 86400) if expires_at else 0
+
+        return {
+            "configured": True,
+            "is_valid": is_valid,
+            "expires_at": datetime.fromtimestamp(expires_at, tz=timezone.utc).isoformat() if expires_at else None,
+            "days_remaining": days_remaining,
+            "scopes": scopes,
+            "app_id": app_id,
+            "ad_account_id": ad_account_id,
+            "token_preview": f"{token[:12]}...{token[-6:]}",
+        }
+    except Exception as e:
+        return {
+            "configured": True,
+            "is_valid": None,
+            "error": str(e),
+            "app_id": app_id,
+            "ad_account_id": ad_account_id,
+        }
