@@ -28,7 +28,8 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] Separate onboarding history from pending
 - [x] Cleanup unused subscription types
 - [x] Nutrition score + evolution chart in bilans
-- [x] Skip Onboarding feature (2026-03-23) - Backend + Frontend + Tested
+- [x] Skip Onboarding feature (2026-03-23)
+- [x] Bugfix: Sync billing_amount to pending/late payments on member update (2026-03-23)
 
 ## Upcoming Tasks
 - (P1) Integration API bsport

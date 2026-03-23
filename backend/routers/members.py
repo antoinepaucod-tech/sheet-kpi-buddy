@@ -475,6 +475,15 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
     # Update payment schedule if billing changed
     existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "is_active": True})
     
+    # Sync billing_amount to existing pending/late payments
+    new_amount = update_data.get("billing_amount")
+    old_amount = existing.get("billing_amount")
+    if new_amount is not None and new_amount != old_amount and new_amount > 0:
+        await db.payments.update_many(
+            {"member_id": member_id, "status": {"$in": ["pending", "late"]}},
+            {"$set": {"amount": new_amount, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+
     # Auto-recalculate pending/late payment dates when billing root changes
     billing_root_fields = ["contract_signed_date", "billing_cycle_type", "billing_cycle_value"]
     billing_root_changed = any(
@@ -688,6 +697,12 @@ async def renew_membership(member_id: str, body: dict):
             if "billing_payment_method" in body:
                 schedule_update["payment_method"] = body["billing_payment_method"]
             await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": schedule_update})
+        # Also sync amount to existing pending/late payments on renewal
+        if "billing_amount" in body and body["billing_amount"] > 0:
+            await db.payments.update_many(
+                {"member_id": member_id, "status": {"$in": ["pending", "late"]}},
+                {"$set": {"amount": body["billing_amount"], "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
     
     doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     return {"member": doc, "message": "Abonnement renouvelé"}
