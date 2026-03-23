@@ -47,6 +47,26 @@ async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
     return filtered
 
 
+@router.get("/onboarding/history")
+async def get_onboarding_history(club_id: Optional[str] = Depends(get_club_id)):
+    """Get members who completed onboarding"""
+    COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL", "IFRC"]
+    docs = await db.customer_members.find(_cq(club_id, {
+        "onboarding_completed": True
+    }), {"_id": 0}).to_list(500)
+    
+    filtered = []
+    for doc in docs:
+        membership = (doc.get("membership") or "").upper()
+        if any(kw in membership for kw in COACH_KEYWORDS):
+            continue
+        filtered.append(doc)
+    
+    filtered.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+    return filtered
+
+
+
 @router.get("/alerts/summary")
 async def get_alerts_summary(club_id: Optional[str] = Depends(get_club_id)):
     """Get summary of all alerts (late payments, missed followups, expiring subscriptions)"""

@@ -83,7 +83,7 @@ export default function OnboardingPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("onboarding");
   const [search, setSearch] = useState("");
-  const [showCompleted, setShowCompleted] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [followupModalOpen, setFollowupModalOpen] = useState(false);
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [selectedFollowup, setSelectedFollowup] = useState(null);
@@ -110,10 +110,13 @@ export default function OnboardingPage() {
     queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
   });
 
-  // Completed onboarding members (for Historique tab)
+  // Completed onboarding members (for Historique tab) — exclude coaches/IFRC
+  const COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL", "IFRC"];
   const completedMembers = useMemo(() => {
     return allMembers.filter(m => 
-      m.onboarding_completed === true && !pendingOnboarding.find(p => p.id === m.id)
+      m.onboarding_completed === true && 
+      !pendingOnboarding.find(p => p.id === m.id) &&
+      !COACH_KEYWORDS.some(kw => (m.membership || "").toUpperCase().includes(kw))
     );
   }, [allMembers, pendingOnboarding]);
 
