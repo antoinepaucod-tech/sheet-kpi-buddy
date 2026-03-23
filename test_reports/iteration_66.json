@@ -1,0 +1,92 @@
+{
+  "summary": "Iteration 66 - Payment Bug Fixes Testing Complete. All 3 critical bugs verified as FIXED. Backend: 9/9 tests passed. Frontend: 'Payé' button works correctly, Johan Michelazzi excluded from late payments, Audrey Bernard has correct due date.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration66_payment_bugs.py",
+    "/app/test_reports/pytest/pytest_results_iter66.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration66_payment_bugs.py"
+  ],
+  "success_rate": {"backend": "100% (9/9 tests)", "frontend": "100%"},
+  "test_credentials": {
+    "super_admin": {"email": "antoine.paucod@the-coach.pro", "password": "TheCoach1290."}
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 3 payment bugs are now fixed and verified. mark-paid returns 200 with transaction_created=true. Johan Michelazzi (5 entries, 4 departed) correctly excluded from late payments. Audrey Bernard (interval_days=25, contract 2025-10-27) has due_date 2026-03-01 (not 2026-03-25).",
+  "bugs_verified_fixed": {
+    "bug_1_payer_button_500_error": {
+      "status": "FIXED",
+      "description": "POST /api/payments/{id}/mark-paid now returns 200 with status=paid and transaction_created=true",
+      "evidence": "API test: mark-paid returned 200 with {status: 'paid', transaction_created: true}. Frontend: Dialog opens, Confirmer button works, payment marked as paid.",
+      "root_cause_fix": "recalculate_month was split into route handler (with Depends) + standalone function (without Depends) so it can be called from payments.py"
+    },
+    "bug_2_johan_michelazzi_in_late_payments": {
+      "status": "FIXED",
+      "description": "GET /api/payments/late no longer contains Johan Michelazzi (departed member)",
+      "evidence": "API returns 72 late payments, none with 'Johan Michelazzi'. Johan has 5 member entries, 4 with past exit_dates (2025-02-28, 2025-03-25, 2025-10-31, 2025-11-30).",
+      "root_cause_fix": "Late payments endpoint now checks all member entries by name - if other entries all have past exit_dates, considers member departed"
+    },
+    "bug_3_billing_cycle_interval_days": {
+      "status": "FIXED",
+      "description": "Billing cycle 'interval_days' now calculates due dates from contract_signed_date correctly",
+      "evidence": "Audrey Bernard (contract 2025-10-27, interval 25 days) has due_date 2026-03-01 (NOT 2026-03-25). Calculation: 2025-10-27 + 25*6 = 2026-03-01",
+      "root_cause_fix": "interval_days now calculates from contract_signed_date + N-day intervals instead of using cycle_value as day-of-month"
+    }
+  },
+  "api_test_results": {
+    "mark_paid_endpoint": {
+      "endpoint": "POST /api/payments/{id}/mark-paid",
+      "status_code": 200,
+      "response": {
+        "status": "paid",
+        "transaction_created": true,
+        "paid_date": "2026-03-23"
+      }
+    },
+    "late_payments_endpoint": {
+      "endpoint": "GET /api/payments/late",
+      "status_code": 200,
+      "count": 72,
+      "johan_michelazzi_present": false
+    },
+    "audrey_bernard_payment": {
+      "member_name": "Audrey Bernard",
+      "contract_signed_date": "2025-10-27",
+      "billing_cycle_type": "interval_days",
+      "billing_cycle_value": 25,
+      "due_date": "2026-03-01",
+      "amount": 149
+    },
+    "sync_payments_endpoint": {
+      "endpoint": "POST /api/payments/sync-with-members",
+      "status_code": 200,
+      "schedules_created": 91,
+      "payments_created": 91
+    }
+  },
+  "frontend_test_results": {
+    "payments_page_loads": true,
+    "late_payments_tab_works": true,
+    "paye_button_clickable": true,
+    "mark_paid_dialog_opens": true,
+    "confirm_button_works": true,
+    "no_500_errors": true,
+    "johan_not_in_list": true,
+    "audrey_due_date_correct": true
+  },
+  "test_date": "2026-03-23",
+  "test_time": "08:19 UTC"
+}

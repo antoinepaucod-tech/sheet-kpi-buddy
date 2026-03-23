@@ -317,7 +317,11 @@ async def get_monthly_kpi_details(month: str, club_id: Optional[str] = Depends(g
 
 
 @router.post("/{month}/recalculate")
-async def recalculate_month(month: str, club_id: Optional[str] = Depends(get_club_id)):
+async def recalculate_month_route(month: str, club_id: Optional[str] = Depends(get_club_id)):
+    return await recalculate_month(month, club_id)
+
+
+async def recalculate_month(month: str, club_id: Optional[str] = None):
     cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
     cat_map = {c["name"]: c for c in cats}
 
@@ -560,7 +564,7 @@ async def recalculate_all(club_id: Optional[str] = Depends(get_club_id)):
     results = []
     for m in months:
         try:
-            await recalculate_month(m["month"])
+            await recalculate_month(m["month"], club_id)
             results.append({"month": m["month"], "status": "ok"})
         except Exception as e:
             results.append({"month": m["month"], "status": "skipped", "reason": str(e)})

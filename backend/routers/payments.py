@@ -124,9 +124,42 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
     import uuid
     for m in active_billing:
         amt = m.get("billing_amount", 0) or 0
+        cycle_type = m.get("billing_cycle_type", "monthly_day")
         cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
-        day = min(int(cycle_value), days_in_month)
-        due_date = f"{month_str}-{day:02d}"
+
+        # Calculate due date based on cycle type
+        if cycle_type == "interval_days" and cycle_value and int(cycle_value) > 0:
+            # Calculate from contract start date + N-day intervals
+            start_str = m.get("contract_signed_date", "")
+            if start_str:
+                try:
+                    start_dt = datetime.strptime(start_str[:10], "%Y-%m-%d")
+                    interval = int(cycle_value)
+                    # Find the due date that falls in the current month
+                    month_start = datetime(current_year, current_month, 1)
+                    month_end = datetime(current_year, current_month, days_in_month, 23, 59, 59)
+                    # Calculate first occurrence after month_start
+                    days_since = (month_start - start_dt).days
+                    if days_since < 0:
+                        due_dt = start_dt
+                    else:
+                        cycles_passed = days_since // interval
+                        due_dt = start_dt + timedelta(days=cycles_passed * interval)
+                        if due_dt < month_start:
+                            due_dt += timedelta(days=interval)
+                    if month_start <= due_dt <= month_end:
+                        due_date = due_dt.strftime("%Y-%m-%d")
+                    else:
+                        continue  # No payment due this month
+                except (ValueError, TypeError):
+                    day = min(int(cycle_value), days_in_month)
+                    due_date = f"{month_str}-{day:02d}"
+            else:
+                day = min(int(cycle_value), days_in_month)
+                due_date = f"{month_str}-{day:02d}"
+        else:
+            day = min(int(cycle_value), days_in_month)
+            due_date = f"{month_str}-{day:02d}"
 
         # For 0 CHF (offerts): auto-mark as paid
         if amt <= 0:
@@ -203,28 +236,62 @@ async def get_payments(
 
 @router.get("/payments/late")
 async def get_late_payments(club_id: Optional[str] = Depends(get_club_id)):
-    """Get all late payments (past due and not paid)"""
+    """Get all late payments (past due and not paid), excluding departed members"""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     q = {"due_date": {"$lt": today}, "status": {"$in": ["pending", "late"]}}
     if club_id:
         q["club_id"] = club_id
     docs = await db.payments.find(q, {"_id": 0}).sort("due_date", 1).to_list(500)
     
+    # Filter out payments for departed members
+    filtered_docs = []
     for doc in docs:
+        member = await db.customer_members.find_one(
+            {"id": doc["member_id"]},
+            {"_id": 0, "name": 1, "email": 1, "phone": 1, "exit_date": 1}
+        )
+        if not member:
+            continue
+        # Skip if member has departed (direct exit_date check)
+        exit_d = member.get("exit_date")
+        member_departed = exit_d and exit_d not in (None, "", "None") and exit_d < today
+
+        # Also check: if all OTHER entries for same name have departed, treat as departed
+        if not member_departed:
+            member_name = member.get("name", "")
+            if member_name:
+                all_entries = await db.customer_members.find(
+                    {"name": member_name, "club_id": doc.get("club_id")},
+                    {"_id": 0, "exit_date": 1, "id": 1}
+                ).to_list(20)
+                if len(all_entries) > 1:
+                    other_entries = [e for e in all_entries if e.get("id") != doc["member_id"]]
+                    if other_entries and all(
+                        e.get("exit_date") and e["exit_date"] not in (None, "", "None") and e["exit_date"] < today
+                        for e in other_entries
+                    ):
+                        member_departed = True
+
+        if member_departed:
+            await db.payments.update_one(
+                {"id": doc["id"]},
+                {"$set": {"status": "cancelled", "notes": "Membre parti", "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            continue
+        
         if doc["status"] == "pending":
             await db.payments.update_one(
                 {"id": doc["id"]},
                 {"$set": {"status": "late", "updated_at": datetime.now(timezone.utc).isoformat()}}
             )
             doc["status"] = "late"
+        
+        doc["member_name"] = member.get("name", "Inconnu")
+        doc["member_email"] = member.get("email", "")
+        doc["member_phone"] = member.get("phone", "")
+        filtered_docs.append(doc)
     
-    for doc in docs:
-        member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
-        doc["member_name"] = member.get("name", "Inconnu") if member else "Inconnu"
-        doc["member_email"] = member.get("email", "") if member else ""
-        doc["member_phone"] = member.get("phone", "") if member else ""
-    
-    return docs
+    return filtered_docs
 
 
 @router.get("/payments/upcoming")
@@ -314,13 +381,15 @@ async def mark_payment_paid(payment_id: str, body: dict = {}):
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "source": "payment_validation",
         "payment_id": payment_id,
+        "club_id": existing.get("club_id"),
     }
     await db.accounting_transactions.insert_one(tx)
     
     # Recalculate KPI for the month
     month_str = paid_date[:7]
     from routers.kpis import recalculate_month
-    await recalculate_month(month_str)
+    payment_club_id = existing.get("club_id")
+    await recalculate_month(month_str, payment_club_id)
     
     result = await db.payments.find_one({"id": payment_id}, {"_id": 0})
     result["transaction_created"] = True
@@ -376,7 +445,34 @@ async def generate_monthly_payments(year: int, month: int, club_id: Optional[str
         cycle_type = member.get("billing_cycle_type", "monthly_day")
         cycle_value = member.get("billing_cycle_value", 1)
         
-        if cycle_type == "monthly_day":
+        if cycle_type == "interval_days" and cycle_value and int(cycle_value) > 0:
+            # Calculate from contract start date + N-day intervals
+            start_str = member.get("contract_signed_date", "")
+            if start_str:
+                try:
+                    start_dt = datetime.strptime(start_str[:10], "%Y-%m-%d")
+                    interval = int(cycle_value)
+                    month_start = datetime(year, month, 1)
+                    month_end = datetime(year, month, days_in_month, 23, 59, 59)
+                    days_since = (month_start - start_dt).days
+                    if days_since < 0:
+                        due_dt = start_dt
+                    else:
+                        cycles_passed = days_since // interval
+                        due_dt = start_dt + timedelta(days=cycles_passed * interval)
+                        if due_dt < month_start:
+                            due_dt += timedelta(days=interval)
+                    if month_start <= due_dt <= month_end:
+                        due_date = due_dt.strftime("%Y-%m-%d")
+                    else:
+                        continue  # No payment due this month
+                except (ValueError, TypeError):
+                    day = min(int(cycle_value or 1), days_in_month)
+                    due_date = f"{month_str}-{day:02d}"
+            else:
+                day = min(int(cycle_value or 1), days_in_month)
+                due_date = f"{month_str}-{day:02d}"
+        elif cycle_type == "monthly_day":
             day = min(cycle_value or 1, days_in_month)
             due_date = f"{month_str}-{day:02d}"
         else:
