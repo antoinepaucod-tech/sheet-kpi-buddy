@@ -141,6 +141,11 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
             continue
 
         amt = m.get("billing_amount", 0) or 0
+
+        # Skip members with 0 CHF billing (offerts, DUO secondaries without amount, unset amounts)
+        if amt <= 0:
+            continue
+
         cycle_type = m.get("billing_cycle_type", "monthly_day")
         cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
 
@@ -178,35 +183,18 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
             day = min(int(cycle_value), days_in_month)
             due_date = f"{month_str}-{day:02d}"
 
-        # For 0 CHF (offerts): auto-mark as paid
-        if amt <= 0:
-            payment = {
-                "id": str(uuid.uuid4()),
-                "member_id": m["id"],
-                "schedule_id": m["id"],
-                "member_name": m.get("name", ""),
-                "amount": 0,
-                "due_date": due_date,
-                "status": "paid",
-                "paid_date": due_date,
-                "payment_method": m.get("billing_payment_method", "offert"),
-                "notes": "Abonnement offert - 0 CHF",
-                "created_at": now.isoformat(),
-                "updated_at": now.isoformat(),
-            }
-        else:
-            payment = {
-                "id": str(uuid.uuid4()),
-                "member_id": m["id"],
-                "schedule_id": m["id"],
-                "member_name": m.get("name", ""),
-                "amount": amt,
-                "due_date": due_date,
-                "status": "late" if due_date < today_str else "pending",
-                "payment_method": m.get("billing_payment_method", "prelevement"),
-                "created_at": now.isoformat(),
-                "updated_at": now.isoformat(),
-            }
+        payment = {
+            "id": str(uuid.uuid4()),
+            "member_id": m["id"],
+            "schedule_id": m["id"],
+            "member_name": m.get("name", ""),
+            "amount": amt,
+            "due_date": due_date,
+            "status": "late" if due_date < today_str else "pending",
+            "payment_method": m.get("billing_payment_method", "prelevement"),
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+        }
         if club_id:
             payment["club_id"] = club_id
         await db.payments.insert_one(payment)
@@ -500,34 +488,20 @@ async def generate_monthly_payments(year: int, month: int, club_id: Optional[str
         
         amt = member.get("billing_amount", 0) or 0
         
-        # For offerts (0 CHF): auto-mark as paid
+        # Skip members with 0 CHF billing
         if amt <= 0:
-            import uuid
-            doc = {
-                "id": str(uuid.uuid4()),
-                "member_id": member["id"],
-                "schedule_id": member["id"],
-                "member_name": member.get("name", ""),
-                "amount": 0,
-                "due_date": due_date,
-                "status": "paid",
-                "paid_date": due_date,
-                "payment_method": member.get("billing_payment_method", "offert"),
-                "notes": "Abonnement offert - 0 CHF",
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
-        else:
-            payment = Payment(
-                member_id=member["id"],
-                schedule_id=member["id"],
-                amount=amt,
-                due_date=due_date,
-                status="pending",
-                payment_method=member.get("billing_payment_method", "prelevement")
-            )
-            doc = payment.model_dump()
-            doc["member_name"] = member["name"]
+            continue
+        
+        payment = Payment(
+            member_id=member["id"],
+            schedule_id=member["id"],
+            amount=amt,
+            due_date=due_date,
+            status="pending",
+            payment_method=member.get("billing_payment_method", "prelevement")
+        )
+        doc = payment.model_dump()
+        doc["member_name"] = member["name"]
         
         await db.payments.insert_one(doc)
         doc.pop('_id', None)
