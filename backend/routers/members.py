@@ -475,6 +475,43 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
     # Update payment schedule if billing changed
     existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "is_active": True})
     
+    # Auto-recalculate pending/late payment dates when billing root changes
+    billing_root_fields = ["contract_signed_date", "billing_cycle_type", "billing_cycle_value"]
+    billing_root_changed = any(
+        update_data.get(f) is not None and update_data.get(f) != existing.get(f)
+        for f in billing_root_fields
+    )
+    if billing_root_changed:
+        new_contract = update_data.get("contract_signed_date") or existing.get("contract_signed_date")
+        new_cycle_type = update_data.get("billing_cycle_type") or existing.get("billing_cycle_type", "monthly_day")
+        new_cycle_value = int(update_data.get("billing_cycle_value") or existing.get("billing_cycle_value") or 1)
+        
+        if new_contract and new_cycle_type == "interval_days" and new_cycle_value > 0:
+            from calendar import monthrange
+            now = datetime.now(timezone.utc)
+            month_str = now.strftime("%Y-%m")
+            year, month_num = now.year, now.month
+            days_in_m = monthrange(year, month_num)[1]
+            month_start = datetime(year, month_num, 1)
+            month_end = datetime(year, month_num, days_in_m, 23, 59, 59)
+            
+            try:
+                start_dt = datetime.strptime(new_contract[:10], "%Y-%m-%d")
+                days_since = (month_start - start_dt).days
+                if days_since >= 0:
+                    cycles = days_since // new_cycle_value
+                    due_dt = start_dt + timedelta(days=cycles * new_cycle_value)
+                    if due_dt < month_start:
+                        due_dt += timedelta(days=new_cycle_value)
+                    if month_start <= due_dt <= month_end:
+                        new_due = due_dt.strftime("%Y-%m-%d")
+                        await db.payments.update_many(
+                            {"member_id": member_id, "due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["pending", "late", "paid"]}},
+                            {"$set": {"due_date": new_due, "updated_at": now.isoformat()}}
+                        )
+            except (ValueError, TypeError):
+                pass
+
     if data.billing_enabled and data.billing_amount > 0:
         schedule_update = {
             "amount": data.billing_amount,
