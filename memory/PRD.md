@@ -29,7 +29,19 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] Cleanup unused subscription types
 - [x] Nutrition score + evolution chart in bilans
 - [x] Skip Onboarding feature (2026-03-23)
-- [x] Bugfix: Sync billing_amount to pending/late payments on member update (2026-03-23)
+- [x] Sync billing_amount to pending/late payments on member update (2026-03-23)
+- [x] Fix Kristina Jonova future payment marked paid (2026-03-23)
+- [x] Fix Teo Succi & Adrianna Zapata missing club_id (2026-03-23)
+- [x] Fix Cindy payment generation when billing_amount 0→positive (2026-03-23)
+- [x] Fix sidebar badges not refreshing on club switch (2026-03-23)
+- [x] DB Query Optimization - 11 warnings resolved (2026-03-23)
+  - distinct() for memberships
+  - Date filter in MongoDB for expiring members
+  - Pagination for transactions
+  - Aggregation pipeline for monthly-grid (50K→pipeline)
+  - Aggregation for churn count + limit 36 months KPIs
+  - Aggregation $sum for recurring revenue
+  - Reduced projections for member counts
 
 ## Upcoming Tasks
 - (P1) Integration API bsport
