@@ -230,11 +230,12 @@ async def get_member(member_id: str):
 
 @router.post("")
 async def create_member(data: CustomerMemberCreate, club_id: Optional[str] = Depends(get_club_id)):
+    if not club_id:
+        raise HTTPException(status_code=400, detail="Club ID requis (header X-Club-Id manquant)")
     member_data = data.model_dump()
     
     # Add club_id to the member
-    if club_id:
-        member_data["club_id"] = club_id
+    member_data["club_id"] = club_id
     
     # Auto-detect challenge membership type
     is_challenge = data.membership and "challenge" in data.membership.lower()
@@ -507,17 +508,19 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
             try:
                 start_dt = datetime.strptime(new_contract[:10], "%Y-%m-%d")
                 days_since = (month_start - start_dt).days
-                if days_since >= 0:
+                if days_since < 0:
+                    due_dt = start_dt
+                else:
                     cycles = days_since // new_cycle_value
                     due_dt = start_dt + timedelta(days=cycles * new_cycle_value)
                     if due_dt < month_start:
                         due_dt += timedelta(days=new_cycle_value)
-                    if month_start <= due_dt <= month_end:
-                        new_due = due_dt.strftime("%Y-%m-%d")
-                        await db.payments.update_many(
-                            {"member_id": member_id, "due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["pending", "late"]}},
-                            {"$set": {"due_date": new_due, "updated_at": now.isoformat()}}
-                        )
+                if month_start <= due_dt <= month_end:
+                    new_due = due_dt.strftime("%Y-%m-%d")
+                    await db.payments.update_many(
+                        {"member_id": member_id, "due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["pending", "late"]}},
+                        {"$set": {"due_date": new_due, "updated_at": now.isoformat()}}
+                    )
             except (ValueError, TypeError):
                 pass
 
