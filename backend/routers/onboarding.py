@@ -1,7 +1,8 @@
 """Onboarding and Alerts routes"""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+from uuid import uuid4
 
 from core.config import db
 from core.security import get_club_id
@@ -18,16 +19,16 @@ def _cq(club_id, base=None):
 
 @router.get("/onboarding/pending")
 async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
-    """Get members with incomplete onboarding (excludes coaches)"""
+    """Get members with incomplete onboarding (excludes coaches, IFRC, and skipped)"""
     COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL", "IFRC"]
     docs = await db.customer_members.find(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
+        "onboarding_skipped": {"$ne": True},
         "exit_date": None
     }), {"_id": 0}).to_list(500)
     
     filtered = []
     for doc in docs:
-        # Skip coaches
         membership = (doc.get("membership") or "").upper()
         if any(kw in membership for kw in COACH_KEYWORDS):
             continue
@@ -45,6 +46,34 @@ async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
     
     filtered.sort(key=lambda x: x["onboarding_progress"])
     return filtered
+
+
+@router.post("/onboarding/{member_id}/skip")
+async def skip_onboarding(member_id: str, body: dict = {}):
+    """Skip onboarding for a member"""
+    member = await db.customer_members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    
+    await db.customer_members.update_one(
+        {"id": member_id},
+        {"$set": {
+            "onboarding_skipped": True,
+            "onboarding_skip_reason": body.get("reason", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await db.activity_logs.insert_one({
+        "id": str(uuid4()),
+        "member_id": member_id,
+        "action": "onboarding_skipped",
+        "description": f"Onboarding skipé - {body.get('reason', 'Aucune raison')}",
+        "user_name": body.get("user_name", "Utilisateur"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    
+    return {"message": "Onboarding skipé"}
 
 
 @router.get("/onboarding/history")

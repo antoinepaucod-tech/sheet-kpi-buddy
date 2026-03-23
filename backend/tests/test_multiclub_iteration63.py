@@ -10,7 +10,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://franchise-sync.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://fast-onboard.preview.emergentagent.com').rstrip('/')
 
 # Club IDs discovered from API
 VERSOIX_CLUB_ID = "0a327bf5-c759-49eb-87e4-551913f78bdb"

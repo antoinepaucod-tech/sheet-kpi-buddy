@@ -17,6 +17,7 @@ import {
   Search,
   Filter,
   Bell,
+  SkipForward,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -88,6 +89,9 @@ export default function OnboardingPage() {
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [selectedFollowup, setSelectedFollowup] = useState(null);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [skipDialogOpen, setSkipDialogOpen] = useState(false);
+  const [skipTarget, setSkipTarget] = useState(null);
+  const [skipReason, setSkipReason] = useState("");
   // Track which member is being edited to prevent reordering
   const [editingMemberId, setEditingMemberId] = useState(null);
   
@@ -190,6 +194,20 @@ export default function OnboardingPage() {
       queryClient.invalidateQueries(["followups"]);
       toast.success("Suivi supprimé");
     },
+  });
+
+  const skipOnboardingMutation = useMutation({
+    mutationFn: ({ memberId, reason }) =>
+      axios.post(`${API}/onboarding/${memberId}/skip`, { reason, user_name: "Utilisateur" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["onboarding"]);
+      queryClient.invalidateQueries(["members"]);
+      toast.success("Onboarding skipé");
+      setSkipDialogOpen(false);
+      setSkipTarget(null);
+      setSkipReason("");
+    },
+    onError: () => toast.error("Erreur lors du skip"),
   });
 
   // Filter onboarding - preserve order during editing
@@ -369,15 +387,31 @@ export default function OnboardingPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Progression</p>
-                        <div className="flex items-center gap-2">
-                          <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-[rgba(255,255,255,0.1)]" />
-                          <span className="font-bold text-[var(--color-accent)]">
-                            {member.onboarding_percentage}%
-                          </span>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Progression</p>
+                          <div className="flex items-center gap-2">
+                            <Progress value={member.onboarding_percentage} className="w-24 h-2 bg-[rgba(255,255,255,0.1)]" />
+                            <span className="font-bold text-[var(--color-accent)]">
+                              {member.onboarding_percentage}%
+                            </span>
+                          </div>
+                          <p className="text-[var(--color-text-tertiary)] text-xs">{member.onboarding_progress}/5 étapes</p>
                         </div>
-                        <p className="text-[var(--color-text-tertiary)] text-xs">{member.onboarding_progress}/5 étapes</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          data-testid={`skip-onboarding-${member.id}`}
+                          className="border-[rgba(255,159,10,0.3)] text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.1)] hover:text-[var(--color-warning)] gap-1.5"
+                          onClick={() => {
+                            setSkipTarget(member);
+                            setSkipReason("");
+                            setSkipDialogOpen(true);
+                          }}
+                        >
+                          <SkipForward size={14} />
+                          Passer
+                        </Button>
                       </div>
                     </div>
 
@@ -635,6 +669,52 @@ export default function OnboardingPage() {
               className="bg-[var(--color-success)] hover:bg-[var(--color-success)] hover:opacity-85"
             >
               {completeFollowupMutation.isPending ? "..." : "Compléter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Skip Onboarding Confirmation Modal */}
+      <Dialog open={skipDialogOpen} onOpenChange={setSkipDialogOpen}>
+        <DialogContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SkipForward className="text-[var(--color-warning)]" size={20} />
+              Passer l'onboarding
+            </DialogTitle>
+          </DialogHeader>
+          {skipTarget && (
+            <div className="space-y-4 py-4">
+              <div className="bg-[var(--color-bg-tertiary)] rounded-[var(--radius-lg)] p-4">
+                <p className="text-white font-medium">{skipTarget.name}</p>
+                <p className="text-[var(--color-text-secondary)] text-sm">
+                  Progression actuelle : {skipTarget.onboarding_progress}/5 étapes ({skipTarget.onboarding_percentage}%)
+                </p>
+              </div>
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                Ce membre sera retiré de la liste des onboardings en attente. Vous pouvez indiquer une raison (optionnel).
+              </p>
+              <div>
+                <label className="tf-stat-label">Raison (optionnel)</label>
+                <Input
+                  value={skipReason}
+                  onChange={(e) => setSkipReason(e.target.value)}
+                  placeholder="Ex: Membre déjà expérimenté, transfert d'un autre club..."
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
+                  data-testid="skip-reason-input"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSkipDialogOpen(false)} data-testid="skip-cancel-btn">Annuler</Button>
+            <Button
+              onClick={() => skipOnboardingMutation.mutate({ memberId: skipTarget?.id, reason: skipReason })}
+              disabled={skipOnboardingMutation.isPending}
+              className="bg-[var(--color-warning)] hover:bg-[var(--color-warning)] hover:opacity-85 text-black"
+              data-testid="skip-confirm-btn"
+            >
+              {skipOnboardingMutation.isPending ? "..." : "Confirmer le skip"}
             </Button>
           </DialogFooter>
         </DialogContent>
