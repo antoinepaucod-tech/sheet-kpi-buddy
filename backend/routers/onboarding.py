@@ -18,13 +18,19 @@ def _cq(club_id, base=None):
 
 @router.get("/onboarding/pending")
 async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
-    """Get members with incomplete onboarding"""
+    """Get members with incomplete onboarding (excludes coaches)"""
+    COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL"]
     docs = await db.customer_members.find(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "exit_date": None
     }), {"_id": 0}).to_list(500)
     
+    filtered = []
     for doc in docs:
+        # Skip coaches
+        membership = (doc.get("membership") or "").upper()
+        if any(kw in membership for kw in COACH_KEYWORDS):
+            continue
         steps = [
             doc.get("onboarding_bsport", False),
             doc.get("onboarding_hubfit", False),
@@ -35,9 +41,10 @@ async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
         doc["onboarding_progress"] = sum(steps)
         doc["onboarding_total"] = 5
         doc["onboarding_percentage"] = round((sum(steps) / 5) * 100)
+        filtered.append(doc)
     
-    docs.sort(key=lambda x: x["onboarding_progress"])
-    return docs
+    filtered.sort(key=lambda x: x["onboarding_progress"])
+    return filtered
 
 
 @router.get("/alerts/summary")
