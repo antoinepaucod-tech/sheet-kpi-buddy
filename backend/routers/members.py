@@ -515,7 +515,7 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
                     if month_start <= due_dt <= month_end:
                         new_due = due_dt.strftime("%Y-%m-%d")
                         await db.payments.update_many(
-                            {"member_id": member_id, "due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["pending", "late", "paid"]}},
+                            {"member_id": member_id, "due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["pending", "late"]}},
                             {"$set": {"due_date": new_due, "updated_at": now.isoformat()}}
                         )
             except (ValueError, TypeError):
