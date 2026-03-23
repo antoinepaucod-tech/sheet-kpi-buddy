@@ -383,6 +383,24 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.customer_members.update_one({"id": member_id}, {"$set": update_data})
 
+    # Auto-cancel pending/late payments when member is marked as departed
+    new_exit = update_data.get("exit_date")
+    old_exit = existing.get("exit_date")
+    if new_exit and new_exit != old_exit:
+        cancelled = await db.payments.update_many(
+            {"member_id": member_id, "status": {"$in": ["pending", "late"]}},
+            {"$set": {"status": "cancelled", "notes": "Membre parti", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        if cancelled.modified_count > 0:
+            await db.activity_logs.insert_one({
+                "id": str(uuid4()),
+                "member_id": member_id,
+                "action": "payments_cancelled_on_departure",
+                "description": f"{cancelled.modified_count} paiement(s) annulé(s) suite au départ du membre.",
+                "user_name": "Système",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+
     # Sync bilans when review_frequency changes
     old_freq = existing.get("review_frequency", "monthly")
     new_freq = update_data.get("review_frequency", old_freq)

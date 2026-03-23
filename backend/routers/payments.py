@@ -235,12 +235,40 @@ async def get_payments(
     
     docs = await db.payments.find(query, {"_id": 0}).sort("due_date", -1).to_list(1000)
     
-    # Enrich with member names
+    # Enrich with member names and filter out departed members' pending/late payments
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    result = []
     for doc in docs:
-        member = await db.customer_members.find_one({"id": doc.get("member_id")}, {"_id": 0, "name": 1})
+        member = await db.customer_members.find_one({"id": doc.get("member_id")}, {"_id": 0, "name": 1, "exit_date": 1, "membership": 1})
         doc["member_name"] = member.get("name", "Inconnu") if member else "Inconnu"
+        
+        # Auto-cancel departed members' pending/late payments
+        if doc["status"] in ("pending", "late") and member:
+            exit_d = member.get("exit_date")
+            is_departed = exit_d and exit_d not in (None, "", "None") and exit_d < today
+            # HUBFIT special: check other entries
+            if not is_departed and "HUBFIT" in (member.get("membership", "") or "").upper():
+                member_name = member.get("name", "")
+                if member_name:
+                    other_entries = await db.customer_members.find(
+                        {"name": member_name, "id": {"$ne": doc["member_id"]}},
+                        {"_id": 0, "exit_date": 1}
+                    ).to_list(20)
+                    if other_entries and all(
+                        e.get("exit_date") and e["exit_date"] not in (None, "", "None") and e["exit_date"] < today
+                        for e in other_entries
+                    ):
+                        is_departed = True
+            if is_departed:
+                await db.payments.update_one(
+                    {"id": doc["id"]},
+                    {"$set": {"status": "cancelled", "notes": "Membre parti", "updated_at": datetime.now(timezone.utc).isoformat()}}
+                )
+                doc["status"] = "cancelled"
+                doc["notes"] = "Membre parti"
+        result.append(doc)
     
-    return docs
+    return result
 
 
 @router.get("/payments/late")
