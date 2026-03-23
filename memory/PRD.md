@@ -38,6 +38,19 @@ SaaS de pilotage financier multi-clubs pour franchises de clubs de sport. L'appl
 - Accessible uniquement au Super Admin
 - Tests: iteration_64 + iteration_65 (bug fixes CSS + data mapping, 100% pass)
 
+### Corrections Paiements - DONE (Mars 2026)
+- Fix bouton "Payer" (erreur 500 causée par Depends dans recalculate_month)
+- Filtre membres partis des paiements en retard (ex: Johan Michelazzi)
+- Billing cycles "interval_days" respectent la date de contrat
+- Tests: iteration_66 + iteration_67 (100% pass)
+
+### Améliorations Membres & Bilans - DONE (Mars 2026)
+- Renouvellement "Sans engagement" (pas de date d'échéance)
+- CAC corrigé: utilise marketing_spend + ad_spend (pas marketing_cost)
+- Score nutrition 1-10 dans le formulaire de bilan
+- Mini-graphiques évolution poids + nutrition dans le formulaire de complétion
+- Graphique score nutrition ajouté dans l'historique des bilans
+
 ### Page Config Meta Ads - DONE (Mars 2026)
 - Page d'aide complète pour le renouvellement du token Meta
 - Statut du token en temps réel (actif/expiré, jours restants, date d'expiration)
