@@ -20,23 +20,19 @@ def _cq(club_id, base=None):
 
 @router.get("")
 async def get_monthly_kpis(club_id: Optional[str] = Depends(get_club_id)):
-    docs = await db.monthly_kpis.find(_cq(club_id), {"_id": 0}).sort("month", 1).to_list(1000)
+    docs = await db.monthly_kpis.find(_cq(club_id), {"_id": 0}).sort("month", 1).to_list(36)
 
-    # Enrich with real churn from member exit_dates (only fetch members with exit dates)
-    members = await db.customer_members.find(
-        {**_cq(club_id), "exit_date": {"$exists": True, "$ne": None, "$ne": ""}, "is_duplicate": {"$ne": True}},
-        {"_id": 0, "exit_date": 1}
-    ).to_list(5000)
+    # Enrich with real churn using aggregation pipeline
+    exit_pipeline = [
+        {"$match": {**_cq(club_id), "exit_date": {"$exists": True, "$ne": None, "$ne": ""}, "is_duplicate": {"$ne": True}}},
+        {"$addFields": {"exit_month": {"$substr": ["$exit_date", 0, 7]}}},
+        {"$group": {"_id": "$exit_month", "count": {"$sum": 1}}}
+    ]
+    exit_counts = {r["_id"]: r["count"] for r in await db.customer_members.aggregate(exit_pipeline).to_list(100)}
 
     for doc in docs:
-        month = doc.get("month", "")  # e.g. "2026-03"
-        if not month:
-            continue
-        # Count members who left this month (exit_date starts with this month)
-        lost = sum(
-            1 for m in members
-            if m.get("exit_date") and m["exit_date"].startswith(month)
-        )
+        month = doc.get("month", "")
+        lost = exit_counts.get(month, 0)
         if lost > 0 and doc.get("lost_members", 0) == 0:
             doc["lost_members"] = lost
 
@@ -429,10 +425,10 @@ async def recalculate_month(month: str, club_id: Optional[str] = None):
     all_members_for_count = await db.customer_members.find(
         _cq(club_id, {"contract_signed_date": {"$lt": month_end_str}}),
         {"_id": 0, "name": 1, "membership": 1, "exit_date": 1,
-         "subscription_end_date": 1, "is_duo": 1, "is_coach": 1,
-         "billing_amount": 1, "billing_cycle_type": 1, "billing_cycle_value": 1,
-         "billing_enabled": 1}
-    ).to_list(10000)
+         "subscription_end_date": 1, "is_duo": 1,
+         "billing_amount": 1, "billing_enabled": 1,
+         "billing_cycle_type": 1, "billing_cycle_value": 1}
+    ).to_list(5000)
 
     # Filter: not departed before start of month, and subscription not ended before start of month
     current_members = []
@@ -487,27 +483,27 @@ async def recalculate_month(month: str, club_id: Optional[str] = None):
     update["total_active_members"] = active_members_count + coach_members_count
     update["lost_members"] = lost_this_month
 
-    # --- Recurring: Calculate from active billing members (exclude coaches) ---
+    # --- Recurring: Calculate from active billing members using aggregation ---
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    coach_kw_rec = ["THE COACH", "VIRTUAL COACH"]
-    rec_q = {"billing_enabled": True, "billing_amount": {"$gt": 0},
-         "$or": [
-             {"exit_date": None}, {"exit_date": ""},
-             {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
-         ]}
+    rec_match = {
+        "billing_enabled": True, "billing_amount": {"$gt": 0},
+        "$or": [
+            {"exit_date": None}, {"exit_date": ""},
+            {"exit_date": {"$exists": False}}, {"exit_date": {"$gte": today_str}}
+        ]
+    }
     if club_id:
-        rec_q["club_id"] = club_id
-    active_recurring = await db.customer_members.find(
-        rec_q,
-        {"_id": 0, "billing_amount": 1, "is_coach": 1, "membership": 1}
-    ).to_list(5000)
-
-    # Exclude coaches
-    active_recurring = [m for m in active_recurring if not m.get("is_coach") and
-                        not any(kw in (m.get("membership") or "").upper() for kw in coach_kw_rec)]
-
-    recurring_count = len(active_recurring)
-    recurring_rev = sum(m.get("billing_amount", 0) for m in active_recurring)
+        rec_match["club_id"] = club_id
+    
+    recurring_pipeline = [
+        {"$match": rec_match},
+        {"$project": {"billing_amount": 1, "membership": 1, "_id": 0}},
+        {"$match": {"membership": {"$not": {"$regex": "THE COACH|VIRTUAL COACH", "$options": "i"}}}},
+        {"$group": {"_id": None, "total": {"$sum": "$billing_amount"}, "count": {"$sum": 1}}}
+    ]
+    rec_result = await db.customer_members.aggregate(recurring_pipeline).to_list(1)
+    recurring_count = rec_result[0]["count"] if rec_result else 0
+    recurring_rev = rec_result[0]["total"] if rec_result else 0
 
     # Recurring expenses from expense categories marked as recurring
     rec_exp_q = {"date": {"$regex": f"^{month}"}, "amount": {"$lt": 0},

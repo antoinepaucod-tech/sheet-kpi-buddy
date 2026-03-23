@@ -99,11 +99,11 @@ async def _auto_recalculate_kpis(tx_date: str, club_id: str = None):
 # ── Transactions ──────────────────────────────────────────────────────────────
 
 @router.get("/transactions")
-async def get_transactions(month: Optional[str] = None, club_id: Optional[str] = Depends(get_club_id)):
+async def get_transactions(month: Optional[str] = None, limit: int = 500, skip: int = 0, club_id: Optional[str] = Depends(get_club_id)):
     query = _cq(club_id)
     if month:
         query["date"] = {"$regex": f"^{month}"}
-    return await db.accounting_transactions.find(query, {"_id": 0}).sort("date", -1).to_list(10000)
+    return await db.accounting_transactions.find(query, {"_id": 0}).sort("date", -1).skip(skip).limit(limit).to_list(limit)
 
 
 @router.post("/transactions")
@@ -568,27 +568,29 @@ MONTH_NAMES = {
 async def get_monthly_grid(year: int, type: Optional[str] = None, club_id: Optional[str] = Depends(get_club_id)):
     """Get transactions summarized by category and month for a given year."""
     cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
-    cat_filter = {}
     if type:
-        cat_filter = {"type": type}
         cats = [c for c in cats if c.get("type") == type]
 
-    # Get all transactions for the year
-    txs = await db.accounting_transactions.find(
-        _cq(club_id, {"date": {"$regex": f"^{year}"}}), {"_id": 0}
-    ).to_list(50000)
+    # Use aggregation pipeline instead of fetching all transactions
+    match_stage = _cq(club_id, {"date": {"$regex": f"^{year}"}})
+    pipeline = [
+        {"$match": match_stage},
+        {"$addFields": {"month_num": {"$toInt": {"$substr": ["$date", 5, 2]}}}},
+        {"$group": {
+            "_id": {"category": "$category", "month": "$month_num"},
+            "total": {"$sum": "$amount"}
+        }}
+    ]
+    agg_results = await db.accounting_transactions.aggregate(pipeline).to_list(5000)
 
-    # Build grid: category → month → total amount
+    # Build grid from aggregation results
     grid = {}
-    for tx in txs:
-        cat = tx.get("category", "")
-        try:
-            m = int(tx.get("date", "")[5:7])
-        except (ValueError, IndexError):
-            continue
+    for r in agg_results:
+        cat = r["_id"]["category"]
+        m = r["_id"]["month"]
         if cat not in grid:
             grid[cat] = {}
-        grid[cat][m] = grid[cat].get(m, 0) + tx.get("amount", 0)
+        grid[cat][m] = r["total"]
 
     # Format response
     result = []

@@ -185,9 +185,8 @@ async def get_unique_memberships(club_id: Optional[str] = Depends(get_club_id)):
     query = {}
     if club_id:
         query["club_id"] = club_id
-    docs = await db.customer_members.find(query, {"_id": 0, "membership": 1}).to_list(5000)
-    memberships = sorted(set(d.get("membership", "") for d in docs if d.get("membership")))
-    return memberships
+    memberships = await db.customer_members.distinct("membership", query)
+    return sorted(m for m in memberships if m)
 
 
 
@@ -197,20 +196,19 @@ async def get_expiring_members(days: int = 30, club_id: Optional[str] = Depends(
     today = datetime.now(timezone.utc).date()
     end_date = today + timedelta(days=days)
     
-    query = {}
+    query = {
+        "subscription_end_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
+        "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
+    }
     if club_id:
         query["club_id"] = club_id
-    docs = await db.customer_members.find(query, {"_id": 0}).to_list(1000)
-    expiring = []
+    docs = await db.customer_members.find(query, {"_id": 0}).to_list(500)
     for d in docs:
-        if d.get("subscription_end_date") and not d.get("exit_date"):
-            sub_end = datetime.fromisoformat(d["subscription_end_date"]).date()
-            if today <= sub_end <= end_date:
-                d["days_remaining"] = (sub_end - today).days
-                expiring.append(d)
+        sub_end = datetime.fromisoformat(d["subscription_end_date"]).date()
+        d["days_remaining"] = (sub_end - today).days
     
-    expiring.sort(key=lambda x: x.get("days_remaining", 999))
-    return expiring
+    docs.sort(key=lambda x: x.get("days_remaining", 999))
+    return docs
 
 
 @router.get("/{member_id}")
