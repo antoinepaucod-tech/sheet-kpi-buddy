@@ -19,7 +19,7 @@ def _cq(club_id, base=None):
 @router.get("/onboarding/pending")
 async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
     """Get members with incomplete onboarding (excludes coaches)"""
-    COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL"]
+    COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL", "IFRC"]
     docs = await db.customer_members.find(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "exit_date": None
