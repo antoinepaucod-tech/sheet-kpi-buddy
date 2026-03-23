@@ -257,7 +257,7 @@ async def get_late_payments(club_id: Optional[str] = Depends(get_club_id)):
     for doc in docs:
         member = await db.customer_members.find_one(
             {"id": doc["member_id"]},
-            {"_id": 0, "name": 1, "email": 1, "phone": 1, "exit_date": 1}
+            {"_id": 0, "name": 1, "email": 1, "phone": 1, "exit_date": 1, "membership": 1}
         )
         if not member:
             continue
@@ -265,8 +265,8 @@ async def get_late_payments(club_id: Optional[str] = Depends(get_club_id)):
         exit_d = member.get("exit_date")
         member_departed = exit_d and exit_d not in (None, "", "None") and exit_d < today
 
-        # Also check: if all OTHER entries for same name have departed, treat as departed
-        if not member_departed:
+        # Extra check ONLY for HUBFIT entries: if all other entries for same name departed, treat as departed
+        if not member_departed and "HUBFIT" in (member.get("membership", "") or "").upper():
             member_name = member.get("name", "")
             if member_name:
                 all_entries = await db.customer_members.find(
