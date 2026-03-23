@@ -156,7 +156,7 @@ def compute_metrics(kpi: dict) -> dict:
 
     # CAC = (Marketing + Publicité) / Ventes (close)
     ad = kpi.get('ad_spend', 0) or 0
-    marketing = kpi.get('marketing_cost', 0) or 0
+    marketing = kpi.get('marketing_spend', 0) or kpi.get('marketing_cost', 0) or 0
     close = kpi.get('close', 0) or 0
     total_acq_spend = ad + marketing
     cac = round((total_acq_spend / close) if close > 0 else 0, 2)

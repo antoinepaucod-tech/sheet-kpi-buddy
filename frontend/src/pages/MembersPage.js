@@ -235,6 +235,8 @@ export default function MembersPage() {
         options.push({ value: label, label });
       }
     }
+    // Always add "Sans engagement" option at the end
+    options.push({ value: "Sans engagement", label: "Sans engagement (pas d'échéance)" });
     return options;
   }, [membershipTypes]);
 
@@ -1257,7 +1259,13 @@ export default function MembersPage() {
               </div>
               <div>
                 <label className="tf-stat-label">Durée du renouvellement</label>
-                <Select value={renewData.renewal_duration} onValueChange={(v) => setRenewData({ ...renewData, renewal_duration: v })}>
+                <Select value={renewData.renewal_duration} onValueChange={(v) => {
+                  const updates = { renewal_duration: v };
+                  if (v === "Sans engagement") {
+                    updates.new_end_date = "";
+                  }
+                  setRenewData(prev => ({ ...prev, ...updates }));
+                }}>
                   <SelectTrigger className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
@@ -1268,6 +1276,7 @@ export default function MembersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {renewData.renewal_duration !== "Sans engagement" && (
               <div>
                 <label className="tf-stat-label">Nouvelle date d'expiration</label>
                 <Input
@@ -1278,6 +1287,13 @@ export default function MembersPage() {
                   data-testid="new-end-date-input"
                 />
               </div>
+              )}
+              {renewData.renewal_duration === "Sans engagement" && (
+              <div className="bg-[rgba(48,209,88,0.08)] border border-[rgba(48,209,88,0.2)] rounded-[var(--radius-lg)] p-3">
+                <p className="text-[var(--color-success)] text-sm font-medium">Abonnement sans date d'échéance</p>
+                <p className="text-[var(--color-text-secondary)] text-xs mt-1">Le membre restera actif indéfiniment jusqu'à résiliation manuelle.</p>
+              </div>
+              )}
               <div>
                 <label className="tf-stat-label">Notes</label>
                 <Input
@@ -1428,7 +1444,7 @@ export default function MembersPage() {
             <Button
               onClick={() => {
                 const payload = {
-                  new_end_date: renewData.new_end_date,
+                  new_end_date: renewData.renewal_duration === "Sans engagement" ? null : renewData.new_end_date,
                   renewal_duration: renewData.renewal_duration,
                   notes: renewData.notes,
                 };
@@ -1444,7 +1460,7 @@ export default function MembersPage() {
                 }
                 renewMutation.mutate({ id: selectedMember?.id, data: payload });
               }}
-              disabled={!renewData.new_end_date || renewMutation.isPending}
+              disabled={(renewData.renewal_duration !== "Sans engagement" && !renewData.new_end_date) || renewMutation.isPending}
               className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
               data-testid="confirm-renew-btn"
             >

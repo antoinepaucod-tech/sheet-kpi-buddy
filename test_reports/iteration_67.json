@@ -1,0 +1,119 @@
+{
+  "summary": "Iteration 67 - All 6 reported issues (3 bugs + 3 improvements) verified as FIXED. Backend: 13/13 tests passed. Frontend: All dialogs working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration67_all_fixes.py",
+    "/app/test_reports/pytest/pytest_results_iter67.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration67_all_fixes.py"
+  ],
+  "success_rate": {"backend": "100% (13/13 tests)", "frontend": "100%"},
+  "test_credentials": {
+    "super_admin": {"email": "antoine.paucod@the-coach.pro", "password": "TheCoach1290."}
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 6 issues verified fixed. mark-paid returns 200. Johan Michelazzi excluded from late payments. Audrey Bernard has correct due_date 2026-03-01. Renewal with 'Sans engagement' sets subscription_end_date to null. CAC uses marketing_spend. Bilans completion form has nutrition_score 1-10 clickable scale.",
+  "bugs_and_improvements_verified": {
+    "bug_1_mark_paid_500_error": {
+      "status": "FIXED",
+      "description": "POST /api/payments/{id}/mark-paid now returns 200 with status=paid and transaction_created=true",
+      "evidence": "Backend test passed: mark-paid returned 200 with {status: 'paid', transaction_created: true}. Frontend: 72 'Payé' buttons visible, dialog opens correctly.",
+      "root_cause_fix": "recalculate_month was split into route handler (with Depends) + standalone function (without Depends)"
+    },
+    "bug_2_johan_michelazzi_in_late_payments": {
+      "status": "FIXED",
+      "description": "GET /api/payments/late no longer contains Johan Michelazzi (departed member)",
+      "evidence": "Backend test passed: Johan Michelazzi not found in late payments list. Johan has multiple entries with past exit_dates."
+    },
+    "bug_3_audrey_bernard_billing_cycle": {
+      "status": "FIXED",
+      "description": "Billing cycle 'interval_days' calculates due dates from contract_signed_date correctly",
+      "evidence": "Backend test passed: Audrey Bernard (contract 2025-10-27, interval 25 days) has due_date 2026-03-01 (NOT 2026-03-25)"
+    },
+    "improvement_4_renewal_sans_engagement": {
+      "status": "FIXED",
+      "description": "POST /api/members/{id}/renew with 'Sans engagement' and new_end_date=null sets subscription_end_date to null",
+      "evidence": "Backend test passed: Renewal with 'Sans engagement' successfully set subscription_end_date to null. Frontend: Renewal dialog has 'Sans engagement' option in dropdown (code verified at line 239 of MembersPage.js)"
+    },
+    "improvement_5_cac_marketing_spend": {
+      "status": "FIXED",
+      "description": "CAC calculation in compute_metrics uses marketing_spend field",
+      "evidence": "Backend test passed: CAC = (marketing_spend + ad_spend) / close. Code verified at line 159 of models/kpi.py"
+    },
+    "improvement_6_bilans_nutrition_score": {
+      "status": "FIXED",
+      "description": "Bilans completion form has nutrition_score field with 1-10 clickable scale",
+      "evidence": "Frontend test passed: Bilan completion dialog shows 'Score nutrition (1-10)' with input field and 10 clickable buttons (1-10 scale). Screenshot shows the nutrition section with scale buttons."
+    }
+  },
+  "api_test_results": {
+    "mark_paid_endpoint": {
+      "endpoint": "POST /api/payments/{id}/mark-paid",
+      "status_code": 200,
+      "response": {
+        "status": "paid",
+        "transaction_created": true
+      }
+    },
+    "late_payments_endpoint": {
+      "endpoint": "GET /api/payments/late",
+      "status_code": 200,
+      "johan_michelazzi_present": false
+    },
+    "audrey_bernard_payment": {
+      "member_name": "Audrey Bernard",
+      "contract_signed_date": "2025-10-27",
+      "billing_cycle_type": "interval_days",
+      "billing_cycle_value": 25,
+      "due_date": "2026-03-01"
+    },
+    "renewal_sans_engagement": {
+      "endpoint": "POST /api/members/{id}/renew",
+      "body": {"renewal_duration": "Sans engagement", "new_end_date": null},
+      "status_code": 200,
+      "result": "subscription_end_date set to null"
+    },
+    "kpi_cac_calculation": {
+      "endpoint": "GET /api/monthly-kpis",
+      "status_code": 200,
+      "cac_formula": "(marketing_spend + ad_spend) / close"
+    }
+  },
+  "frontend_test_results": {
+    "payments_page": {
+      "loads": true,
+      "late_payments_count": 72,
+      "paye_buttons_visible": true,
+      "mark_paid_dialog_opens": true
+    },
+    "members_page": {
+      "loads": true,
+      "members_count": 93,
+      "renew_buttons_visible": true,
+      "renewal_dialog_opens": true,
+      "sans_engagement_option_in_code": true
+    },
+    "bilans_page": {
+      "loads": true,
+      "complete_buttons_count": 90,
+      "completion_dialog_opens": true,
+      "nutrition_score_field_visible": true,
+      "nutrition_score_1_10_scale": true
+    }
+  },
+  "test_date": "2026-03-23",
+  "test_time": "08:35 UTC"
+}

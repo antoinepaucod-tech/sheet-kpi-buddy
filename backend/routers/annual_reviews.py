@@ -236,8 +236,9 @@ async def get_member_review_summary(member_id: str):
     past_reviews = await db.annual_reviews.find(
         {"member_id": member_id, "status": "completed"},
         {"_id": 0, "review_date": 1, "weight_current": 1, "weight_start": 1,
-         "weight_change": 1, "training_frequency": 1, "new_goals": 1}
-    ).sort("review_date", -1).to_list(5)
+         "weight_change": 1, "weight_goal": 1, "training_frequency": 1, "new_goals": 1,
+         "nutrition_score": 1, "nutrition_current": 1}
+    ).sort("review_date", -1).to_list(10)
 
     return {
         "member_name": member.get("name", ""),

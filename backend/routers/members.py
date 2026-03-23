@@ -544,22 +544,28 @@ async def renew_membership(member_id: str, body: dict):
         raise HTTPException(status_code=404, detail="Membre introuvable")
     
     new_end_date = body.get("new_end_date")
-    if not new_end_date:
+    renewal_duration = body.get("renewal_duration", "12 mois")
+    is_no_commitment = renewal_duration == "Sans engagement"
+    
+    if not new_end_date and not is_no_commitment:
         raise HTTPException(status_code=400, detail="new_end_date requis")
     
     renewal = MemberRenewalHistory(
         member_id=member_id,
         previous_end_date=member.get("subscription_end_date"),
-        new_end_date=new_end_date,
-        renewal_duration=body.get("renewal_duration", "12 mois"),
+        new_end_date=new_end_date if new_end_date else "Sans engagement",
+        renewal_duration=renewal_duration,
         notes=body.get("notes", "")
     )
     await db.member_renewals.insert_one(renewal.model_dump())
     
     member_update = {
-        "subscription_end_date": new_end_date,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
+    if is_no_commitment:
+        member_update["subscription_end_date"] = None
+    else:
+        member_update["subscription_end_date"] = new_end_date
     
     # Update membership type if changing
     if "new_membership" in body:

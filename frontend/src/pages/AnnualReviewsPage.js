@@ -111,6 +111,7 @@ export default function AnnualReviewsPage() {
     muscle_mass: "",
     nutrition_current: "",
     nutrition_adjustments: "",
+    nutrition_score: "",
     calories_target: "",
     protein_target: "",
     current_program: "",
@@ -300,6 +301,7 @@ export default function AnnualReviewsPage() {
       muscle_mass: review.muscle_mass || "",
       nutrition_current: review.nutrition_current || "",
       nutrition_adjustments: review.nutrition_adjustments || "",
+      nutrition_score: review.nutrition_score || "",
       calories_target: review.calories_target || "",
       protein_target: review.protein_target || "",
       current_program: review.current_program || "",
@@ -751,6 +753,60 @@ export default function AnnualReviewsPage() {
                 )}
               </div>
 
+              {/* Evolution Charts (previous reviews) */}
+              {memberSummary?.previous_reviews?.length > 0 && (
+              <div>
+                <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-3">
+                  <BarChart3 size={16} className="text-[#64D2FF]" />
+                  Evolution des bilans précédents
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Weight Evolution Mini-Chart */}
+                  {memberSummary.previous_reviews.some(r => r.weight_current) && (
+                  <div className="bg-[var(--color-bg-secondary)] rounded-lg p-3">
+                    <p className="text-xs text-[var(--color-text-tertiary)] mb-2">Poids (kg)</p>
+                    <ResponsiveContainer width="100%" height={120}>
+                      <LineChart data={memberSummary.previous_reviews
+                        .filter(r => r.weight_current)
+                        .sort((a, b) => (a.review_date || "").localeCompare(b.review_date || ""))
+                        .map(r => ({
+                          date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
+                          poids: r.weight_current,
+                          objectif: r.weight_goal,
+                        }))}>
+                        <XAxis dataKey="date" stroke="#555" tick={{ fontSize: 9 }} />
+                        <YAxis stroke="#555" tick={{ fontSize: 9 }} domain={["dataMin - 2", "dataMax + 2"]} width={35} />
+                        <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8, fontSize: 11 }} />
+                        <Line type="monotone" dataKey="poids" stroke="#64D2FF" strokeWidth={2} dot={{ fill: "#64D2FF", r: 3 }} name="Poids" />
+                        <Line type="monotone" dataKey="objectif" stroke="#30D158" strokeWidth={1.5} strokeDasharray="4 4" dot={{ fill: "#30D158", r: 2 }} name="Objectif" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  )}
+                  {/* Nutrition Score Mini-Chart */}
+                  {memberSummary.previous_reviews.some(r => r.nutrition_score) && (
+                  <div className="bg-[var(--color-bg-secondary)] rounded-lg p-3">
+                    <p className="text-xs text-[var(--color-text-tertiary)] mb-2">Score Nutrition (1-10)</p>
+                    <ResponsiveContainer width="100%" height={120}>
+                      <LineChart data={memberSummary.previous_reviews
+                        .filter(r => r.nutrition_score)
+                        .sort((a, b) => (a.review_date || "").localeCompare(b.review_date || ""))
+                        .map(r => ({
+                          date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
+                          score: r.nutrition_score,
+                        }))}>
+                        <XAxis dataKey="date" stroke="#555" tick={{ fontSize: 9 }} />
+                        <YAxis stroke="#555" tick={{ fontSize: 9 }} domain={[0, 10]} width={25} />
+                        <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8, fontSize: 11 }} />
+                        <Line type="monotone" dataKey="score" stroke="#30D158" strokeWidth={2} dot={{ fill: "#30D158", r: 3 }} name="Nutrition" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  )}
+                </div>
+              </div>
+              )}
+
               {/* Weight Section */}
               <div>
                 <h3 className="text-[var(--color-text-secondary)] text-sm font-medium flex items-center gap-2 mb-3">
@@ -823,6 +879,40 @@ export default function AnnualReviewsPage() {
                   Nutrition
                 </h3>
                 <div className="space-y-3">
+                  <div>
+                    <label className="text-[var(--color-text-secondary)] text-xs">Score nutrition (1-10)</label>
+                    <div className="flex items-center gap-3 mt-1">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value={formData.nutrition_score}
+                        onChange={(e) => setFormData({ ...formData, nutrition_score: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })}
+                        className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white w-20"
+                        placeholder="1-10"
+                        data-testid="nutrition-score"
+                      />
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, nutrition_score: n })}
+                            className={`w-6 h-6 rounded text-xs font-bold transition-all ${
+                              formData.nutrition_score >= n
+                                ? n <= 3 ? "bg-[rgba(255,69,58,0.3)] text-[var(--color-danger)]"
+                                : n <= 6 ? "bg-[rgba(255,214,10,0.3)] text-[var(--color-warning)]"
+                                : "bg-[rgba(48,209,88,0.3)] text-[var(--color-success)]"
+                                : "bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)]"
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                   <div>
                     <label className="text-[var(--color-text-secondary)] text-xs">Régime actuel</label>
                     <Textarea
@@ -1266,6 +1356,26 @@ export default function AnnualReviewsPage() {
                       <YAxis stroke="#666" tick={{ fontSize: 11 }} />
                       <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
                       <Line type="monotone" dataKey="freq" stroke="#30D158" strokeWidth={2} dot={{ fill: "#30D158", r: 4 }} name="Séances/semaine" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Nutrition Score */}
+              {historyData.reviews.some(r => r.nutrition_score) && (
+                <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] p-4">
+                  <h3 className="text-[var(--color-text-secondary)] text-sm font-medium mb-3">Score Nutrition (1-10)</h3>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <LineChart data={historyData.reviews.filter(r => r.nutrition_score).map(r => ({
+                      date: r.review_date ? format(parseISO(r.review_date), "MMM yy", { locale: fr }) : "",
+                      score: r.nutrition_score,
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="#666" tick={{ fontSize: 11 }} domain={[0, 10]} />
+                      <Tooltip contentStyle={{ backgroundColor: "#1C1C1E", border: "1px solid #333", borderRadius: 8 }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="score" stroke="#30D158" strokeWidth={2} dot={{ fill: "#30D158", r: 4 }} name="Score nutrition" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
