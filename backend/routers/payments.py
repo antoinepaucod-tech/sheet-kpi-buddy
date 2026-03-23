@@ -136,9 +136,13 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
         if m["id"] in already_paid_members:
             continue
 
-        # Skip DUO secondary members (duo_partner_id set but this is NOT the primary billing member)
-        if m.get("duo_partner_id") and m.get("is_duo_secondary"):
-            continue
+        # Skip DUO secondary members:
+        # If member has duo_partner_id AND their name does NOT contain "&" (combined), they are the secondary
+        if m.get("duo_partner_id"):
+            member_name = m.get("name", "")
+            if "&" not in member_name:
+                # This is the individual (secondary) DUO member, skip payment
+                continue
 
         amt = m.get("billing_amount", 0) or 0
 
@@ -431,7 +435,7 @@ async def generate_monthly_payments(year: int, month: int, club_id: Optional[str
         if exit_d and exit_d not in (None, "", "None") and exit_d < today_str:
             continue
         # Skip DUO secondary members
-        if m.get("duo_partner_id") and m.get("is_duo_secondary"):
+        if m.get("duo_partner_id") and "&" not in m.get("name", ""):
             continue
         members.append(m)
     
