@@ -116,13 +116,30 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
         schedules_created += 1
 
     # 3. Sync payments for current month (including 0 CHF for offerts)
+    # First: delete only pending/late payments to recreate them
     if club_id:
         await db.payments.delete_many({"club_id": club_id, "status": {"$in": ["pending", "late"]}})
     else:
         await db.payments.delete_many({"status": {"$in": ["pending", "late"]}})
     payments_created = 0
     import uuid
+
+    # Build set of member_ids that already have a paid/cancelled payment this month
+    existing_paid = await db.payments.find(
+        _cq(club_id, {"due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["paid", "cancelled"]}}),
+        {"_id": 0, "member_id": 1}
+    ).to_list(5000)
+    already_paid_members = {p["member_id"] for p in existing_paid}
+
     for m in active_billing:
+        # Skip if this member already has a paid/cancelled payment this month
+        if m["id"] in already_paid_members:
+            continue
+
+        # Skip DUO secondary members (duo_partner_id set but this is NOT the primary billing member)
+        if m.get("duo_partner_id") and m.get("is_duo_secondary"):
+            continue
+
         amt = m.get("billing_amount", 0) or 0
         cycle_type = m.get("billing_cycle_type", "monthly_day")
         cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
@@ -424,6 +441,9 @@ async def generate_monthly_payments(year: int, month: int, club_id: Optional[str
     for m in all_members:
         exit_d = m.get("exit_date")
         if exit_d and exit_d not in (None, "", "None") and exit_d < today_str:
+            continue
+        # Skip DUO secondary members
+        if m.get("duo_partner_id") and m.get("is_duo_secondary"):
             continue
         members.append(m)
     
