@@ -549,6 +549,69 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
     elif existing_schedule and not data.billing_enabled:
         await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": {"is_active": False}})
     
+    # Auto-generate payment for current month if billing enabled, amount > 0, and no payment exists
+    if data.billing_enabled and data.billing_amount > 0:
+        from calendar import monthrange
+        now = datetime.now(timezone.utc)
+        month_str = now.strftime("%Y-%m")
+        today_str = now.strftime("%Y-%m-%d")
+        year, month_num = now.year, now.month
+        days_in_m = monthrange(year, month_num)[1]
+        month_start = datetime(year, month_num, 1)
+        month_end = datetime(year, month_num, days_in_m, 23, 59, 59)
+        
+        # Check if member is DUO secondary (no "&" in name) → skip payment generation
+        is_duo_secondary = existing.get("duo_partner_id") and "&" not in (existing.get("name") or "")
+        
+        existing_payment = await db.payments.find_one({
+            "member_id": member_id,
+            "due_date": {"$regex": f"^{month_str}"}
+        })
+        
+        if not existing_payment and not is_duo_secondary:
+            cycle_type = data.billing_cycle_type or existing.get("billing_cycle_type", "monthly_day")
+            cycle_value = int(data.billing_cycle_value or existing.get("billing_cycle_value") or 1)
+            contract = data.contract_signed_date or existing.get("contract_signed_date", "")
+            
+            due_date = None
+            if cycle_type == "interval_days" and cycle_value > 0 and contract:
+                try:
+                    start_dt = datetime.strptime(contract[:10], "%Y-%m-%d")
+                    days_since = (month_start - start_dt).days
+                    if days_since < 0:
+                        due_dt = start_dt
+                    else:
+                        cycles_passed = days_since // cycle_value
+                        due_dt = start_dt + timedelta(days=cycles_passed * cycle_value)
+                        if due_dt < month_start:
+                            due_dt += timedelta(days=cycle_value)
+                    if month_start <= due_dt <= month_end:
+                        due_date = due_dt.strftime("%Y-%m-%d")
+                except (ValueError, TypeError):
+                    pass
+            
+            if not due_date:
+                day = min(cycle_value, days_in_m)
+                due_date = f"{month_str}-{day:02d}"
+            
+            payment = {
+                "id": str(uuid4()),
+                "member_id": member_id,
+                "schedule_id": member_id,
+                "member_name": existing.get("name", ""),
+                "member_email": existing.get("email", ""),
+                "member_phone": existing.get("phone", ""),
+                "amount": data.billing_amount,
+                "due_date": due_date,
+                "status": "late" if due_date < today_str else "pending",
+                "payment_method": data.billing_payment_method or existing.get("billing_payment_method", "prelevement"),
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+            }
+            if club_id:
+                payment["club_id"] = club_id
+            await db.payments.insert_one(payment)
+    
     # Log modification
     await log_member_activity(member_id, "member_updated", f"Fiche membre modifiée : {data.name}", club_id=club_id)
 
