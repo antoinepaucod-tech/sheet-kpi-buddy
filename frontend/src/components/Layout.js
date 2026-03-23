@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -118,23 +119,23 @@ export function Layout({ children, selectedMonth, setSelectedMonth, availableMon
 
   // Fetch notification counts for badges
   useEffect(() => {
-    const API = process.env.REACT_APP_BACKEND_URL + "/api";
-    fetch(`${API}/onboarding/pending`)
-      .then(r => r.json())
-      .then(data => setPendingOnboardingCount(Array.isArray(data) ? data.length : 0))
-      .catch(() => {});
-    fetch(`${API}/payments/late`)
-      .then(r => r.json())
-      .then(data => setLatePaymentsCount(Array.isArray(data) ? data.length : 0))
-      .catch(() => {});
-    fetch(`${API}/annual-reviews/stats`)
-      .then(r => r.json())
-      .then(data => {
-        setUpcomingReviewsCount(data.this_week || 0);
-        setOverdueReviewsCount(data.overdue || 0);
-      })
-      .catch(() => {});
-  }, [location.pathname]);
+    const fetchBadges = async () => {
+      try {
+        const [onbRes, lateRes, reviewRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/onboarding/pending`),
+          axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/payments/late`),
+          axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/annual-reviews/stats`),
+        ]);
+        setPendingOnboardingCount(Array.isArray(onbRes.data) ? onbRes.data.length : 0);
+        setLatePaymentsCount(Array.isArray(lateRes.data) ? lateRes.data.length : 0);
+        setUpcomingReviewsCount(reviewRes.data?.this_week || 0);
+        setOverdueReviewsCount(reviewRes.data?.overdue || 0);
+      } catch {
+        // silent
+      }
+    };
+    fetchBadges();
+  }, [location.pathname, activeClubId]);
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
