@@ -25,21 +25,26 @@ async def get_trainings(member_id: Optional[str] = None, year: Optional[int] = N
 
 
 @router.post("")
-async def upsert_training(data: WeeklyTrainingUpdate):
+async def upsert_training(data: WeeklyTrainingUpdate, club_id: Optional[str] = Depends(get_club_id)):
     existing = await db.weekly_trainings.find_one({
         "member_id": data.member_id,
         "calendar_year": data.calendar_year,
         "calendar_week": data.calendar_week
     })
     if existing:
+        update_fields = {"trainings_count": data.trainings_count, "updated_at": datetime.now(timezone.utc).isoformat()}
+        if club_id and not existing.get("club_id"):
+            update_fields["club_id"] = club_id
         await db.weekly_trainings.update_one(
             {"id": existing["id"]},
-            {"$set": {"trainings_count": data.trainings_count, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            {"$set": update_fields}
         )
         return await db.weekly_trainings.find_one({"id": existing["id"]}, {"_id": 0})
     else:
         training = WeeklyTraining(**data.model_dump())
         doc = training.model_dump()
+        if club_id:
+            doc["club_id"] = club_id
         await db.weekly_trainings.insert_one(doc)
         doc.pop('_id', None)
         return doc

@@ -105,18 +105,23 @@ export default function AttendancePage() {
     },
   });
 
-  const trainingMap = useMemo(() => {
+  // Server-only training map (without local overrides) for save comparison
+  const serverTrainingMap = useMemo(() => {
     const map = {};
     trainings.forEach((t) => {
       const key = `${t.member_id}_${t.calendar_week}`;
       map[key] = t.trainings_count || 0;
     });
-    // Merge local updates for instant total recalculation
+    return map;
+  }, [trainings]);
+
+  const trainingMap = useMemo(() => {
+    const map = { ...serverTrainingMap };
     Object.entries(localUpdates).forEach(([key, val]) => {
       map[key] = val;
     });
     return map;
-  }, [trainings, localUpdates]);
+  }, [serverTrainingMap, localUpdates]);
 
   const filteredMembers = useMemo(() => {
     if (!search) return members.filter(m => !m.is_coach);
@@ -146,8 +151,8 @@ export default function AttendancePage() {
     (memberId, week, value) => {
       const val = parseInt(value) || 0;
       const key = `${memberId}_${week}`;
-      const current = trainingMap[key] || 0;
-      if (val === current) return;
+      const serverVal = serverTrainingMap[key] || 0;
+      if (val === serverVal) return;
 
       // Update local state immediately for instant total recalculation
       setLocalUpdates(prev => ({ ...prev, [key]: val }));
@@ -159,7 +164,7 @@ export default function AttendancePage() {
         trainings_count: val,
       });
     },
-    [selectedYear, trainingMap, updateMutation]
+    [selectedYear, serverTrainingMap, updateMutation]
   );
 
   const handleSaveAll = () => {
