@@ -286,16 +286,17 @@ async def get_monthly_kpi_details(month: str, club_id: Optional[str] = Depends(g
     exclude_kw = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
     new_members_filtered = [m for m in new_members_raw
                             if not any(kw in (m.get("membership") or "").upper() for kw in exclude_kw)]
-    # Exclude renewals: keep only members who had NO prior contract
+    # Exclude renewals: batch query for prior contracts
     month_start = f"{month}-01"
-    new_members = []
-    for m in new_members_filtered:
-        prior = await db.customer_members.find_one(
-            {"name": m["name"], "contract_signed_date": {"$lt": month_start, "$exists": True, "$ne": ""}},
-            {"_id": 1}
-        )
-        if not prior:
-            new_members.append(m)
+    member_names = [m["name"] for m in new_members_filtered]
+    prior_names = set()
+    if member_names:
+        prior_docs = await db.customer_members.find(
+            {"name": {"$in": member_names}, "contract_signed_date": {"$lt": month_start, "$exists": True, "$ne": ""}},
+            {"_id": 0, "name": 1}
+        ).to_list(5000)
+        prior_names = {d["name"] for d in prior_docs}
+    new_members = [m for m in new_members_filtered if m["name"] not in prior_names]
 
     return {
         "kpi": kpi,
@@ -402,17 +403,17 @@ async def recalculate_month(month: str, club_id: Optional[str] = None):
     exclude_kw_new = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
     new_filtered = [m for m in new_members_raw
                     if not any(kw in (m.get("membership") or "").upper() for kw in exclude_kw_new)]
-    # Exclude renewals
+    # Exclude renewals - batch query
     new_month_start = f"{month}-01"
-    new_count = 0
-    for m in new_filtered:
-        prior = await db.customer_members.find_one(
-            {"name": m["name"], "contract_signed_date": {"$lt": new_month_start, "$exists": True, "$ne": ""}},
-            {"_id": 1}
-        )
-        if not prior:
-            new_count += 1
-    update["new_members"] = new_count
+    new_names = [m["name"] for m in new_filtered]
+    prior_names_set = set()
+    if new_names:
+        prior_docs = await db.customer_members.find(
+            {"name": {"$in": new_names}, "contract_signed_date": {"$lt": new_month_start, "$exists": True, "$ne": ""}},
+            {"_id": 0, "name": 1}
+        ).to_list(5000)
+        prior_names_set = {d["name"] for d in prior_docs}
+    update["new_members"] = len([m for m in new_filtered if m["name"] not in prior_names_set])
 
     # --- Member counts: Calculate active members for this specific month ---
     year_int, month_int = int(month[:4]), int(month[5:7])
