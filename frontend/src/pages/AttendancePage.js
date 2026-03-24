@@ -102,7 +102,6 @@ export default function AttendancePage() {
     mutationFn: (data) => axios.post(`${API}/trainings`, data),
     onSuccess: () => {
       queryClient.invalidateQueries(["trainings"]);
-      setLocalUpdates({});
     },
   });
 
@@ -319,14 +318,16 @@ export default function AttendancePage() {
                     return (
                       <td key={w} className="py-2 px-1 text-center">
                         <input
-                          key={`${member.id}_${w}_${val}`}
                           type="number"
                           min="0"
                           max="7"
                           defaultValue={val}
+                          key={`${member.id}_${w}`}
                           onBlur={(e) => handleCellBlur(member.id, w, e.target.value)}
                           onChange={(e) => {
-                            pendingUpdates.current[`${member.id}_${w}`] = parseInt(e.target.value) || 0;
+                            const newVal = parseInt(e.target.value) || 0;
+                            pendingUpdates.current[`${member.id}_${w}`] = newVal;
+                            setLocalUpdates(prev => ({ ...prev, [`${member.id}_${w}`]: newVal }));
                           }}
                           className={`w-12 h-8 text-center rounded border-0 text-sm font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none ${getCellBg(val)} ${getCellColor(val)}`}
                           data-testid={`cell-${member.id}-w${w}`}
