@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -12,6 +12,8 @@ import {
   X,
   GripVertical,
   Download,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -59,6 +61,7 @@ export default function SettingsTypesPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("memberships");
+  const [expandedMembershipId, setExpandedMembershipId] = useState(null);
   
   // Membership type modal
   const [membershipModalOpen, setMembershipModalOpen] = useState(false);
@@ -138,6 +141,22 @@ export default function SettingsTypesPage() {
   });
 
   // Mutations for member types
+  // Fetch all members for membership member list
+  const { data: allMembers = [] } = useQuery({
+    queryKey: ["members-all"],
+    queryFn: () => axios.get(`${API}/members`).then(r => r.data),
+  });
+
+  const membersByMembership = useMemo(() => {
+    const map = {};
+    allMembers.forEach(m => {
+      const membership = m.membership || "Sans abonnement";
+      if (!map[membership]) map[membership] = [];
+      map[membership].push(m);
+    });
+    return map;
+  }, [allMembers]);
+
   const createMemberTypeMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/settings/member-types`, data),
     onSuccess: () => {
@@ -349,14 +368,22 @@ export default function SettingsTypesPage() {
                   </TableRow>
                 ) : (
                   membershipTypes.map((item) => (
-                    <TableRow key={item.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]" data-testid={`membership-row-${item.id}`}>
+                    <React.Fragment key={item.id}>
+                    <TableRow className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] cursor-pointer" data-testid={`membership-row-${item.id}`}
+                      onClick={() => setExpandedMembershipId(expandedMembershipId === item.id ? null : item.id)}
+                    >
                       <TableCell>
                         <div 
                           className="w-4 h-4 rounded-full" 
                           style={{ backgroundColor: item.color || "#0A84FF" }}
                         />
                       </TableCell>
-                      <TableCell className="text-white font-medium">{item.name}</TableCell>
+                      <TableCell className="text-white font-medium">
+                        <div className="flex items-center gap-2">
+                          {expandedMembershipId === item.id ? <ChevronUp size={14} className="text-[var(--color-accent)]" /> : <ChevronDown size={14} className="text-[var(--color-text-secondary)]" />}
+                          {item.name}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-[var(--color-text-secondary)]">{formatDuration(item)}</TableCell>
                       <TableCell className="text-[var(--color-text-secondary)]">{item.price} CHF</TableCell>
                       <TableCell className="text-[var(--color-text-secondary)] text-sm">
@@ -396,7 +423,7 @@ export default function SettingsTypesPage() {
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[rgba(255,255,255,0.1)]"
-                            onClick={() => openEditMembership(item)}
+                            onClick={(e) => { e.stopPropagation(); openEditMembership(item); }}
                             data-testid={`edit-membership-${item.id}`}
                           >
                             <Pencil size={14} />
@@ -405,7 +432,8 @@ export default function SettingsTypesPage() {
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (window.confirm("Supprimer ce type d'abonnement ?")) {
                                 deleteMembershipMutation.mutate(item.id);
                               }
@@ -417,6 +445,40 @@ export default function SettingsTypesPage() {
                         </div>
                       </TableCell>
                     </TableRow>
+                    {expandedMembershipId === item.id && (
+                      <TableRow className="border-[var(--color-border)] bg-[var(--color-bg-tertiary)]">
+                        <TableCell colSpan={10} className="p-0">
+                          <div className="px-6 py-3 max-h-60 overflow-y-auto">
+                            {(membersByMembership[item.name] || []).length > 0 ? (
+                              <div className="space-y-1">
+                                <p className="text-[var(--color-text-secondary)] text-xs mb-2 uppercase tracking-wider">
+                                  {(membersByMembership[item.name] || []).filter(m => !m.exit_date).length} membre(s) actif(s) sur {(membersByMembership[item.name] || []).length} total
+                                </p>
+                                {(membersByMembership[item.name] || [])
+                                  .sort((a, b) => (a.exit_date ? 1 : 0) - (b.exit_date ? 1 : 0))
+                                  .map(m => (
+                                  <div key={m.id} className="flex items-center gap-3 py-1 px-2 rounded hover:bg-[rgba(255,255,255,0.05)]">
+                                    <div className={`w-2 h-2 rounded-full ${m.exit_date ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-success)]'}`} />
+                                    <span className={`text-sm ${m.exit_date ? 'text-[var(--color-text-tertiary)] line-through' : 'text-white'}`}>
+                                      {m.name}
+                                    </span>
+                                    {m.billing_amount > 0 && (
+                                      <span className="text-xs text-[var(--color-text-secondary)]">{m.billing_amount} CHF</span>
+                                    )}
+                                    {m.exit_date && (
+                                      <Badge className="bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] border-0 text-[9px] px-1">Parti</Badge>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-[var(--color-text-secondary)] text-sm">Aucun membre avec cet abonnement</p>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </React.Fragment>
                   ))
                 )}
               </TableBody>

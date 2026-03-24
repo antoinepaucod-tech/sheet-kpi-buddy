@@ -81,6 +81,7 @@ export default function AttendancePage() {
   const [search, setSearch] = useState("");
 
   const pendingUpdates = useRef({});
+  const [localUpdates, setLocalUpdates] = useState({});
 
   const weeks = useMemo(
     () => Array.from({ length: weeksToShow }, (_, i) => startWeek + i).filter((w) => w >= 1 && w <= 52),
@@ -99,7 +100,10 @@ export default function AttendancePage() {
 
   const updateMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/trainings`, data),
-    onSuccess: () => queryClient.invalidateQueries(["trainings"]),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["trainings"]);
+      setLocalUpdates({});
+    },
   });
 
   const trainingMap = useMemo(() => {
@@ -108,8 +112,12 @@ export default function AttendancePage() {
       const key = `${t.member_id}_${t.calendar_week}`;
       map[key] = t.trainings_count || 0;
     });
+    // Merge local updates for instant total recalculation
+    Object.entries(localUpdates).forEach(([key, val]) => {
+      map[key] = val;
+    });
     return map;
-  }, [trainings]);
+  }, [trainings, localUpdates]);
 
   const filteredMembers = useMemo(() => {
     if (!search) return members.filter(m => !m.is_coach);
@@ -141,6 +149,9 @@ export default function AttendancePage() {
       const key = `${memberId}_${week}`;
       const current = trainingMap[key] || 0;
       if (val === current) return;
+
+      // Update local state immediately for instant total recalculation
+      setLocalUpdates(prev => ({ ...prev, [key]: val }));
 
       updateMutation.mutate({
         member_id: memberId,

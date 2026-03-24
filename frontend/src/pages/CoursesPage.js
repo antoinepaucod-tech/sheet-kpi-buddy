@@ -92,6 +92,9 @@ export default function CoursesPage() {
   });
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkRows, setBulkRows] = useState([]);
+  const [newCourseTypeModalOpen, setNewCourseTypeModalOpen] = useState(false);
+  const [newCourseTypeName, setNewCourseTypeName] = useState("");
+  const [newCourseTypeTargetIdx, setNewCourseTypeTargetIdx] = useState(null);
 
   // Fetch courses
   const { data: courses = [], isLoading } = useQuery({
@@ -731,8 +734,22 @@ export default function CoursesPage() {
                 <div className="flex items-center gap-4">
                   <Badge className="bg-[rgba(10,132,255,0.15)] text-[var(--color-accent)] border-0">{selectedCourse.day_of_week}</Badge>
                   <span className="text-white">{selectedCourse.time_slot}</span>
-                  <span className="text-white font-medium">{selectedCourse.course_name}</span>
                 </div>
+              </div>
+              <div>
+                <label className="tf-stat-label">Nom du cours</label>
+                <Input
+                  defaultValue={selectedCourse.course_name}
+                  onBlur={(e) => {
+                    const val = e.target.value.trim();
+                    if (val && val !== selectedCourse.course_name) {
+                      updateMutation.mutate({ id: selectedCourse.id, data: { course_name: val } });
+                      setSelectedCourse(prev => ({ ...prev, course_name: val }));
+                    }
+                  }}
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
+                  data-testid="edit-course-name"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -915,11 +932,9 @@ export default function CoursesPage() {
                 </Select>
                 <Select value={row.course_name} onValueChange={(v) => {
                   if (v === "__new__") {
-                    const name = prompt("Nom du nouveau type de cours :");
-                    if (name && name.trim()) {
-                      createCourseTypeMutation.mutate({ name: name.trim() });
-                      updateBulkRow(idx, "course_name", name.trim());
-                    }
+                    setNewCourseTypeTargetIdx(idx);
+                    setNewCourseTypeName("");
+                    setNewCourseTypeModalOpen(true);
                   } else {
                     updateBulkRow(idx, "course_name", v);
                   }
@@ -931,7 +946,7 @@ export default function CoursesPage() {
                     {courseTypes.map((ct) => (
                       <SelectItem key={ct.name} value={ct.name}>{ct.name}</SelectItem>
                     ))}
-                    <SelectItem value="__new__" className="text-[var(--color-accent)]">+ Nouveau</SelectItem>
+                    <SelectItem value="__new__" className="text-[var(--color-accent)]">+ Nouveau type de cours</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={row.instructor} onValueChange={(v) => updateBulkRow(idx, "instructor", v)}>
@@ -982,6 +997,54 @@ export default function CoursesPage() {
                 {bulkCreateMutation.isPending ? "Création..." : `Créer ${bulkRows.filter(r => r.course_name.trim()).length} cours`}
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Course Type Modal */}
+      <Dialog open={newCourseTypeModalOpen} onOpenChange={setNewCourseTypeModalOpen}>
+        <DialogContent className="max-w-sm bg-[var(--color-bg-primary)] border-[var(--color-border)]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Nouveau type de cours</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="tf-stat-label">Nom du cours</label>
+            <Input
+              value={newCourseTypeName}
+              onChange={(e) => setNewCourseTypeName(e.target.value)}
+              placeholder="Ex: CrossFit, Pilates..."
+              className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
+              data-testid="new-course-type-name"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newCourseTypeName.trim()) {
+                  createCourseTypeMutation.mutate({ name: newCourseTypeName.trim() });
+                  if (newCourseTypeTargetIdx !== null) {
+                    updateBulkRow(newCourseTypeTargetIdx, "course_name", newCourseTypeName.trim());
+                  }
+                  setNewCourseTypeModalOpen(false);
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNewCourseTypeModalOpen(false)} className="text-white">Annuler</Button>
+            <Button
+              onClick={() => {
+                if (newCourseTypeName.trim()) {
+                  createCourseTypeMutation.mutate({ name: newCourseTypeName.trim() });
+                  if (newCourseTypeTargetIdx !== null) {
+                    updateBulkRow(newCourseTypeTargetIdx, "course_name", newCourseTypeName.trim());
+                  }
+                  setNewCourseTypeModalOpen(false);
+                }
+              }}
+              disabled={!newCourseTypeName.trim()}
+              className="bg-[var(--color-accent)] hover:opacity-85"
+              data-testid="save-course-type-btn"
+            >
+              Créer
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

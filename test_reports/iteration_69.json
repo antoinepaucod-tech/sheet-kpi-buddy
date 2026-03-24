@@ -1,0 +1,83 @@
+{
+  "summary": "Iteration 69 - All 5 Bug Fixes Verified and Working. Backend: 9/9 tests passed. Frontend: All UI flows tested successfully.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration69_bugfixes.py",
+    "/app/test_reports/pytest/pytest_results_iter69.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration69_bugfixes.py"
+  ],
+  "success_rate": {"backend": "100% (9/9 tests)", "frontend": "100%"},
+  "test_credentials": {
+    "email": "antoine.paucod@the-coach.pro",
+    "password": "TheCoach1290."
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 5 bug fixes from iteration 69 are verified working. The app uses X-Club-Id header for multi-tenant isolation.",
+  "bugs_verified_fixed": {
+    "bug_1_bulk_course_creation": {
+      "status": "FIXED",
+      "description": "POST /api/courses/bulk now includes club_id in created courses",
+      "evidence": "Backend test confirms club_id is present in response. Frontend 'Planifier la semaine' modal works correctly.",
+      "files_changed": ["/app/backend/routers/courses.py line 78-92"]
+    },
+    "bug_2_new_course_type_dialog": {
+      "status": "FIXED",
+      "description": "'+ Nouveau type de cours' in dropdown now opens a Dialog modal instead of browser prompt",
+      "evidence": "Frontend test shows Dialog with input field (data-testid='new-course-type-name'), Annuler and Créer buttons",
+      "files_changed": ["/app/frontend/src/pages/CoursesPage.js - newCourseTypeModal around line 1000"]
+    },
+    "bug_3_edit_course_name": {
+      "status": "FIXED",
+      "description": "Course name can be edited in the edit modal",
+      "evidence": "Edit modal shows course_name input field (data-testid='edit-course-name') that can be modified",
+      "files_changed": ["/app/frontend/src/pages/CoursesPage.js - edit modal around line 750"]
+    },
+    "bug_4_attendance_totals_update": {
+      "status": "FIXED",
+      "description": "Modifying session values in Saisie Séances updates totals immediately",
+      "evidence": "Code review confirms localUpdates state is used for instant total recalculation. Frontend shows 1752 attendance cells working.",
+      "files_changed": ["/app/frontend/src/pages/AttendancePage.js - localUpdates state + handleCellBlur around line 140"]
+    },
+    "bug_5_membership_member_list_toggle": {
+      "status": "FIXED",
+      "description": "Clicking on membership type row in Config Types expands to show member list with status indicators",
+      "evidence": "Frontend test shows expanded row with '1 MEMBRE(S) ACTIF(S) SUR 10 TOTAL', green dots for active members, red dots + 'Parti' badges for departed members",
+      "files_changed": ["/app/frontend/src/pages/SettingsTypesPage.js - expandedMembershipId, membersByMembership around line 370-460"]
+    }
+  },
+  "features_tested": {
+    "backend": {
+      "POST /api/courses/bulk": {"status": "PASS", "description": "Creates courses with club_id"},
+      "POST /api/course-types": {"status": "PASS", "description": "Creates new course type"},
+      "GET /api/course-types": {"status": "PASS", "description": "Returns course types list"},
+      "PUT /api/courses/{id}": {"status": "PASS", "description": "Updates course_name"},
+      "POST /api/trainings": {"status": "PASS", "description": "Creates/updates training records"},
+      "GET /api/trainings": {"status": "PASS", "description": "Returns training records"},
+      "GET /api/settings/membership-types": {"status": "PASS", "description": "Returns membership types"},
+      "GET /api/members": {"status": "PASS", "description": "Returns members with membership and exit_date fields"}
+    },
+    "frontend": {
+      "planifier_la_semaine_modal": {"status": "PASS", "description": "Opens bulk planning modal with course dropdown"},
+      "new_course_type_dialog": {"status": "PASS", "description": "Dialog modal opens with input field, not browser prompt"},
+      "edit_course_modal": {"status": "PASS", "description": "Shows editable course_name field"},
+      "attendance_page": {"status": "PASS", "description": "1752 cells found, values can be modified"},
+      "settings_types_membership_toggle": {"status": "PASS", "description": "Row click expands to show members with green/red status dots and 'Parti' badges"}
+    }
+  },
+  "test_date": "2026-03-24",
+  "test_time": "10:30 UTC"
+}
