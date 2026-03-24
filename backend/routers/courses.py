@@ -53,6 +53,38 @@ async def create_course_type(data: dict, club_id: Optional[str] = Depends(get_cl
     return {"id": doc["id"], "name": name}
 
 
+@router.put("/course-types/{type_id}")
+async def update_course_type(type_id: str, data: dict, club_id: Optional[str] = Depends(get_club_id)):
+    """Update a course type name and propagate to all course_kpis."""
+    new_name = data.get("name", "").strip()
+    if not new_name:
+        raise HTTPException(status_code=400, detail="Nom requis")
+    
+    existing = await db.course_types.find_one({"id": type_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Type de cours introuvable")
+    
+    old_name = existing.get("name", "")
+    if old_name == new_name:
+        return {"id": type_id, "name": new_name}
+    
+    # Check for duplicate name
+    duplicate = await db.course_types.find_one(_cq(club_id, {"name": new_name, "id": {"$ne": type_id}}))
+    if duplicate:
+        raise HTTPException(status_code=400, detail="Ce nom existe déjà")
+    
+    # Update the course type
+    await db.course_types.update_one({"id": type_id}, {"$set": {"name": new_name}})
+    
+    # Propagate name change to all course_kpis referencing this course type
+    await db.course_kpis.update_many(
+        {"course_name": old_name},
+        {"$set": {"course_name": new_name}}
+    )
+    
+    return {"id": type_id, "name": new_name, "renamed_from": old_name}
+
+
 
 
 @router.get("/courses/{course_id}")

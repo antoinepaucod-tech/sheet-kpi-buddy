@@ -16,6 +16,8 @@ import {
   UserCog,
   ListPlus,
   X,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -129,6 +131,20 @@ export default function CoursesPage() {
       toast.success("Type de cours ajouté");
     },
   });
+
+  // Edit course type
+  const updateCourseTypeMutation = useMutation({
+    mutationFn: ({ id, name }) => axios.put(`${API}/course-types/${id}`, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["course-types"]);
+      queryClient.invalidateQueries(["courses"]);
+      toast.success("Type de cours renommé");
+      setEditingCourseType(null);
+    },
+  });
+
+  const [editingCourseType, setEditingCourseType] = useState(null);
+  const [editingCourseTypeName, setEditingCourseTypeName] = useState("");
 
   // Fetch summary
   const { data: summary } = useQuery({
@@ -462,6 +478,64 @@ export default function CoursesPage() {
           </Button>
         </div>
       )}
+
+      {/* Course Types Management */}
+      <div className="tf-card p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">Types de cours</h3>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {courseTypes.map((ct) => (
+            <div key={ct.id || ct.name} className="group flex items-center gap-1">
+              {editingCourseType === ct.id ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={editingCourseTypeName}
+                    onChange={(e) => setEditingCourseTypeName(e.target.value)}
+                    className="h-8 w-40 bg-[var(--color-bg-secondary)] border-[var(--color-accent)] text-white text-sm"
+                    data-testid={`edit-course-type-input-${ct.id}`}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && editingCourseTypeName.trim()) {
+                        updateCourseTypeMutation.mutate({ id: ct.id, name: editingCourseTypeName.trim() });
+                      }
+                      if (e.key === "Escape") setEditingCourseType(null);
+                    }}
+                  />
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-[var(--color-success)]"
+                    onClick={() => {
+                      if (editingCourseTypeName.trim()) {
+                        updateCourseTypeMutation.mutate({ id: ct.id, name: editingCourseTypeName.trim() });
+                      }
+                    }}
+                    data-testid={`save-course-type-${ct.id}`}
+                  >
+                    <Check size={14} />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-[var(--color-text-secondary)]"
+                    onClick={() => setEditingCourseType(null)}
+                  >
+                    <X size={14} />
+                  </Button>
+                </div>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="border-[var(--color-border-strong)] text-[var(--color-text-secondary)] cursor-pointer hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors pr-1"
+                  onClick={() => {
+                    setEditingCourseType(ct.id);
+                    setEditingCourseTypeName(ct.name);
+                  }}
+                  data-testid={`course-type-badge-${ct.id}`}
+                >
+                  {ct.name}
+                  <Pencil size={10} className="ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Badge>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Courses Table */}
       <div className="tf-card overflow-hidden p-0">
