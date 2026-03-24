@@ -17,31 +17,25 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - Bilans / Annual Reviews (nutrition score, evolution chart)
 - Meta Ads Integration (Ad spend, CAC calculation)
 - Config Meta Ads Help Page
+- KPIs Cours (planification hebdomadaire, édition, suppression)
+- Saisie Séances (attendance tracking avec totaux temps réel)
+- Config Types (types d'abonnement avec toggle liste des membres)
+- Export/Import DB pour synchronisation preview → production
 
-## Completed Tasks
-- [x] Multi-Tenant Franchise Dashboard
-- [x] Meta Ads Integration
-- [x] Billing cycles interval_days fix
-- [x] DUO payments fix (root member only)
-- [x] Filter inactive/cancelled members from payments
-- [x] Exclude coaches/IFRC from onboarding
-- [x] Separate onboarding history from pending
-- [x] Cleanup unused subscription types
-- [x] Nutrition score + evolution chart in bilans
-- [x] Skip Onboarding feature (2026-03-23)
-- [x] Sync billing_amount to pending/late payments on member update (2026-03-23)
-- [x] Fix Kristina Jonova future payment marked paid (2026-03-23)
-- [x] Fix Teo Succi & Adrianna Zapata missing club_id (2026-03-23)
-- [x] Fix Cindy payment generation when billing_amount 0→positive (2026-03-23)
-- [x] Fix sidebar badges not refreshing on club switch (2026-03-23)
-- [x] DB Query Optimization - 11 warnings resolved (2026-03-23)
-  - distinct() for memberships
-  - Date filter in MongoDB for expiring members
-  - Pagination for transactions
-  - Aggregation pipeline for monthly-grid (50K→pipeline)
-  - Aggregation for churn count + limit 36 months KPIs
-  - Aggregation $sum for recurring revenue
-  - Reduced projections for member counts
+## Completed Tasks (Latest Session 2026-03-24)
+- [x] Skip Onboarding feature
+- [x] Sync billing_amount to pending/late payments on member update
+- [x] Fix Kristina Jonova future payment marked paid
+- [x] Fix Teo Succi & Adrianna Zapata missing club_id
+- [x] Fix Cindy payment generation when billing_amount 0→positive
+- [x] Fix sidebar badges not refreshing on club switch
+- [x] DB Query Optimization - 11 warnings resolved
+- [x] Export/Import DB endpoints for preview→production sync
+- [x] Fix bulk course creation (missing club_id)
+- [x] Fix new course type creation (Dialog instead of prompt)
+- [x] Fix course name editing in edit modal
+- [x] Fix attendance totals not updating (localUpdates state)
+- [x] Feature: Toggle member list per subscription type in Config Types
 
 ## Upcoming Tasks
 - (P1) Integration API bsport
@@ -56,3 +50,4 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 
 ## Key Credentials
 - Super Admin: antoine.paucod@the-coach.pro / TheCoach1290.
+- Deployed URL: https://franchise-sync.emergent.host
