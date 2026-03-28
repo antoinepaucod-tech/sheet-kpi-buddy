@@ -552,6 +552,13 @@ async def recalculate_month(month: str, club_id: Optional[str] = None):
 
     await db.monthly_kpis.update_one(_cq(club_id, {"month": month}), {"$set": update}, upsert=True)
     doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0})
+
+    # Trigger Supabase sync after recalculation
+    if club_id:
+        import asyncio
+        from routers.sync import trigger_sync_for_club
+        asyncio.ensure_future(trigger_sync_for_club(club_id))
+
     return compute_metrics(doc) if doc else {"error": "Mois introuvable"}
 
 

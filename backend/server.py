@@ -6,6 +6,7 @@ from fastapi import FastAPI, APIRouter, Depends
 from typing import Optional
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
+import asyncio
 import logging
 
 # Core imports
@@ -16,7 +17,7 @@ from models.kpi import ClubSettings
 from routers import (
     auth, members, payments, annual_reviews, followups, onboarding,
     settings, coaches, challenges, kpis, transactions, trainings,
-    courses, alerts, reports, notifications, ghl, clubs, meta, franchise, admin
+    courses, alerts, reports, notifications, ghl, clubs, meta, franchise, admin, sync
 )
 
 # App setup
@@ -48,6 +49,7 @@ api_router.include_router(clubs.router)
 api_router.include_router(meta.router)
 api_router.include_router(franchise.router)
 api_router.include_router(admin.router)
+api_router.include_router(sync.router)
 
 
 from core.security import get_club_id as _get_club_id
@@ -110,3 +112,31 @@ app.add_middleware(
 async def shutdown_db_client():
     from core.config import client
     client.close()
+
+
+# ── APScheduler: Hourly Supabase Sync ────────────────────────────────────────
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+
+scheduler = AsyncIOScheduler()
+
+
+async def _scheduled_supabase_sync():
+    """Wrapper to call sync_all_clubs from scheduler context."""
+    from routers.sync import sync_all_clubs
+    try:
+        await sync_all_clubs()
+    except Exception as e:
+        logger.error(f"[Scheduler] Supabase sync failed: {e}")
+
+
+@app.on_event("startup")
+async def start_scheduler():
+    scheduler.add_job(
+        _scheduled_supabase_sync,
+        trigger=IntervalTrigger(hours=1),
+        id="supabase_sync_hourly",
+        replace_existing=True,
+    )
+    scheduler.start()
+    logger.info("[Scheduler] APScheduler started — Supabase sync every 1 hour.")
