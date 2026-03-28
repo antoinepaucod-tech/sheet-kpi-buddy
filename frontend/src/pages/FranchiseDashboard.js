@@ -27,20 +27,24 @@ export default function FranchiseDashboard() {
   const [metaStatus, setMetaStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null);
+  const [supaSyncing, setSupaSyncing] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(
     new Date().toISOString().slice(0, 7)
   );
 
   const fetchData = useCallback(async () => {
     try {
-      const [dashRes, trendRes, metaRes] = await Promise.all([
+      const [dashRes, trendRes, metaRes, syncRes] = await Promise.all([
         axios.get(`${API}/franchise/dashboard?month=${selectedMonth}`),
         axios.get(`${API}/franchise/trends?months=12`),
         axios.get(`${API}/meta/status`),
+        axios.get(`${API}/sync/status`),
       ]);
       setData(dashRes.data);
       setTrends(trendRes.data);
       setMetaStatus(metaRes.data);
+      setSyncStatus(syncRes.data);
     } catch (err) {
       console.error("Franchise load error:", err);
     } finally {
@@ -64,6 +68,19 @@ export default function FranchiseDashboard() {
       alert("Erreur de synchronisation Meta");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleSupabaseSync = async () => {
+    setSupaSyncing(true);
+    try {
+      await axios.post(`${API}/sync/supabase/all`);
+      const res = await axios.get(`${API}/sync/status`);
+      setSyncStatus(res.data);
+    } catch (err) {
+      console.error("Supabase sync error:", err);
+    } finally {
+      setSupaSyncing(false);
     }
   };
 
@@ -173,6 +190,57 @@ export default function FranchiseDashboard() {
             </Link>
           </div>
         )}
+      </div>
+
+      {/* Supabase Sync Status */}
+      <div
+        className="tf-card flex items-center justify-between"
+        style={{
+          padding: "0.75rem 1.25rem",
+          background: syncStatus?.status === "ok"
+            ? "rgba(34,197,94,0.08)"
+            : syncStatus?.status === "error"
+            ? "rgba(239,68,68,0.08)"
+            : "rgba(148,163,184,0.08)",
+          border: `1px solid ${
+            syncStatus?.status === "ok"
+              ? "rgba(34,197,94,0.3)"
+              : syncStatus?.status === "error"
+              ? "rgba(239,68,68,0.3)"
+              : "rgba(148,163,184,0.3)"
+          }`,
+        }}
+        data-testid="supabase-sync-banner"
+      >
+        <div className="flex items-center gap-3">
+          {syncStatus?.status === "ok" ? (
+            <Wifi size={16} style={{ color: "#22c55e" }} />
+          ) : syncStatus?.status === "error" ? (
+            <WifiOff size={16} style={{ color: "#ef4444" }} />
+          ) : (
+            <WifiOff size={16} style={{ color: "#94a3b8" }} />
+          )}
+          <div>
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-primary)" }}>
+              Supabase Sync : {syncStatus?.status === "ok" ? "OK" : syncStatus?.status === "error" ? "Erreur" : "Jamais"}
+            </span>
+            {syncStatus?.last_sync && (
+              <span style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", marginLeft: "0.75rem" }}>
+                Dernière sync : {new Date(syncStatus.last_sync).toLocaleString("fr-CH")}
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={handleSupabaseSync}
+          disabled={supaSyncing}
+          className="tf-btn-outline flex items-center gap-2"
+          style={{ fontSize: "var(--text-sm)" }}
+          data-testid="supabase-sync-btn"
+        >
+          <RefreshCw className={supaSyncing ? "animate-spin" : ""} size={14} />
+          {supaSyncing ? "Sync..." : "Sync maintenant"}
+        </button>
       </div>
 
       {/* Global KPIs */}
