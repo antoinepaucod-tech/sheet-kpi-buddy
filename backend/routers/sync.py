@@ -41,12 +41,13 @@ def _supabase_headers():
     }
 
 
-def _build_row(kpi: dict, supabase_club_id: str) -> dict:
+def _build_row(kpi: dict, supabase_club_id: str, total_members: int, total_coaches: int) -> dict:
     """Map a MongoDB monthly_kpi doc to a Supabase club_kpis_live row."""
     return {
         "club_id": supabase_club_id,
         "month": kpi.get("month", ""),
-        "total_members": kpi.get("total_members", 0),
+        "total_members": total_members,
+        "total_coaches": total_coaches,
         "new_members": kpi.get("new_members", 0),
         "lost_members": kpi.get("lost_members", 0),
         "total_revenue": kpi.get("total_revenue", 0),
@@ -59,6 +60,27 @@ def _build_row(kpi: dict, supabase_club_id: str) -> dict:
         "roas": kpi.get("roas", 0),
         "cac": kpi.get("cac", 0),
     }
+
+
+async def _count_active(club_id: str) -> tuple[int, int]:
+    """Return (total_members excluding coaches, total_coaches) for a club."""
+    active_filter = {
+        "club_id": club_id,
+        "$or": [
+            {"exit_date": None},
+            {"exit_date": ""},
+            {"exit_date": {"$exists": False}},
+        ],
+    }
+    pipeline = [
+        {"$match": active_filter},
+        {"$group": {
+            "_id": {"$cond": [{"$eq": ["$is_coach", True]}, "coach", "member"]},
+            "count": {"$sum": 1},
+        }},
+    ]
+    results = {r["_id"]: r["count"] for r in await db.customer_members.aggregate(pipeline).to_list(2)}
+    return results.get("member", 0), results.get("coach", 0)
 
 
 async def sync_club_kpis(club_id: str) -> dict:
@@ -75,7 +97,8 @@ async def sync_club_kpis(club_id: str) -> dict:
     if not docs:
         return {"status": "skipped", "reason": "No KPI data found"}
 
-    rows = [_build_row(compute_metrics(d), supabase_id) for d in docs]
+    total_members, total_coaches = await _count_active(club_id)
+    rows = [_build_row(compute_metrics(d), supabase_id, total_members, total_coaches) for d in docs]
 
     url = f"{supabase_url}/rest/v1/club_kpis_live?on_conflict=club_id,month"
     async with httpx.AsyncClient(timeout=30) as client:
