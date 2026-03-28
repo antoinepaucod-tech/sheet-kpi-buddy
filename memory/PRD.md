@@ -37,6 +37,12 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] Fix attendance totals not updating (localUpdates state)
 - [x] Feature: Toggle member list per subscription type in Config Types
 
+## Completed Tasks (Session 2026-03-28)
+- [x] Supabase KPI sync service (POST /api/sync/supabase, /api/sync/supabase/all, GET /api/sync/status)
+- [x] APScheduler hourly auto-sync to Supabase
+- [x] Auto-trigger sync after KPI recalculation (kpis.py → trigger_sync_for_club)
+- [x] Club mapping MongoDB→Supabase UUID (Versoix, Servette, Grand-Saconnex, Lausanne)
+
 ## Upcoming Tasks
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping
@@ -47,6 +53,12 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 ## Backlog
 - (P3) Refactoring MembersPage.js (>1500 lines) et Dashboard.js (>900 lines)
 - (P3) Responsive Mobile / PWA optimization
+
+## 3rd Party Integrations
+- Supabase REST API (sync KPIs) — ACTIVE, anon key
+- Meta Facebook Marketing API — requires User API Key
+- GoHighLevel API — requires User API Key
+- Resend (Emails) — requires User API Key
 
 ## Key Credentials
 - Super Admin: antoine.paucod@the-coach.pro / TheCoach1290.
