@@ -1,0 +1,84 @@
+{
+  "summary": "Iteration 70 - Supabase KPI Sync Service fully tested and working. Backend: 9/9 tests passed. All sync endpoints functional with real Supabase integration.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration70_supabase_sync.py",
+    "/app/test_reports/pytest/pytest_results_iter70.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration70_supabase_sync.py"
+  ],
+  "success_rate": {"backend": "100% (9/9 tests)", "frontend": "N/A (backend only)"},
+  "test_credentials": {
+    "email": "antoine.paucod@the-coach.pro",
+    "password": "TheCoach1290.",
+    "test_club_versoix": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+    "test_club_grand_saconnex": "3933cca5-ed80-42b9-ac91-6120f8f06ed4"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Supabase KPI sync service fully implemented and tested. Real Supabase integration working (not mocked). APScheduler runs hourly sync. Auto-sync triggers after KPI recalculation.",
+  "features_tested": {
+    "backend": {
+      "GET /api/sync/status": {
+        "status": "PASS",
+        "description": "Returns correct structure with last_sync, status, mapping, synced_rows, clubs_synced"
+      },
+      "POST /api/sync/supabase (with X-Club-Id)": {
+        "status": "PASS",
+        "description": "Syncs KPIs for specified club to Supabase, returns {status: ok, rows_upserted: N}"
+      },
+      "POST /api/sync/supabase (unknown club_id)": {
+        "status": "PASS",
+        "description": "Returns {status: skipped, reason: 'No Supabase mapping for club...'}"
+      },
+      "POST /api/sync/supabase (no data club)": {
+        "status": "PASS",
+        "description": "Servette club (no KPI data) returns skipped status"
+      },
+      "POST /api/sync/supabase/all": {
+        "status": "PASS",
+        "description": "Syncs all 4 mapped clubs, returns per-club results (2 ok, 2 skipped)"
+      },
+      "POST /api/sync/supabase (no header)": {
+        "status": "PASS",
+        "description": "Without X-Club-Id header, syncs all clubs like /supabase/all"
+      },
+      "GET /api/sync/status (after sync)": {
+        "status": "PASS",
+        "description": "Shows updated last_sync timestamp and status ok after sync"
+      },
+      "POST /api/monthly-kpis/{month}/recalculate (auto-sync)": {
+        "status": "PASS",
+        "description": "Triggers auto-sync to Supabase after KPI recalculation (verified in logs)"
+      },
+      "APScheduler hourly sync": {
+        "status": "PASS",
+        "description": "Scheduler started at app startup, runs sync_all_clubs every hour (verified in logs)"
+      }
+    }
+  },
+  "supabase_integration_details": {
+    "supabase_url": "https://tnmpphysbtoezzjfqxcd.supabase.co",
+    "table": "club_kpis_live",
+    "upsert_conflict_key": "club_id,month",
+    "clubs_with_data": {
+      "Versoix": "27 months of KPI data",
+      "Grand-Saconnex": "1 month of KPI data"
+    },
+    "clubs_without_data": ["Servette", "Lausanne"]
+  },
+  "test_date": "2026-01-27",
+  "test_time": "UTC"
+}

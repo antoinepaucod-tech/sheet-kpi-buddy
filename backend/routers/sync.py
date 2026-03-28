@@ -58,7 +58,6 @@ def _build_row(kpi: dict, supabase_club_id: str) -> dict:
         "cash_collected": kpi.get("cash_collected", 0),
         "roas": kpi.get("roas", 0),
         "cac": kpi.get("cac", 0),
-        "synced_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -78,7 +77,7 @@ async def sync_club_kpis(club_id: str) -> dict:
 
     rows = [_build_row(compute_metrics(d), supabase_id) for d in docs]
 
-    url = f"{supabase_url}/rest/v1/club_kpis_live"
+    url = f"{supabase_url}/rest/v1/club_kpis_live?on_conflict=club_id,month"
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(url, json=rows, headers=_supabase_headers())
 
