@@ -64,23 +64,24 @@ def _build_row(kpi: dict, supabase_club_id: str, total_members: int, total_coach
 
 async def _count_active(club_id: str) -> tuple[int, int]:
     """Return (total_members excluding coaches, total_coaches) for a club."""
-    active_filter = {
-        "club_id": club_id,
-        "$or": [
+    active_cond = [
+        {"$or": [
             {"exit_date": None},
             {"exit_date": ""},
             {"exit_date": {"$exists": False}},
-        ],
-    }
-    pipeline = [
-        {"$match": active_filter},
-        {"$group": {
-            "_id": {"$cond": [{"$eq": ["$is_coach", True]}, "coach", "member"]},
-            "count": {"$sum": 1},
-        }},
+        ]}
     ]
-    results = {r["_id"]: r["count"] for r in await db.customer_members.aggregate(pipeline).to_list(2)}
-    return results.get("member", 0), results.get("coach", 0)
+    coach_cond = {"$or": [
+        {"member_type": "coach"},
+        {"membership": {"$regex": "THE COACH|VIRTUAL COACH", "$options": "i"}},
+    ]}
+    coaches = await db.customer_members.count_documents(
+        {"club_id": club_id, "$and": active_cond + [coach_cond]}
+    )
+    total = await db.customer_members.count_documents(
+        {"club_id": club_id, "$and": active_cond}
+    )
+    return total - coaches, coaches
 
 
 async def sync_club_kpis(club_id: str) -> dict:
