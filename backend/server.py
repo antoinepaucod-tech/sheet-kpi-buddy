@@ -17,7 +17,7 @@ from models.kpi import ClubSettings
 from routers import (
     auth, members, payments, annual_reviews, followups, onboarding,
     settings, coaches, challenges, kpis, transactions, trainings,
-    courses, alerts, reports, notifications, ghl, clubs, meta, franchise, admin, sync
+    courses, alerts, reports, notifications, ghl, clubs, meta, franchise, admin, sync, rollover
 )
 
 # App setup
@@ -50,6 +50,7 @@ api_router.include_router(meta.router)
 api_router.include_router(franchise.router)
 api_router.include_router(admin.router)
 api_router.include_router(sync.router)
+api_router.include_router(rollover.router)
 
 
 from core.security import get_club_id as _get_club_id
@@ -117,6 +118,7 @@ async def shutdown_db_client():
 # ── APScheduler: Hourly Supabase Sync ────────────────────────────────────────
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 
 scheduler = AsyncIOScheduler()
 
@@ -130,6 +132,15 @@ async def _scheduled_supabase_sync():
         logger.error(f"[Scheduler] Supabase sync failed: {e}")
 
 
+async def _scheduled_daily_rollover():
+    """Daily rollover: generate payments, recurring transactions, mark late."""
+    from routers.rollover import run_rollover_all_clubs
+    try:
+        await run_rollover_all_clubs()
+    except Exception as e:
+        logger.error(f"[Scheduler] Daily rollover failed: {e}")
+
+
 @app.on_event("startup")
 async def start_scheduler():
     scheduler.add_job(
@@ -138,5 +149,11 @@ async def start_scheduler():
         id="supabase_sync_hourly",
         replace_existing=True,
     )
+    scheduler.add_job(
+        _scheduled_daily_rollover,
+        trigger=CronTrigger(hour=1, minute=0),
+        id="daily_rollover",
+        replace_existing=True,
+    )
     scheduler.start()
-    logger.info("[Scheduler] APScheduler started — Supabase sync every 1 hour.")
+    logger.info("[Scheduler] APScheduler started — Supabase sync every 1h, Daily rollover at 01:00.")
