@@ -24,7 +24,7 @@ async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
     docs = await db.customer_members.find(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "onboarding_skipped": {"$ne": True},
-        "exit_date": None
+        "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
     }), {"_id": 0}).to_list(500)
     
     filtered = []
@@ -113,7 +113,7 @@ async def get_alerts_summary(club_id: Optional[str] = Depends(get_club_id)):
     }))
     
     members = await db.customer_members.find(_cq(club_id, {
-        "exit_date": None
+        "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
     }), {"_id": 0, "subscription_end_date": 1}).to_list(1000)
     
     expiring_count = 0
@@ -128,7 +128,7 @@ async def get_alerts_summary(club_id: Optional[str] = Depends(get_club_id)):
     
     incomplete_onboarding = await db.customer_members.count_documents(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
-        "exit_date": None
+        "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
     }))
     
     seven_days = today + timedelta(days=7)

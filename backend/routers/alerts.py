@@ -69,7 +69,7 @@ async def get_alerts_summary():
     })
 
     members_list = await db.customer_members.find(
-        {"exit_date": None}, {"_id": 0, "subscription_end_date": 1}
+        {"$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]}, {"_id": 0, "subscription_end_date": 1}
     ).to_list(1000)
     expiring_count = 0
     for m in members_list:
@@ -82,7 +82,8 @@ async def get_alerts_summary():
                 pass
 
     incomplete_onboarding = await db.customer_members.count_documents({
-        "onboarding_completed": {"$ne": True}, "exit_date": None
+        "onboarding_completed": {"$ne": True},
+        "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
     })
     seven_days = today + timedelta(days=7)
     upcoming_followups = await db.member_followups.count_documents({
