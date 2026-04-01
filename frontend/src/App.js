@@ -65,26 +65,43 @@ function AppInner() {
     }
   }, [isAuthenticated]);
 
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
   useEffect(() => {
     if (kpis.length > 0 && !selectedMonth) {
-      // Default to the latest month with actual data (revenue or expenses > 0)
-      const withData = kpis.filter(k => (k.total_revenue || 0) > 0 || (k.total_expenses || 0) > 0);
-      if (withData.length > 0) {
-        setSelectedMonth(withData[withData.length - 1].month);
-      } else {
-        setSelectedMonth(kpis[kpis.length - 1].month);
-      }
+      setSelectedMonth(currentMonth);
+    } else if (kpis.length === 0 && !selectedMonth) {
+      setSelectedMonth(currentMonth);
     }
-  }, [kpis, selectedMonth]);
+  }, [kpis, selectedMonth, currentMonth]);
 
-  const availableMonths = useMemo(
-    () =>
-      kpis.map((k) => ({
-        value: k.month,
-        label: formatMonthFull(k.month, lang),
-      })).reverse(),
-    [kpis, lang]
-  );
+  const availableMonths = useMemo(() => {
+    // Collect DB months
+    const dbMonths = new Set(kpis.map((k) => k.month));
+
+    // Generate months: from earliest DB month (or 12 months ago) to 12 months in the future
+    const now = new Date();
+    const futureLimit = new Date(now.getFullYear() + 1, now.getMonth(), 1);
+
+    let startDate;
+    if (kpis.length > 0) {
+      const earliest = kpis[0].month;
+      const [y, m] = earliest.split("-").map(Number);
+      startDate = new Date(y, m - 1, 1);
+    } else {
+      startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+    }
+
+    const months = [];
+    const d = new Date(startDate);
+    while (d <= futureLimit) {
+      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      months.push({ value: val, label: formatMonthFull(val, lang) });
+      d.setMonth(d.getMonth() + 1);
+    }
+
+    return months.reverse();
+  }, [kpis, lang]);
 
   if (isLoading) {
     return (

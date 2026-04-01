@@ -90,17 +90,16 @@ export default function Dashboard({ selectedMonth, setSelectedMonth }) {
     }
   }, [selectedMonth, refetch]);
 
-  // Month navigation
+  // Month navigation — calendar-based, not limited to DB months
   const navigateMonth = (direction) => {
-    if (!kpis.length || !selectedMonth) return;
-    const idx = kpis.findIndex((k) => k.month === selectedMonth);
-    const newIdx = idx + direction;
-    if (newIdx >= 0 && newIdx < kpis.length) {
-      setSelectedMonth(kpis[newIdx].month);
-    }
+    if (!selectedMonth) return;
+    const [y, m] = selectedMonth.split("-").map(Number);
+    const d = new Date(y, m - 1 + direction, 1);
+    const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    setSelectedMonth(newMonth);
   };
-  const canGoBack = kpis.findIndex((k) => k.month === selectedMonth) > 0;
-  const canGoForward = kpis.findIndex((k) => k.month === selectedMonth) < kpis.length - 1;
+  const canGoBack = true;
+  const canGoForward = true;
 
   // Annual summary
   const annualData = useMemo(() => {
