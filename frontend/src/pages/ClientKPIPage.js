@@ -325,7 +325,7 @@ export default function ClientKPIPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
-            {[2023, 2024, 2025].map((y) => (
+            {Array.from({ length: new Date().getFullYear() - 2022 }, (_, i) => 2023 + i).map((y) => (
               <SelectItem key={y} value={y.toString()} className="text-white">{y}</SelectItem>
             ))}
           </SelectContent>
