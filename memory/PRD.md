@@ -43,6 +43,18 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] Auto-trigger sync after KPI recalculation (kpis.py → trigger_sync_for_club)
 - [x] Club mapping MongoDB→Supabase UUID (Versoix, Servette, Grand-Saconnex, Lausanne)
 
+## Completed Tasks (Session 2026-04-01)
+- [x] Fix total_members/total_coaches split in Supabase payload (coach = member_type "coach" OR membership contains THE COACH/VIRTUAL COACH)
+- [x] Month selector extended: 12 months into the future, default = current month
+- [x] Dashboard arrow navigation: calendar-based, no longer limited to DB months
+- [x] Monthly Rollover CRON (POST /api/rollover/run, /run/all, GET /status)
+  - Auto-generates payments for current month (idempotent)
+  - Auto-generates recurring transactions (idempotent, duplicate-safe)
+  - Auto-marks past-due payments as "late"
+  - Auto-creates KPI record for current month
+  - Auto-recalculates KPIs + triggers Supabase sync
+  - APScheduler daily at 01:00 UTC
+
 ## Upcoming Tasks
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping
