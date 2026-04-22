@@ -29,6 +29,10 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 MONGO_URL = os.environ['MONGO_URL']
 DB_NAME = os.environ['DB_NAME']
 
+# Abonnements obsolètes (retirés du catalogue) → archiver systématiquement
+# même si exit_date n'est pas encore passée.
+OBSOLETE_MEMBERSHIPS = ["HUBFIT"]
+
 
 async def main(apply: bool = False):
     client = AsyncIOMotorClient(MONGO_URL)
@@ -41,17 +45,23 @@ async def main(apply: bool = False):
     print(f"\n{'='*70}")
     print(f"  SPRINT B MIGRATION — Mode: {mode}")
     print(f"  Timestamp: {now_iso}")
+    print(f"  Abonnements obsolètes: {OBSOLETE_MEMBERSHIPS}")
     print(f"{'='*70}\n")
 
     report = {
         "coaches_rent_init": [],
         "members_archived_by_exit_date": [],
         "duplicates_archived": [],
+        "obsolete_memberships_archived": [],
         "duplicates_ambiguous_logged_only": [],
     }
 
+    # Track des IDs "virtuellement archivés" dans ce run — nécessaire pour que
+    # le dry-run simule correctement l'état post-étape dans les étapes suivantes.
+    virtually_archived_ids = set()
+
     # ── 1) Coaches: init rent_amount / rent_status ─────────────────────────
-    print("[1/3] Initialisation des champs rent_* sur les coachs...")
+    print("[1/4] Initialisation des champs rent_* sur les coachs...")
     coaches = await db.coaches.find({}, {"_id": 0}).to_list(5000)
     for c in coaches:
         needs_update = {}
@@ -73,7 +83,7 @@ async def main(apply: bool = False):
     print(f"  → {len(report['coaches_rent_init'])} coach(s) avec rent_* manquant")
 
     # ── 2) Members: archive ceux avec exit_date passé ────────────────────
-    print("\n[2/3] Archivage des membres avec exit_date passé...")
+    print("\n[2/4] Archivage des membres avec exit_date passé...")
     members = await db.customer_members.find({}, {"_id": 0}).to_list(10000)
     for m in members:
         if m.get("archived_at"):
@@ -87,6 +97,7 @@ async def main(apply: bool = False):
                 "exit_date": exit_d,
                 "membership": m.get("membership", ""),
             })
+            virtually_archived_ids.add(m["id"])
             if apply:
                 await db.customer_members.update_one(
                     {"id": m["id"]},
@@ -95,10 +106,42 @@ async def main(apply: bool = False):
 
     print(f"  → {len(report['members_archived_by_exit_date'])} membre(s) à archiver via exit_date")
 
-    # ── 3) Doublons (name + club_id) ────────────────────────────────────
-    print("\n[3/3] Détection des doublons (name + club_id)...")
+    # ── 3) Members: archive les abonnements obsolètes (HUBFIT) ────────────
+    print(f"\n[3/4] Archivage des abonnements obsolètes {OBSOLETE_MEMBERSHIPS}...")
+    for m in members:
+        if m.get("archived_at") or m["id"] in virtually_archived_ids:
+            continue  # déjà archivé (effectif ou virtuel)
+        membership = (m.get("membership") or "").strip().upper()
+        if membership not in [om.upper() for om in OBSOLETE_MEMBERSHIPS]:
+            continue
+        # exit_date vide OU futur OU null
+        exit_d = m.get("exit_date")
+        is_future_or_empty = (
+            not exit_d or exit_d in (None, "", "None") or str(exit_d) >= today_str
+        )
+        if not is_future_or_empty:
+            continue  # déjà traité par étape 2
+        report["obsolete_memberships_archived"].append({
+            "id": m.get("id"),
+            "name": m.get("name", "?"),
+            "club_id": m.get("club_id"),
+            "membership": m.get("membership", ""),
+            "exit_date": exit_d,
+            "reason": f"obsolete_membership_{membership}",
+        })
+        virtually_archived_ids.add(m["id"])
+        if apply:
+            await db.customer_members.update_one(
+                {"id": m["id"]},
+                {"$set": {"archived_at": now_iso, "updated_at": now_iso}}
+            )
 
-    # Refresh members after section 2 if applied (avoid double-counting)
+    print(f"  → {len(report['obsolete_memberships_archived'])} membre(s) à archiver via membership obsolète")
+
+    # ── 4) Doublons (name + club_id) ────────────────────────────────────
+    print("\n[4/4] Détection des doublons (name + club_id)...")
+
+    # Refresh members after sections 2-3 if applied
     members_fresh = await db.customer_members.find({}, {"_id": 0}).to_list(10000)
     groups = defaultdict(list)
     for m in members_fresh:
@@ -107,8 +150,10 @@ async def main(apply: bool = False):
             groups[key].append(m)
 
     def is_active(m):
-        """Un membre est actif si non archivé ET exit_date non passé."""
+        """Un membre est actif si non archivé (réel OU virtuel) ET exit_date non passé."""
         if m.get("archived_at"):
+            return False
+        if m.get("id") in virtually_archived_ids:
             return False
         exit_d = m.get("exit_date")
         if exit_d and exit_d not in (None, "", "None") and str(exit_d) < today_str:
@@ -124,8 +169,10 @@ async def main(apply: bool = False):
 
         # Cas simple : 1 seul actif → les inactifs sont déjà archivés ou seront ignorés
         if len(active_entries) == 1 and inactive_entries:
-            # Archiver uniquement les inactifs non-déjà-archivés
-            to_archive = [m for m in inactive_entries if not m.get("archived_at")]
+            # Archiver uniquement les inactifs non-déjà-archivés (réel OU virtuel)
+            to_archive = [m for m in inactive_entries
+                          if not m.get("archived_at")
+                          and m.get("id") not in virtually_archived_ids]
             if to_archive:
                 for m in to_archive:
                     report["duplicates_archived"].append({
@@ -136,6 +183,7 @@ async def main(apply: bool = False):
                         "kept_active_id": active_entries[0].get("id"),
                         "reason": "duplicate_inactive",
                     })
+                    virtually_archived_ids.add(m["id"])
                     if apply:
                         await db.customer_members.update_one(
                             {"id": m["id"]},
@@ -165,11 +213,24 @@ async def main(apply: bool = False):
     print(f"\n{'='*70}")
     print(f"  RAPPORT FINAL — Mode: {mode}")
     print(f"{'='*70}")
-    print(f"  Coachs → rent_* init           : {len(report['coaches_rent_init'])}")
-    print(f"  Membres → archived (exit_date) : {len(report['members_archived_by_exit_date'])}")
-    print(f"  Membres → archived (doublon)   : {len(report['duplicates_archived'])}")
-    print(f"  Cas ambigus (non touchés)      : {len(report['duplicates_ambiguous_logged_only'])}")
+    print(f"  Coachs → rent_* init               : {len(report['coaches_rent_init'])}")
+    print(f"  Membres → archived (exit_date)     : {len(report['members_archived_by_exit_date'])}")
+    print(f"  Membres → archived (HUBFIT obsolète): {len(report['obsolete_memberships_archived'])}")
+    print(f"  Membres → archived (doublon)       : {len(report['duplicates_archived'])}")
+    total_archived = (len(report['members_archived_by_exit_date'])
+                      + len(report['obsolete_memberships_archived'])
+                      + len(report['duplicates_archived']))
+    print(f"  TOTAL membres archivés             : {total_archived}")
+    print(f"  Cas ambigus (non touchés)          : {len(report['duplicates_ambiguous_logged_only'])}")
     print(f"{'='*70}\n")
+
+    # Liste nominative des membres archivés via HUBFIT (obsolète)
+    if report["obsolete_memberships_archived"]:
+        print(f"📋 LISTE NOMINATIVE — {len(report['obsolete_memberships_archived'])} membre(s) archivé(s) via règle OBSOLETE_MEMBERSHIPS :")
+        for i, m in enumerate(report["obsolete_memberships_archived"], 1):
+            exit_lbl = m.get("exit_date") or "(aucune)"
+            print(f"  {i:>3}. {m.get('name', '?'):<40} | {m.get('membership', ''):<25} | exit_date: {exit_lbl}")
+        print()
 
     # Détails des cas ambigus (pour décision utilisateur)
     if report["duplicates_ambiguous_logged_only"]:

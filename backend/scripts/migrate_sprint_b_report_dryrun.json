@@ -1494,151 +1494,34 @@
       "membership": "PRÊT"
     }
   ],
-  "duplicates_archived": [
+  "duplicates_archived": [],
+  "obsolete_memberships_archived": [
     {
-      "id": "ade82444-8cbb-44a2-ae64-f713db6010f9",
-      "name": "Nicolas Major",
+      "id": "9377e975-500b-4390-962a-56ccb7d74c79",
+      "name": "Taha Bentafat",
       "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-12-27",
-      "kept_active_id": "8784e7f6-b6e6-4cdc-a9f8-53d3b93d18fd",
-      "reason": "duplicate_inactive"
+      "membership": "HUBFIT",
+      "exit_date": null,
+      "reason": "obsolete_membership_HUBFIT"
     },
     {
-      "id": "4e18dd9b-bae1-42af-bf4e-7050075ed840",
-      "name": "Lucas Da Costa",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-06-30",
-      "kept_active_id": "294622d0-4bf0-40ff-a22b-361ee7b01517",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "fefe1d89-2187-421c-8f20-089babc1706d",
-      "name": "Lucas Da Costa",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-12-01",
-      "kept_active_id": "294622d0-4bf0-40ff-a22b-361ee7b01517",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "0022b625-4606-4a09-93f5-facedd83ac8d",
-      "name": "Camille Astier",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-12-01",
-      "kept_active_id": "bb9474c4-4737-496d-996c-262497a6fad6",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "eaafbedb-fc2c-49cf-a733-9acefedd549a",
-      "name": "Camille Astier",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-11-30",
-      "kept_active_id": "bb9474c4-4737-496d-996c-262497a6fad6",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "1a9ea21f-6ea5-4512-a1d2-ececb72bdbf8",
-      "name": "Stevens Jerent",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-11-30",
-      "kept_active_id": "d6533b3e-50a3-4129-b4bc-34a3435d3076",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "33aa443a-8bc4-4db6-a76e-ee7af9c306e9",
-      "name": "Stevens Jerent",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-11-30",
-      "kept_active_id": "d6533b3e-50a3-4129-b4bc-34a3435d3076",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "fe84f4d5-7f8f-4df9-beb1-d6a7384e1599",
-      "name": "Johan Michelazzi ",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-11-30",
-      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "34775622-e669-4f7c-b394-07107d44c4ac",
+      "id": "8a64c5a1-d158-42c7-be23-2158975d5646",
       "name": "Johan Michelazzi",
       "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-03-25",
-      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
-      "reason": "duplicate_inactive"
+      "membership": "HUBFIT",
+      "exit_date": null,
+      "reason": "obsolete_membership_HUBFIT"
     },
     {
-      "id": "db4191e6-5667-4257-993a-b12aaf3f4529",
-      "name": "Johan Michelazzi ",
+      "id": "09925ae5-dee5-4aa5-a808-3a37efee0d3e",
+      "name": "Léa Ebebeden",
       "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-10-01",
-      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "8b116323-e820-4a85-ab70-3ff0c170f821",
-      "name": "Johan Michelazzi",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-02-28",
-      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
-      "reason": "duplicate_inactive"
-    },
-    {
-      "id": "14b992b0-ebbd-48a3-b903-ce7ec35187d4",
-      "name": "Isabelle Forget ",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "exit_date": "2025-11-28",
-      "kept_active_id": "a4238a9e-0a74-44e7-b069-11fe744a3c3e",
-      "reason": "duplicate_inactive"
+      "membership": "HUBFIT",
+      "exit_date": null,
+      "reason": "obsolete_membership_HUBFIT"
     }
   ],
   "duplicates_ambiguous_logged_only": [
-    {
-      "name": "léa ebebeden",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "total_entries": 3,
-      "active_count": 2,
-      "archived_count": 0,
-      "entry_ids": [
-        "ccc431c7-f887-4739-bd18-817fd9f94035",
-        "09925ae5-dee5-4aa5-a808-3a37efee0d3e",
-        "e209f8ac-aada-4925-8d4d-7df7f5579365"
-      ],
-      "memberships": [
-        "THE COACH PASS MENSUEL",
-        "HUBFIT",
-        "THE COACH PASS MENSUEL"
-      ],
-      "exit_dates": [
-        "2025-08-31",
-        null,
-        null
-      ],
-      "note": "Plusieurs entrées actives pour un même nom → à arbitrer"
-    },
-    {
-      "name": "taha bentafat",
-      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
-      "total_entries": 3,
-      "active_count": 2,
-      "archived_count": 0,
-      "entry_ids": [
-        "9377e975-500b-4390-962a-56ccb7d74c79",
-        "b137fc73-25b7-43c4-b532-f7db08df54cf",
-        "f98aadf5-20a7-43dc-9cfe-b1aa664af5c0"
-      ],
-      "memberships": [
-        "HUBFIT",
-        "THE COACH PASS MENSUEL",
-        "THE COACH PASS MENSUEL"
-      ],
-      "exit_dates": [
-        null,
-        "2025-11-30",
-        null
-      ],
-      "note": "Plusieurs entrées actives pour un même nom → à arbitrer"
-    },
     {
       "name": "cindy & alexis cabassot & bolle",
       "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
