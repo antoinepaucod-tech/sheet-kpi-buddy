@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 
-from core.config import db
+from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id
 from models.members import MemberFollowUp, MemberFollowUpCreate
 

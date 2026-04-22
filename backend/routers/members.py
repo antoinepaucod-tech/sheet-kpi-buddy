@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from dateutil.relativedelta import relativedelta
 from uuid import uuid4
 
-from core.config import db
+from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id
 from models.members import (
     CustomerMember, CustomerMemberCreate,
@@ -47,12 +47,18 @@ def _is_coach(membership: str) -> bool:
 
 
 @router.get("")
-async def get_members(expiring_soon: Optional[bool] = None, member_type: Optional[str] = None, club_id: Optional[str] = Depends(get_club_id)):
+async def get_members(expiring_soon: Optional[bool] = None, member_type: Optional[str] = None, include_archived: Optional[bool] = None, only_archived: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
     query = {}
     if club_id:
         query["club_id"] = club_id
     if member_type:
         query["member_type"] = member_type
+    
+    # Archived filtering (B.2)
+    if only_archived:
+        query["archived_at"] = {"$ne": None, "$exists": True}
+    elif not include_archived:
+        query = exclude_archived(query)
     
     docs = await db.customer_members.find(query, {"_id": 0}).sort("name", 1).to_list(5000)
     
@@ -110,6 +116,7 @@ async def get_member_stats(club_id: Optional[str] = Depends(get_club_id)):
     query = {}
     if club_id:
         query["club_id"] = club_id
+    query = exclude_archived(query)
     docs = await db.customer_members.find(query, {"_id": 0}).to_list(5000)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     thirty_days = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
@@ -202,6 +209,7 @@ async def get_expiring_members(days: int = 30, club_id: Optional[str] = Depends(
     }
     if club_id:
         query["club_id"] = club_id
+    query = exclude_archived(query)
     docs = await db.customer_members.find(query, {"_id": 0}).to_list(500)
     for d in docs:
         sub_end = datetime.fromisoformat(d["subscription_end_date"]).date()

@@ -10,7 +10,7 @@ import os
 import resend
 from dotenv import load_dotenv
 
-from core.config import db
+from core.config import db, exclude_archived
 from core.security import get_club_id
 
 load_dotenv()
@@ -259,7 +259,7 @@ async def send_review_reminder(review_id: str):
     app_base_url = os.environ.get("FRONTEND_URL", "")
     if not app_base_url:
         # Try to infer from CORS or use a default
-        app_base_url = "https://kpi-sync-live.preview.emergentagent.com"
+        app_base_url = "https://member-archive-mgmt.preview.emergentagent.com"
     member_url = f"{app_base_url}/members?search={member.get('name', '').replace(' ', '+')}"
 
     html = review_reminder_staff_template(
@@ -319,7 +319,7 @@ async def send_bulk_notifications(data: BulkNotificationRequest):
         }, {"_id": 0}).to_list(100)
 
         staff_email = SENDER_EMAIL
-        app_base_url = os.environ.get("FRONTEND_URL", "https://kpi-sync-live.preview.emergentagent.com")
+        app_base_url = os.environ.get("FRONTEND_URL", "https://member-archive-mgmt.preview.emergentagent.com")
 
         for r in upcoming:
             member = await db.customer_members.find_one({"id": r["member_id"]}, {"_id": 0})

@@ -13,7 +13,7 @@ import os
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://kpi-sync-live.preview.emergentagent.com"
+    BASE_URL = "https://member-archive-mgmt.preview.emergentagent.com"
 
 TEST_EMAIL = "antoine.paucod@the-coach.pro"
 TEST_PASSWORD = "TheCoach1290."

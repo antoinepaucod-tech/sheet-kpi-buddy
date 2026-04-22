@@ -6,7 +6,7 @@ import httpx
 import os
 import logging
 
-from core.config import db
+from core.config import db, exclude_archived
 from core.security import get_club_id
 from models.kpi import compute_metrics
 
@@ -69,7 +69,8 @@ async def _count_active(club_id: str) -> tuple[int, int]:
             {"exit_date": None},
             {"exit_date": ""},
             {"exit_date": {"$exists": False}},
-        ]}
+        ]},
+        {"$or": [{"archived_at": None}, {"archived_at": {"$exists": False}}]},
     ]
     coach_cond = {"$or": [
         {"member_type": "coach"},

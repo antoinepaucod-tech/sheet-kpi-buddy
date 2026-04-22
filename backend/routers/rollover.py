@@ -6,7 +6,7 @@ import logging
 import uuid
 
 from fastapi import APIRouter, Depends
-from core.config import db, MONTHS_FR
+from core.config import db, MONTHS_FR, exclude_archived
 from core.security import get_club_id
 
 router = APIRouter(prefix="/rollover", tags=["rollover"])
@@ -33,7 +33,7 @@ async def _generate_payments_for_month(year: int, month: int, club_id: str) -> i
     days_in_month = monthrange(year, month)[1]
 
     all_members = await db.customer_members.find(
-        _cq(club_id, {"billing_enabled": True}), {"_id": 0}
+        exclude_archived(_cq(club_id, {"billing_enabled": True})), {"_id": 0}
     ).to_list(5000)
 
     members = []

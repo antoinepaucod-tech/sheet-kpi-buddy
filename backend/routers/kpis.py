@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from datetime import datetime, timezone
 
-from core.config import db
+from core.config import db, exclude_archived
 from core.security import get_club_id
 from models.kpi import MonthlyKPI, MonthlyKPICreate, compute_metrics
 
@@ -195,6 +195,7 @@ async def get_monthly_kpi_details(month: str, club_id: Optional[str] = Depends(g
          ]}
     if club_id:
         bm_q["club_id"] = club_id
+    bm_q = exclude_archived(bm_q)
     billing_members = await db.customer_members.find(
         bm_q,
         {"_id": 0, "id": 1, "name": 1, "billing_amount": 1, "membership": 1,
@@ -280,7 +281,7 @@ async def get_monthly_kpi_details(month: str, club_id: Optional[str] = Depends(g
 
     # New members this month (exclude coaches, HUBFIT, and renewals)
     new_members_raw = await db.customer_members.find(
-        _cq(club_id, {"contract_signed_date": {"$regex": f"^{month}"}}),
+        exclude_archived(_cq(club_id, {"contract_signed_date": {"$regex": f"^{month}"}})),
         {"_id": 0, "id": 1, "name": 1, "membership": 1, "contract_signed_date": 1, "cash_collected": 1}
     ).to_list(1000)
     exclude_kw = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
@@ -397,7 +398,7 @@ async def recalculate_month(month: str, club_id: Optional[str] = None):
 
     # New members count (exclude coaches, HUBFIT, and renewals)
     new_members_raw = await db.customer_members.find(
-        _cq(club_id, {"contract_signed_date": {"$regex": f"^{month}"}}),
+        exclude_archived(_cq(club_id, {"contract_signed_date": {"$regex": f"^{month}"}})),
         {"_id": 0, "name": 1, "membership": 1, "contract_signed_date": 1}
     ).to_list(1000)
     exclude_kw_new = ["THE COACH", "VIRTUAL COACH", "HUBFIT"]
@@ -424,7 +425,7 @@ async def recalculate_month(month: str, club_id: Optional[str] = None):
     month_start_str = f"{month}-01"
 
     all_members_for_count = await db.customer_members.find(
-        _cq(club_id, {"contract_signed_date": {"$lt": month_end_str}}),
+        exclude_archived(_cq(club_id, {"contract_signed_date": {"$lt": month_end_str}})),
         {"_id": 0, "name": 1, "membership": 1, "exit_date": 1,
          "subscription_end_date": 1, "is_duo": 1,
          "billing_amount": 1, "billing_enabled": 1,

@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime, timezone, timedelta
 import logging
 
-from core.config import db
+from core.config import db, exclude_archived
 from core.security import get_club_id
 from services.ghl import sync_pipeline_data
 

@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime, timezone, timedelta
 from calendar import monthrange
 
-from core.config import db, MONTHS_FR
+from core.config import db, MONTHS_FR, exclude_archived, check_member_not_archived, get_member_archived_warning
 from core.security import get_club_id
 from models.payments import (
     PaymentSchedule, PaymentScheduleCreate,
@@ -78,7 +78,7 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
 
     # 1. Get all billing_enabled active members (including coaches)
     all_members = await db.customer_members.find(
-        _cq(club_id, {"billing_enabled": True}),
+        exclude_archived(_cq(club_id, {"billing_enabled": True})),
         {"_id": 0}
     ).to_list(5000)
 
@@ -459,6 +459,9 @@ async def revert_payment_to_unpaid(payment_id: str):
         {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     updated = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    warnings = await get_member_archived_warning(doc.get("member_id", ""))
+    if warnings:
+        return {**updated, "warnings": warnings}
     return updated
 
 

@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 import logging
 import os
 
-from core.config import db
+from core.config import db, exclude_archived
 
 router = APIRouter(tags=["alerts"])
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ async def get_alerts_summary():
     })
 
     members_list = await db.customer_members.find(
-        {"$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]}, {"_id": 0, "subscription_end_date": 1}
+        exclude_archived({"$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]}), {"_id": 0, "subscription_end_date": 1}
     ).to_list(1000)
     expiring_count = 0
     for m in members_list:
@@ -81,10 +81,10 @@ async def get_alerts_summary():
             except (ValueError, TypeError):
                 pass
 
-    incomplete_onboarding = await db.customer_members.count_documents({
+    incomplete_onboarding = await db.customer_members.count_documents(exclude_archived({
         "onboarding_completed": {"$ne": True},
         "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
-    })
+    }))
     seven_days = today + timedelta(days=7)
     upcoming_followups = await db.member_followups.count_documents({
         "followup_date": {"$gte": today.isoformat(), "$lte": seven_days.isoformat()},

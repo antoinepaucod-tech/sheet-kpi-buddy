@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from uuid import uuid4
 import logging
 
-from core.config import db
+from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id
 from models.members import AnnualReview, AnnualReviewCreate
 

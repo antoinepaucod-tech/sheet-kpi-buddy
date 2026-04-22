@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
-from core.config import db, MONTHS_FR
+from core.config import db, exclude_archived, MONTHS_FR
 from core.security import get_club_id
 from models.courses import Instructor, CourseKPI, CourseKPICreate
 from models.transactions import AccountingCategory, AccountingTransaction
@@ -280,7 +280,7 @@ async def generate_salary_expenses(year: int, month: int, club_id: Optional[str]
         raise HTTPException(status_code=404, detail="Aucun cours trouvé pour ce mois")
 
     # Build lookup maps by both name and id
-    coaches_list = await db.coaches.find(_cq(club_id), {"_id": 0}).to_list(100)
+    coaches_list = await db.coaches.find(exclude_archived(_cq(club_id)), {"_id": 0}).to_list(100)
     coaches_by_name = {c["name"]: c for c in coaches_list}
     coaches_by_id = {c["id"]: c for c in coaches_list}
     instructors_map = {i["name"]: i for i in await db.instructors.find(_cq(club_id), {"_id": 0}).to_list(100)}

@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
-from core.config import db
+from core.config import db, exclude_archived
 from core.security import get_club_id
 from models.coaches import Coach, CoachCreate, CoachReplacement
 
@@ -18,11 +18,15 @@ def _cq(club_id, base=None):
 
 
 @router.get("")
-async def get_coaches(active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
+async def get_coaches(active_only: Optional[bool] = None, include_archived: Optional[bool] = None, only_archived: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
     """Get all coaches"""
     query = _cq(club_id)
     if active_only:
         query["is_active"] = True
+    if only_archived:
+        query["archived_at"] = {"$ne": None, "$exists": True}
+    elif not include_archived:
+        query = exclude_archived(query)
     docs = await db.coaches.find(query, {"_id": 0}).sort("name", 1).to_list(100)
     return docs
 

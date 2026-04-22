@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from typing import Optional
 from datetime import datetime, timezone
 
-from core.config import db
+from core.config import db, exclude_archived
 from core.security import get_current_user
 
 router = APIRouter(prefix="/franchise", tags=["franchise"])

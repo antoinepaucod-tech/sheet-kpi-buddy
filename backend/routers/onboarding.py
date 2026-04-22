@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
 
-from core.config import db
+from core.config import db, exclude_archived
 from core.security import get_club_id
 
 router = APIRouter(tags=["onboarding"])
@@ -21,11 +21,11 @@ def _cq(club_id, base=None):
 async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
     """Get members with incomplete onboarding (excludes coaches, IFRC, and skipped)"""
     COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL", "IFRC"]
-    docs = await db.customer_members.find(_cq(club_id, {
+    docs = await db.customer_members.find(exclude_archived(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "onboarding_skipped": {"$ne": True},
         "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
-    }), {"_id": 0}).to_list(500)
+    })), {"_id": 0}).to_list(500)
     
     filtered = []
     for doc in docs:
@@ -112,9 +112,9 @@ async def get_alerts_summary(club_id: Optional[str] = Depends(get_club_id)):
         "status": {"$in": ["scheduled", "rescheduled"]}
     }))
     
-    members = await db.customer_members.find(_cq(club_id, {
+    members = await db.customer_members.find(exclude_archived(_cq(club_id, {
         "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
-    }), {"_id": 0, "subscription_end_date": 1}).to_list(1000)
+    })), {"_id": 0, "subscription_end_date": 1}).to_list(1000)
     
     expiring_count = 0
     for m in members:
@@ -126,10 +126,10 @@ async def get_alerts_summary(club_id: Optional[str] = Depends(get_club_id)):
             except:
                 pass
     
-    incomplete_onboarding = await db.customer_members.count_documents(_cq(club_id, {
+    incomplete_onboarding = await db.customer_members.count_documents(exclude_archived(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "$or": [{"exit_date": None}, {"exit_date": ""}, {"exit_date": {"$exists": False}}]
-    }))
+    })))
     
     seven_days = today + timedelta(days=7)
     upcoming_followups = await db.member_followups.count_documents(_cq(club_id, {
