@@ -47,18 +47,18 @@ async def get_followups(
 
 
 @router.get("/upcoming")
-async def get_upcoming_followups(days: int = 7):
+async def get_upcoming_followups(days: int = 7, club_id: Optional[str] = Depends(get_club_id)):
     """Get follow-ups scheduled in the next N days"""
     today = datetime.now(timezone.utc).date()
     end_date = today + timedelta(days=days)
     
-    docs = await db.member_followups.find({
+    docs = await db.member_followups.find(_cq(club_id, {
         "followup_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
         "status": {"$in": ["scheduled", "rescheduled"]}
-    }, {"_id": 0}).sort("followup_date", 1).to_list(500)
+    }), {"_id": 0}).sort("followup_date", 1).to_list(500)
     
     # Type B: silently filter archived members
-    archived_ids = await get_archived_member_ids()
+    archived_ids = await get_archived_member_ids(club_id)
     docs = [d for d in docs if d.get("member_id") not in archived_ids]
     
     for doc in docs:
@@ -72,16 +72,16 @@ async def get_upcoming_followups(days: int = 7):
 
 
 @router.get("/missed")
-async def get_missed_followups():
+async def get_missed_followups(club_id: Optional[str] = Depends(get_club_id)):
     """Get all missed follow-ups (past date and not completed)"""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    docs = await db.member_followups.find({
+    docs = await db.member_followups.find(_cq(club_id, {
         "followup_date": {"$lt": today},
         "status": {"$in": ["scheduled", "rescheduled"]}
-    }, {"_id": 0}).sort("followup_date", 1).to_list(500)
+    }), {"_id": 0}).sort("followup_date", 1).to_list(500)
     
     # Type B: silently filter archived members
-    archived_ids = await get_archived_member_ids()
+    archived_ids = await get_archived_member_ids(club_id)
     docs = [d for d in docs if d.get("member_id") not in archived_ids]
     
     for doc in docs:

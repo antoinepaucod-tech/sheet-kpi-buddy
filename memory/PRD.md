@@ -55,12 +55,32 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Auto-recalculates KPIs + triggers Supabase sync
   - APScheduler daily at 01:00 UTC
 
+## Completed Tasks (Session 2026-04-22 — Sprint B)
+- [x] Sprint A : Infrastructure soft delete (archived_at, rent_amount, rent_status, endpoints /archive, /restore, /revert-to-unpaid)
+- [x] Sprint B Backend : Classification endpoints A/B/C complète
+  - Type C (blocage 400) : POST /challenges/{id}/participants, /annual-reviews, /followups, /payments
+  - Type B (filtre silencieux) sur toutes les listes : payments (+/late +/upcoming), followups (+/upcoming +/missed), annual-reviews (+/upcoming +/overdue +/stats +/dashboard-alerts)
+  - Type B sur les générations en masse : payments/generate, annual-reviews/auto-generate, challenges/auto-generate-bilans, notifications/send-bulk
+  - Type A + warning `member_archived` : mark-paid, revert-to-unpaid
+- [x] B.5 Redirection DELETE → soft delete (coaches + members, idempotent)
+- [x] Script migration /app/backend/scripts/migrate_sprint_b.py (--dry-run par défaut, --apply avec confirmation)
+- [x] Testing backend : 24/24 tests pytest passent (/app/backend/tests/test_iteration72_sprint_b_filters.py)
+
 ## Upcoming Tasks
+- (P0) Sprint B suite : --apply de la migration APRÈS validation user + arbitrage des 3 cas ambigus
+- (P0) Sprint B Frontend (B.4 + B.6) : boutons Archiver/Restaurer, onglet "Voir archivés", badges, modales confirmation
+- (P1) Sprint C : Filtres par type membre (IFRC, HG, Open Gym, Partenaire) et coach (Interne, THE COACH)
+- (P1) Sprint D : Couleurs transactions, planning, stats, membres à risques
+- (P1) Investigation collection doublon `instructors`
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping
 - (P2) Integration API GoHighLevel + Notifications
 - (P2) CRON renouvellement token Meta Ads (60 jours)
 - (P2) Alertes WhatsApp via Twilio
+
+## Upcoming Tasks (OLD)
+- (P1) Integration API bsport
+- (P1) Integration Revolut Business API + Category mapping
 
 ## Backlog
 - (P3) Refactoring MembersPage.js (>1500 lines) et Dashboard.js (>900 lines)
