@@ -441,6 +441,27 @@ async def delete_payment(payment_id: str):
     return {"message": "Paiement supprimé"}
 
 
+@router.post("/payments/{payment_id}/revert-to-unpaid")
+async def revert_payment_to_unpaid(payment_id: str):
+    """Revert a paid payment back to pending or late based on due_date."""
+    doc = await db.payments.find_one({"id": payment_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Paiement introuvable")
+    if doc.get("status") != "paid":
+        raise HTTPException(status_code=400, detail=f"Transition impossible : le paiement est en statut '{doc.get('status')}', seul 'paid' peut être repassé en impayé")
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    due_date = doc.get("due_date", "")
+    new_status = "late" if due_date < today else "pending"
+
+    await db.payments.update_one(
+        {"id": payment_id},
+        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    updated = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    return updated
+
+
 @router.post("/payments/generate/{year}/{month}")
 async def generate_monthly_payments(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
     """Generate payments for a month based on active billing-enabled members"""

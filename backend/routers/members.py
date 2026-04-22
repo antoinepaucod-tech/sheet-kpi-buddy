@@ -254,6 +254,7 @@ async def create_member(data: CustomerMemberCreate, club_id: Optional[str] = Dep
     
     member = CustomerMember(**member_data)
     doc = member.model_dump()
+    doc["club_id"] = club_id  # défense en profondeur
     await db.customer_members.insert_one(doc)
     doc.pop('_id', None)
     
@@ -371,7 +372,8 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
         raise HTTPException(status_code=404, detail="Membre introuvable")
     
     update_data = data.model_dump()
-    
+    update_data.pop("club_id", None)  # Ne jamais écraser club_id via PUT
+
     # Update review date if enabled and changed
     if data.annual_review_enabled and data.contract_signed_date:
         freq = getattr(data, 'review_frequency', 'annually')
@@ -663,6 +665,34 @@ async def delete_member(member_id: str):
     await db.challenge_checkins.delete_many({"member_id": member_id})
     await db.member_renewals.delete_many({"member_id": member_id})
     return {"message": "Membre et données associées supprimés"}
+
+
+# ── Soft delete (archive / restore) ──────────────────────────────────────────
+
+@router.post("/{member_id}/archive")
+async def archive_member(member_id: str):
+    doc = await db.customer_members.find_one({"id": member_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if doc.get("archived_at"):
+        raise HTTPException(status_code=400, detail="Membre déjà archivé")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.customer_members.update_one({"id": member_id}, {"$set": {"archived_at": now, "updated_at": now}})
+    updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    return updated
+
+
+@router.post("/{member_id}/restore")
+async def restore_member(member_id: str):
+    doc = await db.customer_members.find_one({"id": member_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if not doc.get("archived_at"):
+        raise HTTPException(status_code=400, detail="Membre déjà actif (non archivé)")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.customer_members.update_one({"id": member_id}, {"$set": {"archived_at": None, "updated_at": now}})
+    updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    return updated
 
 
 @router.post("/{member_id}/renew")

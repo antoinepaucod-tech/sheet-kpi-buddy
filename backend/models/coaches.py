@@ -6,7 +6,7 @@ import uuid
 
 
 class Coach(BaseModel):
-    """Coach with hourly rate"""
+    """Coach with hourly rate and rent tracking"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     email: Optional[str] = None
@@ -16,6 +16,12 @@ class Coach(BaseModel):
     color: Optional[str] = None  # Couleur pour le planning
     is_active: bool = True
     notes: Optional[str] = None
+    # Rent tracking
+    rent_amount: Optional[float] = 0.0  # Loyer mensuel en CHF
+    rent_status: Optional[str] = "impayé"  # "payé", "impayé", "en_attente"
+    rent_last_paid_at: Optional[str] = None  # ISO datetime
+    # Soft delete
+    archived_at: Optional[str] = None  # ISO datetime, None si actif
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -29,6 +35,8 @@ class CoachCreate(BaseModel):
     color: Optional[str] = None
     is_active: bool = True
     notes: Optional[str] = None
+    rent_amount: Optional[float] = 0.0
+    rent_status: Optional[str] = "impayé"
 
 
 class CoachReplacement(BaseModel):

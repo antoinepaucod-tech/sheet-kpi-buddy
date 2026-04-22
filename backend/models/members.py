@@ -12,6 +12,7 @@ class CustomerMember(BaseModel):
     phone: Optional[str] = None
     membership: str  # Type d'abonnement
     member_type: Optional[str] = None  # "Membres Généraux Récurrents", "Membres PIF", "Membres PT"
+    club_id: Optional[str] = None  # Multi-tenant isolation
     contract_signed_date: Optional[str] = None  # Date de signature
     subscription_end_date: Optional[str] = None  # Date d'expiration
     exit_date: Optional[str] = None  # Date de sortie
@@ -50,6 +51,8 @@ class CustomerMember(BaseModel):
     duo_primary: bool = False
     subscription_group_id: Optional[str] = None  # UUID linking duo pairs
     is_primary_subscriber: bool = True  # Primary = pays, Secondary = 0 CHF
+    # Soft delete
+    archived_at: Optional[str] = None  # ISO datetime, None si actif
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
