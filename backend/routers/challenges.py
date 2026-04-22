@@ -116,6 +116,9 @@ async def add_challenge_participant(challenge_id: str, data: ChallengeParticipan
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge introuvable")
 
+    # Type C: block if target member is archived
+    await check_member_not_archived(data.member_id)
+
     existing = await db.challenge_participants.find_one(
         {"challenge_id": challenge_id, "member_id": data.member_id}
     )
@@ -180,9 +183,9 @@ async def auto_generate_bilans():
     today_str = today.strftime("%Y-%m-%d")
     next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
 
-    # Get all active members
+    # Get all active members (excluding archived — Type B filter)
     members = await db.customer_members.find(
-        {"subscription_end_date": {"$gte": today_str}},
+        exclude_archived({"subscription_end_date": {"$gte": today_str}}),
         {"_id": 0, "id": 1, "name": 1, "bilan_frequency": 1}
     ).to_list(500)
 

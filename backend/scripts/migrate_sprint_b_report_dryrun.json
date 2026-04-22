@@ -1,0 +1,1663 @@
+{
+  "coaches_rent_init": [
+    {
+      "id": "4ff465b5-52c5-4154-a0ca-1b4eaa9e2834",
+      "name": "Léa Ebebeden",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "fields_to_set": {
+        "rent_amount": 0.0,
+        "rent_status": "impayé"
+      }
+    },
+    {
+      "id": "8f1fb0c6-c2eb-4696-9788-7c81859a4745",
+      "name": "Camille Astier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "fields_to_set": {
+        "rent_amount": 0.0,
+        "rent_status": "impayé"
+      }
+    },
+    {
+      "id": "47543412-212b-4501-8160-154120b693c1",
+      "name": "Jennifer Porraz",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "fields_to_set": {
+        "rent_amount": 0.0,
+        "rent_status": "impayé"
+      }
+    },
+    {
+      "id": "e80f4bd1-fa2b-4964-abd2-43cc5b3376dd",
+      "name": "Myriam Morales",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "fields_to_set": {
+        "rent_amount": 0.0,
+        "rent_status": "impayé"
+      }
+    },
+    {
+      "id": "cfe9cdcd-548b-4147-a047-ad66eda3102b",
+      "name": "Antoine Paucod",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "fields_to_set": {
+        "rent_amount": 0.0,
+        "rent_status": "impayé"
+      }
+    },
+    {
+      "id": "b618885d-3feb-4334-826a-2747b958e93a",
+      "name": "Taryn Gitsham",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "fields_to_set": {
+        "rent_amount": 0.0,
+        "rent_status": "impayé"
+      }
+    },
+    {
+      "id": "ba3a4ac3-01de-42f3-8d1b-90b225d1800f",
+      "name": "Lucas Da Costa",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "fields_to_set": {
+        "rent_amount": 0.0,
+        "rent_status": "impayé"
+      }
+    }
+  ],
+  "members_archived_by_exit_date": [
+    {
+      "id": "ef53b3cb-9db6-4fc7-b111-3c748cd60240",
+      "name": "Anna Carrel",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "OPEN GYM - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "6fcdc9a2-8741-441d-b59e-063e203707d9",
+      "name": "Peter Milthorp",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "d31bc59a-c2f9-4292-afb5-3ebe50cc3230",
+      "name": "Saskia Hermanceder",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "cd7a7644-93ff-4846-b58a-15df7e198fc9",
+      "name": "Montse Mortara",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "25c25208-ebfe-45ed-887f-f4c1d44b2e66",
+      "name": "Samir Gentil",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "225d472d-87d0-4aa2-add2-b21125b5a765",
+      "name": "Lucy Mckoy",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "4e5262d2-5b6e-4ca6-87fd-be8b658ad8b8",
+      "name": "José Santos",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-17",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "1531c8e8-d8d6-4c1f-903c-1a7874eff7de",
+      "name": "Osman Kalenica",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-08",
+      "membership": "OPEN GYM - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "44cc2c9d-0954-4a38-9994-c260a03fd988",
+      "name": "Andréa Nascimento",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-31",
+      "membership": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL"
+    },
+    {
+      "id": "d597fa30-b202-4d10-aa21-04776b15ab8b",
+      "name": "Christophe Delemaison",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-04",
+      "membership": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL"
+    },
+    {
+      "id": "cd3488f6-10cd-44c6-8d7b-f0b0e7c7d480",
+      "name": "Federica Sambiose",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-14",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "ebb882c2-f6da-4b3c-9f9a-e343510a1450",
+      "name": "Bernard Garcia",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "OPEN GYM - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "a972aa06-5a70-4d92-99de-b72c57b27223",
+      "name": "Nabil Darazzi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-31",
+      "membership": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "6206934c-a6dd-4925-a318-7c7d83358cea",
+      "name": "Daniil Reznikov",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "c7dc5584-370d-4c93-9b38-385aa1794de1",
+      "name": "Vanessa Amandio",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-03-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "1df8b40b-738c-4bf2-be73-f8bf3e704f5e",
+      "name": "Malik Marelille",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-01",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "5519a87f-7483-4f63-b6aa-2e6def1672fe",
+      "name": "Timothé Mumenthaler",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-14",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "b10e869c-95d3-486a-a489-e9d7190ea732",
+      "name": "Laura Gaia Ferrer",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "3e9657d1-4615-4b14-a6f2-e1271e3f6f5c",
+      "name": "Leslie Haskel",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-02",
+      "membership": "PACK 10 SESSIONS"
+    },
+    {
+      "id": "e866caed-111c-4de5-a6e9-b61c943d832e",
+      "name": "Ilona Piekoszewska",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-16",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "0d64d618-2ddd-4e4b-bfef-4eef2cfdd7f6",
+      "name": "Houda Abid",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-31",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "0584dfd1-76e2-4e72-b335-a03b48cccec8",
+      "name": "Sébastien Baufumé",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-28",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "ab6ab90a-99c1-47bb-aa09-fb88c6b5eb7e",
+      "name": "Adrien Testa",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "ce3c00b8-4a3f-4e5c-9a49-404c6ac50099",
+      "name": "Grégory Tochon",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "7a8893b4-2cc8-4ad8-86ad-cd5d464d3f1d",
+      "name": "Matthew Tolson",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "03360894-aa71-459b-a965-cef8ea353b96",
+      "name": "Caroline Poisat",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "b7ac019e-85a3-445c-829b-8e118905aa43",
+      "name": "Coralie Lacroix",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "55ec3350-1985-4974-a4d9-fc32ab15ddac",
+      "name": "Santiago Hege",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "d5587a7a-ebe9-4e4b-9226-f3887baeb79e",
+      "name": "Norman Piller",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "123c6a11-e7ac-44df-aa32-2a3210e8f4f1",
+      "name": "Yann Tsong",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-28",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "9c95edd1-9ef6-4c7f-a6d1-d237e44bf790",
+      "name": "Rachel Habersaat",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "157813f5-66a8-4d01-a210-8c1e70e769c7",
+      "name": "Evan Serafini",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "5197b0e1-1852-49af-b917-13fabb96e4f4",
+      "name": "Gianni Simon Pereira",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "ec24e936-b8f0-4311-87a8-dd90fe152f0c",
+      "name": "Raphaël Des Combes",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-03-24",
+      "membership": "THE COACH PASS 6 MOIS - PAIEMENT X1"
+    },
+    {
+      "id": "4e75b9c3-5576-4d25-a717-0c10baddbbc0",
+      "name": "Nicholas Schmale",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-30",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "44cb6bde-0e96-4cba-a836-d6fc56579707",
+      "name": "Cristina Gomes",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "50d46db8-e459-45be-ae10-8f112ab784d3",
+      "name": "Emmanuelle Epstein",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "4806bc0e-d9b5-4adb-a160-ef75d99c0692",
+      "name": "Sophie Magnes",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-02-28",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "6cf37169-cb0f-4fa3-bb67-94ddadf91361",
+      "name": "Julien Rey",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-07",
+      "membership": "OPEN GYM - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "11b624fc-8ddd-4c65-8ac6-e7275f437238",
+      "name": "Laurie Bulloz",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-03-01",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "e2f90ecb-f94b-406d-950a-08d90d1a9396",
+      "name": "Cloé & Romain Quadri / Juchat",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-31",
+      "membership": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "3f928dab-8db3-4437-a11a-be15284316b9",
+      "name": "Wissem Ben Hamidane",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-28",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "e0e27690-f262-4f2c-9cf4-71b44a752978",
+      "name": "Isabelle Weibel",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-10",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "ccea3010-63e9-4bcb-999b-e251a00fbb69",
+      "name": "Luna Layla",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-15",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "5db9ac23-d6ef-45c4-ad29-40579b03ab9b",
+      "name": "Alice Dias",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-29",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "0260b63b-6eb6-4b0b-8b95-db344f86c9ed",
+      "name": "Pénélope Schulmann",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-26",
+      "membership": "HYBRID FULL DUO SANS ENGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "c924a631-caac-44ca-8876-0819f5e4852d",
+      "name": "Damien Bressi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-10",
+      "membership": "PACK 10 SESSIONS"
+    },
+    {
+      "id": "bd050c44-58f7-444d-908c-c3a4d1299294",
+      "name": "Iris Jagot",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "be0aed61-5033-44ae-9076-5c29e442749e",
+      "name": "Choukri Hedhiri",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "35a3b5e4-e536-4133-8878-430b20554d0a",
+      "name": "Rayan Belayel",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "68952d87-0cc3-47af-857d-d75e8e8b9100",
+      "name": "Christophe Bays",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "64ef89e7-24b9-482f-bebc-335fb0d28fb2",
+      "name": "Cristel Gonzales",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "a98c2431-a5c3-4ef7-a898-929dd5ba859b",
+      "name": "Jacqueline Ortiz",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "80c30b53-fe61-4722-b539-9205398bf37f",
+      "name": "Romane Martin",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "10f85e9f-be00-4cbe-b328-9b2aab5702a2",
+      "name": "Elsa Marguerretaz",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "ab75c626-f24a-4b4f-bd23-bf8a76ac4c22",
+      "name": "Elena Soldatova",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "9d62424c-7c9f-482c-8b4a-28c50ed6b7ff",
+      "name": "Amine Belkouch",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "4b4949db-123e-474f-b077-152cd7b0f30a",
+      "name": "Christopher Lezeau",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "4e18dd9b-bae1-42af-bf4e-7050075ed840",
+      "name": "Lucas Da Costa",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "37ab6d38-dc5e-406d-9c13-81af23d8bdea",
+      "name": "Ale Galves",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-27",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "ccc431c7-f887-4739-bd18-817fd9f94035",
+      "name": "Léa Ebebeden",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "79fae7c0-b7be-4abe-b924-9d497588fde9",
+      "name": "Jonathan Toffalo",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-22",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "fefe1d89-2187-421c-8f20-089babc1706d",
+      "name": "Lucas Da Costa",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-01",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "6752152f-822d-44d6-b491-66001088c007",
+      "name": "Laura Moreau",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "0022b625-4606-4a09-93f5-facedd83ac8d",
+      "name": "Camille Astier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-01",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "23ff55a2-bef9-4513-a1a7-3682c8f696e9",
+      "name": "Romane Martin",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-27",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "faf58651-e635-4fb9-b040-765410c3bee8",
+      "name": "Gianni Simone Pereira",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "5313ad52-30fb-4fc2-b3ed-2d8ff41c4e7f",
+      "name": "Taryn Gitsham",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "6358736b-935d-44f8-a21a-3bb1f9798801",
+      "name": "Noah Thomi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-01",
+      "membership": "OPEN GYM - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "bb8e0c18-34b8-4eae-a297-df28bca488f5",
+      "name": "Maëlle Lounifi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "7cfae3d6-8996-4d4e-b905-946135ed1cdb",
+      "name": "Tamara Lawson",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "e7c4aded-7dfc-446c-94fb-2af881f701a0",
+      "name": "Magno Soares",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "d423ecbb-9e55-47c3-80fd-8f3596bb8c91",
+      "name": "Cyrielle Fuertes",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "d5893ed1-bb25-4797-a28b-0e4806e3ae32",
+      "name": "Reda Sefraoui",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-23",
+      "membership": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL"
+    },
+    {
+      "id": "b69fed48-2ce2-4ec1-8c67-a340a343068e",
+      "name": "Pedro Pascoal",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-16",
+      "membership": "OPEN GYM - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "3d4cee23-fc37-42c7-a6b1-2072f95fe69d",
+      "name": "Pedro Pascoal Junior",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-16",
+      "membership": "OPEN GYM - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "b5eb762f-2aab-4e23-a61d-d3d93b7c4177",
+      "name": "Eva Cidades",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-13",
+      "membership": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL"
+    },
+    {
+      "id": "1eb45483-97e9-4ccf-9957-c325441be10a",
+      "name": "Amina Howard",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-31",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "246b9015-9d8e-4c83-801f-1402591ee8d6",
+      "name": "Ellyn Maillard (fille de Sylvie Maillard)",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-12",
+      "membership": "OPEN GYM - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "c3c08f41-4375-4925-bd4d-f9df87d5d301",
+      "name": "Anna Urzedowska",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL"
+    },
+    {
+      "id": "b2b289cd-c631-4aa4-9f00-f1bf655bbbb4",
+      "name": "Aliya Chanan",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-01",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "515ff747-72eb-4e47-a80a-1ff3c00e35b8",
+      "name": "Mélissa Schreiber",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-04",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "f005b458-27ca-4308-bc16-02db28ad726b",
+      "name": "Nabidja Fofana",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-02-10",
+      "membership": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL"
+    },
+    {
+      "id": "d965f318-e294-4e96-ab4d-329175da6870",
+      "name": "Nadia Elfiki",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-08",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "ad66d223-8272-4d6f-a9cd-a45cd06254d3",
+      "name": "Nawel Akrim",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-19",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "e3cb6a18-49f0-4496-a1be-1173a3358ae5",
+      "name": "Stefania Mastrullo",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-04",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "45f3069b-f656-4744-8309-109f0dcce733",
+      "name": "Farah Bakkali",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-31",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "89042565-ee05-42bd-bcb8-9c875e930007",
+      "name": "Claire Chavassieux",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-01",
+      "membership": "PACK 20 SESSIONS"
+    },
+    {
+      "id": "ade82444-8cbb-44a2-ae64-f713db6010f9",
+      "name": "Nicolas Major",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-27",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "9bc4ee76-0e3e-4bcb-a722-cf40c155d2f0",
+      "name": "Sirella Feredie",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "378c5bac-f26b-4fd2-8584-da602dfb2aff",
+      "name": "Alison Meylan",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "5b349395-6250-48bb-a177-c36ba000c47b",
+      "name": "Audrey Jeleff",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "9abb8bd9-82bf-4e76-825e-593954e9bf5c",
+      "name": "Timon Karim",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "1d78d603-2709-4ef3-9351-25c844a1671a",
+      "name": "Mehdi Outaleb",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "d772ff17-ed6c-4941-aeac-96812df5123a",
+      "name": "Mickael Weatherby",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "57e70382-c78e-412a-be6c-e9546dc357c1",
+      "name": "Johan Michellazi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "1a9ea21f-6ea5-4512-a1d2-ececb72bdbf8",
+      "name": "Stevens Jerent",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "469d5a37-bdc0-471d-9324-dd8d9fb9a15d",
+      "name": "Manda  Randriatsimihoatra",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-03-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "c4ca706b-1428-44d9-9fad-8b16ea493834",
+      "name": "Veronika Prensilevich",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "984e0b7f-6eed-4253-baf9-750d2922f174",
+      "name": "Sila Yenni",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "cb28c32b-5293-4646-b76c-ea5fa5ba5794",
+      "name": "Isild Moussyl",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-28",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "855c8c14-b59e-400f-bda0-6d415104d243",
+      "name": "Sofia Ribeiro",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "IFRC"
+    },
+    {
+      "id": "2c551f95-3db3-4480-9604-ffb79d925b72",
+      "name": "Mark Mason",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-28",
+      "membership": "IFRC"
+    },
+    {
+      "id": "093a9a16-fa53-438a-bafc-9a3f0730753e",
+      "name": "Laura Delay",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-24",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "6b0eb7db-df91-4924-a080-8e41ba25318f",
+      "name": "Paolo Ceccantini",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-27",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "77c8dcdc-92c8-4f5a-bf0a-c4c2dd3fce47",
+      "name": "Iris Jagot",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "33aa443a-8bc4-4db6-a76e-ee7af9c306e9",
+      "name": "Stevens Jerent",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "f0a60db7-240c-4549-9ac4-7472fa55c36b",
+      "name": "Nicholas Schmale",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-30",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "1e03086d-9729-4dbc-b169-ae0b3818f955",
+      "name": "Zoé Domenjoz",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "OPEN GYM - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "da46ee1c-af51-4c49-ab8a-65ffb67d4ea5",
+      "name": "Pierre-Antoine Vardan",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-01",
+      "membership": "OPEN GYM - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "6acde303-7823-44aa-aa05-c06157d347f2",
+      "name": "Claudia Carletti",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "OPEN GYM - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "9590e433-9d26-4896-bc3f-dc896fd7aaf8",
+      "name": "Zakaria El Kadourri",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-01",
+      "membership": "OPEN GYM - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "f998206b-ae26-46a3-bb96-ff46234abf65",
+      "name": "Jolivette Jensik",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "854525bd-5b13-44fb-bbbd-dc3668302c00",
+      "name": "Sophie Alves",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "46860f1c-da75-4e06-a460-94cf97cf723f",
+      "name": "Djamila Geymeier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "2b46966e-04a7-46cf-8e17-db82c0567e4c",
+      "name": "Ravit Stav",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "4c1be8dc-afdc-4b54-b2c1-5ff3857d1263",
+      "name": "Joelma Ramos",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "61fa545e-9ac2-46a2-a9e6-7d0ae2eba55d",
+      "name": "Jazmin Fuertes",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "b0d799c5-4158-42dd-ae74-baac7824a3b6",
+      "name": "Tim Elvin",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-17",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "61662739-b7ad-4c65-8359-9e2e509ebba5",
+      "name": "Elena Roch",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-29",
+      "membership": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "8330ac91-efa0-4883-ac9c-7f5873984a2b",
+      "name": "Purity Wanguru",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-11",
+      "membership": "UNLIMITED ACCESS - PAIEMENT X1 - ANNUEL"
+    },
+    {
+      "id": "6a51b356-b5c6-46e8-9c52-0b4b213965ea",
+      "name": "Burak Sarioglu",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-11",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "8990cc33-ef78-42be-b150-b4093bb05460",
+      "name": "Jocelyne Lambert",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-27",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "58abe810-f242-47dd-a426-e963708647a1",
+      "name": "Moustafa Rustom",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-02-04",
+      "membership": "OPEN GYM - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "246498f4-6ff7-4227-b323-78cdcadc6721",
+      "name": "Emilie Roux",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-01",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "f5e7ca74-5d69-4088-891e-c1280607bcf8",
+      "name": "Sophie Ducret",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-10",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "8428f957-0cb6-405f-8e65-60117535bde8",
+      "name": "Julien Vulliet",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-12",
+      "membership": "OFFRE 6 MOIS - 499 CHF"
+    },
+    {
+      "id": "2ca53b82-0a14-4ca5-988f-bc189bdb52cb",
+      "name": "Oana Condrea",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-18",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "9312cc9b-3906-4638-92d7-db0a067d79a1",
+      "name": "Annielle Schmidt",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-18",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "7f4dd484-09b3-42ef-9ec8-f273fcadf6ee",
+      "name": "Tatiana Varlamova",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-03",
+      "membership": "6 WEEKS CHALLENGE"
+    },
+    {
+      "id": "a22c55fe-402e-4c3b-86ba-08ce91d7cc72",
+      "name": "Alexia Guenoun",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-01",
+      "membership": "PACK 10 SESSIONS"
+    },
+    {
+      "id": "eaafbedb-fc2c-49cf-a733-9acefedd549a",
+      "name": "Camille Astier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "b137fc73-25b7-43c4-b532-f7db08df54cf",
+      "name": "Taha Bentafat",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "72e3f58b-658d-4d8b-8462-14c8ed6f7fef",
+      "name": "Florent Zocchi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-03-27",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "d2e9893c-b51d-4d48-86bf-4b2f61b5098d",
+      "name": "Aaron Dos Reis De La Fuente",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "38e7bba9-4599-40f6-86f1-96ccc87a3964",
+      "name": "Valentin Meyer",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "c5023d1d-bfe6-4b8f-a00c-f5d8562cacd4",
+      "name": "Mattia Delle Foglie",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "960856a5-ad20-4368-bfcf-bc85071486bd",
+      "name": "Myriam Morales",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "c19df415-dede-4528-a4a6-61574bc79f95",
+      "name": "Anastasia Dutoy",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "27f8c758-c475-4d50-9f01-095285dc1e25",
+      "name": "Lucie Cros",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "aee1343c-5cea-45ad-bf00-1940ba2eea0b",
+      "name": "Taryn Githsam",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "59ca65b6-629a-437d-b290-06c3271ea34d",
+      "name": "Olha Savenko",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "101e7114-7819-4a0f-9758-68f809709fe6",
+      "name": "Andréa Sancha",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "1cbb2136-6e67-4624-a975-0c1a909a8765",
+      "name": "Lydia Di Mauro",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "6dc445ab-0062-49bb-a849-ba32629d7894",
+      "name": "Nourdine Boudina",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-03-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "c99522b3-1351-43f7-bfeb-0b4ad1ebfb0e",
+      "name": "Ricardo Capopochi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "6165cd8d-be74-4b52-948d-38e352a367d8",
+      "name": "Kelly Trabichet",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "97f947d2-5970-4e21-a5a4-a47d3c432c88",
+      "name": "Vassili Fioramonti",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "47576696-846b-4a1d-9f74-77b183bd92d5",
+      "name": "Christopher Edelin",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "655701da-b468-4198-9681-57183638e859",
+      "name": "Romolo Panno",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "8600423a-cb66-4dc1-9b56-7e7c83697404",
+      "name": "Tatiana Alvarez",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "IFRC"
+    },
+    {
+      "id": "cd13c0a4-88d1-40a8-9861-259efc24617e",
+      "name": "Elisa Riquier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "IFRC"
+    },
+    {
+      "id": "d385b4ff-59d9-4e48-b20f-dcbc2cb6c063",
+      "name": "Yasmine Esseiva",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "6178f1d6-38f7-4623-a161-3d99194b6eb1",
+      "name": "Laura Conrad",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-08-31",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "c8f7289e-68e2-4876-9583-e91d4adc57bb",
+      "name": "Jacques Ndongo",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-30",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "3406c3c7-3065-4dc7-ac25-330dca97b013",
+      "name": "Anastasia Dutoy",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-31",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "82b74044-dd7d-49a5-ae4d-518400a1d78e",
+      "name": "Najib Blanco",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-30",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "91920070-709b-4b69-b5aa-855033cc0d36",
+      "name": "Christine & Ivan Haussler / Zollo ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "6d8ff7e5-6a75-4ef1-a379-aa3ec86c1abd",
+      "name": "Rafik & Asma Fathi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "a803d0c9-a2b7-4383-81e7-92ac7d5f0c2c",
+      "name": "Stéphane Chayto ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-06",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "689982b6-0547-42fe-b12d-ba7eb52361f3",
+      "name": "Anthony Froppier ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "31c9f851-7ccc-41a6-9efd-962c7051582c",
+      "name": "Guillaume Berthaud",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-26",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "9d245e56-23d0-4b99-9ba5-a55a7a861d69",
+      "name": "Camille Bourdériat ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "cbda093b-fce3-4b79-8126-c12f06a3ff5a",
+      "name": "Partenaire Isabelle",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-28",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "fe84f4d5-7f8f-4df9-beb1-d6a7384e1599",
+      "name": "Johan Michelazzi ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "ab31a65b-5c6c-4246-b25f-7c850cf77d44",
+      "name": "Nicholas Schmale ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-04",
+      "membership": "THE COACH PASS - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "34775622-e669-4f7c-b394-07107d44c4ac",
+      "name": "Johan Michelazzi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-25",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "686b65fd-76d7-442d-a99d-f29fa55eb23e",
+      "name": "Jonathan Toffalo ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-22",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "40485099-a427-491b-a08e-32ac0dd8724c",
+      "name": "Simon Pellet ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-25",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "65b9f728-3cfc-4c7c-9870-bf303b82ef9d",
+      "name": "Laura Conrad",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-31",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "84ae4a56-fcc8-457a-8d20-d74eb0f5873d",
+      "name": "Jonathan Tondeur",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-01",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "869b0762-4dda-46a9-bc06-59330f8170ef",
+      "name": "Claire Chavassieux",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-03",
+      "membership": "IFRC"
+    },
+    {
+      "id": "8e0e2337-b688-46e2-8514-621c222bbb5c",
+      "name": "Jessy Kalambay",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-31",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "911998f1-bc23-47cd-8416-84f8c6ad0070",
+      "name": "Jane & Guillaume Chabry",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "5b11cc3a-652d-478e-b98b-99e5bd679059",
+      "name": "Jessy Kalambay ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "d40c8ff3-16a1-47c9-b024-df1fb7faf81d",
+      "name": "Khaled Abdelaziz",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-31",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "e274b621-f6b6-4c86-9f81-5d3699e52634",
+      "name": "Simon Pellet ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-18",
+      "membership": "THE COACH PASS - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "4d49e214-a0c7-4167-adcd-8bab4f302c31",
+      "name": "Brice Maillard",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-09",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "5fdc50f8-9aba-4c1c-a3db-4f5936b5e1f6",
+      "name": "Guillaume Chabry",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "858f19b4-8680-4c4b-873f-c311f7ac329d",
+      "name": "Ivan Haussler",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "6249399e-5944-48de-a700-8f92562b4e81",
+      "name": "Simon Pellet",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-18",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "21aacd80-aa3e-4d74-a414-42b4cb711598",
+      "name": "Christophe Lezeau",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-31",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "020e841f-4510-4de2-8a3a-61d88e99f02a",
+      "name": "Valentin Mayer",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-31",
+      "membership": "THE COACH PASS 6 MOIS - PAIEMENT X1"
+    },
+    {
+      "id": "e0703af4-b258-4dcc-9f86-6d9ef9e5e1e9",
+      "name": "Grégory Tochon",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-02-27",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "85d06823-3d2d-4298-83c6-1d7473501114",
+      "name": "Sylvie & Brice Maillard ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-09",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "14b992b0-ebbd-48a3-b903-ce7ec35187d4",
+      "name": "Isabelle Forget ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-28",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "cd13a098-ac2b-40a6-96df-91c9e827201e",
+      "name": "Maria Soler Zappe",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-12",
+      "membership": "HYBRID FULL SANS ENGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "cb318541-4611-44f8-9719-eb072f5feaf7",
+      "name": "Najib Blanco ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-30",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "8b75c89c-c489-48c7-bb6c-36e78c8884c2",
+      "name": "Partenaire Stéphane",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-06",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "9d1581a8-f165-4041-9684-fb54a2647906",
+      "name": "Asma Fathi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "db4191e6-5667-4257-993a-b12aaf3f4529",
+      "name": "Johan Michelazzi ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-01",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "d010b171-9cd9-41a4-90e9-75c52d54dbb7",
+      "name": "Elsa Marguerettaz",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-28",
+      "membership": "HUBFIT"
+    },
+    {
+      "id": "e0f2eec2-404d-410a-b857-d1f3954aed35",
+      "name": "Santiago Hege",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-09-02",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "c858822d-5ac3-47c6-9ee7-d22b237a392a",
+      "name": "Norman Pillier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-03-31",
+      "membership": "THE COACH PASS 6 MOIS - PAIEMENT X1"
+    },
+    {
+      "id": "2f6a3080-0d06-46df-9aef-61b9a8ed6932",
+      "name": "Gaetano Marino ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "c9077812-68c4-46fc-8cc6-289e6b6cd411",
+      "name": "Jamila Loukili ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-14",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "2ef7e7c5-f240-46a1-b994-eaba677842f3",
+      "name": "Marco Guererro ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2026-01-12",
+      "membership": "HYBRID FULL SANS ENGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "fd27c89e-2183-4463-88aa-25535f30dc31",
+      "name": "Nicolas Schmale ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-31",
+      "membership": "THE COACH PASS - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "f48a193f-308b-4727-8d00-97133595383c",
+      "name": "Jonathan Toffalo ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-11",
+      "membership": "THE COACH PASS - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "cc7f7909-8055-40ef-9f93-2c4b1fd2f88d",
+      "name": "Partenaire Jamila",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-07-14",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT ANNUEL X1"
+    },
+    {
+      "id": "fb2c95f7-f7bb-4525-a029-7e14a2a29406",
+      "name": "Partenaire Gaetano",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-05-01",
+      "membership": "UNLIMITED ACCESS DUO - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "8b116323-e820-4a85-ab70-3ff0c170f821",
+      "name": "Johan Michelazzi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-28",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "11a748ef-2ded-4704-926c-3fb798c44652",
+      "name": "Gianni Simone Pereira",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-01-19",
+      "membership": "VIRTUAL COACH"
+    },
+    {
+      "id": "19f7dd16-db16-4743-87b6-044ebce0f3d7",
+      "name": "Catherine Collin ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-04-06",
+      "membership": "PRÊT"
+    }
+  ],
+  "duplicates_archived": [
+    {
+      "id": "ade82444-8cbb-44a2-ae64-f713db6010f9",
+      "name": "Nicolas Major",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-27",
+      "kept_active_id": "8784e7f6-b6e6-4cdc-a9f8-53d3b93d18fd",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "4e18dd9b-bae1-42af-bf4e-7050075ed840",
+      "name": "Lucas Da Costa",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-06-30",
+      "kept_active_id": "294622d0-4bf0-40ff-a22b-361ee7b01517",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "fefe1d89-2187-421c-8f20-089babc1706d",
+      "name": "Lucas Da Costa",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-01",
+      "kept_active_id": "294622d0-4bf0-40ff-a22b-361ee7b01517",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "0022b625-4606-4a09-93f5-facedd83ac8d",
+      "name": "Camille Astier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-12-01",
+      "kept_active_id": "bb9474c4-4737-496d-996c-262497a6fad6",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "eaafbedb-fc2c-49cf-a733-9acefedd549a",
+      "name": "Camille Astier",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "kept_active_id": "bb9474c4-4737-496d-996c-262497a6fad6",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "1a9ea21f-6ea5-4512-a1d2-ececb72bdbf8",
+      "name": "Stevens Jerent",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "kept_active_id": "d6533b3e-50a3-4129-b4bc-34a3435d3076",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "33aa443a-8bc4-4db6-a76e-ee7af9c306e9",
+      "name": "Stevens Jerent",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "kept_active_id": "d6533b3e-50a3-4129-b4bc-34a3435d3076",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "fe84f4d5-7f8f-4df9-beb1-d6a7384e1599",
+      "name": "Johan Michelazzi ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-30",
+      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "34775622-e669-4f7c-b394-07107d44c4ac",
+      "name": "Johan Michelazzi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-03-25",
+      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "db4191e6-5667-4257-993a-b12aaf3f4529",
+      "name": "Johan Michelazzi ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-10-01",
+      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "8b116323-e820-4a85-ab70-3ff0c170f821",
+      "name": "Johan Michelazzi",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-02-28",
+      "kept_active_id": "8a64c5a1-d158-42c7-be23-2158975d5646",
+      "reason": "duplicate_inactive"
+    },
+    {
+      "id": "14b992b0-ebbd-48a3-b903-ce7ec35187d4",
+      "name": "Isabelle Forget ",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "exit_date": "2025-11-28",
+      "kept_active_id": "a4238a9e-0a74-44e7-b069-11fe744a3c3e",
+      "reason": "duplicate_inactive"
+    }
+  ],
+  "duplicates_ambiguous_logged_only": [
+    {
+      "name": "léa ebebeden",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "total_entries": 3,
+      "active_count": 2,
+      "archived_count": 0,
+      "entry_ids": [
+        "ccc431c7-f887-4739-bd18-817fd9f94035",
+        "09925ae5-dee5-4aa5-a808-3a37efee0d3e",
+        "e209f8ac-aada-4925-8d4d-7df7f5579365"
+      ],
+      "memberships": [
+        "THE COACH PASS MENSUEL",
+        "HUBFIT",
+        "THE COACH PASS MENSUEL"
+      ],
+      "exit_dates": [
+        "2025-08-31",
+        null,
+        null
+      ],
+      "note": "Plusieurs entrées actives pour un même nom → à arbitrer"
+    },
+    {
+      "name": "taha bentafat",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "total_entries": 3,
+      "active_count": 2,
+      "archived_count": 0,
+      "entry_ids": [
+        "9377e975-500b-4390-962a-56ccb7d74c79",
+        "b137fc73-25b7-43c4-b532-f7db08df54cf",
+        "f98aadf5-20a7-43dc-9cfe-b1aa664af5c0"
+      ],
+      "memberships": [
+        "HUBFIT",
+        "THE COACH PASS MENSUEL",
+        "THE COACH PASS MENSUEL"
+      ],
+      "exit_dates": [
+        null,
+        "2025-11-30",
+        null
+      ],
+      "note": "Plusieurs entrées actives pour un même nom → à arbitrer"
+    },
+    {
+      "name": "cindy & alexis cabassot & bolle",
+      "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+      "total_entries": 2,
+      "active_count": 2,
+      "archived_count": 0,
+      "entry_ids": [
+        "a448f459-6083-45b3-bc87-e299b529e987",
+        "b9dc8329-cdda-4348-b605-990c1aaec770"
+      ],
+      "memberships": [
+        "HYBRID FULL DUO - PAIEMENT MENSUEL",
+        "HYBRID FULL DUO - PAIEMENT MENSUEL"
+      ],
+      "exit_dates": [
+        "",
+        "2027-02-26"
+      ],
+      "note": "Plusieurs entrées actives pour un même nom → à arbitrer"
+    }
+  ]
+}

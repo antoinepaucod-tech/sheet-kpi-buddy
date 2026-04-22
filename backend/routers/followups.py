@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 
-from core.config import db, exclude_archived, check_member_not_archived
+from core.config import db, exclude_archived, check_member_not_archived, get_archived_member_ids
 from core.security import get_club_id
 from models.members import MemberFollowUp, MemberFollowUpCreate
 
@@ -40,7 +40,10 @@ async def get_followups(
         if to_date:
             query["followup_date"]["$lte"] = to_date
     
-    return await db.member_followups.find(query, {"_id": 0}).sort("followup_date", 1).to_list(1000)
+    docs = await db.member_followups.find(query, {"_id": 0}).sort("followup_date", 1).to_list(1000)
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    return [d for d in docs if d.get("member_id") not in archived_ids]
 
 
 @router.get("/upcoming")
@@ -53,6 +56,10 @@ async def get_upcoming_followups(days: int = 7):
         "followup_date": {"$gte": today.isoformat(), "$lte": end_date.isoformat()},
         "status": {"$in": ["scheduled", "rescheduled"]}
     }, {"_id": 0}).sort("followup_date", 1).to_list(500)
+    
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids()
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
     
     for doc in docs:
         member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1})
@@ -73,6 +80,10 @@ async def get_missed_followups():
         "status": {"$in": ["scheduled", "rescheduled"]}
     }, {"_id": 0}).sort("followup_date", 1).to_list(500)
     
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids()
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
+    
     for doc in docs:
         await db.member_followups.update_one(
             {"id": doc["id"]},
@@ -91,6 +102,8 @@ async def get_missed_followups():
 
 @router.post("")
 async def create_followup(data: MemberFollowUpCreate, club_id: Optional[str] = Depends(get_club_id)):
+    # Type C: block if target member is archived
+    await check_member_not_archived(data.member_id)
     followup = MemberFollowUp(**data.model_dump())
     doc = followup.model_dump()
     if club_id:

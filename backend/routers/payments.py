@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime, timezone, timedelta
 from calendar import monthrange
 
-from core.config import db, MONTHS_FR, exclude_archived, check_member_not_archived, get_member_archived_warning
+from core.config import db, MONTHS_FR, exclude_archived, check_member_not_archived, get_member_archived_warning, get_archived_member_ids
 from core.security import get_club_id
 from models.payments import (
     PaymentSchedule, PaymentScheduleCreate,
@@ -235,6 +235,10 @@ async def get_payments(
     
     docs = await db.payments.find(query, {"_id": 0}).sort("due_date", -1).to_list(1000)
     
+    # Type B: silently filter out payments linked to archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
+    
     # Enrich with member names and filter out departed members' pending/late payments
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     result = []
@@ -279,6 +283,10 @@ async def get_late_payments(club_id: Optional[str] = Depends(get_club_id)):
     if club_id:
         q["club_id"] = club_id
     docs = await db.payments.find(q, {"_id": 0}).sort("due_date", 1).to_list(500)
+    
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
     
     # Filter out payments for departed members
     filtered_docs = []
@@ -342,6 +350,10 @@ async def get_upcoming_payments(days: int = 7, club_id: Optional[str] = Depends(
         q["club_id"] = club_id
     docs = await db.payments.find(q, {"_id": 0}).sort("due_date", 1).to_list(500)
     
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
+    
     for doc in docs:
         member = await db.customer_members.find_one({"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1})
         if member:
@@ -353,6 +365,8 @@ async def get_upcoming_payments(days: int = 7, club_id: Optional[str] = Depends(
 
 @router.post("/payments")
 async def create_payment(data: PaymentCreate):
+    # Type C: block if target member is archived
+    await check_member_not_archived(data.member_id)
     payment = Payment(**data.model_dump())
     doc = payment.model_dump()
     await db.payments.insert_one(doc)
@@ -430,6 +444,9 @@ async def mark_payment_paid(payment_id: str, body: dict = {}):
     
     result = await db.payments.find_one({"id": payment_id}, {"_id": 0})
     result["transaction_created"] = True
+    warnings = await get_member_archived_warning(existing.get("member_id", ""))
+    if warnings:
+        result["warnings"] = warnings
     return result
 
 
@@ -475,9 +492,9 @@ async def generate_monthly_payments(year: int, month: int, club_id: Optional[str
     month_str = f"{year}-{month:02d}"
     days_in_month = monthrange(year, month)[1]
     
-    # Get billing-enabled members (active, including coaches and offerts, non-departed)
+    # Get billing-enabled members (active, including coaches and offerts, non-departed, non-archived)
     all_members = await db.customer_members.find(
-        _cq(club_id, {"billing_enabled": True}),
+        exclude_archived(_cq(club_id, {"billing_enabled": True})),
         {"_id": 0}
     ).to_list(5000)
     

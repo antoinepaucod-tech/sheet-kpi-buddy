@@ -10,7 +10,7 @@ import os
 import resend
 from dotenv import load_dotenv
 
-from core.config import db, exclude_archived
+from core.config import db, exclude_archived, get_archived_member_ids
 from core.security import get_club_id
 
 load_dotenv()
@@ -291,6 +291,7 @@ async def send_bulk_notifications(data: BulkNotificationRequest):
 
     if data.notification_type == "payment_reminder":
         today = datetime.now(timezone.utc).date()
+        archived_ids = await get_archived_member_ids()
         late_payments = await db.payments.find({
             "due_date": {"$lt": today.isoformat()},
             "status": {"$in": ["pending", "late"]},
@@ -298,6 +299,9 @@ async def send_bulk_notifications(data: BulkNotificationRequest):
         }, {"_id": 0}).to_list(200)
 
         for p in late_payments:
+            # Type B: silently skip archived members
+            if p.get("member_id") in archived_ids:
+                continue
             member = await db.customer_members.find_one({"id": p["member_id"]}, {"_id": 0})
             if not member or not member.get("email"):
                 continue
@@ -313,6 +317,7 @@ async def send_bulk_notifications(data: BulkNotificationRequest):
     elif data.notification_type == "review_reminder":
         today = datetime.now(timezone.utc).date()
         week_later = today + timedelta(days=7)
+        archived_ids = await get_archived_member_ids()
         upcoming = await db.annual_reviews.find({
             "review_date": {"$gte": today.isoformat(), "$lte": week_later.isoformat()},
             "status": "scheduled"
@@ -322,6 +327,9 @@ async def send_bulk_notifications(data: BulkNotificationRequest):
         app_base_url = os.environ.get("FRONTEND_URL", "https://member-archive-mgmt.preview.emergentagent.com")
 
         for r in upcoming:
+            # Type B: silently skip archived members
+            if r.get("member_id") in archived_ids:
+                continue
             member = await db.customer_members.find_one({"id": r["member_id"]}, {"_id": 0})
             if not member:
                 continue

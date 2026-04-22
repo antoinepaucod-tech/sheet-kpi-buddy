@@ -55,3 +55,24 @@ async def get_member_archived_warning(member_id: str) -> list:
     if doc and doc.get("archived_at"):
         return ["member_archived"]
     return []
+
+
+async def get_archived_member_ids(club_id: str = None) -> set:
+    """Return set of member_ids whose customer_members doc has archived_at set.
+    Used to silently filter secondary collections (payments, followups, reviews)
+    that don't have their own archived_at field.
+    """
+    q = {"archived_at": {"$ne": None, "$exists": True}}
+    if club_id:
+        q["club_id"] = club_id
+    docs = await db.customer_members.find(q, {"_id": 0, "id": 1}).to_list(5000)
+    return {d["id"] for d in docs if d.get("id")}
+
+
+async def get_archived_coach_ids(club_id: str = None) -> set:
+    """Same as get_archived_member_ids but for coaches collection."""
+    q = {"archived_at": {"$ne": None, "$exists": True}}
+    if club_id:
+        q["club_id"] = club_id
+    docs = await db.coaches.find(q, {"_id": 0, "id": 1}).to_list(5000)
+    return {d["id"] for d in docs if d.get("id")}

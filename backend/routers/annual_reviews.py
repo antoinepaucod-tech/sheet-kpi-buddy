@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from uuid import uuid4
 import logging
 
-from core.config import db, exclude_archived, check_member_not_archived
+from core.config import db, exclude_archived, check_member_not_archived, get_archived_member_ids
 from core.security import get_club_id
 from models.members import AnnualReview, AnnualReviewCreate
 
@@ -57,6 +57,10 @@ async def get_reviews(
 
     docs = await db.annual_reviews.find(query, {"_id": 0}).sort("review_date", -1).to_list(500)
 
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
+
     for doc in docs:
         member = await db.customer_members.find_one(
             {"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "review_frequency": 1}
@@ -83,6 +87,10 @@ async def get_upcoming_reviews(days: int = 30, club_id: Optional[str] = Depends(
         q["club_id"] = club_id
     docs = await db.annual_reviews.find(q, {"_id": 0}).sort("review_date", 1).to_list(100)
 
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
+
     for doc in docs:
         member = await db.customer_members.find_one(
             {"id": doc["member_id"]}, {"_id": 0, "name": 1, "email": 1, "phone": 1, "review_frequency": 1}
@@ -108,8 +116,12 @@ async def get_review_stats(club_id: Optional[str] = Depends(get_club_id)):
     today_date = now.date()
 
     all_scheduled = await db.annual_reviews.find(
-        _cq(club_id, {"status": "scheduled"}), {"_id": 0, "review_date": 1}
+        _cq(club_id, {"status": "scheduled"}), {"_id": 0, "review_date": 1, "member_id": 1}
     ).to_list(None)
+
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    all_scheduled = [r for r in all_scheduled if r.get("member_id") not in archived_ids]
 
     overdue = 0
     this_week = 0
@@ -143,6 +155,10 @@ async def get_overdue_reviews(club_id: Optional[str] = Depends(get_club_id)):
         "status": "scheduled"
     }), {"_id": 0}).sort("review_date", 1).to_list(100)
 
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    docs = [d for d in docs if d.get("member_id") not in archived_ids]
+
     for doc in docs:
         member = await db.customer_members.find_one(
             {"id": doc["member_id"]}, {"_id": 0, "name": 1}
@@ -161,6 +177,10 @@ async def get_dashboard_alerts(club_id: Optional[str] = Depends(get_club_id)):
     all_scheduled = await db.annual_reviews.find(
         _cq(club_id, {"status": "scheduled"}), {"_id": 0}
     ).to_list(500)
+
+    # Type B: silently filter archived members
+    archived_ids = await get_archived_member_ids(club_id)
+    all_scheduled = [r for r in all_scheduled if r.get("member_id") not in archived_ids]
 
     overdue = []
     this_week = []
@@ -294,6 +314,8 @@ async def get_review(review_id: str):
 
 @router.post("")
 async def create_review(data: AnnualReviewCreate, club_id: Optional[str] = Depends(get_club_id)):
+    # Type C: block if target member is archived
+    await check_member_not_archived(data.member_id)
     review = AnnualReview(**data.model_dump())
     doc = review.model_dump()
     if club_id:
@@ -315,9 +337,9 @@ async def auto_generate_reviews(club_id: Optional[str] = Depends(get_club_id)):
     """
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # Get ALL members
+    # Get ALL members (excluding archived — Type B filter)
     members = await db.customer_members.find(
-        _cq(club_id),
+        exclude_archived(_cq(club_id)),
         {"_id": 0, "id": 1, "name": 1, "contract_signed_date": 1,
          "annual_review_date": 1, "exit_date": 1, "membership": 1,
          "annual_review_enabled": 1, "first_review_date": 1,

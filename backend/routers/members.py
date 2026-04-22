@@ -665,14 +665,19 @@ async def dissociate_duo(member_id: str):
 
 @router.delete("/{member_id}")
 async def delete_member(member_id: str):
-    member = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "name": 1})
-    result = await db.customer_members.delete_one({"id": member_id})
-    if result.deleted_count == 0:
+    """B.5 — Redirect hard delete to soft delete. Member is archived instead of deleted."""
+    import logging
+    logger = logging.getLogger(__name__)
+    doc = await db.customer_members.find_one({"id": member_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
-    await db.weekly_trainings.delete_many({"member_id": member_id})
-    await db.challenge_checkins.delete_many({"member_id": member_id})
-    await db.member_renewals.delete_many({"member_id": member_id})
-    return {"message": "Membre et données associées supprimés"}
+    if doc.get("archived_at"):
+        logger.info(f"[SoftDelete] DELETE /members/{member_id} — already archived, no-op")
+        return {"message": "Soft delete applied (already archived)", "soft_delete": True}
+    now = datetime.now(timezone.utc).isoformat()
+    await db.customer_members.update_one({"id": member_id}, {"$set": {"archived_at": now, "updated_at": now}})
+    logger.info(f"[SoftDelete] DELETE /members/{member_id} redirected to archive — name={doc.get('name')}")
+    return {"message": "Soft delete applied", "soft_delete": True, "archived_at": now}
 
 
 # ── Soft delete (archive / restore) ──────────────────────────────────────────

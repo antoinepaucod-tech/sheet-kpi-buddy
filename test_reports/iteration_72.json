@@ -1,0 +1,44 @@
+{
+  "summary": "Sprint B — A/B/C archived-member filtering + soft delete redirect thoroughly tested. 24/24 pytest tests passed. Type C guards (POST payments/followups/annual-reviews/challenges participants) correctly return 400 when target member is archived. Type B silent filters correctly exclude archived members from GET payments, payments/late, payments/upcoming, followups, followups/upcoming, followups/missed, annual-reviews, annual-reviews/upcoming, annual-reviews/overdue, annual-reviews/stats, annual-reviews/dashboard-alerts, POST annual-reviews/auto-generate, POST payments/generate/{year}/{month}, POST notifications/send-bulk (payment_reminder and review_reminder). Warning `member_archived` correctly returned on POST payments/{id}/mark-paid and revert-to-unpaid when member archived. B.5 soft delete redirect verified on DELETE /members/{id} and DELETE /coaches/{id} with idempotency (second DELETE returns {message: 'already archived', soft_delete: true}). Regression check on POST /members + archive + restore passed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration72_sprint_b_filters.py",
+    "/app/test_reports/pytest/pytest_results_iter72.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "core/config.get_archived_member_ids and get_archived_coach_ids load up to 5000 docs each call; for large clubs, consider caching per-request (e.g., via Request scope or fastapi Depends) to avoid repeated queries across endpoints that already do several list filters.",
+    "followups.py get_archived_member_ids() is called WITHOUT club_id on /upcoming and /missed routes (line 61, 84) while followups GET / passes club_id. Slight inconsistency — no functional bug because filter is an exclusion set, but could over-filter if a member_id collides across clubs. Recommend passing club_id for consistency.",
+    "members.py DELETE /members/{id}: good idempotent behavior. coaches.py DELETE identical pattern. Consider extracting to a shared soft_delete helper to DRY.",
+    "Sprint B covers only the owner endpoints. If other collections (e.g., challenge_checkins, activity_logs, recurring_transactions) reference member_id, verify they don't surface archived-member data in their own list endpoints before closing sprint."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration72_sprint_b_filters.py"
+  ],
+  "success_rate": {"backend": "100% (24/24 tests)", "frontend": "N/A (backend-only)"},
+  "test_credentials": {
+    "email": "antoine.paucod@the-coach.pro",
+    "password": "TheCoach1290.",
+    "test_club_versoix": "0a327bf5-c759-49eb-87e4-551913f78bdb"
+  },
+  "seed_data_creation": "Tests create TEST_ prefixed members/coaches and clean up via direct MongoDB delete_many on customer_members/coaches/payments/annual_reviews/member_followups at teardown. No production data mutated.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sprint B fully green. Test file at /app/backend/tests/test_iteration72_sprint_b_filters.py is idempotent and self-cleaning (uses TEST_ prefix + direct pymongo teardown). Safe to re-run anytime. The challenges/auto-generate-bilans endpoint was also smoke-tested live via curl and returned 200 {created: 19}. Note: BulkNotificationRequest expects field `notification_type` (not `type`), and ChallengeParticipantCreate requires `challenge_id` in body (redundant with path param but enforced by pydantic model).",
+  "features_tested": {
+    "Type C guards (400 if archived)": "POST /api/payments, POST /api/followups, POST /api/annual-reviews, POST /api/challenges/{id}/participants — all PASS",
+    "Type B silent filters (list endpoints)": "GET /api/payments, /api/payments/late, /api/payments/upcoming, /api/followups, /api/followups/upcoming, /api/followups/missed, /api/annual-reviews, /api/annual-reviews/upcoming, /api/annual-reviews/overdue, /api/annual-reviews/stats, /api/annual-reviews/dashboard-alerts — all PASS",
+    "Type B bulk generation filters": "POST /api/payments/generate/{year}/{month}, POST /api/annual-reviews/auto-generate, POST /api/notifications/send-bulk (payment_reminder, review_reminder) — all PASS. POST /api/challenges/auto-generate-bilans smoke-tested via curl, returned 200.",
+    "Warnings on mark-paid / revert-to-unpaid": "POST /api/payments/{id}/mark-paid and /api/payments/{id}/revert-to-unpaid return warnings=['member_archived'] when target archived — PASS",
+    "B.5 soft delete redirect": "DELETE /api/members/{id} returns {message: 'Soft delete applied', soft_delete: true, archived_at: ...}, idempotent on second call returns 'already archived'. Identical behavior verified for DELETE /api/coaches/{id} — PASS",
+    "Regression": "POST /api/members, POST /api/members/{id}/archive, POST /api/members/{id}/restore — PASS"
+  }
+}

@@ -80,10 +80,20 @@ async def update_coach(coach_id: str, data: CoachCreate):
 
 @router.delete("/{coach_id}")
 async def delete_coach(coach_id: str):
-    result = await db.coaches.delete_one({"id": coach_id})
-    if result.deleted_count == 0:
+    """B.5 — Redirect hard delete to soft delete. Coach is archived instead of deleted."""
+    import logging
+    logger = logging.getLogger(__name__)
+    doc = await db.coaches.find_one({"id": coach_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Coach introuvable")
-    return {"message": "Coach supprimé"}
+    if doc.get("archived_at"):
+        # Already archived — idempotent
+        logger.info(f"[SoftDelete] DELETE /coaches/{coach_id} — already archived, no-op")
+        return {"message": "Soft delete applied (already archived)", "soft_delete": True}
+    now = datetime.now(timezone.utc).isoformat()
+    await db.coaches.update_one({"id": coach_id}, {"$set": {"archived_at": now, "updated_at": now}})
+    logger.info(f"[SoftDelete] DELETE /coaches/{coach_id} redirected to archive — name={doc.get('name')}")
+    return {"message": "Soft delete applied", "soft_delete": True, "archived_at": now}
 
 
 # ── Soft delete (archive / restore) ──────────────────────────────────────────
