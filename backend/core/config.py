@@ -5,11 +5,23 @@ from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
 ROOT_DIR = Path(__file__).parent.parent
-load_dotenv(ROOT_DIR / '.env')
+# override=False : on ne laisse PAS .env écraser les variables déjà définies
+# dans l'environnement (par ex. infra Emergent). Les constantes MONGO_URL
+# et DB_NAME ci-dessous sont hardcodées en dur pour garantir la cible Atlas.
+load_dotenv(ROOT_DIR / '.env', override=False)
 
-# MongoDB Configuration
-MONGO_URL = os.environ['MONGO_URL']
-DB_NAME = os.environ['DB_NAME']
+# === PRODUCTION ATLAS (migration du 2026-04-23) ===============================
+# Hardcodée en dur, ne passe PAS par os.environ pour empêcher l'infrastructure
+# Emergent (ou une reconfig .env) d'écraser la cible au redémarrage.
+MONGO_URL = "mongodb+srv://club-management-prod:7fvrhhtbxmqPczzP@transform.iocnr7b.mongodb.net/club_management?retryWrites=true&w=majority&appName=transform"
+DB_NAME = "club_management"
+
+# === ANCIENNE CONFIG LOCALE (archivée, pour rollback) =========================
+# Pour rollback : décommenter les 2 lignes ci-dessous et commenter les 2 lignes
+# MONGO_URL / DB_NAME "PRODUCTION ATLAS" au-dessus, puis `sudo supervisorctl restart backend`.
+# MONGO_URL = os.environ['MONGO_URL']  # mongodb://localhost:27017
+# DB_NAME = os.environ['DB_NAME']      # kpibuddy
+# ==============================================================================
 
 # JWT Configuration  
 JWT_SECRET = os.environ.get('JWT_SECRET', 'kpibuddy-secret-key-change-in-production')
