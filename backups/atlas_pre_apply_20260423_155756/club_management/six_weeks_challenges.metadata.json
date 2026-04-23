@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"club_id":{"$numberInt":"1"}},"name":"club_id_1"}],"uuid":"32cff6d5f1ba4392be675328f9860bff","collectionName":"six_weeks_challenges","type":"collection"}

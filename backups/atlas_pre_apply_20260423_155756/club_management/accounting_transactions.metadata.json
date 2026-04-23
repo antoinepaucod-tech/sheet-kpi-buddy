@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"club_id":{"$numberInt":"1"}},"name":"club_id_1"}],"uuid":"85b07ba59e8242488f13111f640bb424","collectionName":"accounting_transactions","type":"collection"}

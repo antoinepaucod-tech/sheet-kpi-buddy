@@ -65,10 +65,15 @@ async def import_database(payload: dict, user=Depends(get_current_user)):
     return {"message": "Import terminé", "results": results}
 
 @router.get("/download-backup")
-async def download_backup(token: str = Query(..., description="One-time backup download token from .env")):
-    """Download the most recent full backup ZIP from /app/backups/.
+async def download_backup(
+    token: str = Query(..., description="One-time backup download token from .env"),
+    file: str = Query(None, description="Specific backup filename (defaults to latest)"),
+):
+    """Download a backup ZIP from /app/backups/.
     
     Protected by BACKUP_DOWNLOAD_TOKEN env var (must match token query param).
+    If `file` is provided, downloads that specific file (must match *.zip in /app/backups).
+    Otherwise, downloads the most recent *.zip by mtime.
     This endpoint is intentionally temporary — remove after migration is complete.
     """
     expected = os.environ.get("BACKUP_DOWNLOAD_TOKEN", "")
@@ -79,8 +84,21 @@ async def download_backup(token: str = Query(..., description="One-time backup d
     if not os.path.isdir(backup_dir):
         raise HTTPException(status_code=404, detail="Backup directory not found")
 
-    # Find the most recent full_backup_*.zip
-    candidates = sorted(glob.glob(os.path.join(backup_dir, "full_backup_*.zip")), reverse=True)
+    if file:
+        # Security: restrict to basename + *.zip
+        if "/" in file or ".." in file or not file.endswith(".zip"):
+            raise HTTPException(status_code=400, detail="Invalid file name")
+        target = os.path.join(backup_dir, file)
+        if not os.path.isfile(target):
+            raise HTTPException(status_code=404, detail=f"Backup file not found: {file}")
+        return FileResponse(path=target, media_type="application/zip", filename=file)
+
+    # Find the most recent *.zip by mtime
+    candidates = sorted(
+        glob.glob(os.path.join(backup_dir, "*.zip")),
+        key=os.path.getmtime,
+        reverse=True,
+    )
     if not candidates:
         raise HTTPException(status_code=404, detail="No backup ZIP found in /app/backups")
 
@@ -105,7 +123,7 @@ async def backup_status(token: str = Query(...)):
         return {"backups": [], "count": 0}
 
     files = []
-    for path in sorted(glob.glob(os.path.join(backup_dir, "full_backup_*.zip")), reverse=True):
+    for path in sorted(glob.glob(os.path.join(backup_dir, "*.zip")), key=os.path.getmtime, reverse=True):
         stat = os.stat(path)
         files.append({
             "filename": os.path.basename(path),
