@@ -55,6 +55,16 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Auto-recalculates KPIs + triggers Supabase sync
   - APScheduler daily at 01:00 UTC
 
+## Completed Tasks (Session 2026-04-23 — Migration Atlas)
+- [x] **Migration DB MongoDB locale → MongoDB Atlas** (2026-04-23)
+  - Backup complet pré-migration (724 KB ZIP, 27 collections, 5037 docs)
+  - Connection Atlas hardcodée dans `/app/backend/core/config.py` (load_dotenv override=False)
+  - `mongorestore` kpibuddy → club_management : 5037/5037 docs OK, 0 failure
+  - Validation intégrité : 100% match manifest vs Atlas
+  - Tests endpoints : /members (328), /coaches (7), /payments (162) → HTTP 200
+  - DB locale `kpibuddy` conservée intacte pour rollback 48h minimum
+  - Doc : `/app/MIGRATION_ATLAS.md` (procédure complète + rollback)
+
 ## Completed Tasks (Session 2026-04-22 — Sprint B)
 - [x] Sprint A : Infrastructure soft delete (archived_at, rent_amount, rent_status, endpoints /archive, /restore, /revert-to-unpaid)
 - [x] Sprint B Backend : Classification endpoints A/B/C complète
