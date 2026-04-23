@@ -19,15 +19,14 @@ import asyncio
 import argparse
 import os
 import sys
+from pathlib import Path
 from datetime import datetime, timezone
 from collections import defaultdict
 from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
 
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
-
-MONGO_URL = os.environ['MONGO_URL']
-DB_NAME = os.environ['DB_NAME']
+# Import cohérent avec le backend — garantit la cible Atlas (hardcoded dans core/config.py)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from core.config import MONGO_URL, DB_NAME  # noqa: E402
 
 # Abonnements obsolètes (retirés du catalogue) → archiver systématiquement
 # même si exit_date n'est pas encore passée.
@@ -35,6 +34,12 @@ OBSOLETE_MEMBERSHIPS = ["HUBFIT"]
 
 
 async def main(apply: bool = False):
+    # Garde-fou : affiche la cible DB avant toute opération
+    host = MONGO_URL.split('@')[1].split('/')[0] if '@' in MONGO_URL else 'localhost'
+    print(f"\n🎯 Cible DB      : {DB_NAME}")
+    print(f"🎯 MONGO_URL host: {host}")
+    print(f"⚠️  Vérifie que c'est bien Atlas (transform.iocnr7b.mongodb.net) avant de continuer !\n")
+
     client = AsyncIOMotorClient(MONGO_URL)
     db = client[DB_NAME]
 
