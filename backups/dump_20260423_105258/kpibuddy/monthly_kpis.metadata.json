@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"club_id":{"$numberInt":"1"}},"name":"club_id_1"}],"uuid":"7100562535364dda93bab5836f71f1bf","collectionName":"monthly_kpis","type":"collection"}

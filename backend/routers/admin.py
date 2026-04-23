@@ -1,6 +1,8 @@
 """Admin routes for database export/import between environments"""
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import JSONResponse
+import os
+import glob
+from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi.responses import JSONResponse, FileResponse
 from datetime import datetime, timezone
 
 from core.config import db
@@ -61,3 +63,55 @@ async def import_database(payload: dict, user=Depends(get_current_user)):
         results[col_name] = {"imported": len(docs)}
 
     return {"message": "Import terminé", "results": results}
+
+@router.get("/download-backup")
+async def download_backup(token: str = Query(..., description="One-time backup download token from .env")):
+    """Download the most recent full backup ZIP from /app/backups/.
+    
+    Protected by BACKUP_DOWNLOAD_TOKEN env var (must match token query param).
+    This endpoint is intentionally temporary — remove after migration is complete.
+    """
+    expected = os.environ.get("BACKUP_DOWNLOAD_TOKEN", "")
+    if not expected or token != expected:
+        raise HTTPException(status_code=403, detail="Invalid or missing token")
+
+    backup_dir = "/app/backups"
+    if not os.path.isdir(backup_dir):
+        raise HTTPException(status_code=404, detail="Backup directory not found")
+
+    # Find the most recent full_backup_*.zip
+    candidates = sorted(glob.glob(os.path.join(backup_dir, "full_backup_*.zip")), reverse=True)
+    if not candidates:
+        raise HTTPException(status_code=404, detail="No backup ZIP found in /app/backups")
+
+    latest = candidates[0]
+    filename = os.path.basename(latest)
+    return FileResponse(
+        path=latest,
+        media_type="application/zip",
+        filename=filename,
+    )
+
+
+@router.get("/backup-status")
+async def backup_status(token: str = Query(...)):
+    """List available backup ZIPs (protected by token)."""
+    expected = os.environ.get("BACKUP_DOWNLOAD_TOKEN", "")
+    if not expected or token != expected:
+        raise HTTPException(status_code=403, detail="Invalid or missing token")
+
+    backup_dir = "/app/backups"
+    if not os.path.isdir(backup_dir):
+        return {"backups": [], "count": 0}
+
+    files = []
+    for path in sorted(glob.glob(os.path.join(backup_dir, "full_backup_*.zip")), reverse=True):
+        stat = os.stat(path)
+        files.append({
+            "filename": os.path.basename(path),
+            "size_bytes": stat.st_size,
+            "size_human": f"{stat.st_size / 1024:.1f} KB",
+            "mtime_iso": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        })
+    return {"backups": files, "count": len(files), "backup_dir": backup_dir}
+

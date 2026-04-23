@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"club_id":{"$numberInt":"1"}},"name":"club_id_1"}],"uuid":"07b5807f4e134a9b8638d2d42067e0d3","collectionName":"recurring_validations","type":"collection"}

@@ -1,0 +1,169 @@
+{
+  "timestamp": "20260423_105258",
+  "db": "kpibuddy",
+  "source": "mongodb://localhost:27017",
+  "collections": [
+    {
+      "name": "accounting_categories",
+      "doc_count": 41,
+      "file": "accounting_categories.json",
+      "size_bytes": 21168
+    },
+    {
+      "name": "accounting_transactions",
+      "doc_count": 3488,
+      "file": "accounting_transactions.json",
+      "size_bytes": 2073452
+    },
+    {
+      "name": "activity_logs",
+      "doc_count": 222,
+      "file": "activity_logs.json",
+      "size_bytes": 79618
+    },
+    {
+      "name": "annual_reviews",
+      "doc_count": 220,
+      "file": "annual_reviews.json",
+      "size_bytes": 182212
+    },
+    {
+      "name": "challenge_participants",
+      "doc_count": 1,
+      "file": "challenge_participants.json",
+      "size_bytes": 634
+    },
+    {
+      "name": "club_settings",
+      "doc_count": 3,
+      "file": "club_settings.json",
+      "size_bytes": 864
+    },
+    {
+      "name": "clubs",
+      "doc_count": 4,
+      "file": "clubs.json",
+      "size_bytes": 848
+    },
+    {
+      "name": "coaches",
+      "doc_count": 7,
+      "file": "coaches.json",
+      "size_bytes": 2547
+    },
+    {
+      "name": "course_kpis",
+      "doc_count": 59,
+      "file": "course_kpis.json",
+      "size_bytes": 39833
+    },
+    {
+      "name": "course_types",
+      "doc_count": 9,
+      "file": "course_types.json",
+      "size_bytes": 1879
+    },
+    {
+      "name": "customer_members",
+      "doc_count": 328,
+      "file": "customer_members.json",
+      "size_bytes": 351833
+    },
+    {
+      "name": "excluded_recurring_expenses",
+      "doc_count": 0,
+      "file": "excluded_recurring_expenses.json",
+      "size_bytes": 3
+    },
+    {
+      "name": "ghl_sales",
+      "doc_count": 1,
+      "file": "ghl_sales.json",
+      "size_bytes": 376
+    },
+    {
+      "name": "ghl_syncs",
+      "doc_count": 2,
+      "file": "ghl_syncs.json",
+      "size_bytes": 15266
+    },
+    {
+      "name": "instructors",
+      "doc_count": 7,
+      "file": "instructors.json",
+      "size_bytes": 1687
+    },
+    {
+      "name": "member_followups",
+      "doc_count": 0,
+      "file": "member_followups.json",
+      "size_bytes": 3
+    },
+    {
+      "name": "member_renewals",
+      "doc_count": 4,
+      "file": "member_renewals.json",
+      "size_bytes": 1378
+    },
+    {
+      "name": "member_types",
+      "doc_count": 3,
+      "file": "member_types.json",
+      "size_bytes": 1059
+    },
+    {
+      "name": "membership_types",
+      "doc_count": 20,
+      "file": "membership_types.json",
+      "size_bytes": 11339
+    },
+    {
+      "name": "monthly_kpis",
+      "doc_count": 34,
+      "file": "monthly_kpis.json",
+      "size_bytes": 55440
+    },
+    {
+      "name": "payment_schedules",
+      "doc_count": 94,
+      "file": "payment_schedules.json",
+      "size_bytes": 44715
+    },
+    {
+      "name": "payments",
+      "doc_count": 162,
+      "file": "payments.json",
+      "size_bytes": 79631
+    },
+    {
+      "name": "recurring_transactions",
+      "doc_count": 0,
+      "file": "recurring_transactions.json",
+      "size_bytes": 3
+    },
+    {
+      "name": "recurring_validations",
+      "doc_count": 0,
+      "file": "recurring_validations.json",
+      "size_bytes": 3
+    },
+    {
+      "name": "six_weeks_challenges",
+      "doc_count": 1,
+      "file": "six_weeks_challenges.json",
+      "size_bytes": 323
+    },
+    {
+      "name": "users",
+      "doc_count": 2,
+      "file": "users.json",
+      "size_bytes": 937
+    },
+    {
+      "name": "weekly_trainings",
+      "doc_count": 325,
+      "file": "weekly_trainings.json",
+      "size_bytes": 111737
+    }
+  ]
+}
