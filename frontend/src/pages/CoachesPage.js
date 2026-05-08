@@ -139,9 +139,16 @@ export default function CoachesPage() {
         rent_status: newStatus,
       }),
     onSuccess: (res, vars) => {
-      // Fire-and-forget invalidation: TanStack v5 will refetch the active ['coaches'] query
-      // and re-render the table badge as soon as the new data lands. Do NOT await.
+      // INSTANT UI UPDATE: patch the cached coach in ALL ['coaches', ...] caches.
+      const updatedCoach = res?.data || { ...vars.coach, rent_status: vars.newStatus };
+      queryClient.setQueriesData({ queryKey: ["coaches"] }, (list) =>
+        Array.isArray(list)
+          ? list.map((c) => (c.id === vars.coach.id ? { ...c, ...updatedCoach } : c))
+          : list
+      );
+      // Eventual reconciliation
       queryClient.invalidateQueries({ queryKey: ["coaches"] });
+
       const newLabel = vars.newStatus === "impayé" ? "impayé" : "en attente";
       toast.success(`Loyer de ${vars.coach.name} repassé en ${newLabel}`);
       setRentRevertDialog({ open: false, newStatus: null, previousStatus: null });

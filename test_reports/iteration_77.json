@@ -1,0 +1,34 @@
+{
+  "summary": "Sprint B Lot 2 hotfix V3 retest — optimistic setQueryData cache patch + invalidateQueries. CODE REVIEW PASSED: PaymentsPage.js lines 187-200 correctly implement queryClient.setQueryData on ['payments'], ['payments','late'], ['payments','upcoming'] using the mutation response payload (instant synchronous UI patch), then non-awaited invalidateQueries({queryKey:['payments']}) for eventual server reconciliation. CoachesPage.js similarly uses queryClient.setQueriesData({queryKey:['coaches']}) followed by invalidateQueries. The optimistic-cache approach recommended in iter76 is now in place. UNABLE TO COMPLETE FUNCTIONAL UI TEST in this session: the topbar period combobox selection (clicking 'octobre 2025' in the dropdown list) did NOT persist after navigation to /payments — the topbar continued to display 'mai 2026' and the page showed 0 paid payments / 'Paiements (0)' / 'En retard (0)' tabs, with no revert-payment-{id} buttons present. This is likely a session-state issue specific to this fresh browser session (period not persisted across nav, or the combobox option click selected the value but did not commit it). Without paid payments visible, the strict <1s revert→swap timing cannot be measured. Tests 2 and 3 were not reached. RECOMMENDATION: main agent should self-test by following the exact described flow (login → /payments → manually click topbar 'mai 2026' → click 'octobre 2025' → wait for table to load 73 paid rows → click any 'Impayé' button → confirm without email → observe row swap). Code is consistent with the fix that was empirically suggested in iter76.",
+  "tests_executed": {
+    "Test 1 — Payment revert <2s UI swap": "NOT EXECUTED (env) — could not get paid payments to appear. Topbar combobox option click for 'oct 2025' did not change the active period (topbar still showed 'mai 2026' after click; revert-payment-* buttons count = 0). Code path verified to be correct.",
+    "Test 2 — Coach rent revert <2s UI swap": "NOT EXECUTED — depended on Test 1 environment baseline. Code path /app/frontend/src/pages/CoachesPage.js verified.",
+    "Test 3 — Members archive non-régression": "NOT EXECUTED — same session ran out of token budget."
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Topbar period combobox", "issue": "Selecting an option (e.g. 'octobre 2025') in the topbar period combobox does not appear to persist the selection — after navigating to /payments the topbar still displays the previous period ('mai 2026') and the data is unchanged. This blocked TEST 1 setup. May not be a regression (was usable in iter76 logs) but caused this test session to fail. Worth confirming whether persistence relies on localStorage / URL search params and that the combobox click actually fires the correct setter.", "affected_selectors": ["button[role='combobox']:nth-of-type(2)", "[role='option']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "MAIN AGENT SELF-TEST: The fix in PaymentsPage.js (setQueryData on 3 keys + invalidateQueries) is the exact pattern iter76 recommended. Self-test by manually selecting 'octobre 2025' in the topbar AFTER landing on /payments (not on dashboard), waiting for the 73 paid rows to render, then clicking any 'Impayé' button, confirming WITHOUT email — the row's button MUST swap to 'Payé' within ~100ms because setQueryData is synchronous.",
+    "CONFIRM topbar period selection persists across navigations OR document the order required (must select period AFTER opening /payments)."
+  ],
+  "critical_code_review_comments": [
+    "PaymentsPage.js L187-200: optimistic patch is correctly written. Uses Array.isArray guard, immutably maps the cached arrays, and merges {...p, ...payment} so any field returned by the server (status, paid_date, etc.) replaces the old value. setQueryData is synchronous — UI re-renders in the same tick. invalidateQueries is fire-and-forget for eventual reconciliation. This is textbook TanStack v5.",
+    "CoachesPage.js — uses setQueriesData({queryKey:['coaches']}) which patches ALL cached coach lists matching the prefix (handles paginated/filtered variants). Good defensive choice.",
+    "MINOR (out of scope): The mutation response payload structure is critical here. If the backend ever returns a partial object (e.g. omits 'paid_date'), the spread {...p, ...payment} would keep the old paid_date silently. Consider explicit field selection or a backend test that asserts the response shape."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "0/3 tests executed end-to-end in this session; code review PASS for all 3 fix locations"},
+  "test_credentials": "antoine.paucod@the-coach.pro / TheCoach1290.",
+  "seed_data_creation": "None (no destructive actions executed because revert-payment-{id} buttons were never visible in this session).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The setQueryData fix for both PaymentsPage and CoachesPage is in place and matches iter76's recommendation. To functionally validate: (1) Login as antoine.paucod, (2) Navigate to /payments FIRST (not via dashboard), (3) Use the topbar combobox to select 'octobre 2025' — wait for the table to populate with paid rows (badge 'Payé' green) and revert-payment-{id} buttons to appear, (4) Click any revert-payment-* button, confirm WITHOUT email, (5) Within 1s the same row should show mark-paid-{id} button and 'En retard' or 'En attente' status badge — without any F5. Backend logs no longer matter for the swap because setQueryData patches the cache synchronously from the response payload. (6) Then test coach rent flow on /coaches with Antoine Paucod. (7) Then test member archive non-regression.",
+  "rca of the issue": "Iter77 testing session: code-review confirms the fix matches the iter76 recommendation. Could not complete e2e UI verification because the topbar period combobox value did not persist after selecting 'oct 2025' from the dashboard (or it required a different selection mechanism). Main agent self-test is appropriate."
+}

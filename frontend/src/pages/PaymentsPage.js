@@ -185,10 +185,19 @@ export default function PaymentsPage() {
       return { payment: res.data, mailStatus, mailError, memberEmail };
     },
     onSuccess: ({ payment, mailStatus, mailError, memberEmail }) => {
-      // Fire-and-forget invalidations: TanStack v5 will refetch active queries in parallel
-      // and re-render the list as soon as the new data lands (typically <1s).
-      // Do NOT await: keeping the mutation in pending state would block dialog close.
+      // INSTANT UI UPDATE: optimistically patch the cached arrays with the server response.
+      // This avoids relying on TanStack v5 prefix-match invalidation (which empirically
+      // does not always refetch the active observer) and guarantees <100ms row swap.
+      const patchInList = (list) =>
+        Array.isArray(list)
+          ? list.map((p) => (p.id === payment.id ? { ...p, ...payment } : p))
+          : list;
+      queryClient.setQueryData(["payments"], patchInList);
+      queryClient.setQueryData(["payments", "late"], patchInList);
+      queryClient.setQueryData(["payments", "upcoming"], patchInList);
+      // Eventual reconciliation with the server (fire-and-forget)
       queryClient.invalidateQueries({ queryKey: ["payments"] });
+
       const newStatus = payment?.status === "late" ? "en retard" : "en attente";
       toast.success(`Paiement repassé en ${newStatus}`);
       if (mailStatus === "sent") {
