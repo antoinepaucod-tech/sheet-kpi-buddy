@@ -55,7 +55,7 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Auto-recalculates KPIs + triggers Supabase sync
   - APScheduler daily at 01:00 UTC
 
-## Completed Tasks (Session 2026-04-23 — Migration Atlas + Sprint B Apply)
+## Completed Tasks (Session 2026-04-23 / 2026-05-08 — Migration Atlas + Sprint B Apply + Récupération DB-A)
 - [x] **Migration DB MongoDB locale → MongoDB Atlas** (2026-04-23)
   - Backup complet pré-migration (724 KB ZIP, 27 collections, 5037 docs)
   - Connection Atlas hardcodée dans `/app/backend/core/config.py` (load_dotenv override=False)
@@ -64,12 +64,20 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Doc : `/app/MIGRATION_ATLAS.md`
 - [x] **Sprint B `--apply` APPLIQUÉ sur Atlas** (2026-04-23)
   - Fix script `migrate_sprint_b.py` : import depuis `core.config` + garde-fou visuel de la cible DB
-  - Script `migrate_sprint_b.py` corrigé après incident initial (apply sur mauvaise DB kpibuddy au lieu d'Atlas)
-  - DB locale `kpibuddy` restaurée depuis ZIP pré-migration après l'incident
-  - Mini-backup Atlas pré-apply : `atlas_pre_apply_20260423_155756.zip` (384 KB)
-  - Apply propre sur Atlas : 7 coachs rent_* init + 204 archivés (exit_date) + 3 HUBFIT + 0 doublons = 207 archivés
+  - 207 archivés (204 exit_date + 3 HUBFIT obsolète) + 7 coachs rent_* init
   - 1 cas ambigu non touché : Cabassot & Bolle (HYBRID DUO normal)
-  - Tests endpoints OK : /members (121 actifs, 328 include_archived, 207 only_archived), /coaches (7 rent_status=impayé)
+- [x] **Récupération DB-A vers Atlas** (2026-05-08)
+  - Découverte : le déploiement franchise-sync.emergent.host pointait sur DB-A (managed Emergent customer-apps.nngdus.mongodb.net) avant la migration Atlas du 23/04
+  - 4 semaines de saisies utilisateur (30 mars - 28 avril) étaient dans DB-A, invisibles depuis Atlas perso
+  - Dump DB-A obtenu via mongodb-viewer-2 Emergent (449 KB, 23 collections)
+  - Merge sélectif via script `merge_db_a_recovery.py` (whitelist + INSERT only) :
+    - 109 accounting_transactions (61 avril + 47 mars tardives + 1 mai)
+    - 121 weekly_trainings (semaines 14-16 majoritairement)
+    - 100 course_kpis
+    - 12 activity_logs
+    - 3 customer_members (Anouk Salina, Christine Wambaa, Norman Pilller) avec name trim + club_id Versoix forcé
+  - Total : 345 docs récupérés
+  - Sprint B préservé : 207 archivés, 7 coachs rent_* inchangés
 
 ## Completed Tasks (Session 2026-04-22 — Sprint B Backend)
 - [x] Sprint A : Infrastructure soft delete (archived_at, rent_amount, rent_status, endpoints /archive, /restore, /revert-to-unpaid)
