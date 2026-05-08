@@ -25,6 +25,7 @@ import NotificationsPage from "./pages/NotificationsPage";
 import MonthlyBudgetPage from "./pages/MonthlyBudgetPage";
 import FranchiseDashboard from "./pages/FranchiseDashboard";
 import MetaHelpPage from "./pages/MetaHelpPage";
+import ArchivesPage from "./pages/ArchivesPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -148,6 +149,7 @@ function AppInner() {
                   <Route path="/coaches" element={<CoachesPage />} />
                   <Route path="/franchise" element={<FranchiseDashboard />} />
                   <Route path="/meta-help" element={<MetaHelpPage />} />
+                  <Route path="/archives" element={<ArchivesPage />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

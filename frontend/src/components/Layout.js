@@ -28,6 +28,7 @@ import {
   Building2,
   ChevronDown,
   HelpCircle,
+  Archive,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -92,6 +93,12 @@ const NAV_SECTIONS = (lang) => [
     items: [
       { path: "/settings", icon: Settings, label: lang === "fr" ? "Paramètres" : "Settings" },
       { path: "/settings/types", icon: Sliders, label: lang === "fr" ? "Config. Types" : "Types Config" },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { path: "/archives", icon: Archive, label: lang === "fr" ? "Archives" : "Archives" },
     ],
   },
 ];

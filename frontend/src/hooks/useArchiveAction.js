@@ -5,8 +5,8 @@ import { toast } from "sonner";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ENTITY_LABELS = {
-  member: { fr: { single: "membre", plural: "membres" } },
-  coach: { fr: { single: "coach", plural: "coachs" } },
+  member: { single: "membre", plural: "membres" },
+  coach: { single: "coach", plural: "coachs" },
 };
 
 const ENTITY_PATHS = {
@@ -15,7 +15,7 @@ const ENTITY_PATHS = {
 };
 
 /**
- * Hook réutilisable pour archiver / restaurer un membre ou un coach.
+ * Hook reutilisable pour archiver / restaurer un membre ou un coach.
  *
  * @param {'member' | 'coach'} entityType
  * @param {object} options - { onSuccess?: () => void, queryKeysToInvalidate?: string[] }
@@ -23,20 +23,32 @@ const ENTITY_PATHS = {
 export function useArchiveAction(entityType, options = {}) {
   const queryClient = useQueryClient();
   const path = ENTITY_PATHS[entityType];
-  const label = ENTITY_LABELS[entityType].fr;
+  const label = ENTITY_LABELS[entityType];
 
   const invalidate = () => {
-    const defaultKeys = [path, `${path}-archived`, `${path}-all`];
-    const keys = options.queryKeysToInvalidate || defaultKeys;
-    keys.forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
+    // Invalidate ALL related caches (active list, archived list, expiring, etc.)
+    if (entityType === "member") {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["members-archived"] });
+      queryClient.invalidateQueries({ queryKey: ["memberships-unique"] });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["coaches"] });
+      queryClient.invalidateQueries({ queryKey: ["coaches-archived"] });
+    }
+    (options.queryKeysToInvalidate || []).forEach((k) =>
+      queryClient.invalidateQueries({ queryKey: Array.isArray(k) ? k : [k] })
+    );
   };
 
   const archiveMutation = useMutation({
-    mutationFn: (id) => axios.post(`${API}/${path}/${id}/archive`),
+    mutationFn: ({ id, reason }) =>
+      axios.post(`${API}/${path}/${id}/archive`, reason ? { reason } : {}),
     onSuccess: () => {
       invalidate();
-      toast.success(`${label.single.charAt(0).toUpperCase()}${label.single.slice(1)} archivé`);
-      options.onSuccess?.();
+      toast.success(
+        `${label.single.charAt(0).toUpperCase()}${label.single.slice(1)} archivé`
+      );
+      options.onSuccess?.("archive");
     },
     onError: (err) => {
       toast.error(err.response?.data?.detail || "Erreur lors de l'archivage");
@@ -47,8 +59,10 @@ export function useArchiveAction(entityType, options = {}) {
     mutationFn: (id) => axios.post(`${API}/${path}/${id}/restore`),
     onSuccess: () => {
       invalidate();
-      toast.success(`${label.single.charAt(0).toUpperCase()}${label.single.slice(1)} restauré`);
-      options.onSuccess?.();
+      toast.success(
+        `${label.single.charAt(0).toUpperCase()}${label.single.slice(1)} restauré`
+      );
+      options.onSuccess?.("restore");
     },
     onError: (err) => {
       toast.error(err.response?.data?.detail || "Erreur lors de la restauration");
@@ -56,8 +70,8 @@ export function useArchiveAction(entityType, options = {}) {
   });
 
   return {
-    archive: archiveMutation.mutate,
-    restore: restoreMutation.mutate,
+    archive: (id, reason) => archiveMutation.mutate({ id, reason }),
+    restore: (id) => restoreMutation.mutate(id),
     isArchiving: archiveMutation.isPending,
     isRestoring: restoreMutation.isPending,
     label,

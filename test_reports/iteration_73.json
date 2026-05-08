@@ -1,0 +1,25 @@
+{
+  "summary": "Frontend-only e2e test of Sprint B Lot 1 archive/restore. All 11 listed scenarios passed: sidebar Administration > Archives, /archives 2-tab page (207 membres / 0 coachs), per-row restore, toggle 'Inclure les archivés' on /members and /coaches with ARCHIVÉ badge + restore button replacing archive, ArchiveConfirmDialog opens directly for non-DUO member, archive a coach with reason -> appears in /archives Coachs tab WITH the reason text -> restore (no reason field, simple confirm) -> coach disappears. Cross-validation between /coaches and /archives works.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ArchivesPage Members tab fetches /api/members?only_archived=true without club scoping in the query key — currently rendered all 207 archived members across clubs (super-admin context). If a non-super-admin views this, ensure backend already enforces club scoping (request states super_admin only relevant). Verify behavior for regular admin role.",
+    "ArchivesPage renders ALL 207 rows at once (no pagination/virtualization). Works at current scale but will degrade if archived volume grows past a few thousand. Consider TanStack virtualization or paginated query later.",
+    "useArchiveAction toast text is plain ('Membre archivé', 'Coach archivé') — does not surface the reason or include i18n via useTranslations. Minor i18n consistency gap with the rest of the app.",
+    "Toasts auto-dismissed before ~2s assertion window; not a bug, just FYI for future Playwright tests — assert immediately after the click rather than after waits."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "antoine.paucod@the-coach.pro / TheCoach1290. (super_admin)",
+  "seed_data_creation": "Archived 1 coach with reason 'TEST_archive_e2e_reason' then restored him in same run — DB returned to original state (0 archived coaches).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sprint B Lot 1 frontend (archive/restore UI, /archives page, sidebar Administration, ArchiveConfirmDialog, ArchiveBadge, toggles 'Inclure les archivés') is fully working. Test ran on Transform Versoix club (94 active members, 1 archived in this club view; /archives page however lists 207 archived members franchise-wide for super_admin). All data-testids in the request are populated correctly. Lot 2 (bulk actions, payment/coach rent revert modals) remains out of scope.",
+  "rca_of_the_issue": "n/a — no issues found"
+}

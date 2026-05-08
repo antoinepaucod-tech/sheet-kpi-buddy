@@ -99,14 +99,18 @@ async def delete_coach(coach_id: str):
 # ── Soft delete (archive / restore) ──────────────────────────────────────────
 
 @router.post("/{coach_id}/archive")
-async def archive_coach(coach_id: str):
+async def archive_coach(coach_id: str, body: Optional[dict] = None):
     doc = await db.coaches.find_one({"id": coach_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Coach introuvable")
     if doc.get("archived_at"):
         raise HTTPException(status_code=400, detail="Coach déjà archivé")
     now = datetime.now(timezone.utc).isoformat()
-    await db.coaches.update_one({"id": coach_id}, {"$set": {"archived_at": now, "updated_at": now}})
+    reason = (body or {}).get("reason") if isinstance(body, dict) else None
+    update = {"archived_at": now, "updated_at": now}
+    if reason:
+        update["archived_reason"] = reason
+    await db.coaches.update_one({"id": coach_id}, {"$set": update})
     return await db.coaches.find_one({"id": coach_id}, {"_id": 0})
 
 
@@ -118,7 +122,10 @@ async def restore_coach(coach_id: str):
     if not doc.get("archived_at"):
         raise HTTPException(status_code=400, detail="Coach déjà actif (non archivé)")
     now = datetime.now(timezone.utc).isoformat()
-    await db.coaches.update_one({"id": coach_id}, {"$set": {"archived_at": None, "updated_at": now}})
+    await db.coaches.update_one(
+        {"id": coach_id},
+        {"$set": {"archived_at": None, "updated_at": now}, "$unset": {"archived_reason": ""}}
+    )
     return await db.coaches.find_one({"id": coach_id}, {"_id": 0})
 
 

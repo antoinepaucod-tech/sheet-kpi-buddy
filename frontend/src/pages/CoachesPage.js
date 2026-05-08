@@ -7,7 +7,6 @@ import {
   Users,
   Plus,
   Pencil,
-  Trash2,
   DollarSign,
   Mail,
   Phone,
@@ -15,6 +14,8 @@ import {
   Award,
   Search,
   BarChart3,
+  Archive,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -45,6 +46,9 @@ import {
 import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
+import { useArchiveAction } from "../hooks/useArchiveAction";
+import { ArchiveBadge } from "../components/ArchiveBadge";
+import { ArchiveConfirmDialog } from "../components/ArchiveConfirmDialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -62,6 +66,8 @@ export default function CoachesPage() {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const [archiveDialog, setArchiveDialog] = useState({ open: false, mode: "archive", coach: null });
   const [modalOpen, setModalOpen] = useState(false);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [selectedCoach, setSelectedCoach] = useState(null);
@@ -77,10 +83,18 @@ export default function CoachesPage() {
   });
   const [customSpecialty, setCustomSpecialty] = useState("");
 
-  // Fetch coaches
+  // Fetch coaches (optionally including archived)
   const { data: coaches = [], isLoading } = useQuery({
-    queryKey: ["coaches"],
-    queryFn: () => axios.get(`${API}/coaches`).then((r) => r.data),
+    queryKey: ["coaches", { includeArchived }],
+    queryFn: () =>
+      axios
+        .get(`${API}/coaches${includeArchived ? "?include_archived=true" : ""}`)
+        .then((r) => r.data),
+  });
+
+  // Archive / Restore hook
+  const { archive, restore, isArchiving, isRestoring } = useArchiveAction("coach", {
+    onSuccess: () => setArchiveDialog({ open: false, mode: "archive", coach: null }),
   });
 
   // Fetch coach stats when selected
@@ -105,13 +119,7 @@ export default function CoachesPage() {
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur"),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => axios.delete(`${API}/coaches/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["coaches"]);
-      toast.success("Coach supprimé");
-    },
-  });
+  // (Hard delete redirected to soft delete by backend; we now use Archive flow.)
 
   const resetForm = () => {
     setSelectedCoach(null);
@@ -213,16 +221,28 @@ export default function CoachesPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={lang === "fr" ? "Rechercher un coach..." : "Search coach..."}
-          className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
-          data-testid="coach-search"
-        />
+      {/* Search + Toggle archived */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative max-w-md flex-1 min-w-[260px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={lang === "fr" ? "Rechercher un coach..." : "Search coach..."}
+            className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
+            data-testid="coach-search"
+          />
+        </div>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <Switch
+            checked={includeArchived}
+            onCheckedChange={setIncludeArchived}
+            data-testid="coaches-include-archived-toggle"
+          />
+          <span className="text-sm text-[var(--color-text-secondary)]">
+            {lang === "fr" ? "Inclure les archivés" : "Include archived"}
+          </span>
+        </label>
       </div>
 
       {/* Table */}
@@ -261,7 +281,12 @@ export default function CoachesPage() {
                       style={{ backgroundColor: coach.color || "#0A84FF" }}
                     />
                   </TableCell>
-                  <TableCell className="text-white font-medium">{coach.name}</TableCell>
+                  <TableCell className="text-white font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>{coach.name}</span>
+                      {coach.archived_at && <ArchiveBadge />}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       {coach.email && (
@@ -317,22 +342,34 @@ export default function CoachesPage() {
                         className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[rgba(255,255,255,0.1)]"
                         onClick={() => openEditModal(coach)}
                         data-testid={`edit-${coach.id}`}
+                        disabled={!!coach.archived_at}
+                        title={coach.archived_at ? "Restaurer le coach pour l'éditer" : "Modifier"}
                       >
                         <Pencil size={14} />
                       </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
-                        onClick={() => {
-                          if (window.confirm("Supprimer ce coach ?")) {
-                            deleteMutation.mutate(coach.id);
-                          }
-                        }}
-                        data-testid={`delete-${coach.id}`}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
+                      {coach.archived_at ? (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-[var(--color-success)] hover:text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.08)]"
+                          onClick={() => setArchiveDialog({ open: true, mode: "restore", coach })}
+                          data-testid={`restore-${coach.id}`}
+                          title="Restaurer"
+                        >
+                          <RotateCcw size={14} />
+                        </Button>
+                      ) : (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.08)]"
+                          onClick={() => setArchiveDialog({ open: true, mode: "archive", coach })}
+                          data-testid={`archive-${coach.id}`}
+                          title="Archiver"
+                        >
+                          <Archive size={14} />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -545,6 +582,23 @@ export default function CoachesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Archive / Restore Confirm Dialog */}
+      <ArchiveConfirmDialog
+        open={archiveDialog.open}
+        onOpenChange={(o) => setArchiveDialog((s) => ({ ...s, open: o }))}
+        mode={archiveDialog.mode}
+        entityLabel="coach"
+        entityName={archiveDialog.coach?.name || ""}
+        isLoading={isArchiving || isRestoring}
+        onConfirm={(reason) => {
+          if (!archiveDialog.coach) return;
+          if (archiveDialog.mode === "archive") {
+            archive(archiveDialog.coach.id, reason);
+          } else {
+            restore(archiveDialog.coach.id);
+          }
+        }}
+      />
     </div>
   );
 }

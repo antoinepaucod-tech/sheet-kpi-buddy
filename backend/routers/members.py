@@ -683,14 +683,26 @@ async def delete_member(member_id: str):
 # ── Soft delete (archive / restore) ──────────────────────────────────────────
 
 @router.post("/{member_id}/archive")
-async def archive_member(member_id: str):
+async def archive_member(member_id: str, body: Optional[dict] = None):
     doc = await db.customer_members.find_one({"id": member_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
     if doc.get("archived_at"):
         raise HTTPException(status_code=400, detail="Membre déjà archivé")
     now = datetime.now(timezone.utc).isoformat()
-    await db.customer_members.update_one({"id": member_id}, {"$set": {"archived_at": now, "updated_at": now}})
+    reason = (body or {}).get("reason") if isinstance(body, dict) else None
+    update = {"archived_at": now, "updated_at": now}
+    if reason:
+        update["archived_reason"] = reason
+    await db.customer_members.update_one({"id": member_id}, {"$set": update})
+    await db.activity_logs.insert_one({
+        "id": str(uuid4()),
+        "member_id": member_id,
+        "action": "member_archived",
+        "description": f"Membre archivé{' — Raison : ' + reason if reason else ''}.",
+        "user_name": "Utilisateur",
+        "created_at": now,
+    })
     updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     return updated
 
@@ -703,7 +715,18 @@ async def restore_member(member_id: str):
     if not doc.get("archived_at"):
         raise HTTPException(status_code=400, detail="Membre déjà actif (non archivé)")
     now = datetime.now(timezone.utc).isoformat()
-    await db.customer_members.update_one({"id": member_id}, {"$set": {"archived_at": None, "updated_at": now}})
+    await db.customer_members.update_one(
+        {"id": member_id},
+        {"$set": {"archived_at": None, "updated_at": now}, "$unset": {"archived_reason": ""}}
+    )
+    await db.activity_logs.insert_one({
+        "id": str(uuid4()),
+        "member_id": member_id,
+        "action": "member_restored",
+        "description": "Membre restauré (sorti des archives).",
+        "user_name": "Utilisateur",
+        "created_at": now,
+    })
     updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     return updated
 

@@ -25,6 +25,8 @@ import {
   SkipForward,
   UserPlus,
   Activity,
+  Archive,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -54,6 +56,9 @@ import {
 } from "../components/ui/table";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
+import { useArchiveAction } from "../hooks/useArchiveAction";
+import { ArchiveBadge } from "../components/ArchiveBadge";
+import { ArchiveConfirmDialog } from "../components/ArchiveConfirmDialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -112,6 +117,8 @@ export default function MembersPage() {
   const [expandedMember, setExpandedMember] = useState(null);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyMemberId, setHistoryMemberId] = useState(null);
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const [archiveDialog, setArchiveDialog] = useState({ open: false, mode: "archive", member: null });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -158,8 +165,16 @@ export default function MembersPage() {
 
   // Fetch members
   const { data: members = [], isLoading } = useQuery({
-    queryKey: ["members"],
-    queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
+    queryKey: ["members", { includeArchived }],
+    queryFn: () =>
+      axios
+        .get(`${API}/members${includeArchived ? "?include_archived=true" : ""}`)
+        .then((r) => r.data),
+  });
+
+  // Archive / Restore hook
+  const { archive: archiveMember, restore: restoreMember, isArchiving: isArchivingMember, isRestoring: isRestoringMember } = useArchiveAction("member", {
+    onSuccess: () => setArchiveDialog({ open: false, mode: "archive", member: null }),
   });
 
   // Fetch expiring members
@@ -595,6 +610,16 @@ export default function MembersPage() {
             ))}
           </SelectContent>
         </Select>
+        <label className="flex items-center gap-2 cursor-pointer select-none ml-2">
+          <Switch
+            checked={includeArchived}
+            onCheckedChange={setIncludeArchived}
+            data-testid="members-include-archived-toggle"
+          />
+          <span className="text-xs text-[var(--color-text-secondary)]">
+            {lang === "fr" ? "Inclure archivés" : "Include archived"}
+          </span>
+        </label>
         <p className="text-xs text-[var(--color-text-tertiary)] ml-auto font-mono">{filteredMembers.length} résultats</p>
       </div>
 
@@ -654,6 +679,7 @@ export default function MembersPage() {
                           {member.is_duo && !member.duo_primary && (
                             <Badge className="bg-[rgba(191,90,242,0.1)] text-[#BF5AF2] border-0 text-[9px] px-1.5 py-0 opacity-70" data-testid="duo-partner-badge">PARTENAIRE</Badge>
                           )}
+                          {member.archived_at && <ArchiveBadge />}
                         </div>
                       </div>
                     </TableCell>
@@ -732,23 +758,37 @@ export default function MembersPage() {
                         >
                           <History size={14} />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:bg-[rgba(255,69,58,0.08)]"
-                          onClick={() => {
-                            if (member.is_duo) {
-                              setDuoWarningMember(member);
-                              setDuoWarningAction("delete");
-                              setDuoWarningOpen(true);
-                            } else {
-                              deleteMutation.mutate(member.id);
-                            }
-                          }}
-                          data-testid={`delete-${member.id}`}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+                        {member.archived_at ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-[var(--color-success)] hover:text-[var(--color-success)] hover:bg-[rgba(48,209,88,0.08)]"
+                            onClick={() => setArchiveDialog({ open: true, mode: "restore", member })}
+                            title="Restaurer"
+                            data-testid={`restore-${member.id}`}
+                          >
+                            <RotateCcw size={14} />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.08)]"
+                            onClick={() => {
+                              if (member.is_duo) {
+                                setDuoWarningMember(member);
+                                setDuoWarningAction("delete");
+                                setDuoWarningOpen(true);
+                              } else {
+                                setArchiveDialog({ open: true, mode: "archive", member });
+                              }
+                            }}
+                            title="Archiver"
+                            data-testid={`archive-${member.id}`}
+                          >
+                            <Archive size={14} />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1574,6 +1614,24 @@ export default function MembersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Archive / Restore Confirm Dialog */}
+      <ArchiveConfirmDialog
+        open={archiveDialog.open}
+        onOpenChange={(o) => setArchiveDialog((s) => ({ ...s, open: o }))}
+        mode={archiveDialog.mode}
+        entityLabel="membre"
+        entityName={archiveDialog.member?.name || ""}
+        isLoading={isArchivingMember || isRestoringMember}
+        onConfirm={(reason) => {
+          if (!archiveDialog.member) return;
+          if (archiveDialog.mode === "archive") {
+            archiveMember(archiveDialog.member.id, reason);
+          } else {
+            restoreMember(archiveDialog.member.id);
+          }
+        }}
+      />
     </div>
   );
 }
