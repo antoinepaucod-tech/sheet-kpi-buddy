@@ -142,9 +142,10 @@ export default function CoachesPage() {
       queryClient.invalidateQueries({ queryKey: ["coaches"] });
       const newLabel = vars.newStatus === "impayé" ? "impayé" : "en attente";
       toast.success(`Loyer de ${vars.coach.name} repassé en ${newLabel}`);
-      // If the edit modal is open on this coach, sync the form value
-      setFormData((f) => ({ ...f, rent_status: vars.newStatus }));
+      // Close revert dialog AND parent edit modal so user sees the updated table immediately
       setRentRevertDialog({ open: false, newStatus: null, previousStatus: null });
+      setModalOpen(false);
+      resetForm();
     },
     onError: (err) => {
       toast.error(err.response?.data?.detail || "Erreur lors de la mise à jour du statut");

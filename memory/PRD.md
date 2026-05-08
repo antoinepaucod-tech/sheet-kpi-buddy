@@ -99,11 +99,24 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] Testing frontend e2e : 11/11 scenarios passed (iteration_73.json)
 - [x] Cross-validation : archive coach avec raison → apparaît dans /archives → restore → réapparaît dans /coaches
 
+## Completed Tasks (Session 2026-05-08 — Sprint B Frontend Lot 2) ✅
+- [x] **B.6.1** Modale `RevertPaymentDialog` sur paiements payés
+  - Bouton "Impayé" sur chaque ligne `paid` (data-testid `revert-payment-{id}`)
+  - Modale affiche détails (membre, montant, échéances) et calcule automatiquement le nouveau statut (En attente / En retard) selon due_date
+  - Checkbox optionnelle "Renvoyer un mail de relance" (désactivée si membre sans email) — chaîne POST `/payments/{id}/revert-to-unpaid` puis POST `/notifications/send-payment-reminder/{id}` via Resend
+  - Toasts différenciés : succès revert + succès/warning email
+- [x] **B.6.2** Modale `RevertCoachRentDialog` sur transitions rent_status payé→impayé/en_attente
+  - Champs `rent_amount` (input CHF) + `rent_status` (select) ajoutés au formulaire d'édition coach
+  - Nouvelle colonne "Loyer" dans le tableau coachs (montant + badge coloré selon statut)
+  - Interception via `handleRentStatusChange` : seules les transitions `payé → {impayé, en_attente}` sur un coach existant déclenchent la modale
+  - Annulation restaure la valeur précédente du select (pas d'appel API)
+  - Confirmation appelle PUT `/api/coaches/{id}` avec payload complet, ferme la modale parent (UX clean)
+- [x] Testing frontend e2e : 8/9 e2e + 1/9 code-path (iteration_74.json), 100% sur les flows fonctionnels
+
 ## Upcoming Tasks
-- (P0) Sprint B Frontend **Lot 2** (à démarrer après validation prod du Lot 1) :
+- (P0) **Sprint B — VALIDATION & DÉPLOIEMENT** : tests utilisateur en preview puis déploiement Lot 1+Lot 2 en prod
+- (P0) Sprint B Frontend **Lot suivant** (à clarifier avec user après validation prod) :
   - B.4.4 : Actions en masse (bulk archive/restore) avec checkboxes + barre de progression
-  - B.6.1 : Modale de confirmation pour repasser un paiement en impayé (+ option email)
-  - B.6.2 : Modale de confirmation pour repasser un loyer coach en impayé (+ option email)
 - (P1) Bug "Paiements onglet vide avril 2026" sans filtre (mis en pause volontaire)
 - (P1) Sprint C : Filtres par type membre (IFRC, HG, Open Gym, Partenaire) et coach (Interne, THE COACH)
 - (P1) Sprint D : Couleurs transactions, planning, stats, membres à risques
