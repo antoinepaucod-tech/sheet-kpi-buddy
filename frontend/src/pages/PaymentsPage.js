@@ -134,23 +134,22 @@ export default function PaymentsPage() {
   // Mutations
   // Helper: synchronously patch the cached payments arrays with an updated payment
   // (so the table re-renders <100ms instead of waiting for the network refetch).
+  // Uses setQueriesData with prefix-match so any parameterized variant of the
+  // ['payments', ...] queryKey is patched (defensive — currently we use plain ['payments']).
   const patchPaymentInCache = (updated) => {
     if (!updated?.id) return;
-    const patcher = (list) =>
+    queryClient.setQueriesData({ queryKey: ["payments"] }, (list) =>
       Array.isArray(list)
         ? list.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
-        : list;
-    queryClient.setQueryData(["payments"], patcher);
-    queryClient.setQueryData(["payments", "late"], patcher);
-    queryClient.setQueryData(["payments", "upcoming"], patcher);
+        : list
+    );
   };
 
   const removePaymentFromCache = (id) => {
     if (!id) return;
-    const remover = (list) => (Array.isArray(list) ? list.filter((p) => p.id !== id) : list);
-    queryClient.setQueryData(["payments"], remover);
-    queryClient.setQueryData(["payments", "late"], remover);
-    queryClient.setQueryData(["payments", "upcoming"], remover);
+    queryClient.setQueriesData({ queryKey: ["payments"] }, (list) =>
+      Array.isArray(list) ? list.filter((p) => p.id !== id) : list
+    );
   };
 
   const createScheduleMutation = useMutation({
@@ -488,6 +487,7 @@ export default function PaymentsPage() {
                               variant="ghost"
                               onClick={() => deletePaymentMutation.mutate(payment.id)}
                               className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
+                              data-testid={`delete-payment-${payment.id}`}
                             >
                               <Trash2 size={14} />
                             </Button>
