@@ -184,13 +184,11 @@ export default function PaymentsPage() {
       }
       return { payment: res.data, mailStatus, mailError, memberEmail };
     },
-    onSuccess: async ({ payment, mailStatus, mailError, memberEmail }) => {
-      // Bulletproof: explicit awaited refetch of the 3 payments queries
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["payments"], type: "active" }),
-        queryClient.refetchQueries({ queryKey: ["payments", "late"], type: "active" }),
-        queryClient.refetchQueries({ queryKey: ["payments", "upcoming"], type: "active" }),
-      ]);
+    onSuccess: ({ payment, mailStatus, mailError, memberEmail }) => {
+      // Fire-and-forget invalidations: TanStack v5 will refetch active queries in parallel
+      // and re-render the list as soon as the new data lands (typically <1s).
+      // Do NOT await: keeping the mutation in pending state would block dialog close.
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       const newStatus = payment?.status === "late" ? "en retard" : "en attente";
       toast.success(`Paiement repassé en ${newStatus}`);
       if (mailStatus === "sent") {

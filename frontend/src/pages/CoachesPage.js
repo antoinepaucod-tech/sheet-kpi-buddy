@@ -138,9 +138,10 @@ export default function CoachesPage() {
         rent_amount: coach.rent_amount || 0,
         rent_status: newStatus,
       }),
-    onSuccess: async (res, vars) => {
-      // Bulletproof: explicit awaited refetch so the table badge updates instantly
-      await queryClient.refetchQueries({ queryKey: ["coaches"], type: "active" });
+    onSuccess: (res, vars) => {
+      // Fire-and-forget invalidation: TanStack v5 will refetch the active ['coaches'] query
+      // and re-render the table badge as soon as the new data lands. Do NOT await.
+      queryClient.invalidateQueries({ queryKey: ["coaches"] });
       const newLabel = vars.newStatus === "impayé" ? "impayé" : "en attente";
       toast.success(`Loyer de ${vars.coach.name} repassé en ${newLabel}`);
       setRentRevertDialog({ open: false, newStatus: null, previousStatus: null });
