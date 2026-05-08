@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from uuid import uuid4
 
 from core.config import db, exclude_archived, check_member_not_archived
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
 from models.members import (
     CustomerMember, CustomerMemberCreate,
     MemberRenewalHistory, WeeklyTraining, WeeklyTrainingUpdate,
@@ -844,31 +844,56 @@ async def get_member_renewals(member_id: str):
 
 
 @router.put("/{member_id}/onboarding")
-async def update_member_onboarding(member_id: str, body: dict):
-    """Update onboarding steps for a member"""
+async def update_member_onboarding(
+    member_id: str,
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update onboarding steps for a member.
+
+    Tracks who completed the onboarding and when (audit fields).
+    """
     existing = await db.customer_members.find_one({"id": member_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Membre introuvable")
-    
+
     update = {}
     onboarding_fields = [
         "onboarding_bsport", "onboarding_hubfit", "onboarding_nutrition",
         "questionnaire_coaching", "session_introduction"
     ]
-    
+
     for field in onboarding_fields:
         if field in body:
             update[field] = body[field]
-    
+
     all_steps = [update.get(f, existing.get(f, False)) for f in onboarding_fields]
-    if all(all_steps):
+    was_completed = existing.get("onboarding_completed", False) is True
+    is_completed = all(all_steps)
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    if is_completed:
         update["onboarding_completed"] = True
         update["onboarding_completed_date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        # Audit fields: only stamp on the transition (idempotent re-saves keep original author/date)
+        if not was_completed or not existing.get("onboarding_completed_at"):
+            update["onboarding_completed_at"] = now_iso
+            update["onboarding_completed_by"] = current_user.get("id")
+            # Display name: derive from email local part if no explicit name on user model.
+            email = current_user.get("email") or ""
+            display = current_user.get("name") or email.split("@")[0] or "Utilisateur"
+            update["onboarding_completed_by_name"] = display
+            update["onboarding_completed_by_email"] = email or None
     else:
         update["onboarding_completed"] = False
         update["onboarding_completed_date"] = None
-    
-    update["updated_at"] = datetime.now(timezone.utc).isoformat()
+        # On regression to incomplete, clear audit fields
+        update["onboarding_completed_at"] = None
+        update["onboarding_completed_by"] = None
+        update["onboarding_completed_by_name"] = None
+        update["onboarding_completed_by_email"] = None
+
+    update["updated_at"] = now_iso
     await db.customer_members.update_one({"id": member_id}, {"$set": update})
     return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
 

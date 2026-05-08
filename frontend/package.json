@@ -60,7 +60,8 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test",
+    "lint:rq": "eslint 'src/**/*.{js,jsx}' --no-warn-ignored"
   },
   "browserslist": {
     "production": [
@@ -73,6 +74,28 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ],
+    "rules": {
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "CallExpression[callee.property.name='invalidateQueries'][arguments.0.type='ArrayExpression']",
+          "message": "TanStack Query v5: positional invalidateQueries(['key']) is deprecated and silently no-op. Use invalidateQueries({ queryKey: ['key'] }) instead."
+        },
+        {
+          "selector": "CallExpression[callee.property.name='refetchQueries'][arguments.0.type='ArrayExpression']",
+          "message": "TanStack Query v5: positional refetchQueries(['key']) is deprecated. Use refetchQueries({ queryKey: ['key'] }) instead."
+        },
+        {
+          "selector": "CallExpression[callee.property.name='cancelQueries'][arguments.0.type='ArrayExpression']",
+          "message": "TanStack Query v5: positional cancelQueries(['key']) is deprecated. Use cancelQueries({ queryKey: ['key'] }) instead."
+        }
+      ]
+    }
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",

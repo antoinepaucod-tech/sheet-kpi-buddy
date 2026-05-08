@@ -415,6 +415,30 @@ export default function OnboardingPage() {
                       </div>
                     </div>
 
+                    {member.onboarding_percentage === 100 && (member.onboarding_completed_at || member.onboarding_completed_date || member.onboarding_completed_by_name) && (
+                      <div
+                        className="mb-4 px-3 py-2 rounded-[var(--radius-md)] bg-[rgba(48,209,88,0.08)] border border-[rgba(48,209,88,0.18)] flex items-center gap-2 text-xs text-[var(--color-success)]"
+                        data-testid={`completed-banner-${member.id}`}
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>
+                          Onboardé le{" "}
+                          {(() => {
+                            const raw = member.onboarding_completed_at || member.onboarding_completed_date;
+                            if (!raw) return "date inconnue";
+                            try {
+                              return format(parseISO(raw), "dd MMM yyyy", { locale: fr });
+                            } catch {
+                              return "date inconnue";
+                            }
+                          })()}
+                          {member.onboarding_completed_by_name && (
+                            <> par <span className="font-medium">{member.onboarding_completed_by_name}</span></>
+                          )}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-5 gap-3">
                       {ONBOARDING_STEPS.map((step) => {
                         const isStepCompleted = member[step.key];
@@ -467,27 +491,48 @@ export default function OnboardingPage() {
                   <TableRow className="border-[var(--color-border)]">
                     <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
                     <TableHead className="text-[var(--color-text-secondary)]">Abonnement</TableHead>
-                    <TableHead className="text-[var(--color-text-secondary)]">Date signature</TableHead>
+                    <TableHead className="text-[var(--color-text-secondary)]">Onboardé le</TableHead>
+                    <TableHead className="text-[var(--color-text-secondary)]">Par</TableHead>
                     <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {completedMembers.map((member) => (
-                    <TableRow key={member.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]">
-                      <TableCell className="text-white font-medium">{member.name}</TableCell>
-                      <TableCell className="text-[var(--color-text-secondary)]">{member.membership || "-"}</TableCell>
-                      <TableCell className="text-[var(--color-text-secondary)]">
-                        {member.contract_signed_date
-                          ? format(parseISO(member.contract_signed_date), "dd MMM yyyy", { locale: fr })
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
-                          Complété
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {completedMembers.map((member) => {
+                    // Prefer ISO datetime (new field), fallback to legacy date string
+                    const completedRaw = member.onboarding_completed_at || member.onboarding_completed_date;
+                    let completedLabel = "—";
+                    if (completedRaw) {
+                      try {
+                        completedLabel = format(parseISO(completedRaw), "dd MMM yyyy", { locale: fr });
+                      } catch {
+                        completedLabel = "—";
+                      }
+                    }
+                    const author = member.onboarding_completed_by_name;
+                    return (
+                      <TableRow
+                        key={member.id}
+                        className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]"
+                        data-testid={`completed-onboarding-row-${member.id}`}
+                      >
+                        <TableCell className="text-white font-medium">{member.name}</TableCell>
+                        <TableCell className="text-[var(--color-text-secondary)]">{member.membership || "-"}</TableCell>
+                        <TableCell className="text-[var(--color-text-secondary)]">{completedLabel}</TableCell>
+                        <TableCell className="text-[var(--color-text-secondary)]">
+                          {author ? (
+                            <span data-testid={`onboarding-author-${member.id}`}>{author}</span>
+                          ) : (
+                            <span className="text-[var(--color-text-tertiary)] italic text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
+                            Complété
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
