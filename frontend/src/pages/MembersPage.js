@@ -270,7 +270,7 @@ export default function MembersPage() {
         ? axios.put(`${API}/members/${selectedMember.id}`, data)
         : axios.post(`${API}/members`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["members"]);
+      queryClient.invalidateQueries({ queryKey: ["members"] });
       setModalOpen(false);
       setSelectedMember(null);
       toast.success(selectedMember ? "Membre mis à jour" : "Membre ajouté");
@@ -282,7 +282,7 @@ export default function MembersPage() {
   const deleteMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/members/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["members"]);
+      queryClient.invalidateQueries({ queryKey: ["members"] });
       toast.success("Membre supprimé");
     },
     onError: () => toast.error("Erreur lors de la suppression"),
@@ -292,7 +292,7 @@ export default function MembersPage() {
   const renewMutation = useMutation({
     mutationFn: ({ id, data }) => axios.post(`${API}/members/${id}/renew`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["members"]);
+      queryClient.invalidateQueries({ queryKey: ["members"] });
       setRenewModalOpen(false);
       setSelectedMember(null);
       toast.success("Abonnement renouvelé");

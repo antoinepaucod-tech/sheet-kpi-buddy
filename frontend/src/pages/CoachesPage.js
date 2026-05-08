@@ -115,7 +115,7 @@ export default function CoachesPage() {
         ? axios.put(`${API}/coaches/${selectedCoach.id}`, data)
         : axios.post(`${API}/coaches`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["coaches"]);
+      queryClient.invalidateQueries({ queryKey: ["coaches"] });
       setModalOpen(false);
       resetForm();
       toast.success(selectedCoach ? "Coach mis à jour" : "Coach ajouté");
@@ -138,11 +138,11 @@ export default function CoachesPage() {
         rent_amount: coach.rent_amount || 0,
         rent_status: newStatus,
       }),
-    onSuccess: (res, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["coaches"] });
+    onSuccess: async (res, vars) => {
+      // Bulletproof: explicit awaited refetch so the table badge updates instantly
+      await queryClient.refetchQueries({ queryKey: ["coaches"], type: "active" });
       const newLabel = vars.newStatus === "impayé" ? "impayé" : "en attente";
       toast.success(`Loyer de ${vars.coach.name} repassé en ${newLabel}`);
-      // Close revert dialog AND parent edit modal so user sees the updated table immediately
       setRentRevertDialog({ open: false, newStatus: null, previousStatus: null });
       setModalOpen(false);
       resetForm();

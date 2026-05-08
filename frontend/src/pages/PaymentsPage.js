@@ -135,7 +135,7 @@ export default function PaymentsPage() {
   const createScheduleMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/payment-schedules`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["payment-schedules"]);
+      queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
       setScheduleModalOpen(false);
       toast.success("Planning créé");
     },
@@ -145,7 +145,7 @@ export default function PaymentsPage() {
   const deleteScheduleMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/payment-schedules/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["payment-schedules"]);
+      queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
       toast.success("Planning supprimé");
     },
   });
@@ -153,7 +153,7 @@ export default function PaymentsPage() {
   const createPaymentMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/payments`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["payments"]);
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       setPaymentModalOpen(false);
       toast.success("Paiement créé");
     },
@@ -162,7 +162,7 @@ export default function PaymentsPage() {
   const markPaidMutation = useMutation({
     mutationFn: ({ id, data }) => axios.post(`${API}/payments/${id}/mark-paid`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["payments"]);
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       setMarkPaidModalOpen(false);
       toast.success("Paiement marqué comme payé");
     },
@@ -184,8 +184,13 @@ export default function PaymentsPage() {
       }
       return { payment: res.data, mailStatus, mailError, memberEmail };
     },
-    onSuccess: ({ payment, mailStatus, mailError, memberEmail }) => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
+    onSuccess: async ({ payment, mailStatus, mailError, memberEmail }) => {
+      // Bulletproof: explicit awaited refetch of the 3 payments queries
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["payments"], type: "active" }),
+        queryClient.refetchQueries({ queryKey: ["payments", "late"], type: "active" }),
+        queryClient.refetchQueries({ queryKey: ["payments", "upcoming"], type: "active" }),
+      ]);
       const newStatus = payment?.status === "late" ? "en retard" : "en attente";
       toast.success(`Paiement repassé en ${newStatus}`);
       if (mailStatus === "sent") {
@@ -203,7 +208,7 @@ export default function PaymentsPage() {
   const sendReminderMutation = useMutation({
     mutationFn: (paymentId) => axios.post(`${API}/notifications/send-payment-reminder/${paymentId}`),
     onSuccess: (res) => {
-      queryClient.invalidateQueries(["payments"]);
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast.success(res.data.message);
     },
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur d'envoi"),
@@ -212,7 +217,7 @@ export default function PaymentsPage() {
   const deletePaymentMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/payments/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["payments"]);
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast.success("Paiement supprimé");
     },
   });
@@ -220,7 +225,7 @@ export default function PaymentsPage() {
   const generatePaymentsMutation = useMutation({
     mutationFn: ({ year, month }) => axios.post(`${API}/payments/generate/${year}/${month}`),
     onSuccess: (res) => {
-      queryClient.invalidateQueries(["payments"]);
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast.success(`${res.data.created} paiements générés`);
     },
     onError: () => toast.error("Erreur lors de la génération"),
