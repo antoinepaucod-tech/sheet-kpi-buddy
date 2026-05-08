@@ -115,7 +115,7 @@ export default function ChallengePage() {
         ? axios.put(`${API}/challenges/${formData.id}`, data)
         : axios.post(`${API}/challenges`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["challenges"]);
+      queryClient.invalidateQueries({ queryKey: ["challenges"] });
       setModalOpen(false);
       toast.success(formData.id ? "Challenge mis à jour" : "Challenge créé");
     },
@@ -126,7 +126,7 @@ export default function ChallengePage() {
   const deleteMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/challenges/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["challenges"]);
+      queryClient.invalidateQueries({ queryKey: ["challenges"] });
       setSelectedChallenge(null);
       toast.success("Challenge supprimé");
     },
@@ -137,7 +137,7 @@ export default function ChallengePage() {
     mutationFn: (data) =>
       axios.post(`${API}/challenges/${selectedChallenge}/participants`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["challenges", selectedChallenge]);
+      queryClient.invalidateQueries({ queryKey: ["challenges", selectedChallenge] });
       setAddParticipantOpen(false);
       toast.success("Participant ajouté");
     },
@@ -149,7 +149,7 @@ export default function ChallengePage() {
     mutationFn: ({ participantId, data }) =>
       axios.put(`${API}/challenges/${selectedChallenge}/participants/${participantId}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["challenges", selectedChallenge]);
+      queryClient.invalidateQueries({ queryKey: ["challenges", selectedChallenge] });
     },
   });
 
@@ -158,7 +158,7 @@ export default function ChallengePage() {
     mutationFn: (participantId) =>
       axios.delete(`${API}/challenges/${selectedChallenge}/participants/${participantId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["challenges", selectedChallenge]);
+      queryClient.invalidateQueries({ queryKey: ["challenges", selectedChallenge] });
       toast.success("Participant retiré");
     },
   });
@@ -561,7 +561,7 @@ export default function ChallengePage() {
                                 });
                               } catch {}
                             }
-                            queryClient.invalidateQueries(["challenge-bilans"]);
+                            queryClient.invalidateQueries({ queryKey: ["challenge-bilans"] });
                           } catch {}
                         }}
                         data-testid="generate-bilans-btn"

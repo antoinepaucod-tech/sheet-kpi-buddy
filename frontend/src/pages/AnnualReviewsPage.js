@@ -148,7 +148,7 @@ export default function AnnualReviewsPage() {
     mutationFn: ({ id, data }) =>
       axios.post(`${API}/annual-reviews/${id}/complete`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["annual-reviews"]);
+      queryClient.invalidateQueries({ queryKey: ["annual-reviews"] });
       setModalOpen(false);
       setSelectedReview(null);
       toast.success("Bilan complété avec succès");
@@ -160,7 +160,7 @@ export default function AnnualReviewsPage() {
   const createMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/annual-reviews`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["annual-reviews"]);
+      queryClient.invalidateQueries({ queryKey: ["annual-reviews"] });
       toast.success("Bilan planifié");
     },
     onError: () => toast.error("Erreur lors de la création"),
@@ -178,7 +178,7 @@ export default function AnnualReviewsPage() {
     mutationFn: ({ id, reason }) =>
       axios.post(`${API}/annual-reviews/${id}/skip`, { reason, user_name: "Utilisateur" }),
     onSuccess: () => {
-      queryClient.invalidateQueries(["annual-reviews"]);
+      queryClient.invalidateQueries({ queryKey: ["annual-reviews"] });
       toast.success("Bilan skipé — prochain bilan planifié");
     },
     onError: () => toast.error("Erreur lors du skip"),
@@ -188,7 +188,7 @@ export default function AnnualReviewsPage() {
   const autoGenerateMutation = useMutation({
     mutationFn: () => axios.post(`${API}/annual-reviews/auto-generate`),
     onSuccess: (res) => {
-      queryClient.invalidateQueries(["annual-reviews"]);
+      queryClient.invalidateQueries({ queryKey: ["annual-reviews"] });
       toast.success(res.data.message);
     },
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la génération"),

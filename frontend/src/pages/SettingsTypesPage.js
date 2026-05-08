@@ -113,7 +113,7 @@ export default function SettingsTypesPage() {
   const createMembershipMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/settings/membership-types`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["membership-types"]);
+      queryClient.invalidateQueries({ queryKey: ["membership-types"] });
       setMembershipModalOpen(false);
       resetMembershipForm();
       toast.success("Type d'abonnement créé");
@@ -124,7 +124,7 @@ export default function SettingsTypesPage() {
   const updateMembershipMutation = useMutation({
     mutationFn: ({ id, data }) => axios.put(`${API}/settings/membership-types/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["membership-types"]);
+      queryClient.invalidateQueries({ queryKey: ["membership-types"] });
       setMembershipModalOpen(false);
       resetMembershipForm();
       toast.success("Type d'abonnement mis à jour");
@@ -135,7 +135,7 @@ export default function SettingsTypesPage() {
   const deleteMembershipMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/settings/membership-types/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["membership-types"]);
+      queryClient.invalidateQueries({ queryKey: ["membership-types"] });
       toast.success("Type d'abonnement supprimé");
     },
   });
@@ -160,7 +160,7 @@ export default function SettingsTypesPage() {
   const createMemberTypeMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/settings/member-types`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["member-types"]);
+      queryClient.invalidateQueries({ queryKey: ["member-types"] });
       setMemberTypeModalOpen(false);
       resetMemberTypeForm();
       toast.success("Type de membre créé");
@@ -171,7 +171,7 @@ export default function SettingsTypesPage() {
   const updateMemberTypeMutation = useMutation({
     mutationFn: ({ id, data }) => axios.put(`${API}/settings/member-types/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["member-types"]);
+      queryClient.invalidateQueries({ queryKey: ["member-types"] });
       setMemberTypeModalOpen(false);
       resetMemberTypeForm();
       toast.success("Type de membre mis à jour");
@@ -182,7 +182,7 @@ export default function SettingsTypesPage() {
   const deleteMemberTypeMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/settings/member-types/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["member-types"]);
+      queryClient.invalidateQueries({ queryKey: ["member-types"] });
       toast.success("Type de membre supprimé");
     },
   });

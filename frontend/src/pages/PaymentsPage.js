@@ -132,6 +132,27 @@ export default function PaymentsPage() {
   });
 
   // Mutations
+  // Helper: synchronously patch the cached payments arrays with an updated payment
+  // (so the table re-renders <100ms instead of waiting for the network refetch).
+  const patchPaymentInCache = (updated) => {
+    if (!updated?.id) return;
+    const patcher = (list) =>
+      Array.isArray(list)
+        ? list.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+        : list;
+    queryClient.setQueryData(["payments"], patcher);
+    queryClient.setQueryData(["payments", "late"], patcher);
+    queryClient.setQueryData(["payments", "upcoming"], patcher);
+  };
+
+  const removePaymentFromCache = (id) => {
+    if (!id) return;
+    const remover = (list) => (Array.isArray(list) ? list.filter((p) => p.id !== id) : list);
+    queryClient.setQueryData(["payments"], remover);
+    queryClient.setQueryData(["payments", "late"], remover);
+    queryClient.setQueryData(["payments", "upcoming"], remover);
+  };
+
   const createScheduleMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/payment-schedules`, data),
     onSuccess: () => {
@@ -153,6 +174,7 @@ export default function PaymentsPage() {
   const createPaymentMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/payments`, data),
     onSuccess: () => {
+      // Creation may produce one or more payment rows; rely on refetch.
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       setPaymentModalOpen(false);
       toast.success("Paiement créé");
@@ -161,7 +183,10 @@ export default function PaymentsPage() {
 
   const markPaidMutation = useMutation({
     mutationFn: ({ id, data }) => axios.post(`${API}/payments/${id}/mark-paid`, data),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      // Synchronous cache patch so the row badge swaps from Impayé/En retard → Payé instantly.
+      patchPaymentInCache(res?.data);
+      // Eventual server reconciliation (fire-and-forget)
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       setMarkPaidModalOpen(false);
       toast.success("Paiement marqué comme payé");
@@ -185,17 +210,8 @@ export default function PaymentsPage() {
       return { payment: res.data, mailStatus, mailError, memberEmail };
     },
     onSuccess: ({ payment, mailStatus, mailError, memberEmail }) => {
-      // INSTANT UI UPDATE: optimistically patch the cached arrays with the server response.
-      // This avoids relying on TanStack v5 prefix-match invalidation (which empirically
-      // does not always refetch the active observer) and guarantees <100ms row swap.
-      const patchInList = (list) =>
-        Array.isArray(list)
-          ? list.map((p) => (p.id === payment.id ? { ...p, ...payment } : p))
-          : list;
-      queryClient.setQueryData(["payments"], patchInList);
-      queryClient.setQueryData(["payments", "late"], patchInList);
-      queryClient.setQueryData(["payments", "upcoming"], patchInList);
-      // Eventual reconciliation with the server (fire-and-forget)
+      // Synchronous cache patch (instant UI swap) + eventual server reconciliation.
+      patchPaymentInCache(payment);
       queryClient.invalidateQueries({ queryKey: ["payments"] });
 
       const newStatus = payment?.status === "late" ? "en retard" : "en attente";
@@ -223,7 +239,9 @@ export default function PaymentsPage() {
 
   const deletePaymentMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/payments/${id}`),
-    onSuccess: () => {
+    onSuccess: (_res, id) => {
+      // Synchronous cache patch so the row disappears instantly.
+      removePaymentFromCache(id);
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast.success("Paiement supprimé");
     },

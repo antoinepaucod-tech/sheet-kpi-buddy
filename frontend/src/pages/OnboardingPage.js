@@ -164,8 +164,8 @@ export default function OnboardingPage() {
   const updateOnboardingMutation = useMutation({
     mutationFn: ({ memberId, data }) => axios.put(`${API}/members/${memberId}/onboarding`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["onboarding"]);
-      queryClient.invalidateQueries(["members"]);
+      queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+      queryClient.invalidateQueries({ queryKey: ["members"] });
       toast.success("Onboarding mis à jour");
     },
   });
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
   const createFollowupMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/followups`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["followups"]);
+      queryClient.invalidateQueries({ queryKey: ["followups"] });
       setFollowupModalOpen(false);
       toast.success("Suivi planifié");
     },
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
   const completeFollowupMutation = useMutation({
     mutationFn: ({ id, data }) => axios.post(`${API}/followups/${id}/complete`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["followups"]);
+      queryClient.invalidateQueries({ queryKey: ["followups"] });
       setCompleteModalOpen(false);
       toast.success("Suivi complété");
     },
@@ -191,7 +191,7 @@ export default function OnboardingPage() {
   const deleteFollowupMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/followups/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["followups"]);
+      queryClient.invalidateQueries({ queryKey: ["followups"] });
       toast.success("Suivi supprimé");
     },
   });
@@ -200,8 +200,8 @@ export default function OnboardingPage() {
     mutationFn: ({ memberId, reason }) =>
       axios.post(`${API}/onboarding/${memberId}/skip`, { reason, user_name: "Utilisateur" }),
     onSuccess: () => {
-      queryClient.invalidateQueries(["onboarding"]);
-      queryClient.invalidateQueries(["members"]);
+      queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+      queryClient.invalidateQueries({ queryKey: ["members"] });
       toast.success("Onboarding skipé");
       setSkipDialogOpen(false);
       setSkipTarget(null);
@@ -261,12 +261,12 @@ export default function OnboardingPage() {
     }, {
       onSuccess: () => {
         // Refetch in background without clearing cache
-        queryClient.invalidateQueries(["onboarding"]);
-        queryClient.invalidateQueries(["members"]);
+        queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+        queryClient.invalidateQueries({ queryKey: ["members"] });
       },
       onError: () => {
         // Rollback optimistic update on error
-        queryClient.invalidateQueries(["onboarding"]);
+        queryClient.invalidateQueries({ queryKey: ["onboarding"] });
       },
       onSettled: () => {
         setTimeout(() => setEditingMemberId(null), 500);

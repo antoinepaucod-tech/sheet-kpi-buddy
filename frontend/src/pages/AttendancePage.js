@@ -101,7 +101,7 @@ export default function AttendancePage() {
   const updateMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/trainings`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["trainings"]);
+      queryClient.invalidateQueries({ queryKey: ["trainings"] });
     },
   });
 

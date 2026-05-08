@@ -127,7 +127,7 @@ export default function CoursesPage() {
   const createCourseTypeMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/course-types`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["course-types"]);
+      queryClient.invalidateQueries({ queryKey: ["course-types"] });
       toast.success("Type de cours ajouté");
     },
   });
@@ -136,8 +136,8 @@ export default function CoursesPage() {
   const updateCourseTypeMutation = useMutation({
     mutationFn: ({ id, name }) => axios.put(`${API}/course-types/${id}`, { name }),
     onSuccess: () => {
-      queryClient.invalidateQueries(["course-types"]);
-      queryClient.invalidateQueries(["courses"]);
+      queryClient.invalidateQueries({ queryKey: ["course-types"] });
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       toast.success("Type de cours renommé");
       setEditingCourseType(null);
     },
@@ -157,7 +157,7 @@ export default function CoursesPage() {
   const createMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/courses`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["courses"]);
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       setModalOpen(false);
       toast.success("Cours ajouté");
     },
@@ -168,7 +168,7 @@ export default function CoursesPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => axios.put(`${API}/courses/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["courses"]);
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       setEditModalOpen(false);
       toast.success("Cours mis à jour");
       // Auto-sync salary after attendance change
@@ -183,7 +183,7 @@ export default function CoursesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/courses/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["courses"]);
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       toast.success("Cours supprimé");
     },
   });
@@ -192,7 +192,7 @@ export default function CoursesPage() {
   const copyPlanningMutation = useMutation({
     mutationFn: () => axios.post(`${API}/courses/copy-planning/${selectedYear}/${selectedMonth}`),
     onSuccess: (res) => {
-      queryClient.invalidateQueries(["courses"]);
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       toast.success(res.data.message);
     },
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la copie"),
@@ -202,8 +202,8 @@ export default function CoursesPage() {
   const generateSalaryMutation = useMutation({
     mutationFn: () => axios.post(`${API}/courses/generate-salary-expenses/${selectedYear}/${selectedMonth}`),
     onSuccess: (res) => {
-      queryClient.invalidateQueries(["transactions"]);
-      queryClient.invalidateQueries(["monthly-kpis"]);
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["monthly-kpis"] });
       toast.success(res.data.message);
     },
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la génération"),
@@ -213,14 +213,14 @@ export default function CoursesPage() {
   const bulkCreateMutation = useMutation({
     mutationFn: (rows) => axios.post(`${API}/courses/bulk`, rows),
     onSuccess: (res) => {
-      queryClient.invalidateQueries(["courses"]);
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       setBulkModalOpen(false);
       setBulkRows([]);
       toast.success(res.data.message);
       // Auto-sync salary
       setTimeout(() => {
         axios.post(`${API}/courses/generate-salary-expenses/${selectedYear}/${selectedMonth}`).then(() => {
-          queryClient.invalidateQueries(["transactions"]);
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
         }).catch(() => {});
       }, 500);
     },
@@ -231,7 +231,7 @@ export default function CoursesPage() {
   const replaceMutation = useMutation({
     mutationFn: (data) => axios.post(`${API}/coaches/replacements/`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["courses"]);
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       setReplaceModalOpen(false);
       toast.success("Remplacement enregistré");
     },
