@@ -90,9 +90,21 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] Script migration /app/backend/scripts/migrate_sprint_b.py (--dry-run par défaut, --apply avec confirmation)
 - [x] Testing backend : 24/24 tests pytest passent (/app/backend/tests/test_iteration72_sprint_b_filters.py)
 
+## Completed Tasks (Session 2026-05-08 — Sprint B Frontend Lot 1) ✅
+- [x] **B.4.1** Boutons Archive/Restore + ArchiveConfirmDialog (avec champ "Raison" optionnel)
+  - Composants partagés : `useArchiveAction.js` hook, `ArchiveBadge.js`, `ArchiveConfirmDialog.js`
+  - Backend : `/archive` accepte body `{reason}` (members + coaches), stocke `archived_reason`, log activity_log pour members
+- [x] **B.4.2** Toggle "Inclure les archivés" sur /members (`members-include-archived-toggle`) et /coaches (`coaches-include-archived-toggle`) + badge `ARCHIVÉ` visuel sur les lignes archivées
+- [x] **B.4.3** Page `/archives` (sidebar section "Administration") avec 2 onglets (Membres / Coachs) via `?only_archived=true`, recherche, restore par ligne + confirmation
+- [x] Testing frontend e2e : 11/11 scenarios passed (iteration_73.json)
+- [x] Cross-validation : archive coach avec raison → apparaît dans /archives → restore → réapparaît dans /coaches
+
 ## Upcoming Tasks
-- (P0) Sprint B suite : --apply de la migration APRÈS validation user + arbitrage des 3 cas ambigus
-- (P0) Sprint B Frontend (B.4 + B.6) : boutons Archiver/Restaurer, onglet "Voir archivés", badges, modales confirmation
+- (P0) Sprint B Frontend **Lot 2** (à démarrer après validation prod du Lot 1) :
+  - B.4.4 : Actions en masse (bulk archive/restore) avec checkboxes + barre de progression
+  - B.6.1 : Modale de confirmation pour repasser un paiement en impayé (+ option email)
+  - B.6.2 : Modale de confirmation pour repasser un loyer coach en impayé (+ option email)
+- (P1) Bug "Paiements onglet vide avril 2026" sans filtre (mis en pause volontaire)
 - (P1) Sprint C : Filtres par type membre (IFRC, HG, Open Gym, Partenaire) et coach (Interne, THE COACH)
 - (P1) Sprint D : Couleurs transactions, planning, stats, membres à risques
 - (P1) Investigation collection doublon `instructors`
