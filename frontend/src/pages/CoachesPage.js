@@ -49,6 +49,7 @@ import { useTranslations } from "../hooks/useTranslations";
 import { useArchiveAction } from "../hooks/useArchiveAction";
 import { ArchiveBadge } from "../components/ArchiveBadge";
 import { ArchiveConfirmDialog } from "../components/ArchiveConfirmDialog";
+import { RevertCoachRentDialog } from "../components/RevertCoachRentDialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -68,6 +69,7 @@ export default function CoachesPage() {
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [archiveDialog, setArchiveDialog] = useState({ open: false, mode: "archive", coach: null });
+  const [rentRevertDialog, setRentRevertDialog] = useState({ open: false, newStatus: null, previousStatus: null });
   const [modalOpen, setModalOpen] = useState(false);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [selectedCoach, setSelectedCoach] = useState(null);
@@ -80,6 +82,8 @@ export default function CoachesPage() {
     color: "#0A84FF",
     is_active: true,
     notes: "",
+    rent_amount: 0,
+    rent_status: "impayé",
   });
   const [customSpecialty, setCustomSpecialty] = useState("");
 
@@ -119,6 +123,60 @@ export default function CoachesPage() {
     onError: (err) => toast.error(err.response?.data?.detail || "Erreur"),
   });
 
+  // Rent status revert mutation (used by RevertCoachRentDialog)
+  const revertCoachRentMutation = useMutation({
+    mutationFn: ({ coach, newStatus }) =>
+      axios.put(`${API}/coaches/${coach.id}`, {
+        name: coach.name,
+        email: coach.email || null,
+        phone: coach.phone || null,
+        hourly_rate: coach.hourly_rate || 0,
+        specialties: coach.specialties || [],
+        color: coach.color || null,
+        is_active: coach.is_active !== false,
+        notes: coach.notes || null,
+        rent_amount: coach.rent_amount || 0,
+        rent_status: newStatus,
+      }),
+    onSuccess: (res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["coaches"] });
+      const newLabel = vars.newStatus === "impayé" ? "impayé" : "en attente";
+      toast.success(`Loyer de ${vars.coach.name} repassé en ${newLabel}`);
+      // If the edit modal is open on this coach, sync the form value
+      setFormData((f) => ({ ...f, rent_status: vars.newStatus }));
+      setRentRevertDialog({ open: false, newStatus: null, previousStatus: null });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.detail || "Erreur lors de la mise à jour du statut");
+      // Restore previous value
+      setFormData((f) => ({
+        ...f,
+        rent_status: rentRevertDialog.previousStatus || "payé",
+      }));
+      setRentRevertDialog({ open: false, newStatus: null, previousStatus: null });
+    },
+  });
+
+  // Intercept rent_status change in the edit form
+  const handleRentStatusChange = (newValue) => {
+    const previous = formData.rent_status;
+    // Only intercept if currently "payé" and transitioning to impayé / en_attente
+    const isRevertTransition =
+      previous === "payé" && (newValue === "impayé" || newValue === "en_attente");
+
+    if (isRevertTransition && selectedCoach) {
+      // Open confirmation dialog (do NOT update formData yet)
+      setRentRevertDialog({
+        open: true,
+        newStatus: newValue,
+        previousStatus: previous,
+      });
+    } else {
+      // Direct update (creation, or non-revert transitions e.g. impayé -> payé)
+      setFormData({ ...formData, rent_status: newValue });
+    }
+  };
+
   // (Hard delete redirected to soft delete by backend; we now use Archive flow.)
 
   const resetForm = () => {
@@ -132,6 +190,8 @@ export default function CoachesPage() {
       color: "#0A84FF",
       is_active: true,
       notes: "",
+      rent_amount: 0,
+      rent_status: "impayé",
     });
   };
 
@@ -146,6 +206,8 @@ export default function CoachesPage() {
       color: coach.color || "#0A84FF",
       is_active: coach.is_active !== false,
       notes: coach.notes || "",
+      rent_amount: coach.rent_amount || 0,
+      rent_status: coach.rent_status || "impayé",
     });
     setModalOpen(true);
   };
@@ -255,6 +317,7 @@ export default function CoachesPage() {
               <TableHead className="text-[var(--color-text-secondary)]">Contact</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Spécialités</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Taux horaire</TableHead>
+              <TableHead className="text-[var(--color-text-secondary)]">Loyer</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Statut</TableHead>
               <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
             </TableRow>
@@ -262,13 +325,13 @@ export default function CoachesPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
+                <TableCell colSpan={8} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredCoaches.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
+                <TableCell colSpan={8} className="text-center text-[var(--color-text-secondary)] py-8">
                   {search ? "Aucun coach trouvé" : "Aucun coach. Ajoutez votre premier coach !"}
                 </TableCell>
               </TableRow>
@@ -317,6 +380,26 @@ export default function CoachesPage() {
                   </TableCell>
                   <TableCell>
                     <span className="text-[var(--color-warning)] font-medium">{coach.hourly_rate || 0} CHF/h</span>
+                  </TableCell>
+                  <TableCell>
+                    {coach.rent_amount > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-sm font-medium">
+                          {coach.rent_amount?.toLocaleString("fr-CH")} CHF
+                        </span>
+                        {coach.rent_status === "payé" && (
+                          <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0 text-[10px] px-1.5">Payé</Badge>
+                        )}
+                        {coach.rent_status === "impayé" && (
+                          <Badge className="bg-[rgba(255,69,58,0.15)] text-[var(--color-danger)] border-0 text-[10px] px-1.5">Impayé</Badge>
+                        )}
+                        {coach.rent_status === "en_attente" && (
+                          <Badge className="bg-[rgba(255,159,10,0.15)] text-[var(--color-warning)] border-0 text-[10px] px-1.5">En attente</Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[var(--color-text-tertiary)] text-xs">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {coach.is_active ? (
@@ -519,6 +602,38 @@ export default function CoachesPage() {
                 placeholder="Notes (optionnel)"
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="tf-stat-label">Loyer mensuel (CHF)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={formData.rent_amount}
+                  onChange={(e) => setFormData({ ...formData, rent_amount: parseFloat(e.target.value) || 0 })}
+                  className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
+                  data-testid="coach-rent-amount-input"
+                />
+              </div>
+              <div>
+                <label className="tf-stat-label">Statut loyer</label>
+                <Select
+                  value={formData.rent_status}
+                  onValueChange={handleRentStatusChange}
+                >
+                  <SelectTrigger
+                    className="bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white mt-1"
+                    data-testid="coach-rent-status-select"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                    <SelectItem value="payé" className="text-white">Payé</SelectItem>
+                    <SelectItem value="impayé" className="text-white">Impayé</SelectItem>
+                    <SelectItem value="en_attente" className="text-white">En attente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="flex items-center justify-between">
               <label className="text-[var(--color-text-secondary)] text-sm">Actif</label>
               <Switch
@@ -597,6 +712,30 @@ export default function CoachesPage() {
           } else {
             restore(archiveDialog.coach.id);
           }
+        }}
+      />
+
+      {/* Revert Coach Rent Status Dialog */}
+      <RevertCoachRentDialog
+        open={rentRevertDialog.open}
+        onOpenChange={(o) => setRentRevertDialog((s) => ({ ...s, open: o }))}
+        coach={selectedCoach}
+        newStatus={rentRevertDialog.newStatus}
+        isLoading={revertCoachRentMutation.isPending}
+        onConfirm={() => {
+          if (!selectedCoach || !rentRevertDialog.newStatus) return;
+          revertCoachRentMutation.mutate({
+            coach: selectedCoach,
+            newStatus: rentRevertDialog.newStatus,
+          });
+        }}
+        onCancel={() => {
+          // Restore previous select value
+          setFormData((f) => ({
+            ...f,
+            rent_status: rentRevertDialog.previousStatus || "payé",
+          }));
+          setRentRevertDialog({ open: false, newStatus: null, previousStatus: null });
         }}
       />
     </div>

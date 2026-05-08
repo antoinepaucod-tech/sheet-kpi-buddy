@@ -17,6 +17,7 @@ import {
   Mail,
   Trash2,
   Filter,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -51,6 +52,7 @@ import {
 } from "../components/ui/tabs";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
+import { RevertPaymentDialog } from "../components/RevertPaymentDialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -83,6 +85,7 @@ export default function PaymentsPage() {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [markPaidModalOpen, setMarkPaidModalOpen] = useState(false);
+  const [revertPaymentDialog, setRevertPaymentDialog] = useState({ open: false, payment: null });
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [generateMonth, setGenerateMonth] = useState(format(new Date(), "yyyy-MM"));
   
@@ -162,6 +165,38 @@ export default function PaymentsPage() {
       queryClient.invalidateQueries(["payments"]);
       setMarkPaidModalOpen(false);
       toast.success("Paiement marqué comme payé");
+    },
+  });
+
+  const revertPaymentMutation = useMutation({
+    mutationFn: async ({ id, sendEmail, memberEmail }) => {
+      const res = await axios.post(`${API}/payments/${id}/revert-to-unpaid`);
+      let mailStatus = "skipped";
+      let mailError = null;
+      if (sendEmail) {
+        try {
+          await axios.post(`${API}/notifications/send-payment-reminder/${id}`);
+          mailStatus = "sent";
+        } catch (e) {
+          mailStatus = "failed";
+          mailError = e.response?.data?.detail || "Erreur d'envoi du mail";
+        }
+      }
+      return { payment: res.data, mailStatus, mailError, memberEmail };
+    },
+    onSuccess: ({ payment, mailStatus, mailError, memberEmail }) => {
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      const newStatus = payment?.status === "late" ? "en retard" : "en attente";
+      toast.success(`Paiement repassé en ${newStatus}`);
+      if (mailStatus === "sent") {
+        toast.success(`Mail de relance envoyé${memberEmail ? ` à ${memberEmail}` : ""}`);
+      } else if (mailStatus === "failed") {
+        toast.warning(`Paiement modifié mais erreur d'envoi du mail : ${mailError}. À renvoyer manuellement.`);
+      }
+      setRevertPaymentDialog({ open: false, payment: null });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.detail || "Erreur lors du retour en impayé");
     },
   });
 
@@ -403,6 +438,19 @@ export default function PaymentsPage() {
                                 data-testid={`mark-paid-${payment.id}`}
                               >
                                 <Check size={14} className="mr-1" /> Payé
+                              </Button>
+                            )}
+                            {payment.status === "paid" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setRevertPaymentDialog({ open: true, payment })}
+                                className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.08)]"
+                                title="Repasser en impayé"
+                                data-testid={`revert-payment-${payment.id}`}
+                              >
+                                <RotateCcw size={14} className="mr-1" />
+                                Impayé
                               </Button>
                             )}
                             <Button
@@ -826,6 +874,33 @@ export default function PaymentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Revert payment to unpaid Dialog */}
+      <RevertPaymentDialog
+        open={revertPaymentDialog.open}
+        onOpenChange={(o) => setRevertPaymentDialog((s) => ({ ...s, open: o }))}
+        payment={revertPaymentDialog.payment}
+        memberName={
+          revertPaymentDialog.payment
+            ? (members.find((m) => m.id === revertPaymentDialog.payment.member_id)?.name || revertPaymentDialog.payment.member_name || "Inconnu")
+            : ""
+        }
+        memberEmail={
+          revertPaymentDialog.payment
+            ? (members.find((m) => m.id === revertPaymentDialog.payment.member_id)?.email || revertPaymentDialog.payment.member_email || "")
+            : ""
+        }
+        isLoading={revertPaymentMutation.isPending}
+        onConfirm={({ sendEmail }) => {
+          if (!revertPaymentDialog.payment) return;
+          const memberEmail = members.find((m) => m.id === revertPaymentDialog.payment.member_id)?.email || revertPaymentDialog.payment.member_email || "";
+          revertPaymentMutation.mutate({
+            id: revertPaymentDialog.payment.id,
+            sendEmail,
+            memberEmail,
+          });
+        }}
+      />
     </div>
   );
 }
