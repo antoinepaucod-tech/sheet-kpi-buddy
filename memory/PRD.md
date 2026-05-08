@@ -99,19 +99,17 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] Testing frontend e2e : 11/11 scenarios passed (iteration_73.json)
 - [x] Cross-validation : archive coach avec raison → apparaît dans /archives → restore → réapparaît dans /coaches
 
-## Completed Tasks (Session 2026-05-08 — Sprint B Frontend Lot 2) ✅
-- [x] **B.6.1** Modale `RevertPaymentDialog` sur paiements payés
-  - Bouton "Impayé" sur chaque ligne `paid` (data-testid `revert-payment-{id}`)
-  - Modale affiche détails (membre, montant, échéances) et calcule automatiquement le nouveau statut (En attente / En retard) selon due_date
-  - Checkbox optionnelle "Renvoyer un mail de relance" (désactivée si membre sans email) — chaîne POST `/payments/{id}/revert-to-unpaid` puis POST `/notifications/send-payment-reminder/{id}` via Resend
-  - Toasts différenciés : succès revert + succès/warning email
-- [x] **B.6.2** Modale `RevertCoachRentDialog` sur transitions rent_status payé→impayé/en_attente
-  - Champs `rent_amount` (input CHF) + `rent_status` (select) ajoutés au formulaire d'édition coach
-  - Nouvelle colonne "Loyer" dans le tableau coachs (montant + badge coloré selon statut)
-  - Interception via `handleRentStatusChange` : seules les transitions `payé → {impayé, en_attente}` sur un coach existant déclenchent la modale
-  - Annulation restaure la valeur précédente du select (pas d'appel API)
-  - Confirmation appelle PUT `/api/coaches/{id}` avec payload complet, ferme la modale parent (UX clean)
-- [x] Testing frontend e2e : 8/9 e2e + 1/9 code-path (iteration_74.json), 100% sur les flows fonctionnels
+## Completed Tasks (Session 2026-05-08 — Sprint B Frontend Lot 2 + ESLint Guard + Onboarding Audit) ✅
+- [x] **B.6.1** Modale `RevertPaymentDialog` sur paiements payés (+ option mail Resend)
+- [x] **B.6.2** Modale `RevertCoachRentDialog` + champs `rent_amount`/`rent_status` + colonne Loyer
+- [x] **Hotfix UI auto-refresh v4** : pattern `setQueriesData` synchrone (instant) + `invalidateQueries` (reconciliation) sur les mutations critiques (revert payment, mark-paid, delete-payment, revert coach rent). Helpers `patchPaymentInCache` / `removePaymentFromCache`.
+- [x] **Sweep technique TanStack Query v5** : 40 calls `invalidateQueries(['key'])` (positionnel déprécié, no-op silencieux) migrés vers `invalidateQueries({queryKey:['key']})` sur 7 fichiers (Onboarding, Attendance, SettingsTypes, ClientKPI, Challenge, Courses, AnnualReviews). Vérifié : 0 occurrence positionnelle restante.
+- [x] **ESLint guard** : règle `no-restricted-syntax` ciblant les CallExpression `invalidateQueries / refetchQueries / cancelQueries` avec premier arg ArrayExpression. Active en 2 endroits :
+  - `package.json` `eslintConfig` (CRA build → fail au `yarn build`)
+  - `eslint.config.js` flat config + script `yarn lint:rq` (CLI / CI)
+  - Validé end-to-end : fichier de test avec violation → erreur claire en français-aware.
+- [x] **Mini-feature Onboarding date+auteur** : Backend `PUT /members/{id}/onboarding` stamps `onboarding_completed_at`, `onboarding_completed_by`, `onboarding_completed_by_name` (= local part de l'email), `onboarding_completed_by_email` lors du passage à 100%. Idempotent (re-saves préservent l'auteur original). Régression (uncomplete) clear les 4 champs. Frontend OnboardingPage Historique : 2 nouvelles colonnes "Onboardé le" + "Par". Banner inline "Onboardé le X par Y" sur les cartes complétées (toggle "Voir complétés" ON). Backward-compat OK : 7 entrées historiques existantes affichent "—" pour Par.
+- [x] Testing frontend e2e iter79 : 6/7 assertions PASS (86%). TEST2 inconclusive automated mais validé via cleanup phase + curl backend.
 
 ## Upcoming Tasks
 - (P0) **Sprint B — VALIDATION & DÉPLOIEMENT** : tests utilisateur en preview puis déploiement Lot 1+Lot 2 en prod
