@@ -54,6 +54,7 @@ import {
 import { Progress } from "../components/ui/progress";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
+import { useMemberCategories, CATEGORY_LABELS, ONBOARDING_EXCLUDED_DEFAULT } from "../hooks/useMemberCategories";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -84,6 +85,8 @@ export default function OnboardingPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("onboarding");
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all"); // "all" = défaut sans exclus
+  const { getCategory, getDuoPartnerId, getDuoPartnerName, isPrimaryInDuo } = useMemberCategories();
   const [showCompleted, setShowCompleted] = useState(false);
   const [followupModalOpen, setFollowupModalOpen] = useState(false);
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
@@ -221,12 +224,32 @@ export default function OnboardingPage() {
         m.email?.toLowerCase().includes(s)
       );
     }
+
+    // Sprint C — Filtre par catégorie
+    if (categoryFilter === "all") {
+      // Défaut : exclure OpenGym / Pret / Inconnu
+      result = result.filter((m) => !ONBOARDING_EXCLUDED_DEFAULT.includes(getCategory(m.id)));
+    } else {
+      result = result.filter((m) => getCategory(m.id) === categoryFilter);
+    }
+
+    // Sprint C — Dédup Partenaire : 1 ligne par couple, garder uniquement le primary
+    // (les non-primary dont le partenaire est aussi dans la liste sont retirés)
+    const idsInList = new Set(result.map((m) => m.id));
+    result = result.filter((m) => {
+      if (getCategory(m.id) !== "Partenaire") return true;
+      const partnerId = getDuoPartnerId(m.id);
+      // Si le partenaire n'est pas dans la liste filtrée → garder
+      if (!partnerId || !idsInList.has(partnerId)) return true;
+      // Sinon : garder UNIQUEMENT si this member est primary
+      return isPrimaryInDuo(m.id);
+    });
     
     // Sort alphabetically for stable order (no reordering when steps are toggled)
     const sorted = [...result].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     
     return sorted;
-  }, [pendingOnboarding, allMembersWithOnboarding, showCompleted, search, editingMemberId]);
+  }, [pendingOnboarding, allMembersWithOnboarding, showCompleted, search, editingMemberId, categoryFilter, getCategory, getDuoPartnerId, isPrimaryInDuo]);
 
   // Stats
   const completedOnboarding = allMembers.filter(m => m.onboarding_completed === true).length;
@@ -318,8 +341,8 @@ export default function OnboardingPage() {
 
         {/* Onboarding Tab */}
         <TabsContent value="onboarding" className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="relative flex-1 min-w-[260px] max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
               <Input
                 value={search}
@@ -328,7 +351,24 @@ export default function OnboardingPage() {
                 className="pl-10 bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
               />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger
+                  className="w-[200px] bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white"
+                  data-testid="onboarding-category-filter"
+                >
+                  <SelectValue placeholder="Catégorie" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
+                  <SelectItem value="all" className="text-white">Tous (par défaut)</SelectItem>
+                  <SelectItem value="HG" className="text-white">{CATEGORY_LABELS.HG}</SelectItem>
+                  <SelectItem value="IFRC" className="text-white">{CATEGORY_LABELS.IFRC}</SelectItem>
+                  <SelectItem value="Partenaire" className="text-white">{CATEGORY_LABELS.Partenaire}</SelectItem>
+                  <SelectItem value="Challenge" className="text-white">{CATEGORY_LABELS.Challenge}</SelectItem>
+                  <SelectItem value="Coach" className="text-white">{CATEGORY_LABELS.Coach}</SelectItem>
+                  <SelectItem value="OpenGym" className="text-white">{CATEGORY_LABELS.OpenGym}</SelectItem>
+                </SelectContent>
+              </Select>
               {completedMembers.length > 0 && (
                 <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
                   {completedMembers.length} complété{completedMembers.length > 1 ? "s" : ""} (voir Historique)
@@ -367,8 +407,18 @@ export default function OnboardingPage() {
                           <User className="text-[var(--color-accent)]" size={24} />
                         </div>
                         <div>
-                          <p className="text-white font-medium text-lg">
-                            {member.name}
+                          <p className="text-white font-medium text-lg flex items-center gap-2 flex-wrap">
+                            <span>{member.name}</span>
+                            {getCategory(member.id) === "Partenaire" && getDuoPartnerName(member.id) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[rgba(191,90,242,0.15)] text-[#BF5AF2] border border-[rgba(191,90,242,0.25)]" data-testid={`duo-pair-${member.id}`}>
+                                & {getDuoPartnerName(member.id)} • DUO
+                              </span>
+                            )}
+                            {getCategory(member.id) && getCategory(member.id) !== "HG" && getCategory(member.id) !== "Partenaire" && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[rgba(255,255,255,0.06)] text-[var(--color-text-tertiary)] border border-[var(--color-border)]" data-testid={`category-${member.id}`}>
+                                {CATEGORY_LABELS[getCategory(member.id)] || getCategory(member.id)}
+                              </span>
+                            )}
                           </p>
                           <div className="flex items-center gap-4 text-[var(--color-text-secondary)] text-sm">
                             {member.email && (

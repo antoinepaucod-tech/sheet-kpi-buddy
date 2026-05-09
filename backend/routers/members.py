@@ -7,6 +7,11 @@ from uuid import uuid4
 
 from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id, get_current_user
+from core.member_categorization import (
+    get_member_category,
+    _dedupe_partenaire,
+    CATEGORIES,
+)
 from models.members import (
     CustomerMember, CustomerMemberCreate,
     MemberRenewalHistory, WeeklyTraining, WeeklyTrainingUpdate,
@@ -217,6 +222,89 @@ async def get_expiring_members(days: int = 30, club_id: Optional[str] = Depends(
     
     docs.sort(key=lambda x: x.get("days_remaining", 999))
     return docs
+
+
+# ─── Sprint C : catégorisation membres ────────────────────────────────────────
+
+async def _build_categorization_map(club_id: Optional[str]) -> tuple[list[dict], dict[str, str]]:
+    """Helper interne : retourne (members_active, category_by_member_id).
+
+    Charge tous les membres ACTIFS du club + le mapping membership_types puis
+    applique `get_member_category` à chacun. Lecture seule, pas de side effect.
+    """
+    member_query = {"$or": [{"archived_at": None}, {"archived_at": {"$exists": False}}]}
+    if club_id:
+        member_query["club_id"] = club_id
+    members = await db.customer_members.find(member_query, {"_id": 0}).to_list(length=None)
+
+    types_query = {"club_id": club_id} if club_id else {}
+    types_list = await db.membership_types.find(types_query, {"_id": 0}).to_list(length=None)
+    types_by_name = {t.get("name"): t for t in types_list if t.get("name")}
+
+    cat_by_id = {m["id"]: get_member_category(m, types_by_name) for m in members if m.get("id")}
+    return members, cat_by_id
+
+
+@router.get("/categories")
+async def get_member_categories(club_id: Optional[str] = Depends(get_club_id)):
+    """Sprint C — Mapping des catégories pour tous les membres ACTIFS du club.
+
+    Retourne :
+        {
+          member_id: {
+            category, duo_partner_id, duo_partner_name, is_primary_in_duo
+          }
+        }
+    Lecture seule. Pas de modification base.
+    """
+    members, cat_by_id = await _build_categorization_map(club_id)
+    by_id = {m["id"]: m for m in members if m.get("id")}
+
+    result: dict[str, dict] = {}
+    for m in members:
+        mid = m.get("id")
+        if not mid:
+            continue
+        partner_id = m.get("duo_partner_id")
+        partner_name = ""
+        if partner_id and partner_id in by_id:
+            partner_name = by_id[partner_id].get("name") or ""
+        elif partner_id:
+            # partner archived/missing — fetch one-shot for label only
+            partner = await db.customer_members.find_one(
+                {"id": partner_id}, {"_id": 0, "name": 1}
+            )
+            partner_name = (partner or {}).get("name") or ""
+
+        result[mid] = {
+            "category": cat_by_id.get(mid, "Inconnu"),
+            "duo_partner_id": partner_id or None,
+            "duo_partner_name": partner_name or None,
+            "is_primary_in_duo": bool(m.get("duo_primary")),
+        }
+    return result
+
+
+@router.get("/categories/stats")
+async def get_member_categories_stats(club_id: Optional[str] = Depends(get_club_id)):
+    """Sprint C — Compteurs de membres actifs par catégorie pour le club.
+
+    Pour la catégorie `Partenaire`, applique la déduplication par couple
+    (1 entrée par couple, pas par membre). Lecture seule.
+    """
+    members, cat_by_id = await _build_categorization_map(club_id)
+
+    by_cat: dict[str, list[dict]] = {c: [] for c in CATEGORIES}
+    for m in members:
+        cat = cat_by_id.get(m.get("id"), "Inconnu")
+        by_cat[cat].append(m)
+
+    # Dédupe Partenaire (1 par couple)
+    by_cat["Partenaire"] = _dedupe_partenaire(by_cat["Partenaire"])
+
+    stats = {cat: len(by_cat[cat]) for cat in CATEGORIES}
+    stats["total"] = sum(stats.values())
+    return stats
 
 
 @router.get("/{member_id}")

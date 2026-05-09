@@ -47,6 +47,53 @@ import {
 import { Progress } from "../components/ui/progress";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
+import { useMemberCategories, CATEGORY_LABELS } from "../hooks/useMemberCategories";
+
+const CATEGORY_VIEW_ORDER = ["HG", "Coach", "Partenaire", "IFRC", "OpenGym", "Challenge"];
+
+const CATEGORY_COLORS = {
+  HG: "var(--color-accent)",          // bleu
+  Coach: "var(--color-warning)",      // orange
+  Partenaire: "#BF5AF2",              // violet (couleur DUO)
+  IFRC: "var(--color-success)",       // vert
+  OpenGym: "var(--color-info)",       // cyan
+  Challenge: "#FF9500",               // orange chaud
+};
+
+function CategoryStatsWidget() {
+  const { stats, isLoading } = useMemberCategories();
+  if (isLoading || !stats) return null;
+  return (
+    <div className="bg-[var(--color-bg-secondary)] rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4" data-testid="category-stats-widget">
+      <div className="flex items-center justify-between mb-3">
+        <p className="tf-stat-label flex items-center gap-2">
+          <Users size={12} /> Membres actifs par catégorie
+        </p>
+        <Badge className="bg-[rgba(255,255,255,0.06)] text-[var(--color-text-tertiary)] border-0 text-[10px]">
+          Total {stats.total} • Partenaire dédupé
+        </Badge>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {CATEGORY_VIEW_ORDER.map((cat) => (
+          <div
+            key={cat}
+            className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 hover:border-[var(--color-accent)] transition-colors"
+            style={{ borderLeftWidth: "3px", borderLeftColor: CATEGORY_COLORS[cat] }}
+            data-testid={`category-stat-${cat.toLowerCase()}`}
+          >
+            <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-tertiary)]">
+              {CATEGORY_LABELS[cat] || cat}
+            </p>
+            <p className="text-2xl font-bold text-white mt-0.5">
+              {stats[cat] || 0}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -461,6 +508,9 @@ export default function CoursesPage() {
           </div>
         </div>
       )}
+
+      {/* Sprint C — Membres actifs par catégorie */}
+      <CategoryStatsWidget />
 
       {/* Generate Salary Expenses */}
       {courses.length > 0 && (

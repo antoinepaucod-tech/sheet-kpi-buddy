@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -10,6 +11,8 @@ import {
   Save,
   Users,
   Activity,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -23,6 +26,9 @@ import {
 } from "../components/ui/select";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
+import { useMemberCategories, CATEGORY_LABELS, ATTENDANCE_EXCLUDED_DEFAULT } from "../hooks/useMemberCategories";
+
+const COACHES_SECTION_LS_KEY = "attendance_coaches_section_expanded";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -130,6 +136,67 @@ export default function AttendancePage() {
       (m) => !m.is_coach && (m.name?.toLowerCase().includes(s) || m.email?.toLowerCase().includes(s))
     );
   }, [members, search]);
+
+  // Sprint C — categorisation
+  const { getCategory, getDuoPartnerId, isPrimaryInDuo } = useMemberCategories();
+  const [coachesExpanded, setCoachesExpanded] = useState(() => {
+    try {
+      const saved = localStorage.getItem(COACHES_SECTION_LS_KEY);
+      return saved === null ? true : saved === "true";
+    } catch {
+      return true;
+    }
+  });
+  const toggleCoaches = () => {
+    setCoachesExpanded((v) => {
+      const next = !v;
+      try { localStorage.setItem(COACHES_SECTION_LS_KEY, String(next)); } catch { /* noop */ }
+      return next;
+    });
+  };
+
+  // Group members by category and exclude defaults; keep only categories with members
+  const sections = useMemo(() => {
+    const byCat = { HG: [], IFRC: [], Challenge: [], Coach: [], Partenaire: [] };
+    for (const m of filteredMembers) {
+      const cat = getCategory(m.id);
+      if (ATTENDANCE_EXCLUDED_DEFAULT.includes(cat)) continue;
+      if (!(cat in byCat)) continue; // skip Inconnu/Pret/OpenGym (already excluded but defensive)
+      byCat[cat].push(m);
+    }
+    // Sort each section alphabetically (except Partenaires which need pair grouping)
+    for (const k of ["HG", "IFRC", "Challenge", "Coach"]) {
+      byCat[k].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    }
+
+    // For Partenaires: build paired list — primary then partner contiguously
+    const partner = byCat.Partenaire;
+    const byId = Object.fromEntries(partner.map((m) => [m.id, m]));
+    const seen = new Set();
+    const ordered = [];
+    // primaries first, alphabetic
+    const primaries = partner.filter((m) => isPrimaryInDuo(m.id) || !byId[getDuoPartnerId(m.id)])
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    for (const p of primaries) {
+      if (seen.has(p.id)) continue;
+      ordered.push({ ...p, _duoRole: "primary" });
+      seen.add(p.id);
+      const pid = getDuoPartnerId(p.id);
+      if (pid && byId[pid] && !seen.has(pid)) {
+        ordered.push({ ...byId[pid], _duoRole: "secondary" });
+        seen.add(pid);
+      }
+    }
+    // any leftover (shouldn't happen but safe)
+    for (const m of partner) {
+      if (!seen.has(m.id)) {
+        ordered.push({ ...m, _duoRole: "primary" });
+        seen.add(m.id);
+      }
+    }
+    byCat.Partenaire = ordered;
+    return byCat;
+  }, [filteredMembers, getCategory, getDuoPartnerId, isPrimaryInDuo]);
 
   const weekTotals = useMemo(() => {
     const totals = {};
@@ -310,43 +377,117 @@ export default function AttendancePage() {
                 </td>
               </tr>
             ) : (
-              filteredMembers.map((member) => (
-                <tr key={member.id} className="border-b border-[var(--color-border)] hover:bg-white/[0.02]" data-testid={`attendance-row-${member.id}`}>
-                  <td className="py-2 px-4 sticky left-0 bg-[var(--color-bg-secondary)] z-10">
-                    <div>
-                      <p className="text-white text-sm font-medium">{member.name}</p>
-                      <p className="text-[var(--color-text-tertiary)] text-xs">{member.membership}</p>
-                    </div>
-                  </td>
-                  {weeks.map((w) => {
-                    const val = trainingMap[`${member.id}_${w}`] || 0;
-                    return (
-                      <td key={w} className="py-2 px-1 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          max="7"
-                          defaultValue={val}
-                          key={`${member.id}_${w}`}
-                          onBlur={(e) => handleCellBlur(member.id, w, e.target.value)}
-                          onChange={(e) => {
-                            const newVal = parseInt(e.target.value) || 0;
-                            pendingUpdates.current[`${member.id}_${w}`] = newVal;
-                            setLocalUpdates(prev => ({ ...prev, [`${member.id}_${w}`]: newVal }));
-                          }}
-                          className={`w-12 h-8 text-center rounded border-0 text-sm font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none ${getCellBg(val)} ${getCellColor(val)}`}
-                          data-testid={`cell-${member.id}-w${w}`}
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="py-2 px-3 text-center">
-                    <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-info)]" : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)]"}`}>
-                      {memberTotals[member.id] || 0}
-                    </Badge>
-                  </td>
-                </tr>
-              ))
+              <>
+                {/* Sprint C — render in 5 sections */}
+                {["HG", "IFRC", "Challenge", "Coach", "Partenaire"].map((cat) => {
+                  const list = sections[cat] || [];
+                  if (list.length === 0) return null;
+
+                  const isCoachSection = cat === "Coach";
+                  const isPartenaireSection = cat === "Partenaire";
+                  const isCollapsed = isCoachSection && !coachesExpanded;
+
+                  return (
+                    <React.Fragment key={cat}>
+                      {/* Section header */}
+                      <tr
+                        className="bg-[var(--color-bg-tertiary)] border-y border-[var(--color-border)]"
+                        data-testid={`attendance-section-${cat.toLowerCase()}`}
+                      >
+                        <td
+                          colSpan={weeks.length + 2}
+                          className="py-2 px-4 sticky left-0 bg-[var(--color-bg-tertiary)] z-10"
+                        >
+                          <div
+                            className={`flex items-center justify-between text-xs uppercase tracking-wider font-medium text-[var(--color-text-secondary)] ${isCoachSection ? "cursor-pointer select-none" : ""}`}
+                            onClick={isCoachSection ? toggleCoaches : undefined}
+                            data-testid={isCoachSection ? "attendance-coaches-toggle" : undefined}
+                          >
+                            <span className="flex items-center gap-2">
+                              {CATEGORY_LABELS[cat] || cat} • {list.length}
+                              {isCoachSection && (isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />)}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Section rows */}
+                      {!isCollapsed && list.map((member, idx) => {
+                        const isDuoPrimary = isPartenaireSection && member._duoRole === "primary";
+                        const isDuoSecondary = isPartenaireSection && member._duoRole === "secondary";
+                        // Determine if this primary actually has a paired secondary right after
+                        const next = isDuoPrimary ? list[idx + 1] : null;
+                        const hasPairedSecondary = !!(next && next._duoRole === "secondary");
+                        const rowBg = isPartenaireSection
+                          ? "bg-[rgba(191,90,242,0.04)] hover:bg-[rgba(191,90,242,0.08)]"
+                          : "hover:bg-white/[0.02]";
+                        const rowBorder = isPartenaireSection
+                          ? (isDuoPrimary && hasPairedSecondary ? "border-b-0" : (isDuoSecondary ? "border-b border-[var(--color-border)]" : "border-b border-[var(--color-border)]"))
+                          : "border-b border-[var(--color-border)]";
+                        const sideBorder = isPartenaireSection ? "border-l-2 border-l-[#BF5AF2]" : "";
+
+                        return (
+                          <tr
+                            key={member.id}
+                            className={`${rowBg} ${rowBorder} ${sideBorder}`}
+                            data-testid={`attendance-row-${member.id}`}
+                            data-category={cat}
+                          >
+                            <td className="py-2 px-4 sticky left-0 bg-[var(--color-bg-secondary)] z-10">
+                              <div className="flex items-center gap-2">
+                                {isPartenaireSection && (
+                                  <span className={`w-1 h-8 rounded-full ${isDuoPrimary ? "bg-[#BF5AF2]" : "bg-[#BF5AF2]/40"}`} />
+                                )}
+                                <div>
+                                  <p className="text-white text-sm font-medium flex items-center gap-2">
+                                    <span>{member.name}</span>
+                                    {isDuoPrimary && hasPairedSecondary && (
+                                      <span
+                                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[rgba(191,90,242,0.18)] text-[#BF5AF2] border border-[rgba(191,90,242,0.3)]"
+                                        data-testid={`duo-badge-${member.id}`}
+                                      >
+                                        DUO
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-[var(--color-text-tertiary)] text-xs">{member.membership}</p>
+                                </div>
+                              </div>
+                            </td>
+                            {weeks.map((w) => {
+                              const val = trainingMap[`${member.id}_${w}`] || 0;
+                              return (
+                                <td key={w} className="py-2 px-1 text-center">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="7"
+                                    defaultValue={val}
+                                    key={`${member.id}_${w}`}
+                                    onBlur={(e) => handleCellBlur(member.id, w, e.target.value)}
+                                    onChange={(e) => {
+                                      const newVal = parseInt(e.target.value) || 0;
+                                      pendingUpdates.current[`${member.id}_${w}`] = newVal;
+                                      setLocalUpdates(prev => ({ ...prev, [`${member.id}_${w}`]: newVal }));
+                                    }}
+                                    className={`w-12 h-8 text-center rounded border-0 text-sm font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none ${getCellBg(val)} ${getCellColor(val)}`}
+                                    data-testid={`cell-${member.id}-w${w}`}
+                                  />
+                                </td>
+                              );
+                            })}
+                            <td className="py-2 px-3 text-center">
+                              <Badge className={`border-0 ${memberTotals[member.id] > 0 ? "bg-[rgba(10,132,255,0.15)] text-[var(--color-info)]" : "bg-[rgba(255,255,255,0.05)] text-[var(--color-text-tertiary)]"}`}>
+                                {memberTotals[member.id] || 0}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </>
             )}
           </tbody>
           {filteredMembers.length > 0 && (
