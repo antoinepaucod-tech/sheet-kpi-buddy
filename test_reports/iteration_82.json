@@ -1,0 +1,51 @@
+{
+  "summary": "Tested PaymentsPage Option B (global month selector branching). Non-regression on Dashboard/TransactionsPage PASSES (month selector persists across pages, no crash). However a CRITICAL frontend bug blocks validation of Tests 1-4: the PaymentsPage table is stuck on 'Chargement...' indefinitely and ALL KPI cards (Total/En retard/En attente/Payés) show 0 regardless of selected month, despite backend endpoints returning correct data.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/payments?month=YYYY-MM", "issue": "Backend ignores the ?month= query param (returns same 232 rows for any month). Filtering is currently fully client-side in PaymentsPage via monthScopedPayments useMemo. This works as long as the bulk fetch succeeds, but the test brief mentioned backend supports ?month= — it does not appear to. Not blocking since FE filters client-side, but inconsistent with Dashboard/Transactions pattern."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "PaymentsPage", "issue": "Main payments table is stuck on 'Chargement...' (loadingPayments=true never resolves). The /api/payments bulk request is NOT observed in the browser network tab on PaymentsPage mount, while /api/payments/late and /api/payments/upcoming ARE fired. Yet curl on /api/payments returns 200 + 232 records in <1s. As a result KPIs (Total/En retard/En attente/Payés/Montant) all display 0 for every month (mai/avril/mars 2026).", "selector": "[data-testid=\"payments-page\"]", "priority": "CRITICAL"},
+      {"component": "PaymentsPage > Late tab", "issue": "Late tab renders 'Aucun paiement en retard' even though /api/payments/late returned 60910 bytes / 124 late payments on the same page load. latePayments useQuery state appears empty despite a successful 200 response.", "selector": "TabsContent[value=\"late\"]", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Payments page initial data load", "issue": "useQuery({queryKey:['payments']}) never triggers a network request OR is being silently overridden. Suspect: queryClient.setQueriesData({queryKey:['payments']}, ...) uses PREFIX match (TanStack Query default) and patches ALL ['payments', *] sub-keys. If this is invoked at mount with undefined/list-shaped data it could write garbage into all related queries. Worth investigating patchPaymentInCache / removePaymentFromCache helpers and any code that hydrates the cache before the queries start.", "affected_selectors": ["[data-testid=\"payments-page\"]"]},
+      {"flow": "Month change on PaymentsPage", "issue": "Cannot validate filtering visually because no rows ever appear. Selecting mai → avril → mars 2026 successfully updates the global month selector and triggers the page re-render, but Total stays 0 for all months."}
+    ],
+    "design_issues": []
+  },
+  "tests_results": {
+    "Test 1 (default mai 2026 list visible)": "FAIL — table shows 'Chargement…', 0 rows, KPIs all 0",
+    "Test 2 (avril 2026 list updates, ~77 late expected)": "FAIL — 0 rows, KPIs all 0, expected ≥1 late",
+    "Test 3 (mars 2026 ~73 paid + ~4 late)": "FAIL — 0 rows, KPIs all 0",
+    "Test 4 (KPI cards change dynamically per month)": "FAIL — KPIs identically 0 across all 3 months",
+    "Test 5 (non-regression Dashboard + TransactionsPage)": "PASS — global month selector persists across navigation Dashboard ↔ Transactions ↔ Payments, no crash on Dashboard, transactions table renders, month switching from any page works"
+  },
+  "test_report_links": [],
+  "action_items": [
+    "URGENT: Investigate why useQuery({queryKey:['payments']}) on PaymentsPage never fires the GET /api/payments request. Open browser devtools Network panel on /payments — confirm absence of bulk /api/payments request.",
+    "URGENT: Investigate why latePayments useQuery state is empty despite /api/payments/late returning 200 with 124 entries (60910 bytes).",
+    "Suspect #1: queryClient.setQueriesData({queryKey:['payments']}, …) uses prefix matching and may inadvertently overwrite ['payments','late'] / ['payments','upcoming'] caches with payment-list-shaped data. Switch to exact-match (use { exact: true } in setQueriesData) or use distinct, non-prefixed query keys (e.g. ['payments-list'], ['payments-late'], ['payments-upcoming']).",
+    "Suspect #2: An axios interceptor or auth guard added during the recent Cleanup Infra sprint may be eating the response for the bulk endpoint specifically. Check git diff vs iter 81 baseline (which was 100% PASS).",
+    "Suspect #3: A hydration / persistQueryClient layer may have stored stale empty arrays for ['payments'] keys that override the network fetch. Clear any persisted cache.",
+    "Once the data loads, re-verify Tests 1-4 by switching mai/avril/mars 2026 and confirming KPI counts and table content change accordingly.",
+    "Recommend: align /api/payments backend to honour ?month=YYYY-MM (consistent with Dashboard/Transactions API contract). Currently it returns the full list for any month query."
+  ],
+  "critical_code_review_comments": [
+    "PaymentsPage.js L139-153: patchPaymentInCache/removePaymentFromCache use queryClient.setQueriesData({queryKey:['payments']}, …) which performs PREFIX matching. This will also patch ['payments','late'] and ['payments','upcoming'] with the payments-list data shape — likely a latent bug, especially on optimistic updates after mark-paid / revert / delete.",
+    "PaymentsPage.js L260-263: monthScopedPayments uses (p.due_date || '').startsWith(selectedMonth) — works for ISO date strings 'YYYY-MM-DD…'. Defensive code is fine.",
+    "PaymentsPage.js L90: generateMonth state is initialized via format(new Date(),'yyyy-MM') (local) — independent of selectedMonth global. Acceptable since 'Générer' is a separate action, but consider seeding from selectedMonth for consistency.",
+    "Backend GET /api/payments: month query param appears unimplemented (returns identical results for ?month=2026-03 vs 2026-04 vs no-param). Either implement server-side month filter OR remove the brief expectation."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "20% (Test 5 only)"},
+  "test_credentials": "antoine.paucod@the-coach.pro / TheCoach1290.  (super admin)",
+  "seed_data_creation": "None — read-only testing on production Atlas DB as instructed.",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Note: 'Hybrid Gym Versoix' club mentioned in the brief is NOT in the available clubs list for this super-admin (only 4 clubs visible: Transform Servette/Lausanne/Versoix/Grand Saconnex). Tests were run on default 'Transform Versoix' which has 232 payments + 124 late + 12 upcoming + 94 plannings (verified via curl). Bulk /api/payments fetch never reaches React state on PaymentsPage mount — this is the blocker for Tests 1-4. Test 5 (non-regression) passed cleanly: Dashboard and TransactionsPage continue to honour the global month selector.",
+  "rca of the issue": "ROOT CAUSE HYPOTHESIS: TanStack Query's queryClient.setQueriesData defaults to a PREFIX (non-exact) filter. PaymentsPage.js patchPaymentInCache/removePaymentFromCache call setQueriesData({queryKey:['payments']}, fn) and also useQuery({queryKey:['payments']}) registers a parent-prefix key. This combination (parent key being a prefix of children ['payments','late'], ['payments','upcoming']) likely confuses the cache: when one of the helpers runs, all three caches are mutated with the same updater that assumes a payments-list shape. Even more critically, useQuery on a key that is a strict prefix of other useQuery keys can produce subtle hydration ordering issues (parent gets undefined cached data, children fail). FIX: change the bulk key from ['payments'] to ['payments-all'] (or pass {exact:true} to setQueriesData). REPRODUCTION: open /payments fresh, observe Network panel — only /api/payments/late and /api/payments/upcoming are called; /api/payments is never called even though useQuery is mounted. MITIGATION: rename queryKey to a non-prefix one and review setQueriesData callsites for exact-match."
+}
