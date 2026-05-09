@@ -76,7 +76,7 @@ const STATUS_CONFIG = {
   cancelled: { label: "Annulé", color: "bg-[rgba(255,255,255,0.1)] text-[var(--color-text-secondary)]", icon: X },
 };
 
-export default function PaymentsPage() {
+export default function PaymentsPage({ selectedMonth }) {
   const { lang } = useTranslations();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("payments");
@@ -255,9 +255,16 @@ export default function PaymentsPage() {
     onError: () => toast.error("Erreur lors de la génération"),
   });
 
+  // Sprint D — filter payments by global selectedMonth (Layout topbar) so the
+  // table + KPI cards stay scoped to the month the user navigates to.
+  const monthScopedPayments = useMemo(() => {
+    if (!selectedMonth) return payments;
+    return payments.filter((p) => (p.due_date || "").startsWith(selectedMonth));
+  }, [payments, selectedMonth]);
+
   // Filter payments
   const filteredPayments = useMemo(() => {
-    let result = payments;
+    let result = monthScopedPayments;
     
     if (filterStatus !== "all") {
       result = result.filter((p) => p.status === filterStatus);
@@ -272,7 +279,7 @@ export default function PaymentsPage() {
     }
     
     return result;
-  }, [payments, filterStatus, search]);
+  }, [monthScopedPayments, filterStatus, search]);
 
   // Enrich payments with member names
   const enrichedPayments = useMemo(() => {
@@ -282,18 +289,23 @@ export default function PaymentsPage() {
     });
   }, [filteredPayments, members]);
 
-  // Stats
-  const stats = useMemo(() => ({
-    total: payments.length,
-    late: latePayments.length,
-    pending: payments.filter((p) => p.status === "pending").length,
-    paid: payments.filter((p) => p.status === "paid").length,
-    totalAmount: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
-    lateAmount: latePayments.reduce((sum, p) => sum + (p.amount || 0), 0),
-    upcomingAmount: upcomingPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
-    schedulesAmount: schedules.filter(s => s.is_active).reduce((sum, s) => sum + (s.amount || 0), 0),
-    activeSchedules: schedules.filter(s => s.is_active).length,
-  }), [payments, latePayments, upcomingPayments, schedules]);
+  // Stats — scoped to the selected month so KPI cards reflect the visible list
+  const stats = useMemo(() => {
+    const scopedLate = monthScopedPayments.filter((p) => p.status === "late");
+    return {
+      total: monthScopedPayments.length,
+      late: scopedLate.length,
+      pending: monthScopedPayments.filter((p) => p.status === "pending").length,
+      paid: monthScopedPayments.filter((p) => p.status === "paid").length,
+      totalAmount: monthScopedPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
+      lateAmount: scopedLate.reduce((sum, p) => sum + (p.amount || 0), 0),
+      // Upcoming and schedules remain global (not month-scoped) — they are
+      // forward-looking by nature (next 7 days / active recurring plans).
+      upcomingAmount: upcomingPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
+      schedulesAmount: schedules.filter(s => s.is_active).reduce((sum, s) => sum + (s.amount || 0), 0),
+      activeSchedules: schedules.filter(s => s.is_active).length,
+    };
+  }, [monthScopedPayments, upcomingPayments, schedules]);
 
   const openMarkPaid = (payment) => {
     setSelectedPayment(payment);

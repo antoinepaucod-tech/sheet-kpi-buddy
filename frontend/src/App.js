@@ -139,7 +139,7 @@ function AppInner() {
                   <Route path="/clients" element={<ClientKPIPage />} />
                   <Route path="/attendance" element={<AttendancePage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/payments" element={<PaymentsPage />} />
+                  <Route path="/payments" element={<PaymentsPage selectedMonth={selectedMonth} />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/annual-reviews" element={<AnnualReviewsPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
