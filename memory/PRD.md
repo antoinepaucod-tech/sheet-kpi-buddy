@@ -111,19 +111,29 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Mini-feature Onboarding date+auteur** : Backend `PUT /members/{id}/onboarding` stamps `onboarding_completed_at`, `onboarding_completed_by`, `onboarding_completed_by_name` (= local part de l'email), `onboarding_completed_by_email` lors du passage à 100%. Idempotent (re-saves préservent l'auteur original). Régression (uncomplete) clear les 4 champs. Frontend OnboardingPage Historique : 2 nouvelles colonnes "Onboardé le" + "Par". Banner inline "Onboardé le X par Y" sur les cartes complétées (toggle "Voir complétés" ON). Backward-compat OK : 7 entrées historiques existantes affichent "—" pour Par.
 - [x] Testing frontend e2e iter79 : 6/7 assertions PASS (86%). TEST2 inconclusive automated mais validé via cleanup phase + curl backend.
 
+## Completed Tasks (Session 2026-05-08 — Sprint C : Catégorisation membres) ✅
+- [x] **Audit préalable** : 27 memberships distincts catégorisés sur 124 actifs (lecture seule)
+- [x] **Phase 1 — Backend helper** : `/app/backend/core/member_categorization.py` avec `get_member_category`, `get_duo_pair`, `is_active`, `_dedupe_partenaire`, `get_active_members_by_category`. Stratégie hybride : flags `is_coach_subscription`/`is_duo` du `membership_types` en source primaire + fallback regex pour les 6 orphelins. **67/67 tests pytest PASS**.
+- [x] **2 endpoints lecture seule** : `GET /api/members/categories` (mapping complet) + `GET /api/members/categories/stats` (compteurs + dédup Partenaire). Validés via curl Versoix : `{HG:53, Coach:25, Partenaire:12, IFRC:12, OpenGym:7, Challenge:2, Pret:1, Inconnu:1, total:113}`.
+- [x] **Phase 2 — Hook `useMemberCategories.js`** : TanStack Query, expose `getCategory/getDuoPartnerId/getDuoPartnerName/isPrimaryInDuo` + constantes `CATEGORY_LABELS`/`ONBOARDING_EXCLUDED_DEFAULT`/`ATTENDANCE_EXCLUDED_DEFAULT`.
+- [x] **OnboardingPage** : Select "Catégorie" (data-testid `onboarding-category-filter`) à côté du search. Filtre par défaut exclut OpenGym/Pret/Inconnu. Pour Partenaires : 1 ligne par couple (dédup) + badge violet `& <partenaire> • DUO` sur le primary (data-testid `duo-pair-{id}`).
+- [x] **AttendancePage** : 5 sections ordonnées **HG / IFRC / Challenge / Coachs (repliable, déplié par défaut, persisté localStorage `attendance_coaches_section_expanded`) / Partenaires (DUO)**. Pour les couples Partenaire : 2 lignes adjacentes regroupées visuellement (fond purple + bordure latérale `#BF5AF2` + badge `DUO` partagé sur la primary). Saisie indépendante par membre validée (1 cellule = 1 POST). Filtre `!m.is_coach` retiré (la catégorisation gère).
+- [x] **CoursesPage** : Widget "Membres actifs par catégorie" (data-testid `category-stats-widget`) avec 6 mini-cards colorées par catégorie (HG/Coach/Partenaire/IFRC/OpenGym/Challenge), bordure latérale colorée.
+- [x] Testing frontend e2e iter80+iter81 : **9/9 scénarios PASS (100%)** après 2 hotfixes (filter `is_coach` retiré, eslintConfig `extends:['react-app']` retiré qui cassait le dev compile).
+
 ## Upcoming Tasks
-- (P0) **Sprint B — VALIDATION & DÉPLOIEMENT** : tests utilisateur en preview puis déploiement Lot 1+Lot 2 en prod
-- (P0) Sprint B Frontend **Lot suivant** (à clarifier avec user après validation prod) :
-  - B.4.4 : Actions en masse (bulk archive/restore) avec checkboxes + barre de progression
+- (P0) **Sprint B + Sprint C — VALIDATION & DÉPLOIEMENT** : tests utilisateur en preview puis déploiement Lots 1+2 + Sweep + Sprint C en prod
 - (P1) Bug "Paiements onglet vide avril 2026" sans filtre (mis en pause volontaire)
-- (P1) Sprint C : Filtres par type membre (IFRC, HG, Open Gym, Partenaire) et coach (Interne, THE COACH)
 - (P1) Sprint D : Couleurs transactions, planning, stats, membres à risques
 - (P1) Investigation collection doublon `instructors`
+- (P1) Cleanup data Partenaires : noms combinés "X & Y FirstLast & Lastname" sur les couples DUO (cosmétique, présent depuis avant Sprint C)
+- (P1) Cleanup membre actif sans membership : Teo Succi (id `52004b50…`) — à investiguer/réassigner
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping
 - (P2) Integration API GoHighLevel + Notifications
 - (P2) CRON renouvellement token Meta Ads (60 jours)
 - (P2) Alertes WhatsApp via Twilio
+- (P2) Widget dashboard "Onboardings de la semaine par utilisateur" (top 3)
 
 ## Upcoming Tasks (OLD)
 - (P1) Integration API bsport
