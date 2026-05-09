@@ -1,0 +1,39 @@
+{
+  "summary": "Sprint C RETEST after 2 hotfixes (AttendancePage filteredMembers no-longer drops is_coach=true; eslintConfig 'react-app' extends removed). All 4 requested tests PASS end-to-end on the deployed preview URL after login + Versoix club switch. (1) TEST 3 — 5 sections present in correct order with exact counts: HG=53, IFRC=12, Challenge=2, Coachs=25, Partenaires=23, no opengym/pret/inconnu. (2) TEST 4 — Coachs collapsible toggle works, hides 25 rows on click, re-shows on second click, localStorage 'attendance_coaches_section_expanded' written with 'true'/'false', and state persists across page reload (collapsed→reload→still collapsed with 0 coach rows). (3) TEST 6 — DUO independent save executed with strict cleanup: chose Partenaire couple a448f459/b9dc8329 (initial S1=0/0, totals 0/0), set primary=2/secondary=1 → exactly 2 distinct POST /api/trainings (one per member_id, week=1), totals updated independently to 2/1; cleanup restored to 0/0 via 2 more POSTs. (4) Smoke retests: /onboarding filter present, /courses category-stats-widget shows 6 cards, /members /coaches /archives all load without errors (Archives shows Membres 207 / Coachs 0 as expected). Dev-server eslint overlay no longer appears.",
+  "tests_executed": {
+    "TEST 3 RETEST — 5 sections": "PASS — data-testid='attendance-section-{hg|ifrc|challenge|coach|partenaire}' all present with exact counts HG·53, IFRC·12, CHALLENGE·2, COACHS·25, PARTENAIRES (DUO)·23. No opengym/pret/inconnu sections.",
+    "TEST 4 RETEST — Coachs collapsible": "PASS — toggle data-testid='attendance-coaches-toggle' present. Click 1: 25 Coach rows → 0, localStorage='false'. Click 2: 0 → 25, localStorage='true'. Collapse + reload: localStorage persisted='false', 0 Coach rows rendered after reload. Restored to expanded after test.",
+    "TEST 6 — DUO independent saisie + cleanup": "PASS — Couple Cindy & Alexis Cabassot & Bolle (ids a448f459 / b9dc8329). S1 initial 0/0 (totals 0/0). Set primary=2 → POST trainings_count=2 for a448f459/week=1. Set secondary=1 → POST trainings_count=1 for b9dc8329/week=1 (would-be 0 reset early-returns; used 1 to force a real POST and verify independence). Got 2 distinct POSTs, 1 per member. Totals updated independently to 2 and 1 (deltas +2 and +1). CLEANUP: reset both to 0 with 2 more POSTs; verified final totals 0/0 = initial state.",
+    "Smoke — Onboarding filter": "PASS — data-testid='onboarding-category-filter' renders.",
+    "Smoke — Courses widget": "PASS — data-testid='category-stats-widget' renders with 6 category-stat-* cards.",
+    "Smoke — /members /coaches /archives": "PASS — all three pages render with non-empty body and no .error elements. Archives shows 'Membres 207' and 'Coachs 0' tabs.",
+    "Dev-server eslint overlay": "PASS — no overlay observed; pages load cleanly without removing webpack-error iframes."
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Partenaire couples — duplicated combined name", "issues": ["The selected DUO test couple shows BOTH members with the same display name 'Cindy & Alexis Cabassot & Bolle' (one for each customer_member). Each row has its own unique id and saves independently (verified), but the visual presentation is confusing — both rows look identical in the Membre column. Cosmetic/data issue, already flagged in iter80. Suggest splitting the name back to individual first+last per customer_member, or hiding the duplicated combined name when a row is the secondary in a DUO."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional/cosmetic: clean up Partenaire member names where both members of a couple appear with the same combined string 'X & Y FirstLast & Lastname' (cf. couple a448f459/b9dc8329). Independence of save is correct; only display is duplicated.",
+    "No functional action required — all Sprint C requested tests pass."
+  ],
+  "critical_code_review_comments": [
+    "AttendancePage.js:132-141 — Comment now correctly documents that is_coach is no longer used as a filter; the categorizer alone classifies. Good fix.",
+    "AttendancePage.js:387 — `if (list.length === 0) return null` still silently drops empty sections. Acceptable now since Coach is non-empty, but if a club has 0 coaches this would silently drop the whole Coachs section + toggle. Consider always rendering the header with '0' for explicitness.",
+    "package.json eslintConfig — extends 'react-app' removed; only the custom no-restricted-syntax rules retained. Dev compile error gone, HMR reachable. Good.",
+    "AttendancePage.js — handleCellBlur (line 220) early-returns if val === serverVal, which is correct behaviour but makes a 'set 0 over an existing 0' a no-op. The TEST 6 spec (Marie=2 / Jean=0) assumes the secondary had a non-zero starting value; testers should pick a couple where both are non-zero, or substitute a distinct delta as done in this run."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "skipped (per request)", "frontend": "TEST3 PASS, TEST4 PASS, TEST6 PASS, Smoke PASS — 100% of requested retests pass"},
+  "test_credentials": "antoine.paucod@the-coach.pro / TheCoach1290. (Super Admin); club: [data-testid='club-option-transform-versoix']",
+  "seed_data_creation": "TEST 6 mutated S1 trainings for couple a448f459 (Cindy/Alexis) and b9dc8329 to (2,1), then restored to (0,0) at end of test. Final state matches initial state — no residual data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Frontend URL is https://member-archive-mgmt.preview.emergentagent.com (not the previous preview URL). Login lands on /auth then redirects. Club switcher [data-testid='club-selector'] → [data-testid='club-option-transform-versoix']. Coach members are sourced from /api/members (customer_members with 'THE COACH PASS *' membership), classified as 'Coach' by useMemberCategories. AttendancePage no longer filters by is_coach — see filteredMembers comment at line 132-141. Sprint C complete; main agent can ship.",
+  "rca of the issue": "Both hotfixes verified in production preview: (1) removing the !m.is_coach filter from filteredMembers immediately makes the 25 Coach customer_members flow into the categorizer and into sections['Coach'], so the section header + collapsible toggle now render. (2) Removing 'react-app' from eslintConfig.extends eliminates the missing-package error; dev server now serves clean HMR. No regressions detected in /onboarding, /courses, /members, /coaches, /archives."
+}

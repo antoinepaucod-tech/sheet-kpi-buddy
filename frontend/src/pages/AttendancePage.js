@@ -130,10 +130,13 @@ export default function AttendancePage() {
   }, [serverTrainingMap, localUpdates]);
 
   const filteredMembers = useMemo(() => {
-    if (!search) return members.filter(m => !m.is_coach);
+    // Sprint C: keep ALL active members; the section builder excludes OpenGym/Pret/Inconnu
+    // via category. The `is_coach` flag (set on customer_members with membership "THE COACH *")
+    // is no longer used to filter — coaches are now their own section.
+    if (!search) return members;
     const s = search.toLowerCase();
     return members.filter(
-      (m) => !m.is_coach && (m.name?.toLowerCase().includes(s) || m.email?.toLowerCase().includes(s))
+      (m) => m.name?.toLowerCase().includes(s) || m.email?.toLowerCase().includes(s)
     );
   }, [members, search]);
 
