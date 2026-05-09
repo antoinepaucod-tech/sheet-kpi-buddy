@@ -106,8 +106,12 @@ export default function PaymentsPage({ selectedMonth }) {
   });
 
   // Fetch data
+  // NOTE: queryKey is ["payments", "all"] (not ["payments"]) so it is a SIBLING
+  // of ["payments", "late"] and ["payments", "upcoming"] rather than their parent.
+  // A parent prefix queryKey causes setQueriesData prefix-match collisions that
+  // wrote payments-list-shaped data into the late/upcoming caches (see iter_82).
   const { data: payments = [], isLoading: loadingPayments } = useQuery({
-    queryKey: ["payments"],
+    queryKey: ["payments", "all"],
     queryFn: () => axios.get(`${API}/payments`).then((r) => r.data),
   });
 
@@ -134,11 +138,12 @@ export default function PaymentsPage({ selectedMonth }) {
   // Mutations
   // Helper: synchronously patch the cached payments arrays with an updated payment
   // (so the table re-renders <100ms instead of waiting for the network refetch).
-  // Uses setQueriesData with prefix-match so any parameterized variant of the
-  // ['payments', ...] queryKey is patched (defensive — currently we use plain ['payments']).
+  // IMPORTANT: use exact:true to ONLY patch the bulk list cache. Without exact,
+  // setQueriesData would also patch ["payments","late"] / ["payments","upcoming"]
+  // with the wrong updater shape (see iter_82 RCA).
   const patchPaymentInCache = (updated) => {
     if (!updated?.id) return;
-    queryClient.setQueriesData({ queryKey: ["payments"] }, (list) =>
+    queryClient.setQueriesData({ queryKey: ["payments", "all"], exact: true }, (list) =>
       Array.isArray(list)
         ? list.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
         : list
@@ -147,7 +152,7 @@ export default function PaymentsPage({ selectedMonth }) {
 
   const removePaymentFromCache = (id) => {
     if (!id) return;
-    queryClient.setQueriesData({ queryKey: ["payments"] }, (list) =>
+    queryClient.setQueriesData({ queryKey: ["payments", "all"], exact: true }, (list) =>
       Array.isArray(list) ? list.filter((p) => p.id !== id) : list
     );
   };

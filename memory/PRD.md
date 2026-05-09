@@ -121,13 +121,25 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **CoursesPage** : Widget "Membres actifs par catégorie" (data-testid `category-stats-widget`) avec 6 mini-cards colorées par catégorie (HG/Coach/Partenaire/IFRC/OpenGym/Challenge), bordure latérale colorée.
 - [x] Testing frontend e2e iter80+iter81 : **9/9 scénarios PASS (100%)** après 2 hotfixes (filter `is_coach` retiré, eslintConfig `extends:['react-app']` retiré qui cassait le dev compile).
 
+## Completed Tasks (Session 2026-05-09 — Cleanup Infra + Fix Option B Paiements) ✅
+- [x] **Cleanup Infra** :
+  - Drop DB locale `kpibuddy` (27 collections / 5037 docs orphelins post-migration Atlas)
+  - Suppression endpoints `GET /api/admin/download-backup` + `GET /api/admin/backup-status` (404 confirmé)
+  - Suppression `BACKUP_DOWNLOAD_TOKEN` du `.env`
+  - Suppression dumps `/app/backups/db_a_recovery_*` (~3M libérés)
+  - Backups Atlas pré-migration conservés (`atlas_pre_apply_20260423_*`, `dump_20260423_*`)
+- [x] **Fix Option B Paiements** : PaymentsPage branchée sur `selectedMonth` global du Layout
+  - Bug racine identifié (iter_82 RCA) : queryKey `["payments"]` était PRÉFIXE de `["payments","late"]` et `["payments","upcoming"]`. Le `setQueriesData({queryKey:["payments"]}, fn)` dans `patchPaymentInCache`/`removePaymentFromCache` faisait du PREFIX MATCH par défaut → corruption silencieuse du cache des onglets late/upcoming + gel du fetch bulk.
+  - Fix : queryKey bulk renommée `["payments","all"]` (sibling, plus parent) + `setQueriesData` utilise `{exact:true}` pour ne patcher QUE le cache bulk
+  - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
+  - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
+
 ## Upcoming Tasks
-- (P0) **Sprint B + Sprint C — VALIDATION & DÉPLOIEMENT** : tests utilisateur en preview puis déploiement Lots 1+2 + Sweep + Sprint C en prod
-- (P1) Bug "Paiements onglet vide avril 2026" sans filtre (mis en pause volontaire)
 - (P1) Sprint D : Couleurs transactions, planning, stats, membres à risques
 - (P1) Investigation collection doublon `instructors`
-- (P1) Cleanup data Partenaires : noms combinés "X & Y FirstLast & Lastname" sur les couples DUO (cosmétique, présent depuis avant Sprint C)
-- (P1) Cleanup membre actif sans membership : Teo Succi (id `52004b50…`) — à investiguer/réassigner
+- (P1) Cleanup data Partenaires : noms combinés "X & Y FirstLast & Lastname" sur les couples DUO
+- (P1) Cleanup membre actif sans membership : Teo Succi (id `52004b50…`)
+- (P1) Backend GET /api/payments : aligner sur `?month=YYYY-MM` côté serveur (cohérence avec Dashboard/Transactions, actuellement filtre full client-side)
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping
 - (P2) Integration API GoHighLevel + Notifications
