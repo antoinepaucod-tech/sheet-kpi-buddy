@@ -30,7 +30,7 @@ export function BulkActionBar({
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]/95 backdrop-blur-md shadow-[0_-8px_24px_rgba(0,0,0,0.35)]"
       data-testid="bulk-action-bar"
     >
-      <div className="max-w-screen-2xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+      <div className="max-w-screen-2xl mx-auto px-6 py-3 pr-44 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="text-sm text-white font-medium" data-testid="bulk-count">
             <span className="text-[var(--color-accent)] font-bold text-base">{count}</span>{" "}
