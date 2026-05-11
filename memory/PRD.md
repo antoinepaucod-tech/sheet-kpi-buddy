@@ -121,6 +121,22 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **CoursesPage** : Widget "Membres actifs par catégorie" (data-testid `category-stats-widget`) avec 6 mini-cards colorées par catégorie (HG/Coach/Partenaire/IFRC/OpenGym/Challenge), bordure latérale colorée.
 - [x] Testing frontend e2e iter80+iter81 : **9/9 scénarios PASS (100%)** après 2 hotfixes (filter `is_coach` retiré, eslintConfig `extends:['react-app']` retiré qui cassait le dev compile).
 
+## Completed Tasks (Session 2026-05-11 — Sprint D Phase 1 + bonus UX) ✅
+- [x] **Bonus UX PaymentsPage** : champ "Générer pour le mois X" seedé automatiquement depuis `selectedMonth` global (`useEffect` sync)
+- [x] **D.1 Couleurs Transactions par type** : helper `getTxTypeStyle(tx)` retourne `{rowClass, amountClass, sign, kind}`. Mapping :
+  - `revenue` → vert (`--color-success`, fond `rgba(48,209,88,0.04)`)
+  - `expense` + catégorie commençant par `SALAIRE*` → bleu (`--color-accent`, fond `rgba(10,132,255,0.04)`)
+  - `expense` autre → rouge (`--color-danger`, fond `rgba(255,69,58,0.04)`)
+  - fallback (type vide) → neutre gris
+  - Bordure gauche 4px colorée + tinted hover + signe `+`/`-` + montant teinté. Attribut `data-tx-kind` exposé pour test e2e.
+  - Validé sur mars 2026 Versoix : 148 tx (103 revenue + 32 expense + 13 salary).
+- [x] **D.5 Page "Membres à risques"** :
+  - Backend : `GET /api/members/at-risk?weeks=N` (N clampé 1..12, défaut 2). Réponse `{period, total, members[]}`.
+  - Logique : membres actifs non archivés, exclut catégories `OpenGym/Inconnu/Pret` + membres en pause (via `_is_on_pause`, helper inerte tant que Phase 2 pas livrée). Bulk fetch `weekly_trainings` sur les N semaines ISO, total `trainings_count == 0` → inclus. Tri DESC par `weeks_without_session` puis ASC par nom. `weeks_without_session` calculé via `datetime.fromisocalendar(year, week, 1)` (999 si jamais aucune saisie).
+  - Frontend : nouvelle page `/at-risk` (`AtRiskMembersPage.js`), nouveau lien sidebar `Administration > Membres à risques` (icône `AlertTriangle`). Sélecteur période 1/2/3/4 semaines (défaut 2), recherche client-side, counter avec bordure rouge, badges catégorie colorés, lien "Voir" → `/members?search={name}`.
+  - Validation : 115 membres at-risk pour Versoix (W19+W20 2026), tri/filtre/recherche tous OK. Tombe à 66 sur 12 semaines (confirme que le filtre fonctionne).
+- [x] Testing e2e iter_83 : 8/8 backend + 7/7 frontend (100% PASS).
+
 ## Completed Tasks (Session 2026-05-09 — Cleanup Infra + Fix Option B Paiements) ✅
 - [x] **Cleanup Infra** :
   - Drop DB locale `kpibuddy` (27 collections / 5037 docs orphelins post-migration Atlas)
@@ -135,7 +151,8 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
 ## Upcoming Tasks
-- (P1) Sprint D : Couleurs transactions, planning, stats, membres à risques
+- (P0) **Sprint D Phase 2** : Statut pause membre (champs `pause_start_date`/`pause_end_date`, endpoints PUT/DELETE /members/{id}/pause, badge UI, exclusion at-risk)
+- (P0) **Sprint D Phase 3** : Recopier planning de cours d'un mois à l'autre + ordre des jours du planning (à clarifier)
 - (P1) Investigation collection doublon `instructors`
 - (P1) Cleanup data Partenaires : noms combinés "X & Y FirstLast & Lastname" sur les couples DUO
 - (P1) Cleanup membre actif sans membership : Teo Succi (id `52004b50…`)
