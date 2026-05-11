@@ -45,6 +45,7 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { Progress } from "../components/ui/progress";
+import { CopyPlanningDialog } from "../components/CopyPlanningDialog";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
 import { useMemberCategories, CATEGORY_LABELS } from "../hooks/useMemberCategories";
@@ -123,6 +124,7 @@ export default function CoursesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [formData, setFormData] = useState({
     year: currentYear,
@@ -151,6 +153,16 @@ export default function CoursesPage() {
     queryFn: () =>
       axios.get(`${API}/courses?year=${selectedYear}&month=${selectedMonth}`).then((r) => r.data),
   });
+
+  // Sprint D.3 — ISO weeks dynamiques pour le mois sélectionné (4 ou 5 lundis)
+  const { data: isoWeeksData } = useQuery({
+    queryKey: ["courses-iso-weeks", selectedYear, selectedMonth],
+    queryFn: () =>
+      axios
+        .get(`${API}/courses/iso-weeks/${selectedYear}/${selectedMonth}`)
+        .then((r) => r.data),
+  });
+  const isoSlots = isoWeeksData?.slots || [];
 
   // Fetch coaches
   const { data: coaches = [] } = useQuery({
@@ -236,14 +248,8 @@ export default function CoursesPage() {
   });
 
   // Copy planning from previous month
-  const copyPlanningMutation = useMutation({
-    mutationFn: () => axios.post(`${API}/courses/copy-planning/${selectedYear}/${selectedMonth}`),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["courses"] });
-      toast.success(res.data.message);
-    },
-    onError: (err) => toast.error(err.response?.data?.detail || "Erreur lors de la copie"),
-  });
+  // Sprint D.2 — Recopier planning : utilise désormais CopyPlanningDialog (source/dest/overwrite/preview).
+  // L'ancien endpoint /copy-planning/{year}/{month} reste en backend pour back-compat.
 
   // Generate salary expenses from courses
   const generateSalaryMutation = useMutation({
@@ -400,14 +406,13 @@ export default function CoursesPage() {
         </div>
         <div className="flex gap-3">
           <Button 
-            onClick={() => copyPlanningMutation.mutate()}
-            disabled={copyPlanningMutation.isPending || courses.length > 0}
+            onClick={() => setCopyDialogOpen(true)}
             variant="outline"
             className="border-[var(--color-border-strong)] text-white hover:bg-[rgba(255,255,255,0.1)]"
             data-testid="copy-planning-btn"
           >
             <Copy size={16} className="mr-2" />
-            {copyPlanningMutation.isPending ? "..." : "Copier mois précédent"}
+            Recopier planning
           </Button>
           <Button
             onClick={openBulkModal}
@@ -431,10 +436,10 @@ export default function CoursesPage() {
           <p className="text-[var(--color-accent)] text-sm">
             Aucun cours pour {MONTHS_FR[selectedMonth - 1]} {selectedYear}. 
             <button 
-              onClick={() => copyPlanningMutation.mutate()}
+              onClick={() => setCopyDialogOpen(true)}
               className="underline ml-1 hover:text-[var(--color-accent)]"
             >
-              Copier le planning du mois précédent
+              Recopier le planning d'un autre mois
             </button>
           </p>
         </div>
@@ -597,11 +602,25 @@ export default function CoursesPage() {
               <TableHead className="text-[var(--color-text-secondary)]">Cours</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Coach</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Cap.</TableHead>
-              <TableHead className="text-[var(--color-text-secondary)] text-center">S1</TableHead>
-              <TableHead className="text-[var(--color-text-secondary)] text-center">S2</TableHead>
-              <TableHead className="text-[var(--color-text-secondary)] text-center">S3</TableHead>
-              <TableHead className="text-[var(--color-text-secondary)] text-center">S4</TableHead>
-              <TableHead className="text-[var(--color-text-secondary)] text-center">S5</TableHead>
+              {/* Sprint D.3 — Colonnes dynamiques 4 ou 5 avec date du lundi */}
+              {isoSlots.map(({ slot, monday_date }) => {
+                const d = new Date(monday_date);
+                const label = `S${slot} ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+                return (
+                  <TableHead
+                    key={slot}
+                    className="text-[var(--color-text-secondary)] text-center"
+                    data-testid={`week-header-${slot}`}
+                  >
+                    <div className="flex flex-col items-center leading-tight">
+                      <span className="text-sm font-bold">{`S${slot}`}</span>
+                      <span className="text-[9px] font-mono text-[var(--color-text-tertiary)]">
+                        {`${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`}
+                      </span>
+                    </div>
+                  </TableHead>
+                );
+              })}
               <TableHead className="text-[var(--color-text-secondary)]">Taux</TableHead>
               <TableHead className="text-[var(--color-text-secondary)] text-right">Actions</TableHead>
             </TableRow>
@@ -609,13 +628,13 @@ export default function CoursesPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center text-[var(--color-text-secondary)] py-8">
+                <TableCell colSpan={7 + isoSlots.length} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredCourses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center text-[var(--color-text-secondary)] py-8">
+                <TableCell colSpan={7 + isoSlots.length} className="text-center text-[var(--color-text-secondary)] py-8">
                   Aucun cours pour cette période
                 </TableCell>
               </TableRow>
@@ -646,24 +665,29 @@ export default function CoursesPage() {
                       {course.max_capacity}
                     </Badge>
                   </TableCell>
-                  {[1, 2, 3, 4, 5].map((week) => {
-                    const weekInstructor = course[`week${week}_instructor`];
+                  {/* Sprint D.3 — Colonnes dynamiques basées sur isoSlots (4 ou 5) */}
+                  {isoSlots.map(({ slot, monday_date }) => {
+                    const weekInstructor = course[`week${slot}_instructor`];
                     const isOverridden = weekInstructor && weekInstructor !== course.instructor;
                     return (
-                      <TableCell key={week} className="text-center">
+                      <TableCell key={slot} className="text-center" data-week-slot={slot} data-monday={monday_date}>
                         <div className="flex flex-col items-center gap-0.5">
                           <Input
                             type="number"
                             min="0"
                             max={course.max_capacity}
-                            value={course[`week${week}_attendance`] || 0}
-                            onChange={(e) => handleAttendanceChange(course, week, e.target.value)}
+                            value={course[`week${slot}_attendance`] || 0}
+                            onChange={(e) => handleAttendanceChange(course, slot, e.target.value)}
                             className={`w-12 h-8 text-center bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-white p-1 ${isOverridden ? 'border-[rgba(255,214,10,0.4)]' : ''}`}
-                            data-testid={`attendance-w${week}-${course.id}`}
+                            data-testid={`attendance-w${slot}-${course.id}`}
                           />
                           {isOverridden && (
-                            <span className="text-[8px] text-[var(--color-warning)] truncate max-w-[50px]" title={weekInstructor}>
-                              {weekInstructor.split(" ")[0]}
+                            <span
+                              className="inline-flex items-center gap-1 text-[9px] font-mono font-bold px-1 py-0.5 rounded bg-[rgba(255,214,10,0.18)] text-[var(--color-warning)] max-w-[60px] truncate"
+                              title={`Remplaçant : ${weekInstructor}`}
+                              data-testid={`substitute-badge-${course.id}-${slot}`}
+                            >
+                              R · {weekInstructor.split(" ")[0]}
                             </span>
                           )}
                         </div>
@@ -1172,6 +1196,14 @@ export default function CoursesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sprint D.2 — Recopier planning */}
+      <CopyPlanningDialog
+        open={copyDialogOpen}
+        currentYear={selectedYear}
+        currentMonth={selectedMonth}
+        onClose={() => setCopyDialogOpen(false)}
+      />
     </div>
   );
 }

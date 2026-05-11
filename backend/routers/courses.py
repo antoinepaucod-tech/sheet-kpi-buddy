@@ -1,7 +1,7 @@
 """Course, Instructor, and Salary Generation routes"""
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 
 from core.config import db, exclude_archived, MONTHS_FR
 from core.security import get_club_id
@@ -18,7 +18,95 @@ def _cq(club_id, base=None):
     return q
 
 
+# ─── Sprint D.3 — Helpers ISO weeks per month ─────────────────────────────────
+#
+# Règle (spec utilisateur, norme ISO adaptée) :
+#   « Une semaine ISO appartient au mois où tombe son LUNDI. »
+# Garantit qu'une semaine n'apparaît jamais dans 2 mois.
+
+def iso_weeks_for_month(year: int, month: int) -> list[dict]:
+    """Retourne la liste ordonnée des semaines (slots) à afficher pour ce mois.
+
+    Chaque entrée : {slot:1..5, iso_year, iso_week, monday_date:"YYYY-MM-DD"}.
+    Une semaine appartient à month ssi son lundi tombe dans (year, month).
+    """
+    # Premier lundi du mois (ou lundi précédent si le 1er n'est pas un lundi —
+    # mais on ne le compte que si son année/mois correspondent).
+    first = date(year, month, 1)
+    # Trouver le lundi de la semaine ISO contenant le 1er du mois
+    iso_y, iso_w, iso_d = first.isocalendar()
+    monday = date.fromisocalendar(iso_y, iso_w, 1)
+    # Si ce lundi est avant le 1er du mois → c'est la semaine du mois précédent
+    # par convention ISO. On commence donc à la semaine SUIVANTE.
+    if monday.month != month or monday.year != year:
+        monday = monday + timedelta(weeks=1)
+
+    slots: list[dict] = []
+    slot_idx = 0
+    while monday.year == year and monday.month == month:
+        slot_idx += 1
+        iy, iw, _ = monday.isocalendar()
+        slots.append({
+            "slot": slot_idx,
+            "iso_year": int(iy),
+            "iso_week": int(iw),
+            "monday_date": monday.isoformat(),
+        })
+        monday = monday + timedelta(weeks=1)
+        if slot_idx >= 5:  # safety cap (max 5 lundis dans un mois)
+            break
+    return slots
+
+
+def _compute_attendance_rate(course: dict, today: Optional[date] = None) -> float:
+    """Sprint D.3 — recalcule le taux de remplissage selon la spec.
+
+    Dénominateur = `max_capacity × nb_slots_écoulés` où "écoulé" = monday <= today.
+    Les semaines futures sont exclues. Retourne 0 si aucun slot écoulé.
+    """
+    if today is None:
+        today = datetime.now(timezone.utc).date()
+    year = int(course.get("year") or 0)
+    month = int(course.get("month") or 0)
+    max_capacity = int(course.get("max_capacity") or 0)
+    if max_capacity <= 0 or year <= 0 or month <= 0:
+        return 0.0
+
+    slots = iso_weeks_for_month(year, month)
+    if not slots:
+        return 0.0
+
+    # Slots dont le lundi est passé OU est cette semaine (lundi <= today)
+    elapsed_slots = [s for s in slots if date.fromisoformat(s["monday_date"]) <= today]
+    if not elapsed_slots:
+        return 0.0
+
+    total_attendance = 0
+    for s in elapsed_slots:
+        total_attendance += int(course.get(f"week{s['slot']}_attendance") or 0)
+
+    denom = max_capacity * len(elapsed_slots)
+    if denom <= 0:
+        return 0.0
+    return round((total_attendance / denom) * 100, 1)
+
+
 # ── Courses ───────────────────────────────────────────────────────────────────
+
+@router.get("/courses/iso-weeks/{year}/{month}")
+async def get_iso_weeks_for_month(year: int, month: int):
+    """Sprint D.3 — Retourne la liste des semaines (slots) à afficher pour
+    un mois donné, selon la règle ISO « lundi détermine le mois ».
+
+    Réponse : { year, month, total_slots, slots: [{slot, iso_year, iso_week, monday_date}] }.
+    """
+    if year < 2000 or year > 2100:
+        raise HTTPException(status_code=400, detail="Année invalide")
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
+    slots = iso_weeks_for_month(year, month)
+    return {"year": year, "month": month, "total_slots": len(slots), "slots": slots}
+
 
 @router.get("/courses")
 async def get_courses(year: Optional[int] = None, month: Optional[int] = None, club_id: Optional[str] = Depends(get_club_id)):
@@ -129,17 +217,12 @@ async def update_course(course_id: str, body: dict):
     if not existing:
         raise HTTPException(status_code=404, detail="Cours introuvable")
 
-    attendance_fields = ["week1_attendance", "week2_attendance", "week3_attendance", "week4_attendance", "week5_attendance"]
-    total_attendance = sum(body.get(f, existing.get(f, 0)) for f in attendance_fields)
-    max_capacity = body.get("max_capacity", existing.get("max_capacity", 10))
-    weeks_with_data = sum(1 for f in attendance_fields if body.get(f, existing.get(f, 0)) > 0)
-
-    if weeks_with_data > 0 and max_capacity > 0:
-        attendance_rate = round((total_attendance / (weeks_with_data * max_capacity)) * 100, 1)
-    else:
-        attendance_rate = 0
-
-    body["attendance_rate"] = attendance_rate
+    # Sprint D.3 — Nouvelle formule attendance_rate (spec ISO) :
+    #   Dénominateur = max_capacity × nb_slots_écoulés (lundi <= today).
+    #   Les semaines à 0 ne sont plus exclues du dénominateur (la formule
+    #   précédente sur-estimait le taux).
+    merged = {**existing, **body}
+    body["attendance_rate"] = _compute_attendance_rate(merged)
     body["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     await db.course_kpis.update_one({"id": course_id}, {"$set": body})
@@ -227,6 +310,159 @@ async def copy_planning_from_previous_month(year: int, month: int, club_id: Opti
         "source": f"{MONTHS_FR[prev_month-1]} {prev_year}",
         "target": f"{MONTHS_FR[month-1]} {year}",
         "copied": len(copied), "courses": copied
+    }
+
+
+# ─── Sprint D.2 — Recopier planning d'un mois à l'autre (configurable) ────────
+
+def _parse_month_param(value: str) -> tuple[int, int]:
+    """Parse 'YYYY-MM' → (year, month). Raise 400 si invalide."""
+    try:
+        parts = (value or "").split("-")
+        if len(parts) != 2:
+            raise ValueError("format")
+        y, m = int(parts[0]), int(parts[1])
+        if not (2000 <= y <= 2100) or not (1 <= m <= 12):
+            raise ValueError("range")
+        return y, m
+    except (ValueError, AttributeError, TypeError):
+        raise HTTPException(status_code=400, detail=f"Mois invalide : '{value}'. Format attendu : YYYY-MM")
+
+
+def _course_dedup_key(course: dict) -> tuple[str, str, str]:
+    """Identité d'un slot de cours dans un mois : (day_of_week, time_slot, course_name)."""
+    return (
+        (course.get("day_of_week") or "").strip(),
+        (course.get("time_slot") or "").strip(),
+        (course.get("course_name") or "").strip(),
+    )
+
+
+@router.post("/courses/copy-month/preview")
+async def copy_month_preview(body: dict, club_id: Optional[str] = Depends(get_club_id)):
+    """Sprint D.2 — Pré-calcul avant recopie : combien créés / écrasés / conservés."""
+    source_year, source_month = _parse_month_param(body.get("source_month"))
+    dest_year, dest_month = _parse_month_param(body.get("dest_month"))
+
+    if (source_year, source_month) == (dest_year, dest_month):
+        raise HTTPException(status_code=400, detail="Source et destination identiques")
+
+    source_courses = await db.course_kpis.find(
+        _cq(club_id, {"year": source_year, "month": source_month}), {"_id": 0}
+    ).to_list(500)
+    dest_courses = await db.course_kpis.find(
+        _cq(club_id, {"year": dest_year, "month": dest_month}), {"_id": 0}
+    ).to_list(500)
+
+    dest_by_key = {_course_dedup_key(c): c for c in dest_courses}
+    source_keys = {_course_dedup_key(c) for c in source_courses}
+
+    will_create = sum(1 for c in source_courses if _course_dedup_key(c) not in dest_by_key)
+    will_overwrite = sum(1 for c in source_courses if _course_dedup_key(c) in dest_by_key)
+    will_keep = sum(1 for k in dest_by_key.keys() if k not in source_keys)
+
+    return {
+        "source": f"{MONTHS_FR[source_month-1]} {source_year}",
+        "dest": f"{MONTHS_FR[dest_month-1]} {dest_year}",
+        "source_count": len(source_courses),
+        "dest_count": len(dest_courses),
+        "will_create": will_create,
+        "will_overwrite": will_overwrite,
+        "will_keep": will_keep,
+    }
+
+
+@router.post("/courses/copy-month")
+async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
+    """Sprint D.2 — Recopier planning source_month → dest_month, avec option overwrite.
+
+    Body : { source_month: "YYYY-MM", dest_month: "YYYY-MM", overwrite: bool }.
+
+    Logique :
+      - Pour chaque cours source, clé d'identité = (day_of_week, time_slot, course_name).
+      - Si destination a déjà un cours avec la même clé :
+          * `overwrite=true`  → écrase (garde l'ID dest existant, met à jour les fields).
+          * `overwrite=false` → conservé tel quel, source ignorée.
+      - Sinon → création (nouveau ID, attendances repartent à 0).
+      - Les cours dest sans équivalent source ne sont **jamais** touchés (conservés).
+    """
+    source_year, source_month = _parse_month_param(body.get("source_month"))
+    dest_year, dest_month = _parse_month_param(body.get("dest_month"))
+    overwrite = bool(body.get("overwrite", True))
+
+    if (source_year, source_month) == (dest_year, dest_month):
+        raise HTTPException(status_code=400, detail="Source et destination identiques")
+
+    source_courses = await db.course_kpis.find(
+        _cq(club_id, {"year": source_year, "month": source_month}), {"_id": 0}
+    ).to_list(500)
+    if not source_courses:
+        return {
+            "message": f"Aucun cours à copier depuis {MONTHS_FR[source_month-1]} {source_year}",
+            "created": 0, "overwritten": 0, "kept": 0, "skipped": 0,
+        }
+
+    dest_courses = await db.course_kpis.find(
+        _cq(club_id, {"year": dest_year, "month": dest_month}), {"_id": 0}
+    ).to_list(500)
+    dest_by_key = {_course_dedup_key(c): c for c in dest_courses}
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    created = 0
+    overwritten = 0
+    skipped = 0
+
+    for src in source_courses:
+        key = _course_dedup_key(src)
+        if key in dest_by_key and not overwrite:
+            skipped += 1
+            continue
+
+        if key in dest_by_key and overwrite:
+            existing = dest_by_key[key]
+            update_fields = {
+                "instructor": src.get("instructor"),
+                "max_capacity": int(src.get("max_capacity") or 10),
+                "week1_attendance": 0, "week2_attendance": 0, "week3_attendance": 0,
+                "week4_attendance": 0, "week5_attendance": 0,
+                "week1_instructor": None, "week2_instructor": None, "week3_instructor": None,
+                "week4_instructor": None, "week5_instructor": None,
+                "attendance_rate": 0.0,
+                "monthly_expenses": float(src.get("monthly_expenses") or 0),
+                "updated_at": now_iso,
+            }
+            await db.course_kpis.update_one({"id": existing["id"]}, {"$set": update_fields})
+            overwritten += 1
+        else:
+            new_course = CourseKPI(
+                year=dest_year, month=dest_month,
+                month_name=MONTHS_FR[dest_month - 1],
+                day_of_week=src.get("day_of_week", ""),
+                time_slot=src.get("time_slot", ""),
+                course_name=src.get("course_name", ""),
+                instructor=src.get("instructor"),
+                max_capacity=int(src.get("max_capacity") or 10),
+                monthly_expenses=float(src.get("monthly_expenses") or 0),
+            )
+            doc = new_course.model_dump()
+            if club_id:
+                doc["club_id"] = club_id
+            await db.course_kpis.insert_one(doc)
+            created += 1
+
+    # Cours dest sans équivalent source = conservés
+    source_keys = {_course_dedup_key(c) for c in source_courses}
+    kept = sum(1 for k in dest_by_key.keys() if k not in source_keys)
+
+    return {
+        "message": f"{created} créés, {overwritten} écrasés, {kept} conservés"
+                   + (f", {skipped} ignorés" if skipped else ""),
+        "source": f"{MONTHS_FR[source_month-1]} {source_year}",
+        "dest": f"{MONTHS_FR[dest_month-1]} {dest_year}",
+        "created": created,
+        "overwritten": overwritten,
+        "kept": kept,
+        "skipped": skipped,
     }
 
 
