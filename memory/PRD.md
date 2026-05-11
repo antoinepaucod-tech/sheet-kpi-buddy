@@ -121,8 +121,15 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **CoursesPage** : Widget "Membres actifs par catégorie" (data-testid `category-stats-widget`) avec 6 mini-cards colorées par catégorie (HG/Coach/Partenaire/IFRC/OpenGym/Challenge), bordure latérale colorée.
 - [x] Testing frontend e2e iter80+iter81 : **9/9 scénarios PASS (100%)** après 2 hotfixes (filter `is_coach` retiré, eslintConfig `extends:['react-app']` retiré qui cassait le dev compile).
 
-## Completed Tasks (Session 2026-05-11 — Sprint D Phase 2 + Bonus Engagement Widget) ✅
-- [x] **Phase 2 Backend** :
+## Completed Tasks (Session 2026-05-11 — Sprint D Phase 3 — D.2 + D.3) ✅
+- [x] **D.3 Backend** : Helper `iso_weeks_for_month(year, month)` (règle ISO "la semaine appartient au mois où tombe son lundi"). Endpoint `GET /api/courses/iso-weeks/{year}/{month}` retourne `{year, month, total_slots, slots:[{slot, iso_year, iso_week, monday_date}]}`. Vérifié sur Mars 2026 (5 lundis 02/09/16/23/30 W10-14), Avril 2026 (4 lundis 06/13/20/27 W15-18 — exclut bien le lundi 30/03 W14), Mai 2026 (4 lundis 04/11/18/25 — inclut le lundi 04/05 W19 et l'exclut d'avril).
+- [x] **D.3 Backend — nouvelle formule `attendance_rate`** : `total_attendance / (max_capacity × nb_slots_écoulés)` où `nb_slots_écoulés` = slots dont `monday_date <= today`. Les semaines à 0 ne sont plus exclues du dénominateur (la formule précédente sur-estimait). Implémenté dans `_compute_attendance_rate` (`routers/courses.py`).
+- [x] **D.3 Frontend** : `CoursesPage` fetch maintenant `/iso-weeks/{year}/{month}` et rend 4 ou 5 colonnes dynamiques avec label `S{n}` + date du lundi `DD/MM`. Badge "Remplaçant" jaune (`substitute-badge-{course_id}-{slot}`) si `weekN_instructor !== instructor`. `colSpan` Loader/Empty également dynamique (`7 + isoSlots.length`).
+- [x] **D.2 Backend** : 2 nouveaux endpoints `POST /api/courses/copy-month/preview` (pure lecture, calcule `will_create`/`will_overwrite`/`will_keep`) et `POST /api/courses/copy-month` (exécution avec `overwrite: bool`). Identité d'un cours pour dédup : `(day_of_week, time_slot, course_name)`. Présences repartent à 0. Cours dest sans équivalent source = conservés intacts. Réponse : `{created, overwritten, kept, skipped, message}`.
+- [x] **D.2 Frontend** : Composant `CopyPlanningDialog` avec 2 SelectMonth (12 mois passés / 6 futurs), checkbox overwrite, preview LIVE qui se recalcule au changement source/dest/overwrite. Affichage 3 lignes colorées (vert créés / jaune écrasés / gris conservés). Bouton "Recopier planning" remplace l'ancien bouton mono-direction. Lien fallback dans la bannière "aucun cours".
+- [x] Testing e2e iter_85 : 11/11 backend + 7/7 frontend (100% PASS). Aucune mutation prod (preview testé en lecture seule, click final Recopier non exécuté pour préserver les 80 cours d'Avril 2026).
+
+## Completed Tasks (Session 2026-05-11 — Sprint D Phase 2 + Bonus Engagement Widget) ✅- [x] **Phase 2 Backend** :
   - Champs Pydantic `pause_start_date` / `pause_end_date` / `pause_reason` ajoutés à `CustomerMember` (Optional, nullable, format YYYY-MM-DD)
   - Endpoint `PUT /api/members/{id}/pause` body `{start_date (requis), end_date (optionnel), reason (optionnel)}`. Validation : format ISO, end >= start, refuse si membre archivé (400).
   - Endpoint `DELETE /api/members/{id}/pause` : clear les 3 champs, idempotent.
@@ -170,18 +177,20 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
 ## Upcoming Tasks
-- (P0) **Sprint D Phase 3** : Recopier planning de cours d'un mois à l'autre + ordre des jours du planning (à clarifier avec user)
+- (P1) **Sprint D — déploiement prod consolidé** Phase 1 + 2 + 3 (validation utilisateur en preview puis ship)
 - (P1) Investigation collection doublon `instructors`
 - (P1) Cleanup data Partenaires : noms combinés "X & Y FirstLast & Lastname" sur les couples DUO
 - (P1) Cleanup membre actif sans membership : Teo Succi (id `52004b50…`)
 - (P1) Backend GET /api/payments : aligner sur `?month=YYYY-MM` côté serveur (cohérence avec Dashboard/Transactions, actuellement filtre full client-side)
 - (P1) Refactor `_is_on_pause` : extraire dans `core/` (DRY — réimplémenté inline dans `routers/onboarding.py`)
-- (P1) Integration API bsport
-- (P1) Integration Revolut Business API + Category mapping
+- (P2) UX CopyPlanningDialog : label "conservés (pas dans la source)" trompeur quand overwrite=OFF
+- (P2) Integration API bsport
+- (P2) Integration Revolut Business API + Category mapping
 - (P2) Integration API GoHighLevel + Notifications
 - (P2) CRON renouvellement token Meta Ads (60 jours)
 - (P2) Alertes WhatsApp via Twilio
 - (P2) Widget dashboard "Onboardings de la semaine par utilisateur" (top 3)
+- (P2) Digest hebdo CRON dimanche : email aux coachs avec membres at_risk + transitions at_risk→engaged
 
 ## Upcoming Tasks (OLD)
 - (P1) Integration API bsport
