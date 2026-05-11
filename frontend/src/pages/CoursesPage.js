@@ -602,20 +602,27 @@ export default function CoursesPage() {
               <TableHead className="text-[var(--color-text-secondary)]">Cours</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Coach</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Cap.</TableHead>
-              {/* Sprint D.3 — Colonnes dynamiques 4 ou 5 avec date du lundi */}
-              {isoSlots.map(({ slot, monday_date }) => {
+              {/* Sprint D.3 — Colonnes dynamiques 4 ou 5 avec date du lundi + semaine ISO */}
+              {isoSlots.map(({ slot, iso_week, monday_date }) => {
                 const d = new Date(monday_date);
-                const label = `S${slot} ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+                const dd = String(d.getDate()).padStart(2, "0");
+                const mm = String(d.getMonth() + 1).padStart(2, "0");
                 return (
                   <TableHead
                     key={slot}
                     className="text-[var(--color-text-secondary)] text-center"
                     data-testid={`week-header-${slot}`}
+                    data-iso-week={iso_week}
                   >
                     <div className="flex flex-col items-center leading-tight">
-                      <span className="text-sm font-bold">{`S${slot}`}</span>
+                      <span className="text-sm font-bold whitespace-nowrap">
+                        {`S${slot} `}
+                        <span className="text-[var(--color-text-tertiary)] font-mono text-[11px] font-normal">
+                          {`W${iso_week}`}
+                        </span>
+                      </span>
                       <span className="text-[9px] font-mono text-[var(--color-text-tertiary)]">
-                        {`${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`}
+                        {`${dd}/${mm}`}
                       </span>
                     </div>
                   </TableHead>
