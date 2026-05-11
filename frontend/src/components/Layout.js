@@ -29,6 +29,7 @@ import {
   ChevronDown,
   HelpCircle,
   Archive,
+  AlertTriangle,
 } from "lucide-react";
 import { useTranslations } from "../hooks/useTranslations";
 import { useAuth } from "../contexts/AuthContext";
@@ -98,6 +99,7 @@ const NAV_SECTIONS = (lang) => [
   {
     label: "Administration",
     items: [
+      { path: "/at-risk", icon: AlertTriangle, label: lang === "fr" ? "Membres à risques" : "At-risk members" },
       { path: "/archives", icon: Archive, label: lang === "fr" ? "Archives" : "Archives" },
     ],
   },

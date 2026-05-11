@@ -49,6 +49,44 @@ export default function TransactionsPage({ selectedMonth }) {
 
   const { memberRevenue, coachRevenue } = useCoachMembership(transactions, categories);
 
+  // Sprint D.1 — Visual type coding per transaction row.
+  // revenue → green, salary categories → blue, other expense → red, unknown → grey.
+  // Returns Tailwind-like inline styles compatible with the dark theme.
+  const getTxTypeStyle = (tx) => {
+    const cat = (tx?.category || "").toUpperCase();
+    const isSalary = tx?.type === "expense" && cat.startsWith("SALAIRE");
+    if (tx?.type === "revenue") {
+      return {
+        rowClass: "border-l-4 border-l-[var(--color-success)] bg-[rgba(48,209,88,0.04)] hover:bg-[rgba(48,209,88,0.10)]",
+        amountClass: "text-[var(--color-success)]",
+        sign: "+",
+        kind: "revenue",
+      };
+    }
+    if (isSalary) {
+      return {
+        rowClass: "border-l-4 border-l-[var(--color-accent)] bg-[rgba(10,132,255,0.04)] hover:bg-[rgba(10,132,255,0.10)]",
+        amountClass: "text-[var(--color-accent)]",
+        sign: "-",
+        kind: "salary",
+      };
+    }
+    if (tx?.type === "expense") {
+      return {
+        rowClass: "border-l-4 border-l-[var(--color-danger)] bg-[rgba(255,69,58,0.04)] hover:bg-[rgba(255,69,58,0.10)]",
+        amountClass: "text-[var(--color-danger)]",
+        sign: "-",
+        kind: "expense",
+      };
+    }
+    return {
+      rowClass: "border-l-4 border-l-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)]",
+      amountClass: "text-[var(--color-text-primary)]",
+      sign: "",
+      kind: "unknown",
+    };
+  };
+
   // Group categories by type
   const categoryGroups = useMemo(() => {
     const revenue = categories.filter(c => c.type === "revenue").sort((a, b) => a.name.localeCompare(b.name));
@@ -224,8 +262,10 @@ export default function TransactionsPage({ selectedMonth }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((tx) => (
-                <TableRow key={tx.id} className="border-[var(--color-border)] hover:bg-[rgba(255,255,255,0.03)] transition-colors" data-testid={`tx-row-${tx.id}`}>
+              {filtered.map((tx) => {
+                const style = getTxTypeStyle(tx);
+                return (
+                <TableRow key={tx.id} className={`border-[var(--color-border)] transition-colors ${style.rowClass}`} data-testid={`tx-row-${tx.id}`} data-tx-kind={style.kind}>
                   <TableCell className="font-mono text-xs text-[var(--color-text-secondary)]">{tx.date}</TableCell>
                   <TableCell>
                     {tx.client_name ? (
@@ -247,8 +287,8 @@ export default function TransactionsPage({ selectedMonth }) {
                       {tx.category}
                     </span>
                   </TableCell>
-                  <TableCell className={`font-mono text-sm font-bold ${tx.type === "revenue" ? "text-[var(--color-success)]" : "text-[var(--color-text-primary)]"}`}>
-                    {tx.type === "revenue" ? "+" : "-"} {formatCHF(tx.amount)}
+                  <TableCell className={`font-mono text-sm font-bold ${style.amountClass}`} data-testid={`tx-amount-${tx.id}`}>
+                    {style.sign} {formatCHF(tx.amount)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -265,7 +305,8 @@ export default function TransactionsPage({ selectedMonth }) {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}

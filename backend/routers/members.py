@@ -307,6 +307,186 @@ async def get_member_categories_stats(club_id: Optional[str] = Depends(get_club_
     return stats
 
 
+# ─── Sprint D.5 : Membres à risques (zéro séance sur N semaines) ──────────────
+
+# Catégories ignorées dans le calcul à risque (selon spec Sprint D)
+AT_RISK_EXCLUDED_CATEGORIES = {"OpenGym", "Inconnu", "Pret"}
+
+
+def _is_on_pause(member: dict, today_iso: str) -> bool:
+    """Sprint D.4 (future) — détecte si un membre est actuellement en pause.
+
+    Compatibilité ascendante : si les champs `pause_start_date` / `pause_end_date`
+    n'existent pas encore (avant rollout Phase 2), renvoie toujours False.
+    """
+    start = member.get("pause_start_date")
+    end = member.get("pause_end_date")
+    if not start:
+        return False
+    if start > today_iso:
+        return False
+    if end and today_iso > end:
+        return False
+    return True
+
+
+def _isocalendar_weeks_back(today: "datetime.date", n: int) -> list[tuple[int, int]]:
+    """Retourne la liste des (year, iso_week) des N dernières semaines, semaine
+    courante incluse, ordre chronologique ASC (la plus ancienne d'abord).
+    """
+    weeks: list[tuple[int, int]] = []
+    for offset in range(n - 1, -1, -1):
+        d = today - timedelta(weeks=offset)
+        y, w, _ = d.isocalendar()
+        weeks.append((int(y), int(w)))
+    return weeks
+
+
+@router.get("/at-risk")
+async def get_members_at_risk(
+    weeks: int = 2,
+    club_id: Optional[str] = Depends(get_club_id),
+):
+    """Sprint D.5 — Liste les membres actifs sans aucune séance sur les N
+    dernières semaines (semaine courante incluse).
+
+    Règles :
+      - Membres actifs (non archivés).
+      - Exclut les catégories `OpenGym`, `Inconnu`, `Pret`.
+      - Exclut les membres en pause (`pause_start_date <= today <= pause_end_date`).
+      - Période = N dernières semaines ISO (1..12). Défaut 2.
+      - Total `trainings_count` sur la période == 0 → inclus.
+      - Trié par `weeks_without_session` desc, puis `last_session_date` asc.
+
+    Réponse : `{ period: {...}, total, members: [...] }`.
+    """
+    weeks = max(1, min(int(weeks or 2), 12))
+
+    today = datetime.now(timezone.utc).date()
+    today_iso = today.isoformat()
+    period_weeks = _isocalendar_weeks_back(today, weeks)
+    period_set = set(period_weeks)
+
+    members, cat_by_id = await _build_categorization_map(club_id)
+
+    # Pre-filter : exclu catégories et membres en pause
+    candidates = []
+    for m in members:
+        mid = m.get("id")
+        if not mid:
+            continue
+        cat = cat_by_id.get(mid, "Inconnu")
+        if cat in AT_RISK_EXCLUDED_CATEGORIES:
+            continue
+        if _is_on_pause(m, today_iso):
+            continue
+        candidates.append(m)
+
+    if not candidates:
+        return {
+            "period": {"weeks": weeks, "iso_weeks": [f"{y}-W{w:02d}" for y, w in period_weeks]},
+            "total": 0,
+            "members": [],
+        }
+
+    candidate_ids = [m["id"] for m in candidates]
+
+    # Bulk fetch des trainings sur la période pour tous les candidats (1 requête)
+    years_in_period = sorted({y for y, _ in period_weeks})
+    weeks_in_period = sorted({w for _, w in period_weeks})
+    trainings = await db.weekly_trainings.find(
+        {
+            "member_id": {"$in": candidate_ids},
+            "calendar_year": {"$in": years_in_period},
+            "calendar_week": {"$in": weeks_in_period},
+        },
+        {"_id": 0, "member_id": 1, "calendar_year": 1, "calendar_week": 1, "trainings_count": 1},
+    ).to_list(length=None)
+
+    # Trainings sur la période, indexés par membre
+    period_count_by_member: dict[str, int] = {}
+    period_weeks_with_session: dict[str, set[tuple[int, int]]] = {}
+    for t in trainings:
+        yw = (int(t.get("calendar_year") or 0), int(t.get("calendar_week") or 0))
+        if yw not in period_set:
+            continue
+        if int(t.get("trainings_count") or 0) <= 0:
+            continue
+        mid = t.get("member_id")
+        if not mid:
+            continue
+        period_count_by_member[mid] = period_count_by_member.get(mid, 0) + int(t["trainings_count"])
+        period_weeks_with_session.setdefault(mid, set()).add(yw)
+
+    # Filtrer : 0 séance sur la période
+    at_risk_ids = [mid for mid in candidate_ids if period_count_by_member.get(mid, 0) == 0]
+
+    if not at_risk_ids:
+        return {
+            "period": {"weeks": weeks, "iso_weeks": [f"{y}-W{w:02d}" for y, w in period_weeks]},
+            "total": 0,
+            "members": [],
+        }
+
+    # Pour chaque membre at-risk : trouver sa dernière séance (toutes années)
+    last_sessions = await db.weekly_trainings.aggregate([
+        {"$match": {"member_id": {"$in": at_risk_ids}, "trainings_count": {"$gt": 0}}},
+        {"$sort": {"calendar_year": -1, "calendar_week": -1}},
+        {"$group": {
+            "_id": "$member_id",
+            "year": {"$first": "$calendar_year"},
+            "week": {"$first": "$calendar_week"},
+        }},
+    ]).to_list(length=None)
+    last_by_member = {d["_id"]: (int(d["year"]), int(d["week"])) for d in last_sessions}
+
+    def _weeks_without(member_id: str) -> int:
+        last = last_by_member.get(member_id)
+        if not last:
+            return 999  # jamais aucune séance enregistrée
+        ly, lw = last
+        try:
+            # ISO week → date (jour 1 = lundi de la semaine ISO)
+            last_date = datetime.fromisocalendar(ly, lw, 1).date()
+        except ValueError:
+            return 999
+        diff_days = (today - last_date).days
+        return max(0, diff_days // 7)
+
+    def _last_iso(member_id: str) -> Optional[str]:
+        last = last_by_member.get(member_id)
+        return f"{last[0]}-W{last[1]:02d}" if last else None
+
+    members_by_id = {m["id"]: m for m in candidates}
+    result_rows = []
+    for mid in at_risk_ids:
+        m = members_by_id[mid]
+        cat = cat_by_id.get(mid, "Inconnu")
+        wno = _weeks_without(mid)
+        result_rows.append({
+            "id": mid,
+            "name": m.get("name") or "",
+            "membership": m.get("membership") or "",
+            "category": cat,
+            "club_id": m.get("club_id"),
+            "weeks_without_session": wno,
+            "last_session_iso_week": _last_iso(mid),
+            "subscription_end_date": m.get("subscription_end_date"),
+        })
+
+    # Tri : weeks_without_session desc, puis nom asc
+    result_rows.sort(key=lambda r: (-r["weeks_without_session"], r["name"].lower()))
+
+    return {
+        "period": {
+            "weeks": weeks,
+            "iso_weeks": [f"{y}-W{w:02d}" for y, w in period_weeks],
+        },
+        "total": len(result_rows),
+        "members": result_rows,
+    }
+
+
 @router.get("/{member_id}")
 async def get_member(member_id: str):
     doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -87,7 +87,13 @@ export default function PaymentsPage({ selectedMonth }) {
   const [markPaidModalOpen, setMarkPaidModalOpen] = useState(false);
   const [revertPaymentDialog, setRevertPaymentDialog] = useState({ open: false, payment: null });
   const [selectedPayment, setSelectedPayment] = useState(null);
-  const [generateMonth, setGenerateMonth] = useState(format(new Date(), "yyyy-MM"));
+  const [generateMonth, setGenerateMonth] = useState(selectedMonth || format(new Date(), "yyyy-MM"));
+
+  // Bonus UX (Sprint D) : keep the "Générer pour le mois X" input in sync with
+  // the global selectedMonth so the user doesn't have to retype it.
+  useEffect(() => {
+    if (selectedMonth) setGenerateMonth(selectedMonth);
+  }, [selectedMonth]);
   
   const [scheduleForm, setScheduleForm] = useState({
     member_id: "",

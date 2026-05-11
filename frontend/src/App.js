@@ -26,6 +26,7 @@ import MonthlyBudgetPage from "./pages/MonthlyBudgetPage";
 import FranchiseDashboard from "./pages/FranchiseDashboard";
 import MetaHelpPage from "./pages/MetaHelpPage";
 import ArchivesPage from "./pages/ArchivesPage";
+import AtRiskMembersPage from "./pages/AtRiskMembersPage";
 import { useMonthlyKPIData } from "./hooks/useMonthlyKPIData";
 import { formatMonthFull } from "./utils/format";
 import { useTranslations } from "./hooks/useTranslations";
@@ -150,6 +151,7 @@ function AppInner() {
                   <Route path="/franchise" element={<FranchiseDashboard />} />
                   <Route path="/meta-help" element={<MetaHelpPage />} />
                   <Route path="/archives" element={<ArchivesPage />} />
+                  <Route path="/at-risk" element={<AtRiskMembersPage />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

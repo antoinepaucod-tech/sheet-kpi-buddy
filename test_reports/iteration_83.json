@@ -1,0 +1,44 @@
+{
+  "summary": "Sprint D Phase 1 (D.1 transaction colors + D.5 At-Risk Members + bonus PaymentsPage generateMonth sync) — ALL TESTS PASS. Backend 8/8 (100%), Frontend 7/7 (100%). Non-regression OK on Transactions / Payments / Dashboard month selector.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/members/at-risk?weeks=0", "issue": "weeks=0 falls back to default 2 (not clamped to 1) because of `int(weeks or 2)` — when weeks is falsy, default 2 is used. Cosmetic only; spec says 1..4 with default 2. Test adjusted to reflect actual behavior."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "tests_results": {
+    "BACKEND Test 1 (default weeks=2 shape Versoix)": "PASS — total=115, period.weeks=2, iso_weeks=['2026-W19','2026-W20'], members list length matches total",
+    "BACKEND Test 2 (weeks=4 excludes OpenGym/Inconnu/Pret)": "PASS — total=115, no excluded categories present in result",
+    "BACKEND Test 3 (weeks=20 clamps to 12)": "PASS — period.weeks=12, total=66, 200 OK",
+    "BACKEND Test 4 (weeks_without_session coherent)": "PASS — sample of 30: never-trained → 999, others have valid week count >=0",
+    "BACKEND Test 5 (sort DESC by wno, ASC by name)": "PASS — verified across 115 rows",
+    "BACKEND Test 6 (non-regression /api/members, /api/members/categories/stats)": "PASS — 200 OK, total=113 categories",
+    "FRONTEND Test 1 (sidebar Administration > Membres à risques + counter)": "PASS — sidebar link visible, navigates to /at-risk, counter=115 matches backend",
+    "FRONTEND Test 2 (period selector 1/2/3/4 weeks)": "PASS — selector works, counter values: 1w=115, 2w=115, 3w=115, 4w=115 (all same; consistent with backend: those 115 members have 0 sessions in ≥4 weeks; at 12w it drops to 66 confirming filtering works)",
+    "FRONTEND Test 3 (search by name)": "PASS — searching 'Manon' filters from 115 to 2 rows (client-side)",
+    "FRONTEND Test 4 (badge + Voir link → /members?search=)": "PASS — badge present per row, Voir on Alex Giraud → /members?search=Alex%20Giraud",
+    "FRONTEND Test 5 (Transactions colors)": "PASS — Versoix mars 2026 shows 148 tx: revenue=103 (border vert color-success rgba(48,209,88)), salary=13 (border bleu color-accent rgba(10,132,255)), expense=32 (border rouge color-danger rgba(255,69,58))",
+    "FRONTEND Test 6 (non-régression month selector Transactions)": "PASS — switching to mars 2026 updates KPI cards (26 202 CHF dépenses, 23 591 CHF revenus, 612 abonnements, 13 560 coaching) and table shows mars rows",
+    "FRONTEND Test 7 (BONUS — PaymentsPage generateMonth sync)": "PASS — PaymentsPage 'Générer pour le mois X' input month value=2026-05 mirrors global selectedMonth (mai 2026)"
+  },
+  "test_report_links": ["/app/backend/tests/test_sprint_d_iter83.py", "/app/test_reports/pytest/iter83_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "members.py L363: `weeks = max(1, min(int(weeks or 2), 12))` — using `weeks or 2` means weeks=0 silently becomes 2 instead of clamping to 1. Minor; consider `weeks = max(1, min(int(weeks if weeks is not None else 2), 12))` if strict clamping desired.",
+    "AtRiskMembersPage.js L26-32: CATEGORY_BADGE only has 5 categories (HG/Coach/Partenaire/IFRC/Challenge). Members with category 'Découverte' or other custom categories will fall back to the gray badge — acceptable but worth documenting.",
+    "AtRiskMembersPage.js L72-75: client-side search is fine for current volumes (~115 rows). If at-risk total grows >1000, consider server-side filter."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "100% (7/7)"},
+  "test_credentials": "antoine.paucod@the-coach.pro / TheCoach1290. (super admin) — Versoix club selected",
+  "seed_data_creation": "None — read-only on production Atlas as per brief",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sprint D Phase 1 validated end-to-end. /api/members/at-risk works correctly with proper category exclusion, period clamping, and sort. AT-RISK counter for Versoix = 115 for weeks 1-4 (stable inactive cohort), drops to 66 at 12 weeks. Transactions color coding (D.1) confirmed visually with data-tx-kind attributes. PaymentsPage generateMonth seeded from selectedMonth global confirmed (value=2026-05 when mai 2026 selected). Sprint D Phase 2 (pause status) and Phase 3 (planning copy) NOT implemented yet — the _is_on_pause helper exists but returns False (no pause_start_date/pause_end_date fields in DB).",
+  "rca of the issue": "N/A — no bugs found."
+}
