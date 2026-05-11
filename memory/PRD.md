@@ -121,6 +121,25 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **CoursesPage** : Widget "Membres actifs par catégorie" (data-testid `category-stats-widget`) avec 6 mini-cards colorées par catégorie (HG/Coach/Partenaire/IFRC/OpenGym/Challenge), bordure latérale colorée.
 - [x] Testing frontend e2e iter80+iter81 : **9/9 scénarios PASS (100%)** après 2 hotfixes (filter `is_coach` retiré, eslintConfig `extends:['react-app']` retiré qui cassait le dev compile).
 
+## Completed Tasks (Session 2026-05-11 — Sprint D Phase 2 + Bonus Engagement Widget) ✅
+- [x] **Phase 2 Backend** :
+  - Champs Pydantic `pause_start_date` / `pause_end_date` / `pause_reason` ajoutés à `CustomerMember` (Optional, nullable, format YYYY-MM-DD)
+  - Endpoint `PUT /api/members/{id}/pause` body `{start_date (requis), end_date (optionnel), reason (optionnel)}`. Validation : format ISO, end >= start, refuse si membre archivé (400).
+  - Endpoint `DELETE /api/members/{id}/pause` : clear les 3 champs, idempotent.
+  - Helper `_is_on_pause(member, today_iso)` activé (true ssi `start <= today` ET `(end is None OR today <= end)`)
+  - `GET /api/members` enrichi : flag `on_pause` calculé pour chaque doc + param `include_paused` (default false → exclut paused)
+  - `GET /api/members/at-risk` exclut auto via `_is_on_pause`
+  - `GET /api/onboarding/pending` enrichi avec `on_pause` + param `include_paused`
+- [x] **Bonus widget — Backend** : `GET /api/members/{id}` retourne nouveau bloc `engagement_recent = {status, category, sessions_last_4_weeks, last_session_date, last_session_iso_week, period_weeks}`. Statuts : `engaged` (≥3), `moderate` (1-2), `at_risk` (0), `on_pause` (priorité), `not_tracked` (OpenGym/Inconnu/Pret), `null` (archivé). Bulk fetch weekly_trainings sur 4 dernières semaines ISO.
+- [x] **Phase 2 Frontend** :
+  - Composants partagés : `PauseBadge.js`, `PauseMemberDialog.js` (mode set + remove), `EngagementWidget.js`
+  - `MembersPage` : toggle `Inclure en pause` (data-testid `members-include-paused-toggle`), badge `EN PAUSE` sur ligne, opacité réduite, section Statut dans expanded (data-testid `pause-section-{id}`) avec boutons Mettre en pause / Modifier / Annuler la pause
+  - `OnboardingPage` : toggle `onboarding-include-paused-toggle`, badge inline `EN PAUSE` (data-testid `onboarding-pause-badge-{id}`)
+  - `AttendancePage` : toggle `attendance-include-paused-toggle`
+  - PauseMemberDialog : 2 date pickers (start required, end optional avec min=start), textarea raison, mode `remove` confirme avant DELETE
+- [x] **Bonus widget — Frontend** : `EngagementWidget` mounted dans MembersPage expanded view (sauf si archivé). Couleurs et icônes par statut (lucide). Compteur séances 4 sem + badge statut + dernière séance formatée FR (`EEEE d MMMM yyyy`).
+- [x] Testing e2e iter_84 : 11/11 backend + 7/7 frontend (100% PASS). Cleanup auto des pauses test via fixture.
+
 ## Completed Tasks (Session 2026-05-11 — Sprint D Phase 1 + bonus UX) ✅
 - [x] **Bonus UX PaymentsPage** : champ "Générer pour le mois X" seedé automatiquement depuis `selectedMonth` global (`useEffect` sync)
 - [x] **D.1 Couleurs Transactions par type** : helper `getTxTypeStyle(tx)` retourne `{rowClass, amountClass, sign, kind}`. Mapping :
@@ -151,12 +170,12 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
 ## Upcoming Tasks
-- (P0) **Sprint D Phase 2** : Statut pause membre (champs `pause_start_date`/`pause_end_date`, endpoints PUT/DELETE /members/{id}/pause, badge UI, exclusion at-risk)
-- (P0) **Sprint D Phase 3** : Recopier planning de cours d'un mois à l'autre + ordre des jours du planning (à clarifier)
+- (P0) **Sprint D Phase 3** : Recopier planning de cours d'un mois à l'autre + ordre des jours du planning (à clarifier avec user)
 - (P1) Investigation collection doublon `instructors`
 - (P1) Cleanup data Partenaires : noms combinés "X & Y FirstLast & Lastname" sur les couples DUO
 - (P1) Cleanup membre actif sans membership : Teo Succi (id `52004b50…`)
 - (P1) Backend GET /api/payments : aligner sur `?month=YYYY-MM` côté serveur (cohérence avec Dashboard/Transactions, actuellement filtre full client-side)
+- (P1) Refactor `_is_on_pause` : extraire dans `core/` (DRY — réimplémenté inline dans `routers/onboarding.py`)
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping
 - (P2) Integration API GoHighLevel + Notifications
