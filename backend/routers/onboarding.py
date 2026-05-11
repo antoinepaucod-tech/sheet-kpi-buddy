@@ -18,9 +18,10 @@ def _cq(club_id, base=None):
 
 
 @router.get("/onboarding/pending")
-async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
+async def get_pending_onboarding(include_paused: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
     """Get members with incomplete onboarding (excludes coaches, IFRC, and skipped)"""
     COACH_KEYWORDS = ["THE COACH", "VIRTUAL COACH", "VIRTUAL", "IFRC"]
+    today_iso_d = datetime.now(timezone.utc).date().isoformat()
     docs = await db.customer_members.find(exclude_archived(_cq(club_id, {
         "onboarding_completed": {"$ne": True},
         "onboarding_skipped": {"$ne": True},
@@ -31,6 +32,13 @@ async def get_pending_onboarding(club_id: Optional[str] = Depends(get_club_id)):
     for doc in docs:
         membership = (doc.get("membership") or "").upper()
         if any(kw in membership for kw in COACH_KEYWORDS):
+            continue
+        # Sprint D Phase 2 — flag on_pause + filtre par défaut
+        start = doc.get("pause_start_date")
+        end = doc.get("pause_end_date")
+        is_paused = bool(start) and start <= today_iso_d and (not end or today_iso_d <= end)
+        doc["on_pause"] = is_paused
+        if is_paused and not include_paused:
             continue
         steps = [
             doc.get("onboarding_bsport", False),

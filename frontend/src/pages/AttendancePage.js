@@ -85,6 +85,7 @@ export default function AttendancePage() {
   const [startWeek, setStartWeek] = useState(1);
   const weeksToShow = 8;
   const [search, setSearch] = useState("");
+  const [includePaused, setIncludePaused] = useState(false);
 
   const pendingUpdates = useRef({});
   const [localUpdates, setLocalUpdates] = useState({});
@@ -95,8 +96,11 @@ export default function AttendancePage() {
   );
 
   const { data: members = [], isLoading: membersLoading } = useQuery({
-    queryKey: ["members"],
-    queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
+    queryKey: ["members", { includePaused }],
+    queryFn: () =>
+      axios
+        .get(`${API}/members${includePaused ? "?include_paused=true" : ""}`)
+        .then((r) => r.data),
   });
 
   const { data: trainings = [] } = useQuery({
@@ -334,6 +338,16 @@ export default function AttendancePage() {
             ))}
           </SelectContent>
         </Select>
+        <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[var(--color-text-secondary)]">
+          <input
+            type="checkbox"
+            checked={includePaused}
+            onChange={(e) => setIncludePaused(e.target.checked)}
+            data-testid="attendance-include-paused-toggle"
+            className="accent-[var(--color-warning)]"
+          />
+          Inclure en pause
+        </label>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" onClick={() => shiftWeeks(-1)} disabled={startWeek <= 1} className="text-[var(--color-text-secondary)]" data-testid="prev-weeks">
             <ChevronLeft size={16} />

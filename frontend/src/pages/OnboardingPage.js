@@ -88,6 +88,7 @@ export default function OnboardingPage() {
   const [categoryFilter, setCategoryFilter] = useState("all"); // "all" = défaut sans exclus
   const { getCategory, getDuoPartnerId, getDuoPartnerName, isPrimaryInDuo } = useMemberCategories();
   const [showCompleted, setShowCompleted] = useState(false);
+  const [includePaused, setIncludePaused] = useState(false);
   const [followupModalOpen, setFollowupModalOpen] = useState(false);
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [selectedFollowup, setSelectedFollowup] = useState(null);
@@ -107,14 +108,20 @@ export default function OnboardingPage() {
 
   // Fetch data - Get ALL members for onboarding view
   const { data: pendingOnboarding = [], isLoading: loadingOnboarding } = useQuery({
-    queryKey: ["onboarding", "pending"],
-    queryFn: () => axios.get(`${API}/onboarding/pending`).then((r) => r.data),
+    queryKey: ["onboarding", "pending", { includePaused }],
+    queryFn: () =>
+      axios
+        .get(`${API}/onboarding/pending${includePaused ? "?include_paused=true" : ""}`)
+        .then((r) => r.data),
   });
 
   // Fetch ALL members to show completed onboarding too
   const { data: allMembers = [] } = useQuery({
-    queryKey: ["members", "all"],
-    queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
+    queryKey: ["members", "all", { includePaused }],
+    queryFn: () =>
+      axios
+        .get(`${API}/members${includePaused ? "?include_paused=true" : ""}`)
+        .then((r) => r.data),
   });
 
   // Completed onboarding members (for Historique tab) — exclude coaches/IFRC
@@ -369,6 +376,16 @@ export default function OnboardingPage() {
                   <SelectItem value="OpenGym" className="text-white">{CATEGORY_LABELS.OpenGym}</SelectItem>
                 </SelectContent>
               </Select>
+              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[var(--color-text-secondary)]">
+                <input
+                  type="checkbox"
+                  checked={includePaused}
+                  onChange={(e) => setIncludePaused(e.target.checked)}
+                  data-testid="onboarding-include-paused-toggle"
+                  className="accent-[var(--color-warning)]"
+                />
+                Inclure en pause
+              </label>
               {completedMembers.length > 0 && (
                 <Badge className="bg-[rgba(48,209,88,0.15)] text-[var(--color-success)] border-0">
                   {completedMembers.length} complété{completedMembers.length > 1 ? "s" : ""} (voir Historique)
@@ -417,6 +434,11 @@ export default function OnboardingPage() {
                             {getCategory(member.id) && getCategory(member.id) !== "HG" && getCategory(member.id) !== "Partenaire" && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[rgba(255,255,255,0.06)] text-[var(--color-text-tertiary)] border border-[var(--color-border)]" data-testid={`category-${member.id}`}>
                                 {CATEGORY_LABELS[getCategory(member.id)] || getCategory(member.id)}
+                              </span>
+                            )}
+                            {member.on_pause && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[rgba(255,214,10,0.15)] text-[var(--color-warning)] border-0" data-testid={`onboarding-pause-badge-${member.id}`}>
+                                EN PAUSE
                               </span>
                             )}
                           </p>

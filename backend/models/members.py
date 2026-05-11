@@ -53,6 +53,10 @@ class CustomerMember(BaseModel):
     is_primary_subscriber: bool = True  # Primary = pays, Secondary = 0 CHF
     # Soft delete
     archived_at: Optional[str] = None  # ISO datetime, None si actif
+    # Sprint D Phase 2 — Statut pause (vacances/blessure/etc.)
+    pause_start_date: Optional[str] = None  # YYYY-MM-DD (incl.). None = pas en pause.
+    pause_end_date: Optional[str] = None    # YYYY-MM-DD (incl.). None = pause indéfinie.
+    pause_reason: Optional[str] = None      # texte libre optionnel
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 

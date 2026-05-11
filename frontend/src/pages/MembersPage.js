@@ -59,6 +59,9 @@ import { useTranslations } from "../hooks/useTranslations";
 import { useArchiveAction } from "../hooks/useArchiveAction";
 import { ArchiveBadge } from "../components/ArchiveBadge";
 import { ArchiveConfirmDialog } from "../components/ArchiveConfirmDialog";
+import { PauseBadge } from "../components/PauseBadge";
+import { PauseMemberDialog } from "../components/PauseMemberDialog";
+import { EngagementWidget } from "../components/EngagementWidget";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -118,7 +121,9 @@ export default function MembersPage() {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyMemberId, setHistoryMemberId] = useState(null);
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [includePaused, setIncludePaused] = useState(false);
   const [archiveDialog, setArchiveDialog] = useState({ open: false, mode: "archive", member: null });
+  const [pauseDialog, setPauseDialog] = useState({ open: false, mode: "set", member: null });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -165,11 +170,16 @@ export default function MembersPage() {
 
   // Fetch members
   const { data: members = [], isLoading } = useQuery({
-    queryKey: ["members", { includeArchived }],
-    queryFn: () =>
-      axios
-        .get(`${API}/members${includeArchived ? "?include_archived=true" : ""}`)
-        .then((r) => r.data),
+    queryKey: ["members", { includeArchived, includePaused }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (includeArchived) params.set("include_archived", "true");
+      if (includePaused) params.set("include_paused", "true");
+      const qs = params.toString();
+      return axios
+        .get(`${API}/members${qs ? `?${qs}` : ""}`)
+        .then((r) => r.data);
+    },
   });
 
   // Archive / Restore hook
@@ -620,6 +630,16 @@ export default function MembersPage() {
             {lang === "fr" ? "Inclure archivés" : "Include archived"}
           </span>
         </label>
+        <label className="flex items-center gap-2 cursor-pointer select-none ml-2">
+          <Switch
+            checked={includePaused}
+            onCheckedChange={setIncludePaused}
+            data-testid="members-include-paused-toggle"
+          />
+          <span className="text-xs text-[var(--color-text-secondary)]">
+            {lang === "fr" ? "Inclure en pause" : "Include paused"}
+          </span>
+        </label>
         <p className="text-xs text-[var(--color-text-tertiary)] ml-auto font-mono">{filteredMembers.length} résultats</p>
       </div>
 
@@ -653,7 +673,7 @@ export default function MembersPage() {
             ) : (
               filteredMembers.map((member) => {
                 const isExpired = member.subscription_end_date && member.subscription_end_date < today;
-                const rowOpacity = isExpired ? "opacity-50" : "";
+                const rowOpacity = isExpired || member.on_pause ? "opacity-60" : "";
                 return (
                 <React.Fragment key={member.id}>
                   <TableRow
@@ -680,6 +700,7 @@ export default function MembersPage() {
                             <Badge className="bg-[rgba(191,90,242,0.1)] text-[#BF5AF2] border-0 text-[9px] px-1.5 py-0 opacity-70" data-testid="duo-partner-badge">PARTENAIRE</Badge>
                           )}
                           {member.archived_at && <ArchiveBadge />}
+                          {member.on_pause && <PauseBadge from={member.pause_start_date} to={member.pause_end_date} />}
                         </div>
                       </div>
                     </TableCell>
@@ -796,6 +817,74 @@ export default function MembersPage() {
                     <TableRow className="bg-[var(--color-bg-secondary)]">
                       <TableCell colSpan={7}>
                         <div className="py-4 px-6 space-y-4">
+                          {/* Sprint D — Engagement widget (bonus) — hidden for archived members */}
+                          {!member.archived_at && <EngagementWidget memberId={member.id} />}
+
+                          {/* Sprint D Phase 2 — Statut pause */}
+                          {!member.archived_at && (
+                            <div className="tf-card p-3 flex items-start justify-between gap-4 flex-wrap" data-testid={`pause-section-${member.id}`}>
+                              <div>
+                                <p className="text-[var(--color-text-secondary)] text-xs uppercase tracking-wider font-text mb-1">Statut</p>
+                                {member.on_pause ? (
+                                  <div className="text-sm text-white">
+                                    <span className="text-[var(--color-warning)] font-bold">En pause</span>
+                                    {member.pause_start_date && (
+                                      <span className="text-[var(--color-text-secondary)] ml-2">
+                                        du {member.pause_start_date}
+                                        {member.pause_end_date ? ` au ${member.pause_end_date}` : " (indéfinie)"}
+                                      </span>
+                                    )}
+                                    {member.pause_reason && (
+                                      <p className="text-xs text-[var(--color-text-tertiary)] mt-1 italic">« {member.pause_reason} »</p>
+                                    )}
+                                  </div>
+                                ) : member.pause_start_date && member.pause_start_date > today ? (
+                                  <div className="text-sm text-white">
+                                    <span className="text-[var(--color-accent)] font-bold">Pause programmée</span>
+                                    <span className="text-[var(--color-text-secondary)] ml-2">
+                                      du {member.pause_start_date}
+                                      {member.pause_end_date ? ` au ${member.pause_end_date}` : ""}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-[var(--color-success)] font-bold">Actif</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {(member.on_pause || (member.pause_start_date && member.pause_start_date > today)) ? (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={(e) => { e.stopPropagation(); setPauseDialog({ open: true, mode: "set", member }); }}
+                                      className="border-[var(--color-border)] text-xs"
+                                      data-testid={`pause-edit-${member.id}`}
+                                    >
+                                      Modifier
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={(e) => { e.stopPropagation(); setPauseDialog({ open: true, mode: "remove", member }); }}
+                                      className="bg-[var(--color-danger)] hover:opacity-85 text-xs"
+                                      data-testid={`pause-cancel-${member.id}`}
+                                    >
+                                      Annuler la pause
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    onClick={(e) => { e.stopPropagation(); setPauseDialog({ open: true, mode: "set", member }); }}
+                                    className="bg-[var(--color-warning)] text-black hover:opacity-85 text-xs"
+                                    data-testid={`pause-set-${member.id}`}
+                                  >
+                                    Mettre en pause
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-3 gap-6">
                             <div>
                               <p className="text-[var(--color-text-secondary)] text-xs uppercase mb-1">Contact</p>
@@ -1631,6 +1720,13 @@ export default function MembersPage() {
             restoreMember(archiveDialog.member.id);
           }
         }}
+      />
+      {/* Sprint D Phase 2 — Pause dialog */}
+      <PauseMemberDialog
+        open={pauseDialog.open}
+        mode={pauseDialog.mode}
+        member={pauseDialog.member}
+        onClose={() => setPauseDialog({ open: false, mode: "set", member: null })}
       />
     </div>
   );

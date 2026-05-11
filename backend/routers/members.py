@@ -52,7 +52,7 @@ def _is_coach(membership: str) -> bool:
 
 
 @router.get("")
-async def get_members(expiring_soon: Optional[bool] = None, member_type: Optional[str] = None, include_archived: Optional[bool] = None, only_archived: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
+async def get_members(expiring_soon: Optional[bool] = None, member_type: Optional[str] = None, include_archived: Optional[bool] = None, only_archived: Optional[bool] = None, include_paused: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
     query = {}
     if club_id:
         query["club_id"] = club_id
@@ -66,6 +66,13 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
         query = exclude_archived(query)
     
     docs = await db.customer_members.find(query, {"_id": 0}).sort("name", 1).to_list(5000)
+    
+    # Sprint D Phase 2 — compute on_pause flag and optionally filter
+    today_iso_d = datetime.now(timezone.utc).date().isoformat()
+    for d in docs:
+        d["on_pause"] = _is_on_pause(d, today_iso_d)
+    if not include_paused and not only_archived:
+        docs = [d for d in docs if not d.get("on_pause")]
     
     # Add computed is_coach field
     for d in docs:
@@ -499,7 +506,153 @@ async def get_member(member_id: str):
         )
         if partner:
             doc["duo_partner_name"] = partner.get("name", "")
+
+    # Sprint D Phase 2 — on_pause flag (computed)
+    today_d = datetime.now(timezone.utc).date()
+    today_iso_d = today_d.isoformat()
+    doc["on_pause"] = _is_on_pause(doc, today_iso_d)
+
+    # Sprint D Bonus — engagement_recent widget data (4 dernières semaines).
+    # Volontairement nul si membre archivé.
+    if doc.get("archived_at"):
+        doc["engagement_recent"] = None
+    else:
+        # Catégorie pour distinguer "non tracé" (OpenGym/Inconnu/Pret)
+        types_query = {"club_id": doc.get("club_id")} if doc.get("club_id") else {}
+        types_list = await db.membership_types.find(types_query, {"_id": 0}).to_list(length=None)
+        types_by_name = {t.get("name"): t for t in types_list if t.get("name")}
+        category = get_member_category(doc, types_by_name)
+
+        if category in {"OpenGym", "Inconnu", "Pret"}:
+            doc["engagement_recent"] = {
+                "status": "not_tracked",
+                "category": category,
+                "sessions_last_4_weeks": 0,
+                "last_session_date": None,
+                "last_session_iso_week": None,
+            }
+        else:
+            # Bulk fetch trainings on last 4 ISO weeks
+            period_weeks = _isocalendar_weeks_back(today_d, 4)
+            years_in_period = sorted({y for y, _ in period_weeks})
+            weeks_in_period = sorted({w for _, w in period_weeks})
+            period_set = set(period_weeks)
+
+            trainings = await db.weekly_trainings.find(
+                {
+                    "member_id": member_id,
+                    "calendar_year": {"$in": years_in_period},
+                    "calendar_week": {"$in": weeks_in_period},
+                },
+                {"_id": 0, "calendar_year": 1, "calendar_week": 1, "trainings_count": 1},
+            ).to_list(length=None)
+
+            sessions_count = 0
+            for t in trainings:
+                yw = (int(t.get("calendar_year") or 0), int(t.get("calendar_week") or 0))
+                if yw in period_set:
+                    sessions_count += int(t.get("trainings_count") or 0)
+
+            # Dernière séance (toutes années)
+            last_session_doc = await db.weekly_trainings.find(
+                {"member_id": member_id, "trainings_count": {"$gt": 0}},
+                {"_id": 0, "calendar_year": 1, "calendar_week": 1, "updated_at": 1},
+            ).sort([("calendar_year", -1), ("calendar_week", -1)]).limit(1).to_list(1)
+
+            last_iso_week = None
+            last_session_date = None
+            if last_session_doc:
+                ly = int(last_session_doc[0].get("calendar_year") or 0)
+                lw = int(last_session_doc[0].get("calendar_week") or 0)
+                last_iso_week = f"{ly}-W{lw:02d}"
+                try:
+                    last_session_date = datetime.fromisocalendar(ly, lw, 1).date().isoformat()
+                except ValueError:
+                    last_session_date = None
+
+            # Statut visuel (priorité : on_pause > sessions buckets)
+            if doc.get("on_pause"):
+                status = "on_pause"
+            elif sessions_count >= 3:
+                status = "engaged"
+            elif sessions_count >= 1:
+                status = "moderate"
+            else:
+                status = "at_risk"
+
+            doc["engagement_recent"] = {
+                "status": status,
+                "category": category,
+                "sessions_last_4_weeks": sessions_count,
+                "last_session_date": last_session_date,
+                "last_session_iso_week": last_iso_week,
+                "period_weeks": [f"{y}-W{w:02d}" for y, w in period_weeks],
+            }
+
     return doc
+
+
+@router.put("/{member_id}/pause")
+async def set_member_pause(member_id: str, payload: dict):
+    """Sprint D Phase 2 — Mettre un membre en pause.
+
+    Body: { start_date: 'YYYY-MM-DD' (requis), end_date: 'YYYY-MM-DD' (optionnel), reason: str (optionnel) }.
+    Refuse si le membre est archivé.
+    """
+    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1, "archived_at": 1})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if doc.get("archived_at"):
+        raise HTTPException(status_code=400, detail="Membre archivé — restaurer avant de mettre en pause")
+
+    start = (payload or {}).get("start_date")
+    end = (payload or {}).get("end_date")
+    reason = (payload or {}).get("reason") or None
+
+    if not start:
+        raise HTTPException(status_code=400, detail="start_date requis")
+    # Validation format
+    try:
+        datetime.fromisoformat(start).date()
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="start_date invalide (YYYY-MM-DD)")
+    if end:
+        try:
+            datetime.fromisoformat(end).date()
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="end_date invalide (YYYY-MM-DD)")
+        if end < start:
+            raise HTTPException(status_code=400, detail="end_date doit être >= start_date")
+
+    update_fields = {
+        "pause_start_date": start,
+        "pause_end_date": end,
+        "pause_reason": reason,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.customer_members.update_one({"id": member_id}, {"$set": update_fields})
+    updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    today_iso_d = datetime.now(timezone.utc).date().isoformat()
+    updated["on_pause"] = _is_on_pause(updated, today_iso_d)
+    return updated
+
+
+@router.delete("/{member_id}/pause")
+async def remove_member_pause(member_id: str):
+    """Sprint D Phase 2 — Annuler la pause d'un membre."""
+    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    await db.customer_members.update_one(
+        {"id": member_id},
+        {"$set": {
+            "pause_start_date": None,
+            "pause_end_date": None,
+            "pause_reason": None,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+    return {"message": "Pause annulée", "id": member_id}
 
 
 @router.post("")
