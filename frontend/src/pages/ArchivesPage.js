@@ -22,7 +22,12 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { useArchiveAction } from "../hooks/useArchiveAction";
+import { useBulkArchiveAction, MAX_BULK_SIZE } from "../hooks/useBulkArchiveAction";
 import { ArchiveConfirmDialog } from "../components/ArchiveConfirmDialog";
+import { BulkActionBar } from "../components/BulkActionBar";
+import { BulkArchiveConfirmDialog } from "../components/BulkArchiveConfirmDialog";
+import { Checkbox } from "../components/ui/checkbox";
+import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -67,6 +72,12 @@ export default function ArchivesPage() {
   const coachArchive = useArchiveAction("coach", {
     onSuccess: () => setRestoreDialog({ open: false, entityType: "coach", entity: null }),
   });
+
+  // Sprint B.4.4 — Bulk restore (un hook par onglet pour ne pas mélanger les ids)
+  const bulkMembers = useBulkArchiveAction("member");
+  const bulkCoaches = useBulkArchiveAction("coach");
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const activeBulk = tab === "members" ? bulkMembers : bulkCoaches;
 
   const filteredMembers = useMemo(() => {
     if (!memberSearch) return archivedMembers;
@@ -150,6 +161,29 @@ export default function ArchivesPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+                  <TableHead className="w-10 text-[var(--color-text-secondary)]">
+                    <Checkbox
+                      checked={
+                        filteredMembers.length > 0 &&
+                        filteredMembers.slice(0, MAX_BULK_SIZE).every((m) => bulkMembers.selected.has(m.id))
+                          ? true
+                          : filteredMembers.some((m) => bulkMembers.selected.has(m.id))
+                            ? "indeterminate"
+                            : false
+                      }
+                      onCheckedChange={(v) => {
+                        if (v) {
+                          const ids = filteredMembers.map((m) => m.id);
+                          if (ids.length > MAX_BULK_SIZE) toast.info(`Maximum ${MAX_BULK_SIZE} sélectionnés.`);
+                          bulkMembers.setMany(ids);
+                        } else {
+                          bulkMembers.clear();
+                        }
+                      }}
+                      data-testid="bulk-select-all-archived-members"
+                      className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)]"
+                    />
+                  </TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Nom</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Abonnement</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Archivé le</TableHead>
@@ -160,13 +194,13 @@ export default function ArchivesPage() {
               <TableBody>
                 {loadingMembers ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-[var(--color-text-secondary)] py-8">
+                    <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
                       Chargement...
                     </TableCell>
                   </TableRow>
                 ) : filteredMembers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-[var(--color-text-secondary)] py-12">
+                    <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-12">
                       <Archive size={28} className="mx-auto mb-2 opacity-30" />
                       {memberSearch ? "Aucun résultat." : "Aucun membre archivé."}
                     </TableCell>
@@ -178,6 +212,20 @@ export default function ArchivesPage() {
                       className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]"
                       data-testid={`archived-member-row-${m.id}`}
                     >
+                      <TableCell className="w-10">
+                        <Checkbox
+                          checked={bulkMembers.selected.has(m.id)}
+                          onCheckedChange={() => {
+                            if (!bulkMembers.selected.has(m.id) && bulkMembers.selected.size >= MAX_BULK_SIZE) {
+                              toast.warning(`Maximum ${MAX_BULK_SIZE} éléments à la fois.`);
+                              return;
+                            }
+                            bulkMembers.toggle(m.id);
+                          }}
+                          data-testid={`bulk-select-archived-${m.id}`}
+                          className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)]"
+                        />
+                      </TableCell>
                       <TableCell className="text-white font-medium">{m.name}</TableCell>
                       <TableCell className="text-[var(--color-text-secondary)]">
                         {m.membership || "-"}
@@ -225,6 +273,29 @@ export default function ArchivesPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+                  <TableHead className="w-10 text-[var(--color-text-secondary)]">
+                    <Checkbox
+                      checked={
+                        filteredCoaches.length > 0 &&
+                        filteredCoaches.slice(0, MAX_BULK_SIZE).every((c) => bulkCoaches.selected.has(c.id))
+                          ? true
+                          : filteredCoaches.some((c) => bulkCoaches.selected.has(c.id))
+                            ? "indeterminate"
+                            : false
+                      }
+                      onCheckedChange={(v) => {
+                        if (v) {
+                          const ids = filteredCoaches.map((c) => c.id);
+                          if (ids.length > MAX_BULK_SIZE) toast.info(`Maximum ${MAX_BULK_SIZE} sélectionnés.`);
+                          bulkCoaches.setMany(ids);
+                        } else {
+                          bulkCoaches.clear();
+                        }
+                      }}
+                      data-testid="bulk-select-all-archived-coaches"
+                      className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)]"
+                    />
+                  </TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Nom</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Email</TableHead>
                   <TableHead className="text-[var(--color-text-secondary)]">Archivé le</TableHead>
@@ -235,13 +306,13 @@ export default function ArchivesPage() {
               <TableBody>
                 {loadingCoaches ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-[var(--color-text-secondary)] py-8">
+                    <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-8">
                       Chargement...
                     </TableCell>
                   </TableRow>
                 ) : filteredCoaches.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-[var(--color-text-secondary)] py-12">
+                    <TableCell colSpan={6} className="text-center text-[var(--color-text-secondary)] py-12">
                       <Archive size={28} className="mx-auto mb-2 opacity-30" />
                       {coachSearch ? "Aucun résultat." : "Aucun coach archivé."}
                     </TableCell>
@@ -253,6 +324,20 @@ export default function ArchivesPage() {
                       className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]"
                       data-testid={`archived-coach-row-${c.id}`}
                     >
+                      <TableCell className="w-10">
+                        <Checkbox
+                          checked={bulkCoaches.selected.has(c.id)}
+                          onCheckedChange={() => {
+                            if (!bulkCoaches.selected.has(c.id) && bulkCoaches.selected.size >= MAX_BULK_SIZE) {
+                              toast.warning(`Maximum ${MAX_BULK_SIZE} éléments à la fois.`);
+                              return;
+                            }
+                            bulkCoaches.toggle(c.id);
+                          }}
+                          data-testid={`bulk-select-archived-coach-${c.id}`}
+                          className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)]"
+                        />
+                      </TableCell>
                       <TableCell className="text-white font-medium">{c.name}</TableCell>
                       <TableCell className="text-[var(--color-text-secondary)]">
                         {c.email || "-"}
@@ -292,6 +377,41 @@ export default function ArchivesPage() {
         entityName={restoreDialog.entity?.name || ""}
         isLoading={memberArchive.isRestoring || coachArchive.isRestoring}
         onConfirm={onConfirmRestore}
+      />
+
+      {/* Sprint B.4.4 — Bulk restore */}
+      <BulkActionBar
+        count={activeBulk.selected.size}
+        entityLabel={tab === "members" ? "membre" : "coach"}
+        entityLabelPlural={tab === "members" ? "membres" : "coachs"}
+        action="restore"
+        onAction={() => setBulkDialogOpen(true)}
+        onClear={() => activeBulk.clear()}
+      />
+      <BulkArchiveConfirmDialog
+        open={bulkDialogOpen || !!activeBulk.results}
+        onClose={() => {
+          setBulkDialogOpen(false);
+          if (activeBulk.results) activeBulk.setResults(null);
+        }}
+        entityType={tab === "members" ? "member" : "coach"}
+        action="restore"
+        count={activeBulk.selected.size}
+        running={activeBulk.running}
+        progress={activeBulk.progress}
+        results={activeBulk.results}
+        onConfirm={async () => {
+          const list = tab === "members" ? filteredMembers : filteredCoaches;
+          const entitiesById = Object.fromEntries(list.map((e) => [e.id, e]));
+          const summary = await activeBulk.run({ action: "restore", entitiesById });
+          if (summary) {
+            const { successes, errors } = summary;
+            const noun = tab === "members" ? "membres" : "coachs";
+            if (errors.length === 0) toast.success(`${successes.length} ${noun} restaurés ✅`);
+            else if (successes.length === 0) toast.error(`Échec — ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
+            else toast.warning(`${successes.length} restaurés ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
+          }
+        }}
       />
     </div>
   );

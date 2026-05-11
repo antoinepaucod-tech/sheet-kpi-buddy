@@ -62,6 +62,10 @@ import { ArchiveConfirmDialog } from "../components/ArchiveConfirmDialog";
 import { PauseBadge } from "../components/PauseBadge";
 import { PauseMemberDialog } from "../components/PauseMemberDialog";
 import { EngagementWidget } from "../components/EngagementWidget";
+import { BulkActionBar } from "../components/BulkActionBar";
+import { BulkArchiveConfirmDialog } from "../components/BulkArchiveConfirmDialog";
+import { useBulkArchiveAction, MAX_BULK_SIZE } from "../hooks/useBulkArchiveAction";
+import { Checkbox } from "../components/ui/checkbox";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -326,6 +330,10 @@ export default function MembersPage() {
     if (!endDate) return null;
     return differenceInDays(parseISO(endDate), new Date());
   };
+
+  // Sprint B.4.4 — Bulk archive
+  const bulkArchive = useBulkArchiveAction("member");
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
 
   // Filter members
   const filteredMembers = useMemo(() => {
@@ -648,6 +656,31 @@ export default function MembersPage() {
         <Table>
           <TableHeader>
             <TableRow className="border-[var(--color-border)] hover:bg-transparent">
+              <TableHead className="w-10 text-[var(--color-text-secondary)]">
+                <Checkbox
+                  checked={
+                    filteredMembers.length > 0 &&
+                    filteredMembers.slice(0, MAX_BULK_SIZE).every((m) => bulkArchive.selected.has(m.id))
+                      ? true
+                      : filteredMembers.some((m) => bulkArchive.selected.has(m.id))
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      const visibleIds = filteredMembers.map((m) => m.id);
+                      if (visibleIds.length > MAX_BULK_SIZE) {
+                        toast.info(`Maximum ${MAX_BULK_SIZE} sélectionnés — les ${MAX_BULK_SIZE} premières lignes sont cochées.`);
+                      }
+                      bulkArchive.setMany(visibleIds);
+                    } else {
+                      bulkArchive.clear();
+                    }
+                  }}
+                  data-testid="bulk-select-all-members"
+                  className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)]"
+                />
+              </TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Membre</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Type</TableHead>
               <TableHead className="text-[var(--color-text-secondary)]">Abonnement</TableHead>
@@ -660,13 +693,13 @@ export default function MembersPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
+                <TableCell colSpan={8} className="text-center text-[var(--color-text-secondary)] py-8">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : filteredMembers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-[var(--color-text-secondary)] py-8">
+                <TableCell colSpan={8} className="text-center text-[var(--color-text-secondary)] py-8">
                   Aucun membre trouvé
                 </TableCell>
               </TableRow>
@@ -682,6 +715,20 @@ export default function MembersPage() {
                     onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
                     data-testid={`member-row-${member.id}`}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()} className="w-10">
+                      <Checkbox
+                        checked={bulkArchive.selected.has(member.id)}
+                        onCheckedChange={() => {
+                          if (!bulkArchive.selected.has(member.id) && bulkArchive.selected.size >= MAX_BULK_SIZE) {
+                            toast.warning(`Maximum ${MAX_BULK_SIZE} éléments à la fois. Désélectionnez quelques éléments.`);
+                            return;
+                          }
+                          bulkArchive.toggle(member.id);
+                        }}
+                        data-testid={`bulk-select-${member.id}`}
+                        className="border-[var(--color-border)] data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)]"
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {expandedMember === member.id ? <ChevronUp size={14} className="text-[var(--color-text-tertiary)]" /> : <ChevronDown size={14} className="text-[var(--color-text-tertiary)]" />}
@@ -815,7 +862,7 @@ export default function MembersPage() {
                   </TableRow>
                   {expandedMember === member.id && (
                     <TableRow className="bg-[var(--color-bg-secondary)]">
-                      <TableCell colSpan={7}>
+                      <TableCell colSpan={8}>
                         <div className="py-4 px-6 space-y-4">
                           {/* Sprint D — Engagement widget (bonus) — hidden for archived members */}
                           {!member.archived_at && <EngagementWidget memberId={member.id} />}
@@ -1727,6 +1774,43 @@ export default function MembersPage() {
         mode={pauseDialog.mode}
         member={pauseDialog.member}
         onClose={() => setPauseDialog({ open: false, mode: "set", member: null })}
+      />
+
+      {/* Sprint B.4.4 — Bulk archive */}
+      <BulkActionBar
+        count={bulkArchive.selected.size}
+        entityLabel="membre"
+        entityLabelPlural="membres"
+        action="archive"
+        onAction={() => setBulkDialogOpen(true)}
+        onClear={() => bulkArchive.clear()}
+      />
+      <BulkArchiveConfirmDialog
+        open={bulkDialogOpen || !!bulkArchive.results}
+        onClose={() => {
+          setBulkDialogOpen(false);
+          if (bulkArchive.results) bulkArchive.setResults(null);
+        }}
+        entityType="member"
+        action="archive"
+        count={bulkArchive.selected.size}
+        running={bulkArchive.running}
+        progress={bulkArchive.progress}
+        results={bulkArchive.results}
+        onConfirm={async (reason) => {
+          const entitiesById = Object.fromEntries(filteredMembers.map((m) => [m.id, m]));
+          const summary = await bulkArchive.run({ action: "archive", reason, entitiesById });
+          if (summary) {
+            const { successes, errors } = summary;
+            if (errors.length === 0) {
+              toast.success(`${successes.length} membres archivés ✅`);
+            } else if (successes.length === 0) {
+              toast.error(`Échec — ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
+            } else {
+              toast.warning(`${successes.length} archivés ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
+            }
+          }
+        }}
       />
     </div>
   );
