@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { format } from "date-fns";
@@ -76,6 +76,7 @@ export default function CoachesPage() {
   // Sprint B.4.4 — Bulk archive
   const bulkArchive = useBulkArchiveAction("coach");
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const shiftHeldRef = useRef(false);
   const [rentRevertDialog, setRentRevertDialog] = useState({ open: false, newStatus: null, previousStatus: null });
   const [modalOpen, setModalOpen] = useState(false);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
@@ -392,7 +393,20 @@ export default function CoachesPage() {
                   <TableCell className="w-10">
                     <Checkbox
                       checked={bulkArchive.selected.has(coach.id)}
+                      onPointerDown={(e) => { shiftHeldRef.current = e.shiftKey; }}
                       onCheckedChange={() => {
+                        const shift = shiftHeldRef.current;
+                        shiftHeldRef.current = false;
+                        if (shift) {
+                          const orderedIds = filteredCoaches.map((c) => c.id);
+                          const { added, truncated } = bulkArchive.selectRange(orderedIds, coach.id);
+                          if (truncated) {
+                            toast.info(`Maximum ${MAX_BULK_SIZE} sélectionnés.`);
+                          } else if (added > 1) {
+                            toast.info(`${added} éléments sélectionnés via Shift+clic`);
+                          }
+                          return;
+                        }
                         if (!bulkArchive.selected.has(coach.id) && bulkArchive.selected.size >= MAX_BULK_SIZE) {
                           toast.warning(`Maximum ${MAX_BULK_SIZE} éléments à la fois. Désélectionnez quelques éléments.`);
                           return;

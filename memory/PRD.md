@@ -227,7 +227,7 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - (P2) Widget dashboard "Onboardings de la semaine par utilisateur" (top 3)
 - (P2) Digest hebdo CRON dimanche : email aux coachs avec membres at_risk + transitions at_risk→engaged
 
-## Completed Tasks (Session 2026-05-12 — Fix UX BulkActionBar)
+## Completed Tasks (Session 2026-05-12 — Fix UX BulkActionBar + Raccourcis clavier)
 - [x] Repositionnement de la `BulkActionBar` de `fixed bottom-0` vers `sticky top-0`
   - Bandeau apparait désormais entre la barre de filtres et le tableau (visible immédiatement après la sélection, plus de scroll requis vers le bas)
   - z-index 30 (sous les modales en z-50, au-dessus du tableau)
@@ -236,6 +236,17 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Background opaque `rgba(28, 28, 30, 0.95)` + backdrop-blur (Tailwind `bg-[var(...)]/95` ne fonctionne pas sur var arbitraires)
   - Appliqué sur 3 pages : MembersPage, CoachesPage, ArchivesPage (2 tabs)
   - API du composant inchangée
+- [x] Raccourci clavier **Échap** → désélectionne tout
+  - Listener global sur `document.keydown` en phase **capture** (pour fire avant Radix Dialog)
+  - Skip si une `[role="dialog"]` ou `[role="alertdialog"]` avec `data-state="open"` est présente
+  - Cleanup propre via useEffect (attach/detach lié au cycle de vie du composant)
+- [x] Raccourci **Shift+clic** → sélection de plage
+  - Hook `useBulkArchiveAction` étendu avec `lastSelectedId` (state) et `selectRange(orderedIds, targetId)`
+  - Plage calculée selon l'ordre visuel (`filteredMembers/Coaches.map(x => x.id)`)
+  - Respect du cap `MAX_BULK_SIZE = 50` → toast info si dépassement
+  - Toast info subtil "N éléments sélectionnés via Shift+clic" si plage ≥ 2
+  - Implémenté sur les 3 pages (Members, Coaches, Archives 2 tabs)
+  - Détection via `onPointerDown` (capture e.shiftKey) puis `onCheckedChange` lit le ref
 
 
 ## Upcoming Tasks (OLD)

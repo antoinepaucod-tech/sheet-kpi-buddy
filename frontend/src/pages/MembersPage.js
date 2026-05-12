@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { format, differenceInDays, parseISO, addYears, addMonths, addDays } from "date-fns";
@@ -334,6 +334,7 @@ export default function MembersPage() {
   // Sprint B.4.4 — Bulk archive
   const bulkArchive = useBulkArchiveAction("member");
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const shiftHeldRef = useRef(false);
 
   // Filter members
   const filteredMembers = useMemo(() => {
@@ -728,7 +729,20 @@ export default function MembersPage() {
                     <TableCell onClick={(e) => e.stopPropagation()} className="w-10">
                       <Checkbox
                         checked={bulkArchive.selected.has(member.id)}
+                        onPointerDown={(e) => { shiftHeldRef.current = e.shiftKey; }}
                         onCheckedChange={() => {
+                          const shift = shiftHeldRef.current;
+                          shiftHeldRef.current = false;
+                          if (shift) {
+                            const orderedIds = filteredMembers.map((m) => m.id);
+                            const { added, truncated } = bulkArchive.selectRange(orderedIds, member.id);
+                            if (truncated) {
+                              toast.info(`Maximum ${MAX_BULK_SIZE} sélectionnés.`);
+                            } else if (added > 1) {
+                              toast.info(`${added} éléments sélectionnés via Shift+clic`);
+                            }
+                            return;
+                          }
                           if (!bulkArchive.selected.has(member.id) && bulkArchive.selected.size >= MAX_BULK_SIZE) {
                             toast.warning(`Maximum ${MAX_BULK_SIZE} éléments à la fois. Désélectionnez quelques éléments.`);
                             return;

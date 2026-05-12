@@ -30,6 +30,7 @@ export function useBulkArchiveAction(entityType) {
   const label = ENTITY_LABELS[entityType];
 
   const [selected, setSelected] = useState(() => new Set());
+  const [lastSelectedId, setLastSelectedId] = useState(null);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [results, setResults] = useState(null); // { successes:[], errors:[{id,name,error}] }
@@ -41,16 +42,65 @@ export function useBulkArchiveAction(entityType) {
       else next.add(id);
       return next;
     });
+    setLastSelectedId(id);
   }, []);
 
   const setMany = useCallback((ids) => {
     setSelected(new Set(ids.slice(0, MAX_BULK_SIZE)));
+    setLastSelectedId(ids.length > 0 ? ids[Math.min(ids.length, MAX_BULK_SIZE) - 1] : null);
   }, []);
 
   const clear = useCallback(() => {
     setSelected(new Set());
+    setLastSelectedId(null);
     setResults(null);
   }, []);
+
+  /**
+   * Sélection de plage type Shift+clic.
+   * @param {string[]} orderedIds — ids dans l'ordre visuel actuel (filtré/trié).
+   * @param {string} targetId — id de la ligne cliquée avec Shift.
+   * @returns {{added:number, truncated:boolean}}
+   */
+  const selectRange = useCallback(
+    (orderedIds, targetId) => {
+      const targetIdx = orderedIds.indexOf(targetId);
+      if (targetIdx < 0) return { added: 0, truncated: false };
+      const anchorIdx = lastSelectedId ? orderedIds.indexOf(lastSelectedId) : -1;
+
+      const next = new Set(selected);
+      let added = 0;
+      let truncated = false;
+
+      if (anchorIdx < 0) {
+        // Pas d'ancrage → toggle simple
+        if (next.has(targetId)) {
+          next.delete(targetId);
+        } else if (next.size < MAX_BULK_SIZE) {
+          next.add(targetId);
+          added = 1;
+        } else {
+          truncated = true;
+        }
+      } else {
+        const [lo, hi] = anchorIdx <= targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+        for (let i = lo; i <= hi; i++) {
+          const id = orderedIds[i];
+          if (next.has(id)) continue;
+          if (next.size >= MAX_BULK_SIZE) {
+            truncated = true;
+            break;
+          }
+          next.add(id);
+          added++;
+        }
+      }
+      setSelected(next);
+      setLastSelectedId(targetId);
+      return { added, truncated };
+    },
+    [selected, lastSelectedId],
+  );
 
   const invalidate = useCallback(() => {
     if (entityType === "member") {
@@ -118,6 +168,7 @@ export function useBulkArchiveAction(entityType) {
     toggle,
     setMany,
     clear,
+    selectRange,
     running,
     progress,
     results,

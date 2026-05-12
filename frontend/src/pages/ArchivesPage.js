@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { format, parseISO } from "date-fns";
@@ -78,6 +78,7 @@ export default function ArchivesPage() {
   const bulkCoaches = useBulkArchiveAction("coach");
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const activeBulk = tab === "members" ? bulkMembers : bulkCoaches;
+  const shiftHeldRef = useRef(false);
 
   const filteredMembers = useMemo(() => {
     if (!memberSearch) return archivedMembers;
@@ -225,7 +226,20 @@ export default function ArchivesPage() {
                       <TableCell className="w-10">
                         <Checkbox
                           checked={bulkMembers.selected.has(m.id)}
+                          onPointerDown={(e) => { shiftHeldRef.current = e.shiftKey; }}
                           onCheckedChange={() => {
+                            const shift = shiftHeldRef.current;
+                            shiftHeldRef.current = false;
+                            if (shift) {
+                              const orderedIds = filteredMembers.map((x) => x.id);
+                              const { added, truncated } = bulkMembers.selectRange(orderedIds, m.id);
+                              if (truncated) {
+                                toast.info(`Maximum ${MAX_BULK_SIZE} sélectionnés.`);
+                              } else if (added > 1) {
+                                toast.info(`${added} éléments sélectionnés via Shift+clic`);
+                              }
+                              return;
+                            }
                             if (!bulkMembers.selected.has(m.id) && bulkMembers.selected.size >= MAX_BULK_SIZE) {
                               toast.warning(`Maximum ${MAX_BULK_SIZE} éléments à la fois.`);
                               return;
@@ -347,7 +361,20 @@ export default function ArchivesPage() {
                       <TableCell className="w-10">
                         <Checkbox
                           checked={bulkCoaches.selected.has(c.id)}
+                          onPointerDown={(e) => { shiftHeldRef.current = e.shiftKey; }}
                           onCheckedChange={() => {
+                            const shift = shiftHeldRef.current;
+                            shiftHeldRef.current = false;
+                            if (shift) {
+                              const orderedIds = filteredCoaches.map((x) => x.id);
+                              const { added, truncated } = bulkCoaches.selectRange(orderedIds, c.id);
+                              if (truncated) {
+                                toast.info(`Maximum ${MAX_BULK_SIZE} sélectionnés.`);
+                              } else if (added > 1) {
+                                toast.info(`${added} éléments sélectionnés via Shift+clic`);
+                              }
+                              return;
+                            }
                             if (!bulkCoaches.selected.has(c.id) && bulkCoaches.selected.size >= MAX_BULK_SIZE) {
                               toast.warning(`Maximum ${MAX_BULK_SIZE} éléments à la fois.`);
                               return;

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Archive, Undo2, X } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -7,6 +8,9 @@ import { Button } from "./ui/button";
  * AVANT le tableau pour que `sticky top-0` colle correctement
  * lorsque l'utilisateur scrolle dans la liste.
  * Visible uniquement si count > 0.
+ *
+ * Raccourci clavier : Échap → désélectionne tout (sauf si une modale
+ * Radix Dialog/AlertDialog est ouverte — dans ce cas Échap ferme la modale).
  */
 export function BulkActionBar({
   count,
@@ -17,6 +21,23 @@ export function BulkActionBar({
   onClear,
   disabled = false,
 }) {
+  // Listener global Échap → onClear (sauf si modale ouverte).
+  // Attaché en phase CAPTURE pour fire AVANT que Radix Dialog ferme la modale,
+  // afin de pouvoir détecter qu'une modale est ouverte au moment du keydown.
+  useEffect(() => {
+    if (count <= 0) return;
+    const handler = (e) => {
+      if (e.key !== "Escape") return;
+      const openDialog = document.querySelector(
+        '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]',
+      );
+      if (openDialog) return; // laisse Radix gérer la fermeture de modale
+      onClear();
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [count, onClear]);
+
   if (count <= 0) return null;
 
   const isRestore = action === "restore";
