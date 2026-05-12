@@ -8,6 +8,7 @@ from uuid import uuid4
 from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id, get_current_user
 from core.activity_log import log_activity
+from core.club_id_guard import resolve_club_id_or_fallback
 from core.member_categorization import (
     get_member_category,
     _dedupe_partenaire,
@@ -816,7 +817,14 @@ async def update_member(
     existing = await db.customer_members.find_one({"id": member_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Membre introuvable")
-    
+
+    # Sprint Hardening — cascade club_id (header > member.club_id > user > Versoix)
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id or existing.get("club_id"),
+        current_user=current_user,
+        endpoint="/api/members/{id} (PUT)",
+    )
+
     update_data = data.model_dump()
     update_data.pop("club_id", None)  # Ne jamais écraser club_id via PUT
 
@@ -882,7 +890,9 @@ async def update_member(
             review_type=new_freq,
             status="scheduled",
         )
-        await db.annual_reviews.insert_one(new_review.model_dump())
+        new_review_doc = new_review.model_dump()
+        new_review_doc["club_id"] = club_id_resolved
+        await db.annual_reviews.insert_one(new_review_doc)
         update_data["annual_review_date"] = next_date.strftime("%Y-%m-%d")
         await db.customer_members.update_one(
             {"id": member_id},
@@ -1053,8 +1063,7 @@ async def update_member(
                 "created_at": now.isoformat(),
                 "updated_at": now.isoformat(),
             }
-            if club_id:
-                payment["club_id"] = club_id
+            payment["club_id"] = club_id_resolved
             await db.payments.insert_one(payment)
     
     # Log modification
@@ -1181,18 +1190,30 @@ async def restore_member(
 
 
 @router.post("/{member_id}/renew")
-async def renew_membership(member_id: str, body: dict):
+async def renew_membership(
+    member_id: str,
+    body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     member = await db.customer_members.find_one({"id": member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Membre introuvable")
-    
+
+    # Cascade : header > member.club_id > user > Versoix
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id or member.get("club_id"),
+        current_user=current_user,
+        endpoint="/api/members/{id}/renew",
+    )
+
     new_end_date = body.get("new_end_date")
     renewal_duration = body.get("renewal_duration", "12 mois")
     is_no_commitment = renewal_duration == "Sans engagement"
-    
+
     if not new_end_date and not is_no_commitment:
         raise HTTPException(status_code=400, detail="new_end_date requis")
-    
+
     renewal = MemberRenewalHistory(
         member_id=member_id,
         previous_end_date=member.get("subscription_end_date"),
@@ -1200,7 +1221,9 @@ async def renew_membership(member_id: str, body: dict):
         renewal_duration=renewal_duration,
         notes=body.get("notes", "")
     )
-    await db.member_renewals.insert_one(renewal.model_dump())
+    renewal_doc = renewal.model_dump()
+    renewal_doc["club_id"] = club_id_resolved
+    await db.member_renewals.insert_one(renewal_doc)
     
     member_update = {
         "updated_at": datetime.now(timezone.utc).isoformat()
@@ -1230,7 +1253,9 @@ async def renew_membership(member_id: str, body: dict):
                     member_id=member_id,
                     member_name=member.get("name", "")
                 )
-                await db.challenge_participants.insert_one(participant.model_dump())
+                participant_doc = participant.model_dump()
+                participant_doc["club_id"] = club_id_resolved
+                await db.challenge_participants.insert_one(participant_doc)
     
     # Update billing cycle if provided
     if "billing_cycle_type" in body:
@@ -1256,7 +1281,9 @@ async def renew_membership(member_id: str, body: dict):
                 review_type=freq,
                 status="scheduled"
             )
-            await db.annual_reviews.insert_one(annual_review.model_dump())
+            ar_doc = annual_review.model_dump()
+            ar_doc["club_id"] = club_id_resolved
+            await db.annual_reviews.insert_one(ar_doc)
         except Exception:
             pass
     

@@ -4,7 +4,8 @@ from typing import Optional
 from datetime import datetime, timezone
 
 from core.config import db, exclude_archived
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from models.coaches import Coach, CoachCreate, CoachReplacement
 
 router = APIRouter(prefix="/coaches", tags=["coaches"])
@@ -191,13 +192,31 @@ async def get_replacements(course_id: Optional[str] = None, date: Optional[str] 
 
 
 @router.post("/replacements/")
-async def create_replacement(data: dict):
+async def create_replacement(
+    data: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Create a coach replacement for a course"""
     required = ["course_id", "original_coach_id", "replacement_coach_id", "date"]
     for field in required:
         if field not in data:
             raise HTTPException(status_code=400, detail=f"{field} requis")
-    
+
+    # Cascade : header X-Club-Id > lookup depuis le coach original > user > Versoix
+    lookup_club_id = None
+    if not club_id:
+        original_coach = await db.coaches.find_one(
+            {"id": data["original_coach_id"]}, {"_id": 0, "club_id": 1}
+        )
+        if original_coach:
+            lookup_club_id = original_coach.get("club_id")
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id or lookup_club_id,
+        current_user=current_user,
+        endpoint="/api/coaches/replacements/",
+    )
+
     replacement = CoachReplacement(
         course_id=data["course_id"],
         original_coach_id=data["original_coach_id"],
@@ -206,10 +225,7 @@ async def create_replacement(data: dict):
         reason=data.get("reason", "")
     )
     doc = replacement.model_dump()
+    doc["club_id"] = club_id_resolved
     await db.coach_replacements.insert_one(doc)
     doc.pop('_id', None)
-    
-    # Also update the course's coach for that specific date
-    # This is handled by the frontend when displaying
-    
     return doc

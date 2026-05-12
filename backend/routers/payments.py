@@ -5,7 +5,8 @@ from datetime import datetime, timezone, timedelta
 from calendar import monthrange
 
 from core.config import db, MONTHS_FR, exclude_archived, check_member_not_archived, get_member_archived_warning, get_archived_member_ids
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from models.payments import (
     PaymentSchedule, PaymentScheduleCreate,
     Payment, PaymentCreate, PaymentUpdate
@@ -364,11 +365,19 @@ async def get_upcoming_payments(days: int = 7, club_id: Optional[str] = Depends(
 
 
 @router.post("/payments")
-async def create_payment(data: PaymentCreate):
+async def create_payment(
+    data: PaymentCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     # Type C: block if target member is archived
     await check_member_not_archived(data.member_id)
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/payments (POST)",
+    )
     payment = Payment(**data.model_dump())
     doc = payment.model_dump()
+    doc["club_id"] = club_id_resolved
     await db.payments.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -388,7 +397,12 @@ async def update_payment(payment_id: str, data: PaymentUpdate):
 
 
 @router.post("/payments/{payment_id}/mark-paid")
-async def mark_payment_paid(payment_id: str, body: dict = {}):
+async def mark_payment_paid(
+    payment_id: str,
+    body: dict = {},
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Quick action to mark a payment as paid and create a revenue transaction."""
     existing = await db.payments.find_one({"id": payment_id})
     if not existing:
@@ -420,6 +434,12 @@ async def mark_payment_paid(payment_id: str, body: dict = {}):
     category = "THE COACH PASS MENSUEL" if is_coach else "ABONNEMENTS"
     
     import uuid
+    # Cascade : existing.club_id (source la plus fiable) > header > user > fallback Versoix
+    tx_club_id = existing.get("club_id") or resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/payments/{id}/mark-paid",
+    )
     tx = {
         "id": str(uuid.uuid4()),
         "date": paid_date,
@@ -432,7 +452,7 @@ async def mark_payment_paid(payment_id: str, body: dict = {}):
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "source": "payment_validation",
         "payment_id": payment_id,
-        "club_id": existing.get("club_id"),
+        "club_id": tx_club_id,
     }
     await db.accounting_transactions.insert_one(tx)
     
