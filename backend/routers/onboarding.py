@@ -5,7 +5,8 @@ from datetime import datetime, timezone, timedelta
 from uuid import uuid4
 
 from core.config import db, exclude_archived
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.activity_log import log_activity
 
 router = APIRouter(tags=["onboarding"])
 
@@ -57,7 +58,11 @@ async def get_pending_onboarding(include_paused: Optional[bool] = None, club_id:
 
 
 @router.post("/onboarding/{member_id}/skip")
-async def skip_onboarding(member_id: str, body: dict = {}):
+async def skip_onboarding(
+    member_id: str,
+    body: dict = {},
+    current_user: dict = Depends(get_current_user),
+):
     """Skip onboarding for a member"""
     member = await db.customer_members.find_one({"id": member_id})
     if not member:
@@ -72,14 +77,14 @@ async def skip_onboarding(member_id: str, body: dict = {}):
         }}
     )
     
-    await db.activity_logs.insert_one({
-        "id": str(uuid4()),
-        "member_id": member_id,
-        "action": "onboarding_skipped",
-        "description": f"Onboarding skipé - {body.get('reason', 'Aucune raison')}",
-        "user_name": body.get("user_name", "Utilisateur"),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    })
+    await log_activity(
+        db,
+        action="onboarding_skipped",
+        description=f"Onboarding skipé - {body.get('reason', 'Aucune raison')}",
+        member_id=member_id,
+        current_user=current_user,
+        user_name=body.get("user_name"),
+    )
     
     return {"message": "Onboarding skipé"}
 

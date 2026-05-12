@@ -7,7 +7,8 @@ from uuid import uuid4
 import logging
 
 from core.config import db, exclude_archived, check_member_not_archived, get_archived_member_ids
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.activity_log import log_activity
 from models.members import AnnualReview, AnnualReviewCreate
 
 router = APIRouter(prefix="/annual-reviews", tags=["reviews"])
@@ -461,7 +462,11 @@ async def update_review(review_id: str, body: dict):
 
 
 @router.post("/{review_id}/complete")
-async def complete_review(review_id: str, body: dict):
+async def complete_review(
+    review_id: str,
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+):
     """Complete a review with all measurements and notes"""
     existing = await db.annual_reviews.find_one({"id": review_id})
     if not existing:
@@ -482,14 +487,14 @@ async def complete_review(review_id: str, body: dict):
     await db.annual_reviews.update_one({"id": review_id}, {"$set": update})
 
     # Log activity
-    await db.activity_logs.insert_one({
-        "id": str(uuid4()),
-        "member_id": existing["member_id"],
-        "action": "bilan_completed",
-        "description": f"Bilan {existing.get('review_type', 'mensuel')} du {existing.get('review_date', '')} complété",
-        "user_name": body.get("user_name", "Utilisateur"),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    })
+    await log_activity(
+        db,
+        action="bilan_completed",
+        description=f"Bilan {existing.get('review_type', 'mensuel')} du {existing.get('review_date', '')} complété",
+        member_id=existing["member_id"],
+        current_user=current_user,
+        user_name=body.get("user_name"),
+    )
 
     await db.customer_members.update_one(
         {"id": existing["member_id"]},
@@ -523,7 +528,11 @@ async def complete_review(review_id: str, body: dict):
 
 
 @router.post("/{review_id}/skip")
-async def skip_review(review_id: str, body: dict = {}):
+async def skip_review(
+    review_id: str,
+    body: dict = {},
+    current_user: dict = Depends(get_current_user),
+):
     """Skip a review - mark as skipped, log activity, auto-schedule next one"""
     existing = await db.annual_reviews.find_one({"id": review_id})
     if not existing:
@@ -546,14 +555,14 @@ async def skip_review(review_id: str, body: dict = {}):
     )
 
     # Log activity on the member
-    await db.activity_logs.insert_one({
-        "id": str(uuid4()),
-        "member_id": existing["member_id"],
-        "action": "bilan_skipped",
-        "description": f"Bilan {existing.get('review_type', 'mensuel')} du {existing.get('review_date', '')} skipé" + (f" — Raison : {reason}" if reason else ""),
-        "user_name": user_name,
-        "created_at": now.isoformat(),
-    })
+    await log_activity(
+        db,
+        action="bilan_skipped",
+        description=f"Bilan {existing.get('review_type', 'mensuel')} du {existing.get('review_date', '')} skipé" + (f" — Raison : {reason}" if reason else ""),
+        member_id=existing["member_id"],
+        current_user=current_user,
+        user_name=user_name,
+    )
 
     # Auto-schedule next review based on frequency
     member = await db.customer_members.find_one({"id": existing["member_id"]}, {"_id": 0})

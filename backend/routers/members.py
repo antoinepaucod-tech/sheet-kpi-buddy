@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id, get_current_user
+from core.activity_log import log_activity
 from core.member_categorization import (
     get_member_category,
     _dedupe_partenaire,
@@ -656,7 +657,11 @@ async def remove_member_pause(member_id: str):
 
 
 @router.post("")
-async def create_member(data: CustomerMemberCreate, club_id: Optional[str] = Depends(get_club_id)):
+async def create_member(
+    data: CustomerMemberCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     if not club_id:
         raise HTTPException(status_code=400, detail="Club ID requis (header X-Club-Id manquant)")
     member_data = data.model_dump()
@@ -789,13 +794,25 @@ async def create_member(data: CustomerMemberCreate, club_id: Optional[str] = Dep
         await _auto_recalculate_kpis(tx_doc["date"])
 
     # Log creation
-    await log_member_activity(doc["id"], "member_created", f"Membre créé : {doc.get('name')}", club_id=club_id)
+    await log_activity(
+        db,
+        action="member_created",
+        description=f"Membre créé : {doc.get('name')}",
+        member_id=doc["id"],
+        current_user=current_user,
+        explicit_club_id=club_id,
+    )
 
     return doc
 
 
 @router.put("/{member_id}")
-async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Optional[str] = Depends(get_club_id)):
+async def update_member(
+    member_id: str,
+    data: CustomerMemberCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     existing = await db.customer_members.find_one({"id": member_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Membre introuvable")
@@ -822,14 +839,14 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
             {"$set": {"status": "cancelled", "notes": "Membre parti", "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
         if cancelled.modified_count > 0:
-            await db.activity_logs.insert_one({
-                "id": str(uuid4()),
-                "member_id": member_id,
-                "action": "payments_cancelled_on_departure",
-                "description": f"{cancelled.modified_count} paiement(s) annulé(s) suite au départ du membre.",
-                "user_name": "Système",
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            })
+            await log_activity(
+                db,
+                action="payments_cancelled_on_departure",
+                description=f"{cancelled.modified_count} paiement(s) annulé(s) suite au départ du membre.",
+                member_id=member_id,
+                current_user=current_user,
+                user_name="Système",
+            )
 
     # Sync bilans when review_frequency changes
     old_freq = existing.get("review_frequency", "monthly")
@@ -872,14 +889,13 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
             {"$set": {"annual_review_date": next_date.strftime("%Y-%m-%d")}}
         )
         # Log activity
-        await db.activity_logs.insert_one({
-            "id": str(uuid4()),
-            "member_id": member_id,
-            "action": "review_frequency_changed",
-            "description": f"Fréquence bilan changée: {old_freq} → {new_freq}. {deleted.deleted_count} bilan(s) planifié(s) supprimé(s), nouveau bilan {new_freq} créé le {next_date.strftime('%Y-%m-%d')}.",
-            "user_name": "Utilisateur",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
+        await log_activity(
+            db,
+            action="review_frequency_changed",
+            description=f"Fréquence bilan changée: {old_freq} → {new_freq}. {deleted.deleted_count} bilan(s) planifié(s) supprimé(s), nouveau bilan {new_freq} créé le {next_date.strftime('%Y-%m-%d')}.",
+            member_id=member_id,
+            current_user=current_user,
+        )
 
     # If DUO primary, propagate key changes to partner
     if existing.get("duo_primary") and existing.get("duo_partner_id"):
@@ -1042,7 +1058,14 @@ async def update_member(member_id: str, data: CustomerMemberCreate, club_id: Opt
             await db.payments.insert_one(payment)
     
     # Log modification
-    await log_member_activity(member_id, "member_updated", f"Fiche membre modifiée : {data.name}", club_id=club_id)
+    await log_activity(
+        db,
+        action="member_updated",
+        description=f"Fiche membre modifiée : {data.name}",
+        member_id=member_id,
+        current_user=current_user,
+        explicit_club_id=club_id,
+    )
 
     return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
 
@@ -1104,7 +1127,11 @@ async def delete_member(member_id: str):
 # ── Soft delete (archive / restore) ──────────────────────────────────────────
 
 @router.post("/{member_id}/archive")
-async def archive_member(member_id: str, body: Optional[dict] = None):
+async def archive_member(
+    member_id: str,
+    body: Optional[dict] = None,
+    current_user: dict = Depends(get_current_user),
+):
     doc = await db.customer_members.find_one({"id": member_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
@@ -1116,20 +1143,22 @@ async def archive_member(member_id: str, body: Optional[dict] = None):
     if reason:
         update["archived_reason"] = reason
     await db.customer_members.update_one({"id": member_id}, {"$set": update})
-    await db.activity_logs.insert_one({
-        "id": str(uuid4()),
-        "member_id": member_id,
-        "action": "member_archived",
-        "description": f"Membre archivé{' — Raison : ' + reason if reason else ''}.",
-        "user_name": "Utilisateur",
-        "created_at": now,
-    })
+    await log_activity(
+        db,
+        action="member_archived",
+        description=f"Membre archivé{' — Raison : ' + reason if reason else ''}.",
+        member_id=member_id,
+        current_user=current_user,
+    )
     updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     return updated
 
 
 @router.post("/{member_id}/restore")
-async def restore_member(member_id: str):
+async def restore_member(
+    member_id: str,
+    current_user: dict = Depends(get_current_user),
+):
     doc = await db.customer_members.find_one({"id": member_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
@@ -1140,14 +1169,13 @@ async def restore_member(member_id: str):
         {"id": member_id},
         {"$set": {"archived_at": None, "updated_at": now}, "$unset": {"archived_reason": ""}}
     )
-    await db.activity_logs.insert_one({
-        "id": str(uuid4()),
-        "member_id": member_id,
-        "action": "member_restored",
-        "description": "Membre restauré (sorti des archives).",
-        "user_name": "Utilisateur",
-        "created_at": now,
-    })
+    await log_activity(
+        db,
+        action="member_restored",
+        description="Membre restauré (sorti des archives).",
+        member_id=member_id,
+        current_user=current_user,
+    )
     updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     return updated
 
@@ -1332,18 +1360,3 @@ async def get_member_activity_log(member_id: str):
     return await db.activity_logs.find(
         {"member_id": member_id}, {"_id": 0}
     ).sort("created_at", -1).to_list(200)
-
-
-async def log_member_activity(member_id: str, action: str, description: str, user_name: str = "Utilisateur", club_id: str = None):
-    """Helper to log an activity on a member"""
-    doc = {
-        "id": str(uuid4()),
-        "member_id": member_id,
-        "action": action,
-        "description": description,
-        "user_name": user_name,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    if club_id:
-        doc["club_id"] = club_id
-    await db.activity_logs.insert_one(doc)
