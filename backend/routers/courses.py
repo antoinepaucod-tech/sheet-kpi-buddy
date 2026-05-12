@@ -470,6 +470,10 @@ async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
 
 @router.post("/courses/generate-salary-expenses/{year}/{month}")
 async def generate_salary_expenses(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
+    # Sprint A pattern — défense en profondeur club_id
+    if not club_id:
+        raise HTTPException(status_code=400, detail="club_id requis (header X-Club-Id)")
+
     courses = await db.course_kpis.find(_cq(club_id, {"year": year, "month": month}), {"_id": 0}).to_list(500)
     if not courses:
         raise HTTPException(status_code=404, detail="Aucun cours trouvé pour ce mois")
@@ -541,6 +545,9 @@ async def generate_salary_expenses(year: int, month: int, club_id: Optional[str]
             category="SALAIRES COACHS"
         )
         doc = tx.model_dump()
+        # Sprint A pattern — défense en profondeur : injection explicite du club_id
+        # APRÈS le model_dump() (l'AccountingTransaction Pydantic model ne le connaît pas).
+        doc["club_id"] = club_id
         await db.accounting_transactions.insert_one(doc)
         doc.pop("_id", None)
         transactions.append(doc)
