@@ -5,7 +5,8 @@ from datetime import datetime, timezone, timedelta
 import logging
 
 from core.config import db, exclude_archived
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from services.ghl import sync_pipeline_data
 
 router = APIRouter(prefix="/ghl", tags=["ghl"])
@@ -24,6 +25,7 @@ async def sync_ghl(
     start_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
     end_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
     club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
 ):
     """Trigger a manual sync from GoHighLevel pipelines with optional date filter"""
     try:
@@ -145,7 +147,7 @@ async def sync_ghl(
 
 
 @router.get("/last-sync")
-async def get_last_sync():
+async def get_last_sync(current_user: dict = Depends(get_current_user)):
     """Get the most recent sync result"""
     doc = await db.ghl_syncs.find_one(
         {"status": "success"},
@@ -158,7 +160,10 @@ async def get_last_sync():
 
 
 @router.get("/sync-history")
-async def get_sync_history(club_id: Optional[str] = Depends(get_club_id)):
+async def get_sync_history(
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Get sync history (last 20)"""
     docs = await db.ghl_syncs.find(
         _cq(club_id), {"_id": 0}
@@ -167,7 +172,11 @@ async def get_sync_history(club_id: Optional[str] = Depends(get_club_id)):
 
 
 @router.post("/confirm-sale")
-async def confirm_sale(body: dict):
+async def confirm_sale(
+    body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Confirm a sale from 'Showed Sold' stage.
     - Creates a member record with full subscription details
@@ -198,6 +207,17 @@ async def confirm_sale(body: dict):
         raise HTTPException(status_code=400, detail="opportunity_id required")
     if not month:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
+
+    # Sprint Hardening club_id (2026-05-12) — mode soft fallback + audit trail
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/ghl/confirm-sale",
+    )
+    audit_fields = {
+        "created_by_user_id": current_user.get("id"),
+        "created_by_email": current_user.get("email"),
+    }
 
     # Use GHL closed_at as signature date, fallback to today
     if not signature_date:
@@ -263,13 +283,16 @@ async def confirm_sale(body: dict):
             onboarding_completed=False,
         )
         member_doc = member.model_dump()
+        # Sprint Hardening : défense en profondeur club_id + audit trail
+        member_doc["club_id"] = club_id_resolved
+        member_doc.update(audit_fields)
         await db.customer_members.insert_one(member_doc)
         member_id = member_doc["id"]
         member_doc.pop("_id", None)
 
         # Create payment schedule if billing is enabled
         if billing_enabled and billing_amount > 0:
-            from models.members import PaymentSchedule
+            from models.payments import PaymentSchedule
             schedule = PaymentSchedule(
                 member_id=member_id,
                 amount=billing_amount,
@@ -279,7 +302,10 @@ async def confirm_sale(body: dict):
                 payment_method=billing_payment_method,
                 is_active=True
             )
-            await db.payment_schedules.insert_one(schedule.model_dump())
+            schedule_doc = schedule.model_dump()
+            schedule_doc["club_id"] = club_id_resolved
+            schedule_doc.update(audit_fields)
+            await db.payment_schedules.insert_one(schedule_doc)
 
         # Create bilan/suivi (annual review) for the new member
         from models.members import AnnualReview
@@ -295,7 +321,9 @@ async def confirm_sale(body: dict):
             review_type=review_type,
             status="scheduled"
         )
-        await db.annual_reviews.insert_one(annual_review.model_dump())
+        review_doc = annual_review.model_dump()
+        review_doc.update(audit_fields)
+        await db.annual_reviews.insert_one(review_doc)
 
     # 2. Auto-add to active 6 Week Challenge if applicable
     challenge_added = False
@@ -311,7 +339,9 @@ async def confirm_sale(body: dict):
                     member_id=member_id,
                     member_name=opportunity_name
                 )
-                await db.challenge_participants.insert_one(participant.model_dump())
+                participant_doc = participant.model_dump()
+                participant_doc.update(audit_fields)
+                await db.challenge_participants.insert_one(participant_doc)
                 challenge_added = True
 
     # 3. Store sale confirmation
@@ -324,6 +354,7 @@ async def confirm_sale(body: dict):
         "challenge_added": challenge_added,
         "month": month,
         "confirmed_at": datetime.now(timezone.utc).isoformat(),
+        **audit_fields,
     }
     await db.ghl_sales.insert_one(sale)
     sale.pop("_id", None)
@@ -340,7 +371,9 @@ async def confirm_sale(body: dict):
         "amount": cash_collected,
         "type": "revenue",
         "category": cat_name,
+        "club_id": club_id_resolved,
         "created_at": datetime.now(timezone.utc).isoformat(),
+        **audit_fields,
     }
     # Avoid duplicates
     existing_tx = await db.accounting_transactions.find_one({"id": tx_doc["id"]})
@@ -369,7 +402,7 @@ async def confirm_sale(body: dict):
 
 
 @router.get("/sales/{month}")
-async def get_sales(month: str):
+async def get_sales(month: str, current_user: dict = Depends(get_current_user)):
     """Get confirmed sales for a given month"""
     docs = await db.ghl_sales.find(
         {"month": month}, {"_id": 0}
@@ -378,7 +411,11 @@ async def get_sales(month: str):
 
 
 @router.patch("/calls-made")
-async def update_calls_made(body: dict):
+async def update_calls_made(
+    body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Update the calls_made field for a given month"""
     month = body.get("month")
     calls_made = body.get("calls_made", 0)

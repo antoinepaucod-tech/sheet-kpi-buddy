@@ -4,7 +4,8 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from core.config import db, exclude_archived
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from models.kpi import MonthlyKPI, MonthlyKPICreate, compute_metrics
 
 router = APIRouter(prefix="/monthly-kpis", tags=["kpis"])
@@ -48,25 +49,39 @@ async def get_monthly_kpi(month: str, club_id: Optional[str] = Depends(get_club_
 
 
 @router.post("")
-async def upsert_monthly_kpi(data: MonthlyKPICreate, club_id: Optional[str] = Depends(get_club_id)):
-    existing = await db.monthly_kpis.find_one(_cq(club_id, {"month": data.month}))
+async def upsert_monthly_kpi(
+    data: MonthlyKPICreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/monthly-kpis (POST)"
+    )
+    existing = await db.monthly_kpis.find_one(_cq(club_id_resolved, {"month": data.month}))
     payload = data.model_dump()
-    if club_id:
-        payload["club_id"] = club_id
+    payload["club_id"] = club_id_resolved
     if existing:
         payload['updated_at'] = datetime.now(timezone.utc).isoformat()
-        await db.monthly_kpis.update_one(_cq(club_id, {"month": data.month}), {"$set": payload})
-        doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": data.month}), {"_id": 0})
+        await db.monthly_kpis.update_one(_cq(club_id_resolved, {"month": data.month}), {"$set": payload})
+        doc = await db.monthly_kpis.find_one(_cq(club_id_resolved, {"month": data.month}), {"_id": 0})
     else:
         kpi = MonthlyKPI(**payload)
         doc = kpi.model_dump()
+        doc["club_id"] = club_id_resolved  # défense en profondeur
         await db.monthly_kpis.insert_one(doc)
         doc.pop('_id', None)
     return compute_metrics(doc)
 
 
 @router.post("/bulk")
-async def bulk_import_kpis(data: List[dict], club_id: Optional[str] = Depends(get_club_id)):
+async def bulk_import_kpis(
+    data: List[dict],
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/monthly-kpis/bulk"
+    )
     imported, updated = 0, 0
     for kpi_data in data:
         month = kpi_data.get("month")
@@ -91,16 +106,17 @@ async def bulk_import_kpis(data: List[dict], club_id: Optional[str] = Depends(ge
             "other_expenses": kpi_data.get("other_expenses", 0),
             "note": kpi_data.get("note", ""),
         }
-        if club_id:
-            mapped["club_id"] = club_id
-        existing = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}))
+        mapped["club_id"] = club_id_resolved
+        existing = await db.monthly_kpis.find_one(_cq(club_id_resolved, {"month": month}))
         if existing:
             mapped['updated_at'] = datetime.now(timezone.utc).isoformat()
-            await db.monthly_kpis.update_one(_cq(club_id, {"month": month}), {"$set": mapped})
+            await db.monthly_kpis.update_one(_cq(club_id_resolved, {"month": month}), {"$set": mapped})
             updated += 1
         else:
             kpi = MonthlyKPI(**{k: v for k, v in mapped.items() if v is not None})
-            await db.monthly_kpis.insert_one(kpi.model_dump())
+            kpi_doc = kpi.model_dump()
+            kpi_doc["club_id"] = club_id_resolved  # défense en profondeur
+            await db.monthly_kpis.insert_one(kpi_doc)
             imported += 1
     return {"imported": imported, "updated": updated, "total": imported + updated}
 

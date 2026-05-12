@@ -16,6 +16,12 @@ load_dotenv(ROOT_DIR / '.env', override=False)
 MONGO_URL = "mongodb+srv://club-management-prod:7fvrhhtbxmqPczzP@transform.iocnr7b.mongodb.net/club_management?retryWrites=true&w=majority&appName=transform"
 DB_NAME = "club_management"
 
+# === DEFAULT CLUB (Sprint Hardening club_id, 2026-05-12) =====================
+# Fallback utilisé par le helper resolve_club_id_or_fallback en mode soft (24-48h).
+# Versoix = club principal historique. Bascule en mode dur (400 strict) à la
+# demande explicite, après audit des warning logs.
+DEFAULT_CLUB_ID = "0a327bf5-c759-49eb-87e4-551913f78bdb"  # Versoix
+
 # === ANCIENNE CONFIG LOCALE (archivée, pour rollback) =========================
 # Pour rollback : décommenter les 2 lignes ci-dessous et commenter les 2 lignes
 # MONGO_URL / DB_NAME "PRODUCTION ATLAS" au-dessus, puis `sudo supervisorctl restart backend`.
