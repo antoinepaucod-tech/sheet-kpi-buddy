@@ -157,6 +157,16 @@ export default function ArchivesPage() {
             />
           </div>
 
+          {/* Sprint B.4.4 — Bulk restore bar (sticky top) */}
+          <BulkActionBar
+            count={bulkMembers.selected.size}
+            entityLabel="membre"
+            entityLabelPlural="membres"
+            action="restore"
+            onAction={() => setBulkDialogOpen(true)}
+            onClear={() => bulkMembers.clear()}
+          />
+
           <div className="tf-card overflow-hidden p-0">
             <Table>
               <TableHeader>
@@ -269,6 +279,16 @@ export default function ArchivesPage() {
             />
           </div>
 
+          {/* Sprint B.4.4 — Bulk restore bar (sticky top) */}
+          <BulkActionBar
+            count={bulkCoaches.selected.size}
+            entityLabel="coach"
+            entityLabelPlural="coachs"
+            action="restore"
+            onAction={() => setBulkDialogOpen(true)}
+            onClear={() => bulkCoaches.clear()}
+          />
+
           <div className="tf-card overflow-hidden p-0">
             <Table>
               <TableHeader>
@@ -380,14 +400,6 @@ export default function ArchivesPage() {
       />
 
       {/* Sprint B.4.4 — Bulk restore */}
-      <BulkActionBar
-        count={activeBulk.selected.size}
-        entityLabel={tab === "members" ? "membre" : "coach"}
-        entityLabelPlural={tab === "members" ? "membres" : "coachs"}
-        action="restore"
-        onAction={() => setBulkDialogOpen(true)}
-        onClear={() => activeBulk.clear()}
-      />
       <BulkArchiveConfirmDialog
         open={bulkDialogOpen || !!activeBulk.results}
         onClose={() => {

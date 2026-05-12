@@ -323,6 +323,16 @@ export default function CoachesPage() {
         </label>
       </div>
 
+      {/* Sprint B.4.4 — Bulk archive bar (sticky top) */}
+      <BulkActionBar
+        count={bulkArchive.selected.size}
+        entityLabel="coach"
+        entityLabelPlural="coachs"
+        action="archive"
+        onAction={() => setBulkDialogOpen(true)}
+        onClear={() => bulkArchive.clear()}
+      />
+
       {/* Table */}
       <div className="tf-card overflow-hidden p-0">
         <Table>
@@ -795,14 +805,6 @@ export default function CoachesPage() {
       />
 
       {/* Sprint B.4.4 — Bulk archive */}
-      <BulkActionBar
-        count={bulkArchive.selected.size}
-        entityLabel="coach"
-        entityLabelPlural="coachs"
-        action="archive"
-        onAction={() => setBulkDialogOpen(true)}
-        onClear={() => bulkArchive.clear()}
-      />
       <BulkArchiveConfirmDialog
         open={bulkDialogOpen || !!bulkArchive.results}
         onClose={() => {

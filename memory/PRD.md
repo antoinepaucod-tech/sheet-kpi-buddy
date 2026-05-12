@@ -227,6 +227,17 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - (P2) Widget dashboard "Onboardings de la semaine par utilisateur" (top 3)
 - (P2) Digest hebdo CRON dimanche : email aux coachs avec membres at_risk + transitions at_risk→engaged
 
+## Completed Tasks (Session 2026-05-12 — Fix UX BulkActionBar)
+- [x] Repositionnement de la `BulkActionBar` de `fixed bottom-0` vers `sticky top-0`
+  - Bandeau apparait désormais entre la barre de filtres et le tableau (visible immédiatement après la sélection, plus de scroll requis vers le bas)
+  - z-index 30 (sous les modales en z-50, au-dessus du tableau)
+  - Ombre vers le bas (`shadow-[0_8px_24px_rgba(0,0,0,0.35)]`)
+  - Animation slide-down 200ms au montage (keyframe ajoutée dans `tailwind.config.js`)
+  - Background opaque `rgba(28, 28, 30, 0.95)` + backdrop-blur (Tailwind `bg-[var(...)]/95` ne fonctionne pas sur var arbitraires)
+  - Appliqué sur 3 pages : MembersPage, CoachesPage, ArchivesPage (2 tabs)
+  - API du composant inchangée
+
+
 ## Upcoming Tasks (OLD)
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping

@@ -2,8 +2,11 @@ import { Archive, Undo2, X } from "lucide-react";
 import { Button } from "./ui/button";
 
 /**
- * Sprint B.4.4 — Bandeau d'action flottant (sticky bottom).
- * Visible uniquement si count > 0. Largeur 100% sous la fenêtre.
+ * Sprint B.4.4 — Bandeau d'action sticky (top).
+ * Doit être placé dans le JSX juste après la barre de filtres et
+ * AVANT le tableau pour que `sticky top-0` colle correctement
+ * lorsque l'utilisateur scrolle dans la liste.
+ * Visible uniquement si count > 0.
  */
 export function BulkActionBar({
   count,
@@ -27,10 +30,11 @@ export function BulkActionBar({
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]/95 backdrop-blur-md shadow-[0_-8px_24px_rgba(0,0,0,0.35)]"
+      className="sticky top-0 z-30 rounded-md border border-[var(--color-border)] backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.35)] animate-slide-down"
+      style={{ background: "rgba(28, 28, 30, 0.95)" }}
       data-testid="bulk-action-bar"
     >
-      <div className="max-w-screen-2xl mx-auto px-6 py-3 pr-44 flex items-center justify-between gap-4">
+      <div className="px-4 py-2 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="text-sm text-white font-medium" data-testid="bulk-count">
             <span className="text-[var(--color-accent)] font-bold text-base">{count}</span>{" "}

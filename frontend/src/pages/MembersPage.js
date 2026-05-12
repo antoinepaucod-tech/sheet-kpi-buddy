@@ -651,6 +651,16 @@ export default function MembersPage() {
         <p className="text-xs text-[var(--color-text-tertiary)] ml-auto font-mono">{filteredMembers.length} résultats</p>
       </div>
 
+      {/* Sprint B.4.4 — Bulk archive bar (sticky top) */}
+      <BulkActionBar
+        count={bulkArchive.selected.size}
+        entityLabel="membre"
+        entityLabelPlural="membres"
+        action="archive"
+        onAction={() => setBulkDialogOpen(true)}
+        onClear={() => bulkArchive.clear()}
+      />
+
       {/* Table */}
       <div className="tf-card overflow-hidden p-0">
         <Table>
@@ -1777,14 +1787,6 @@ export default function MembersPage() {
       />
 
       {/* Sprint B.4.4 — Bulk archive */}
-      <BulkActionBar
-        count={bulkArchive.selected.size}
-        entityLabel="membre"
-        entityLabelPlural="membres"
-        action="archive"
-        onAction={() => setBulkDialogOpen(true)}
-        onClear={() => bulkArchive.clear()}
-      />
       <BulkArchiveConfirmDialog
         open={bulkDialogOpen || !!bulkArchive.results}
         onClose={() => {
