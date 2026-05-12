@@ -28,6 +28,12 @@ async def sync_ghl(
     current_user: dict = Depends(get_current_user),
 ):
     """Trigger a manual sync from GoHighLevel pipelines with optional date filter"""
+    # Sprint Hardening club_id — résolu en haut pour couvrir aussi l'insert d'erreur
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/ghl/sync",
+    )
     try:
         data = await sync_pipeline_data(start_date=start_date, end_date=end_date)
     except Exception as e:
@@ -36,6 +42,7 @@ async def sync_ghl(
         await db.ghl_syncs.insert_one({
             "status": "error",
             "error": error_msg,
+            "club_id": club_id_resolved,
             "synced_at": datetime.now(timezone.utc).isoformat(),
         })
         raise HTTPException(status_code=502, detail=f"GHL API error: {error_msg}")
@@ -88,6 +95,7 @@ async def sync_ghl(
             "stages": p["stages"],
             "total_opportunities": p["total_opportunities"],
         } for p in data["pipelines"]],
+        "club_id": club_id_resolved,
         "synced_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.ghl_syncs.insert_one(sync_record)
@@ -134,13 +142,15 @@ async def sync_ghl(
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    existing = await db.monthly_kpis.find_one({"month": kpi_month})
+    existing = await db.monthly_kpis.find_one({"month": kpi_month, "club_id": club_id_resolved})
     if existing:
-        await db.monthly_kpis.update_one({"month": kpi_month}, {"$set": kpi_update})
+        await db.monthly_kpis.update_one({"month": kpi_month, "club_id": club_id_resolved}, {"$set": kpi_update})
     else:
         from models.kpi import MonthlyKPI
         kpi = MonthlyKPI(month=kpi_month, **kpi_update)
-        await db.monthly_kpis.insert_one(kpi.model_dump())
+        kpi_doc = kpi.model_dump()
+        kpi_doc["club_id"] = club_id_resolved
+        await db.monthly_kpis.insert_one(kpi_doc)
 
     sync_record["kpi_month"] = kpi_month
     return sync_record
@@ -322,6 +332,7 @@ async def confirm_sale(
             status="scheduled"
         )
         review_doc = annual_review.model_dump()
+        review_doc["club_id"] = club_id_resolved
         review_doc.update(audit_fields)
         await db.annual_reviews.insert_one(review_doc)
 
@@ -340,6 +351,7 @@ async def confirm_sale(
                     member_name=opportunity_name
                 )
                 participant_doc = participant.model_dump()
+                participant_doc["club_id"] = club_id_resolved
                 participant_doc.update(audit_fields)
                 await db.challenge_participants.insert_one(participant_doc)
                 challenge_added = True
@@ -353,6 +365,7 @@ async def confirm_sale(
         "member_id": member_id,
         "challenge_added": challenge_added,
         "month": month,
+        "club_id": club_id_resolved,
         "confirmed_at": datetime.now(timezone.utc).isoformat(),
         **audit_fields,
     }
@@ -423,16 +436,24 @@ async def update_calls_made(
     if not month:
         raise HTTPException(status_code=400, detail="month required")
 
-    existing = await db.monthly_kpis.find_one({"month": month})
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/ghl/calls-made",
+    )
+
+    existing = await db.monthly_kpis.find_one({"month": month, "club_id": club_id_resolved})
     if not existing:
         from models.kpi import MonthlyKPI
         kpi = MonthlyKPI(month=month, calls_made=calls_made)
-        await db.monthly_kpis.insert_one(kpi.model_dump())
+        kpi_doc = kpi.model_dump()
+        kpi_doc["club_id"] = club_id_resolved
+        await db.monthly_kpis.insert_one(kpi_doc)
     else:
         leads = existing.get("leads", 0)
         call_pct = round((calls_made / leads * 100) if leads > 0 else 0, 1)
         await db.monthly_kpis.update_one(
-            {"month": month},
+            {"month": month, "club_id": club_id_resolved},
             {"$set": {
                 "calls_made": calls_made,
                 "call_percentage": call_pct,
@@ -440,5 +461,5 @@ async def update_calls_made(
             }}
         )
 
-    doc = await db.monthly_kpis.find_one({"month": month}, {"_id": 0})
+    doc = await db.monthly_kpis.find_one({"month": month, "club_id": club_id_resolved}, {"_id": 0})
     return doc
