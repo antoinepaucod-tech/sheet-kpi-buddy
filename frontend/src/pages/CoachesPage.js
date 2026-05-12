@@ -820,7 +820,7 @@ export default function CoachesPage() {
           const summary = await bulkArchive.run({ action: "archive", reason, entitiesById });
           if (summary) {
             const { successes, errors } = summary;
-            if (errors.length === 0) toast.success(`${successes.length} coachs archivés ✅`);
+            if (errors.length === 0) toast.success(`${successes.length} ${successes.length > 1 ? "coachs archivés" : "coach archivé"} ✅`);
             else if (successes.length === 0) toast.error(`Échec — ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
             else toast.warning(`${successes.length} archivés ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
           }

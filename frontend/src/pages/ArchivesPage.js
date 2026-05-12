@@ -406,10 +406,11 @@ export default function ArchivesPage() {
           const summary = await activeBulk.run({ action: "restore", entitiesById });
           if (summary) {
             const { successes, errors } = summary;
-            const noun = tab === "members" ? "membres" : "coachs";
-            if (errors.length === 0) toast.success(`${successes.length} ${noun} restaurés ✅`);
+            const nounPlural = tab === "members" ? "membres" : "coachs";
+            const nounSingle = tab === "members" ? "membre" : "coach";
+            if (errors.length === 0) toast.success(`${successes.length} ${successes.length > 1 ? nounPlural + " restaurés" : nounSingle + " restauré"} ✅`);
             else if (successes.length === 0) toast.error(`Échec — ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
-            else toast.warning(`${successes.length} restaurés ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
+            else toast.warning(`${successes.length} ${successes.length > 1 ? "restaurés" : "restauré"} ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
           }
         }}
       />

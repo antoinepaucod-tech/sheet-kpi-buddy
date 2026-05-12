@@ -86,7 +86,8 @@ export function BulkArchiveConfirmDialog({
             <AlertDialogDescription className="text-[var(--color-text-secondary)]">
               {successCount > 0 && (
                 <span className="text-[var(--color-success)]">
-                  {successCount} {label[successCount > 1 ? "plural" : "single"]} {verbPast} ✅
+                  {successCount} {label[successCount > 1 ? "plural" : "single"]}{" "}
+                  {successCount > 1 ? `${verbPast} ✅` : `${isRestore ? "restauré" : "archivé"} ✅`}
                 </span>
               )}
               {successCount > 0 && errorCount > 0 && <span>, </span>}

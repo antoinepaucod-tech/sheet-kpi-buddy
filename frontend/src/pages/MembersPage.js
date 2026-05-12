@@ -1803,11 +1803,11 @@ export default function MembersPage() {
           if (summary) {
             const { successes, errors } = summary;
             if (errors.length === 0) {
-              toast.success(`${successes.length} membres archivés ✅`);
+              toast.success(`${successes.length} ${successes.length > 1 ? "membres archivés" : "membre archivé"} ✅`);
             } else if (successes.length === 0) {
               toast.error(`Échec — ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
             } else {
-              toast.warning(`${successes.length} archivés ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
+              toast.warning(`${successes.length} ${successes.length > 1 ? "archivés" : "archivé"} ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
             }
           }
         }}
