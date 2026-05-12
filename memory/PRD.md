@@ -257,6 +257,29 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - (P3) Refactoring MembersPage.js (>1500 lines) et Dashboard.js (>900 lines)
 - (P3) Responsive Mobile / PWA optimization
 
+### Audit Data Integrity (P2, ajouté 2026-05-12)
+- **Membres avec `billing_enabled=true` mais 0 `payment_schedules`** : suite au bug pré-existant `from models.members import PaymentSchedule` corrigé pendant Sprint Hardening Sous-bloc CRITIQUE. Aggregation MongoDB suggérée :
+  ```python
+  db.customer_members.aggregate([
+      {"$match": {"billing_enabled": True}},
+      {"$lookup": {"from": "payment_schedules", "localField": "id", "foreignField": "member_id", "as": "schedules"}},
+      {"$match": {"schedules": {"$size": 0}}},
+      {"$project": {"name": 1, "email": 1, "membership": 1, "contract_signed_date": 1}}
+  ])
+  ```
+  Action : régénérer les échéanciers manquants manuellement (case by case).
+
+- **Audit complet des `monthly_kpis` historiques pour détecter d'autres écrasements zéro silencieux passés** : suite à l'effet de bord détecté pendant Sprint Hardening Sous-bloc 🔴 (test `/sync` qui a écrasé 13 champs sur 2026-01 Versoix → restauré depuis backup). Filtre suggéré :
+  ```python
+  db.monthly_kpis.find({
+      "leads": 0,
+      "cash_collected": 0,
+      "close": 0,
+      "month": {"$lt": "<current_month - 2>"}
+  })
+  ```
+  Croiser avec backup 30-mars-2026 pour repérer les divergences potentielles. Note : depuis 2026-05-12, le garde-fou `GHL_SYNC_ZERO_OVERWRITE_PREVENTED` empêche toute nouvelle régression.
+
 ## 3rd Party Integrations
 - Supabase REST API (sync KPIs) — ACTIVE, anon key
 - Meta Facebook Marketing API — requires User API Key

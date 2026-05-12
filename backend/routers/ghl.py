@@ -143,6 +143,39 @@ async def sync_ghl(
     }
 
     existing = await db.monthly_kpis.find_one({"month": kpi_month, "club_id": club_id_resolved})
+
+    # Sprint Hardening — Protection anti zero-overwrite (2026-05-12).
+    # Si GHL renvoie 0 opportunités ET que le KPI existant contient déjà des
+    # données (leads/cash_collected/close > 0), on SKIP l'update pour préserver
+    # ces données. Sinon (nouveau mois, ou doc existant déjà à 0) le flow normal
+    # s'exécute (create/update).
+    if total_pipeline_opps == 0 and existing and (
+        (existing.get("leads") or 0) > 0
+        or (existing.get("cash_collected") or 0) > 0
+        or (existing.get("close") or 0) > 0
+    ):
+        logger.warning(
+            "GHL_SYNC_ZERO_OVERWRITE_PREVENTED endpoint=/api/ghl/sync month=%s club_id=%s user=%s existing_leads=%s existing_cash=%s",
+            kpi_month,
+            club_id_resolved,
+            (current_user or {}).get("email"),
+            existing.get("leads"),
+            existing.get("cash_collected"),
+            extra={
+                "event": "GHL_SYNC_ZERO_OVERWRITE_PREVENTED",
+                "endpoint": "/api/ghl/sync",
+                "month": kpi_month,
+                "club_id": club_id_resolved,
+                "user_email": (current_user or {}).get("email"),
+                "existing_leads": existing.get("leads"),
+                "existing_cash_collected": existing.get("cash_collected"),
+                "reason": "GHL returned 0 opps but existing KPI has data",
+            },
+        )
+        sync_record["kpi_month"] = kpi_month
+        sync_record["kpi_update_skipped"] = "zero_overwrite_prevented"
+        return sync_record
+
     if existing:
         await db.monthly_kpis.update_one({"month": kpi_month, "club_id": club_id_resolved}, {"$set": kpi_update})
     else:
