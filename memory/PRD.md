@@ -121,6 +121,10 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **CoursesPage** : Widget "Membres actifs par catégorie" (data-testid `category-stats-widget`) avec 6 mini-cards colorées par catégorie (HG/Coach/Partenaire/IFRC/OpenGym/Challenge), bordure latérale colorée.
 - [x] Testing frontend e2e iter80+iter81 : **9/9 scénarios PASS (100%)** après 2 hotfixes (filter `is_coach` retiré, eslintConfig `extends:['react-app']` retiré qui cassait le dev compile).
 
+## Completed Tasks (Session 2026-05-12 — Fix `generate-salary-expenses` club_id défense en profondeur) ✅
+- [x] **Bug pré-existant fixé** : `POST /api/courses/generate-salary-expenses/{year}/{month}` ne propageait pas `club_id` dans les transactions insérées. Pattern Sprint A appliqué : (1) validation 400 si club_id absent du header, (2) injection explicite `doc["club_id"] = club_id` APRÈS `model_dump()`. Validation : sans X-Club-Id → 400, avec → club_id propagé. 4 transactions test créées+nettoyées.
+- [x] **Audit exhaustif** des 43 autres inserts sur collections critiques effectué (voir Sprint Hardening dans Upcoming Tasks ci-dessous)
+
 ## Completed Tasks (Session 2026-05-12 — Cleanup collection `instructors` Option A) ✅
 - [x] **Phase 1 — Backup** : `/app/backups/instructors_backup_20260512_083511.json` (7 docs)
 - [x] **Phase 2 — Cleanup backend** :
@@ -203,8 +207,13 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
 ## Upcoming Tasks
-- (P1) **Sprint D — déploiement prod consolidé** Phase 1 + 2 + 3 (validation utilisateur en preview puis ship)
-- (P1) Investigation collection doublon `instructors`
+- (P1) **🆕 Sprint Hardening club_id** — 2-3h dédiées :
+  - Audit exhaustif des 43 inserts critiques (catégorisation 🟢 OK / 🟡 Vulnérable conditionnel / 🔴 Aucun club_id explicite)
+  - Échantillon 🔴 déjà identifié : `routers/payments.py:372,437`, `routers/coaches.py:209`, `routers/members.py:1175,1205,1231`, `routers/ghl.py:266,282,298,314,348,393`
+  - Cas spécial GHL : 5 inserts webhook dérivent club_id du payload (pas du header) → audit flux complet
+  - Stratégie par catégorie : 🟢 tester payload sans club_id → Pydantic refuse / 🟡 conditionnel → required / 🔴 pattern défense en profondeur
+  - Migration data post-fix : repérer docs existants avec `club_id: null` (comme l'audit 96 docs de semaine dernière)
+- (P1) Investigation collection doublon `instructors` ✅ RÉSOLU 2026-05-12 (Option A appliquée)
 - (P1) Cleanup data Partenaires : noms combinés "X & Y FirstLast & Lastname" sur les couples DUO
 - (P1) Cleanup membre actif sans membership : Teo Succi (id `52004b50…`)
 - (P1) Backend GET /api/payments : aligner sur `?month=YYYY-MM` côté serveur (cohérence avec Dashboard/Transactions, actuellement filtre full client-side)
