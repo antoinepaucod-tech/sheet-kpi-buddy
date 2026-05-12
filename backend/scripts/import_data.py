@@ -398,29 +398,6 @@ def import_course_kpis():
     return docs
 
 
-def import_instructors():
-    print("\n=== Importing Instructors ===")
-    db.instructors.delete_many({})
-    
-    with open(f"{ARTIFACTS}/keglskm1_instructeurs.csv", "r") as f:
-        reader = csv.DictReader(f)
-        docs = []
-        for r in reader:
-            doc = {
-                "id": r["id"],
-                "name": r["name"].strip(),
-                "hourly_rate": float(r.get("hourly_rate", 0) or 0),
-                "is_active": True,
-                "created_at": r.get("created_at", datetime.now(timezone.utc).isoformat()),
-            }
-            docs.append(doc)
-        
-        if docs:
-            db.instructors.insert_many(docs)
-        print(f"  Imported {len(docs)} instructors")
-    return docs
-
-
 def rebuild_membership_types(members):
     print("\n=== Rebuilding Membership Types ===")
     db.membership_types.delete_many({})
@@ -501,7 +478,7 @@ def verify_import():
     print("\n=== Verification ===")
     collections = [
         "accounting_categories", "customer_members", "accounting_transactions",
-        "monthly_kpis", "course_kpis", "instructors", "membership_types"
+        "monthly_kpis", "course_kpis", "membership_types"
     ]
     for c in collections:
         count = db[c].count_documents({})
@@ -531,7 +508,6 @@ if __name__ == "__main__":
     import_transactions()
     import_kpis()
     import_course_kpis()
-    import_instructors()
     membership_types = rebuild_membership_types(members)
     verify_import()
     

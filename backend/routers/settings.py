@@ -139,7 +139,7 @@ async def delete_member_type(type_id: str):
 TRANSACTIONAL_COLLECTIONS = [
     "customer_members", "member_renewals", "weekly_trainings",
     "six_weeks_challenges", "challenge_participants",
-    "course_kpis", "instructors", "coaches",
+    "course_kpis", "coaches",
     "payment_schedules", "payments", "member_followups",
     "annual_reviews", "monthly_kpis",
     "accounting_transactions", "recurring_transactions",

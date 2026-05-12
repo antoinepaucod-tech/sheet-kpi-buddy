@@ -10,7 +10,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 # Collections to export/import
 COLLECTIONS = [
-    "clubs", "users", "customer_members", "coaches", "instructors",
+    "clubs", "users", "customer_members", "coaches",
     "payments", "payment_schedules", "monthly_kpis", "accounting_categories",
     "accounting_transactions", "annual_reviews", "course_types", "course_kpis",
     "weekly_trainings", "club_settings", "membership_types", "member_types",

@@ -39,7 +39,6 @@ BUSINESS_COLLECTIONS = [
     "annual_reviews",
     "activity_logs",
     "coaches",
-    "instructors",
     "course_kpis",
     "course_types",
     "weekly_trainings",

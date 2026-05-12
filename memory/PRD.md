@@ -121,7 +121,24 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **CoursesPage** : Widget "Membres actifs par catégorie" (data-testid `category-stats-widget`) avec 6 mini-cards colorées par catégorie (HG/Coach/Partenaire/IFRC/OpenGym/Challenge), bordure latérale colorée.
 - [x] Testing frontend e2e iter80+iter81 : **9/9 scénarios PASS (100%)** après 2 hotfixes (filter `is_coach` retiré, eslintConfig `extends:['react-app']` retiré qui cassait le dev compile).
 
-## Completed Tasks (Session 2026-05-11 — Sprint B.4.4 Bulk Actions) ✅
+## Completed Tasks (Session 2026-05-12 — Cleanup collection `instructors` Option A) ✅
+- [x] **Phase 1 — Backup** : `/app/backups/instructors_backup_20260512_083511.json` (7 docs)
+- [x] **Phase 2 — Cleanup backend** :
+  - Endpoints `GET/POST/PUT/DELETE /api/instructors` retirés (`routers/courses.py`)
+  - Fallback `instructors_map` retiré dans `generate-salary-expenses` (utilise désormais uniquement `coaches.hourly_rate`)
+  - Import Pydantic `Instructor` retiré + docstring fichier mise à jour
+  - `routers/admin.py:13` (liste collections export/import) : `instructors` retiré
+  - `routers/settings.py:142` (liste reset/seed) : `instructors` retiré
+  - `scripts/import_data.py` : fonction `import_instructors()` supprimée + appel retiré + collection retirée de la liste reset
+  - `scripts/migrate_multi_club.py:42` : `instructors` retiré de la liste
+- [x] **Phase 3 — Cleanup frontend** : `useQuery(['instructors'])` retiré dans `CoursesPage.js` + 3 fallbacks UI (instructor fallback string, dropdown coach fallback, dropdown week instructor fallback)
+- [x] **Phase 4 — Tests preview AVANT drop** : 9 pages chargées sans erreur console, `GET /api/instructors` → 404, `generate-salary-expenses/2026/3` PASS (calcul via coaches.hourly_rate)
+- [x] **Phase 5 — Drop Mongo** : garde-fou cible OK (`transform.iocnr7b.mongodb.net/club_management`), `db.instructors.drop()` exécuté, collection absente post-drop, `coaches` inchangée (7 docs)
+- [x] **Phase 6 — Tests post-drop** : 9 pages OK, planning W19-W22 affiché correctement
+- [x] **Bug pré-existant détecté pendant cleanup** : `generate-salary-expenses` insère des transactions **sans `club_id`** (pas un régression du cleanup, pré-existant). 4 transactions test créées puis nettoyées immédiatement. À fixer plus tard.
+- [x] Lint backend + frontend : 0 erreur
+
+
 - [x] **Hook réutilisable** `useBulkArchiveAction(entityType)` (member|coach) : Set sélection, exécution séquentielle, progress, results, invalidation TanStack ciblée par entité, MAX_BULK_SIZE=50.
 - [x] **Composants partagés** : `BulkActionBar` (sticky bottom, count + Archiver/Restaurer + Désélectionner) et `BulkArchiveConfirmDialog` (3 phases : confirm avec raison / progress avec barre / results avec détail erreurs collapsible).
 - [x] **Intégration 3 pages** : `MembersPage` (archive), `CoachesPage` (archive), `ArchivesPage` (restore, 2 onglets avec hooks séparés membre/coach).

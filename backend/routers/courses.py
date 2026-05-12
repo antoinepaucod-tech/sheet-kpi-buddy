@@ -1,11 +1,11 @@
-"""Course, Instructor, and Salary Generation routes"""
+"""Course and Salary Generation routes"""
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, date, timedelta
 
 from core.config import db, exclude_archived, MONTHS_FR
 from core.security import get_club_id
-from models.courses import Instructor, CourseKPI, CourseKPICreate
+from models.courses import CourseKPI, CourseKPICreate
 from models.transactions import AccountingCategory, AccountingTransaction
 
 router = APIRouter(tags=["courses"])
@@ -466,47 +466,6 @@ async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
     }
 
 
-# ── Instructors ───────────────────────────────────────────────────────────────
-
-@router.get("/instructors")
-async def get_instructors(active_only: Optional[bool] = None, club_id: Optional[str] = Depends(get_club_id)):
-    query = _cq(club_id, {"is_active": True} if active_only else None)
-    return await db.instructors.find(query, {"_id": 0}).sort("name", 1).to_list(100)
-
-
-@router.post("/instructors")
-async def create_instructor(body: dict, club_id: Optional[str] = Depends(get_club_id)):
-    instructor = Instructor(
-        name=body.get("name", ""),
-        email=body.get("email"),
-        hourly_rate=body.get("hourly_rate", 0),
-        is_active=body.get("is_active", True)
-    )
-    doc = instructor.model_dump()
-    if club_id:
-        doc["club_id"] = club_id
-    await db.instructors.insert_one(doc)
-    doc.pop('_id', None)
-    return doc
-
-
-@router.put("/instructors/{instructor_id}")
-async def update_instructor(instructor_id: str, body: dict):
-    existing = await db.instructors.find_one({"id": instructor_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Instructeur introuvable")
-    await db.instructors.update_one({"id": instructor_id}, {"$set": body})
-    return await db.instructors.find_one({"id": instructor_id}, {"_id": 0})
-
-
-@router.delete("/instructors/{instructor_id}")
-async def delete_instructor(instructor_id: str):
-    result = await db.instructors.delete_one({"id": instructor_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Instructeur introuvable")
-    return {"message": "Instructeur supprimé"}
-
-
 # ── Salary Generation ─────────────────────────────────────────────────────────
 
 @router.post("/courses/generate-salary-expenses/{year}/{month}")
@@ -519,7 +478,6 @@ async def generate_salary_expenses(year: int, month: int, club_id: Optional[str]
     coaches_list = await db.coaches.find(exclude_archived(_cq(club_id)), {"_id": 0}).to_list(100)
     coaches_by_name = {c["name"]: c for c in coaches_list}
     coaches_by_id = {c["id"]: c for c in coaches_list}
-    instructors_map = {i["name"]: i for i in await db.instructors.find(_cq(club_id), {"_id": 0}).to_list(100)}
 
     salary_by_coach = {}
     for course in courses:
@@ -533,12 +491,10 @@ async def generate_salary_expenses(year: int, month: int, club_id: Optional[str]
         if not main_instr:
             continue
 
-        # Resolve hourly rate
+        # Resolve hourly rate (coaches uniquement, plus de fallback instructors)
         rate = 0
         if main_instr in coaches_by_name:
             rate = coaches_by_name[main_instr].get("hourly_rate", 0)
-        elif main_instr in instructors_map:
-            rate = instructors_map[main_instr].get("hourly_rate", 0)
 
         for w in range(1, 6):
             if course.get(f"week{w}_attendance", 0) == 0:
@@ -549,8 +505,6 @@ async def generate_salary_expenses(year: int, month: int, club_id: Optional[str]
             if override:
                 if override in coaches_by_name:
                     r = coaches_by_name[override].get("hourly_rate", 0)
-                elif override in instructors_map:
-                    r = instructors_map[override].get("hourly_rate", 0)
             if instr_name not in salary_by_coach:
                 salary_by_coach[instr_name] = {"hours": 0, "total": 0, "rate": r}
             salary_by_coach[instr_name]["hours"] += 1

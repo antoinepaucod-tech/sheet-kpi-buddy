@@ -170,12 +170,6 @@ export default function CoursesPage() {
     queryFn: () => axios.get(`${API}/coaches?active_only=true`).then((r) => r.data),
   });
 
-  // Fetch instructors (legacy)
-  const { data: instructors = [] } = useQuery({
-    queryKey: ["instructors"],
-    queryFn: () => axios.get(`${API}/instructors?active_only=true`).then((r) => r.data),
-  });
-
   // Fetch course types
   const { data: courseTypes = [] } = useQuery({
     queryKey: ["course-types"],
@@ -314,7 +308,7 @@ export default function CoursesPage() {
       time_slot: "07:00",
       course_name: "",
       coach_id: coaches[0]?.id || "",
-      instructor: coaches[0]?.name || instructors[0]?.name || "",
+      instructor: coaches[0]?.name || "",
       max_capacity: 12,
     });
     setModalOpen(true);
@@ -844,9 +838,6 @@ export default function CoursesPage() {
                         {c.name} ({c.hourly_rate} CHF/h)
                       </SelectItem>
                     ))}
-                    {coaches.length === 0 && instructors.map((i) => (
-                      <SelectItem key={i.id} value={i.id} className="text-white">{i.name}</SelectItem>
-                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -919,9 +910,6 @@ export default function CoursesPage() {
                     <SelectContent className="bg-[var(--color-bg-secondary)] border-[var(--color-border)]">
                       {coaches.map((c) => (
                         <SelectItem key={c.id} value={c.name} className="text-white">{c.name} ({c.hourly_rate} CHF/h)</SelectItem>
-                      ))}
-                      {instructors.filter(i => !coaches.find(c => c.name === i.name)).map((i) => (
-                        <SelectItem key={i.id} value={i.name} className="text-white">{i.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
