@@ -112,14 +112,17 @@ export default function PaymentsPage({ selectedMonth }) {
   });
 
   // Fetch data
-  // NOTE: queryKey is ["payments", "all"] (not ["payments"]) so it is a SIBLING
-  // of ["payments", "late"] and ["payments", "upcoming"] rather than their parent.
-  // A parent prefix queryKey causes setQueriesData prefix-match collisions that
-  // wrote payments-list-shaped data into the late/upcoming caches (see iter_82).
-  const { data: payments = [], isLoading: loadingPayments } = useQuery({
-    queryKey: ["payments", "all"],
-    queryFn: () => axios.get(`${API}/payments`).then((r) => r.data),
+  // F1 + Sprint P1 — La query "unified" est la source de vérité pour le mois courant.
+  // Elle remplace l'ancienne query ["payments","all"] (qui chargeait tous les 241 docs
+  // et filtrait client-side). Désormais le filtre est server-side via ?month=.
+  const { data: unifiedData = { payments: [], historical: [], breakdown: { historical: 0 } }, isLoading: loadingPayments } = useQuery({
+    queryKey: ["payments", "unified", selectedMonth],
+    queryFn: () =>
+      axios.get(`${API}/payments/unified?month=${selectedMonth}`).then((r) => r.data),
+    enabled: !!selectedMonth,
   });
+  const payments = unifiedData.payments || [];
+  const historicalPayments = unifiedData.historical || [];
 
   const { data: latePayments = [] } = useQuery({
     queryKey: ["payments", "late"],
@@ -141,34 +144,32 @@ export default function PaymentsPage({ selectedMonth }) {
     queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
   });
 
-  // F1 — Historique (accounting_transactions) du mois sélectionné, dédup cascade D côté backend
-  const { data: unifiedData = { historical: [], breakdown: { historical: 0 } } } = useQuery({
-    queryKey: ["payments", "unified", selectedMonth],
-    queryFn: () =>
-      axios.get(`${API}/payments/unified?month=${selectedMonth}`).then((r) => r.data),
-    enabled: !!selectedMonth,
-  });
-  const historicalPayments = unifiedData.historical || [];
-
   // Mutations
-  // Helper: synchronously patch the cached payments arrays with an updated payment
-  // (so the table re-renders <100ms instead of waiting for the network refetch).
-  // IMPORTANT: use exact:true to ONLY patch the bulk list cache. Without exact,
-  // setQueriesData would also patch ["payments","late"] / ["payments","upcoming"]
-  // with the wrong updater shape (see iter_82 RCA).
+  // Helper: synchronously patch the cached unified payload (so the table re-renders
+  // <100ms instead of waiting for the network refetch).
+  // IMPORTANT: use exact:true to ONLY patch the unified cache for the selected month.
   const patchPaymentInCache = (updated) => {
     if (!updated?.id) return;
-    queryClient.setQueriesData({ queryKey: ["payments", "all"], exact: true }, (list) =>
-      Array.isArray(list)
-        ? list.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
-        : list
+    queryClient.setQueriesData(
+      { queryKey: ["payments", "unified", selectedMonth], exact: true },
+      (data) => {
+        if (!data || !Array.isArray(data.payments)) return data;
+        return {
+          ...data,
+          payments: data.payments.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)),
+        };
+      }
     );
   };
 
   const removePaymentFromCache = (id) => {
     if (!id) return;
-    queryClient.setQueriesData({ queryKey: ["payments", "all"], exact: true }, (list) =>
-      Array.isArray(list) ? list.filter((p) => p.id !== id) : list
+    queryClient.setQueriesData(
+      { queryKey: ["payments", "unified", selectedMonth], exact: true },
+      (data) => {
+        if (!data || !Array.isArray(data.payments)) return data;
+        return { ...data, payments: data.payments.filter((p) => p.id !== id) };
+      }
     );
   };
 
@@ -275,12 +276,9 @@ export default function PaymentsPage({ selectedMonth }) {
     onError: () => toast.error("Erreur lors de la génération"),
   });
 
-  // Sprint D — filter payments by global selectedMonth (Layout topbar) so the
-  // table + KPI cards stay scoped to the month the user navigates to.
-  const monthScopedPayments = useMemo(() => {
-    if (!selectedMonth) return payments;
-    return payments.filter((p) => (p.due_date || "").startsWith(selectedMonth));
-  }, [payments, selectedMonth]);
+  // Sprint P1 — payments est déjà filtré server-side par mois (via /payments/unified?month=).
+  // monthScopedPayments = alias direct pour compatibilité avec le reste du code.
+  const monthScopedPayments = payments;
 
   // F1 — Merge actionable payments + read-only historical (source flag)
   const mergedMonthPayments = useMemo(() => {

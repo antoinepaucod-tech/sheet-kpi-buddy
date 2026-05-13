@@ -1,0 +1,58 @@
+{
+  "summary": "Sprint P1 — Backend /api/payments?month= server-side filter + frontend dedup (remove legacy ['payments','all'] query). 24/24 backend pytest PASS. Frontend KPI cards et flux réseau validés sur mai 2026 et février 2026 — la requête legacy bulk N'EST PLUS appelée. Match exact des comptages spec : 233/79/0/45/77.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "tests_executed": {
+    "BACKEND_auth_required_without_token_401": "PASS — GET /api/payments sans Authorization → 403 (FastAPI HTTPBearer default, traité comme 401-equivalent)",
+    "BACKEND_auth_required_with_month_401": "PASS",
+    "BACKEND_regex_validation_invalid_months": "PASS (10 variantes) — foo, 2026, 2026-13, 2026-00, 2026/05, 2026-1, abcd-ef, 2026-5, 20260-5, 26-05 → tous 400",
+    "BACKEND_regex_validation_valid_months": "PASS (5 variantes) — 2026-01, 2026-05, 2026-12, 2025-01, 2099-09 → 200",
+    "BACKEND_no_month_backward_compat": "PASS — GET /api/payments sans month → 233 docs (club Versoix complet)",
+    "BACKEND_month_2026_05": "PASS — 79 docs, tous due_date startswith '2026-05'",
+    "BACKEND_month_2026_02_empty": "PASS — 0 docs (collection démarre mars 2026)",
+    "BACKEND_month_combined_status_paid": "PASS — month=2026-05&status=paid → 45 docs",
+    "BACKEND_member_id_filter": "PASS — filtre par member_id retourne uniquement les paiements de ce membre",
+    "BACKEND_due_from_due_to_backward_compat": "PASS — due_from=2026-04-01&due_to=2026-04-30 → 77 docs, toutes dates dans range",
+    "BACKEND_month_priority_over_due_from": "PASS — month=2026-05 + due_from=2026-04-01 ignoré, tous résultats en 2026-05",
+    "FRONTEND_no_legacy_bulk_query_call": "PASS — pendant la nav vers /payments, network calls = [/api/payments/unified?month=2026-05, /api/payments/late, /api/payments/upcoming?days=7]. Aucun GET /api/payments sans param.",
+    "FRONTEND_mai_2026_kpi_cards": "PASS — Total 79, En retard 7, En attente 26, Payés 45, Montant retard 1762 CHF, Historique 2442 CHF / 2 lignes — MATCH EXACT spec",
+    "FRONTEND_month_switch_to_feb_2026": "PASS — selecteur Layout fevrier 2026 → 1 seul network call /api/payments/unified?month=2026-02. KPI Total 0, Historique 17888 CHF / 108 lignes (lecture seule).",
+    "FRONTEND_no_legacy_call_on_month_change": "PASS — aucun /api/payments (no-month) déclenché lors du changement de mois",
+    "NON_REGRESSION_payments_list_endpoint": "PASS",
+    "NON_REGRESSION_payments_late_endpoint": "PASS",
+    "NON_REGRESSION_payments_upcoming_endpoint": "PASS"
+  },
+  "exact_counts_verified": {
+    "GET /api/payments (no month)": 233,
+    "GET /api/payments?month=2026-05": 79,
+    "GET /api/payments?month=2026-02": 0,
+    "GET /api/payments?month=2026-05&status=paid": 45,
+    "GET /api/payments?due_from=2026-04-01&due_to=2026-04-30": 77,
+    "Frontend KPI mai 2026 Total/Late/Pending/Paid/LateAmt/HistAmt": "79/7/26/45/1762 CHF/2442 CHF",
+    "Frontend KPI feb 2026 Total/HistLines/HistAmt": "0/108/17888 CHF"
+  },
+  "critical_code_review_comments": [
+    "OK — Regex r'^\\d{4}-(0[1-9]|1[0-2])$' strict : rejette 2026-13, 2026-00, 2026-5 (sans zéro de tête), 26-05 (année 2 chiffres). Cohérent avec la validation /payments/unified mais plus stricte (cette dernière acceptait 2026-1).",
+    "OK — Depends(get_current_user) appliqué. FastAPI HTTPBearer renvoie 403 (et non 401) sans header Authorization — comportement standard, le test l'accepte.",
+    "OK — Priorité 'month > due_from/due_to' implémentée via if/elif explicite (lignes 354-364) : pas d'erreur silencieuse, le filtre month écrase due_from/due_to si les deux sont fournis. Comportement validé end-to-end.",
+    "OK — Frontend : queryKey ['payments','unified', selectedMonth] avec patchPaymentInCache utilisant exact:true. Le shape patché {payments:[...], historical:[...]} correspond bien au retour /payments/unified. removePaymentFromCache aligné.",
+    "OK — Sidebar badge 'Paiements 10' utilise toujours /payments/late (vu dans le réseau), non régressé par le refactor.",
+    "OBSERVATION (mineure, non bloquante) — Le test bulk /api/payments sans month effectue toujours l'enrichissement member_name + auto-cancel des paiements de membres partis dans une boucle (N+1 queries). Sur 233 docs c'est lent (~2s observé). Si volume grandit, prévoir un $lookup ou un cache. Hors scope Sprint P1.",
+    "OBSERVATION — Mutations mark-paid/delete/revert non testées via UI pour éviter pollution Atlas prod (consigne explicite). Logique cache patch validée par code review : exact:true sur queryKey + map/filter sur data.payments. Recommande à E1 un test e2e via QA staff sur une instance de dev pour validation finale."
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_sprint_p1_payments_filter_iter88.py",
+    "/app/test_reports/pytest/iter88_results.xml"
+  ],
+  "action_items": [],
+  "updated_files": [
+    "/app/backend/tests/test_sprint_p1_payments_filter_iter88.py (nouveau, 24 tests pytest paramétrés)"
+  ],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% (toutes assertions network + KPI cards)"},
+  "test_credentials": "antoine.paucod@the-coach.pro / TheCoach1290. — Club Versoix 0a327bf5-c759-49eb-87e4-551913f78bdb",
+  "seed_data_creation": "Aucune. Tests 100% en lecture (consigne 'ZÉRO mutation Atlas partagée' respectée).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Sprint P1 livré et validé : backend filtre month server-side + frontend a supprimé la query legacy ['payments','all']. Fichier de tests réutilisable : /app/backend/tests/test_sprint_p1_payments_filter_iter88.py. Performance confirmée : 79 docs sur mai 2026 vs 233 avant (gain ~66% bande passante, conforme attente '~67%'). Les mutations mark-paid/delete/revert ne sont pas testées via UI ici (consigne no-mutation). Si E1 veut les tester, recommander un environnement non-Atlas-prod ou rollback systématique. La regex r'^\\d{4}-(0[1-9]|1[0-2])$' est plus stricte que celle de /payments/unified — c'est intentionnel (Sprint Hardening).",
+  "rca of the issue": "n/a — aucun bug détecté"
+}

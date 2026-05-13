@@ -1,4 +1,5 @@
 """Payment routes"""
+import re
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime, timezone, timedelta
@@ -330,18 +331,32 @@ async def get_payments_unified(
 
 @router.get("/payments")
 async def get_payments(
+    month: Optional[str] = None,
     member_id: Optional[str] = None,
     status: Optional[str] = None,
     due_from: Optional[str] = None,
     due_to: Optional[str] = None,
-    club_id: Optional[str] = Depends(get_club_id)
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
 ):
+    # Sprint Hardening — validation format month strict (YYYY-MM)
+    if month is not None and not re.match(r"^\d{4}-(0[1-9]|1[0-2])$", month):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid month format. Expected YYYY-MM (e.g. 2026-05).",
+        )
+
     query = _cq(club_id)
     if member_id:
         query["member_id"] = member_id
     if status:
         query["status"] = status
-    if due_from or due_to:
+    if month:
+        # Convert YYYY-MM to range query on due_date (cohérent avec storage YYYY-MM-DD)
+        year_i, month_i = int(month[:4]), int(month[5:7])
+        last_day = monthrange(year_i, month_i)[1]
+        query["due_date"] = {"$gte": f"{month}-01", "$lte": f"{month}-{last_day:02d}"}
+    elif due_from or due_to:
         query["due_date"] = {}
         if due_from:
             query["due_date"]["$gte"] = due_from
