@@ -54,6 +54,20 @@ async def _lookup_member_context(db, member_id):
     return (m.get("club_id") or "MEMBER_HAS_NO_CLUB"), m
 
 
+async def _forensic_proof_versoix(db, member_id):
+    """Cherche un activity_log antérieur ayant un club_id non-null pour ce member_id.
+    Retourne le club_id s'il est trouvé, sinon None.
+    Permet de migrer un orphelin MEMBER_NOT_FOUND quand son origine est traçable.
+    """
+    if not member_id:
+        return None
+    log = await db.activity_logs.find_one(
+        {"member_id": member_id, "club_id": {"$ne": None, "$exists": True}},
+        {"_id": 0, "club_id": 1, "created_at": 1, "action": 1}
+    )
+    return (log or {}).get("club_id")
+
+
 async def _analyze_collection(db, collection):
     coll = db[collection]
     orphans = await coll.find(ORPHAN_FILTER, {"_id": 0}).to_list(length=None)
@@ -61,10 +75,18 @@ async def _analyze_collection(db, collection):
     verdict_counter = Counter()
     for doc in orphans:
         member_club, member = await _lookup_member_context(db, doc.get("member_id"))
+        forensic_club = None
         if member_club == DEFAULT_CLUB_ID:
             verdict = "OK_VERSOIX"
         elif member_club in ("MEMBER_NOT_FOUND", "NO_MEMBER_ID", "MEMBER_HAS_NO_CLUB"):
-            verdict = f"⚠️ {member_club}"
+            # Tente preuve forensique via activity_log antérieur
+            forensic_club = await _forensic_proof_versoix(db, doc.get("member_id"))
+            if forensic_club == DEFAULT_CLUB_ID:
+                verdict = "OK_FORENSIC_VERSOIX"
+            elif forensic_club:
+                verdict = f"⚠️ FORENSIC_CROSS_CLUB({forensic_club[:8]}...)"
+            else:
+                verdict = f"⚠️ {member_club}"
         else:
             verdict = f"⚠️ CROSS_CLUB({member_club[:8]}...)"
         verdict_counter[verdict] += 1
@@ -78,6 +100,7 @@ async def _analyze_collection(db, collection):
             "status": doc.get("status"),
             "created_at": doc.get("created_at"),
             "member_club": member_club,
+            "forensic_club": forensic_club,
             "verdict": verdict,
         })
     return rows, verdict_counter
@@ -87,7 +110,6 @@ async def _dry_run(db):
     grand_total = 0
     grand_ok = 0
     grand_anomalies = 0
-
     for collection in COLLECTIONS_TO_MIGRATE:
         print(f"\n=== {collection} ===")
         rows, vcount = await _analyze_collection(db, collection)
@@ -95,7 +117,6 @@ async def _dry_run(db):
             print("  (aucun orphelin)")
             continue
         for r in rows:
-            # Affichage contextuel sélectif
             label_parts = []
             if r["action"]:
                 label_parts.append(f"action={r['action']}")
@@ -107,11 +128,11 @@ async def _dry_run(db):
                 label_parts.append(f"status={r['status']}")
             label = " | ".join(label_parts) or "—"
             print(f"  - member='{r['member_name']}' ({(r['member_id'] or '—')[:8]}) | {label} | created={(r['created_at'] or '—')[:19]} | {r['verdict']}")
-
-        print(f"  Sous-total {collection}: {len(rows)} orphelins | breakdown verdicts: {dict(vcount)}")
+        print(f"  Sous-total {collection}: {len(rows)} orphelins | breakdown: {dict(vcount)}")
         grand_total += len(rows)
-        grand_ok += vcount.get("OK_VERSOIX", 0)
-        grand_anomalies += sum(v for k, v in vcount.items() if k != "OK_VERSOIX")
+        ok_count = vcount.get("OK_VERSOIX", 0) + vcount.get("OK_FORENSIC_VERSOIX", 0)
+        grand_ok += ok_count
+        grand_anomalies += len(rows) - ok_count
 
     print("\n" + "=" * 90)
     print("RÉSUMÉ DRY-RUN")
@@ -120,7 +141,7 @@ async def _dry_run(db):
     print(f"  ↳ OK_VERSOIX (à migrer)    : {grand_ok}")
     print(f"  ↳ Anomalies (à examiner)   : {grand_anomalies}")
     if grand_anomalies == 0:
-        print("\n✅ Tous les orphelins pointent vers un membre Versoix. Migration safe.")
+        print("\n✅ Tous les orphelins pointent vers un membre Versoix (direct ou via preuve forensique). Migration safe.")
         print(f"   → Lancer  python {sys.argv[0].split('/')[-1]} --apply  pour migrer.")
     else:
         print("\n⚠️ Anomalies présentes. Examiner case-par-case AVANT --apply.")
@@ -134,10 +155,12 @@ async def _apply(db):
     totals = {}
     for collection in COLLECTIONS_TO_MIGRATE:
         rows, vcount = await _analyze_collection(db, collection)
+        ok_count = vcount.get("OK_VERSOIX", 0) + vcount.get("OK_FORENSIC_VERSOIX", 0)
         totals[collection] = {
             "count": len(rows),
-            "ok": vcount.get("OK_VERSOIX", 0),
-            "anomalies": sum(v for k, v in vcount.items() if k != "OK_VERSOIX"),
+            "ok": ok_count,
+            "anomalies": len(rows) - ok_count,
+            "rows": rows,
         }
     grand_count = sum(t["count"] for t in totals.values())
     grand_ok = sum(t["ok"] for t in totals.values())
@@ -167,17 +190,24 @@ async def _apply(db):
     print()
     for collection in COLLECTIONS_TO_MIGRATE:
         coll = db[collection]
-        rows, _ = await _analyze_collection(db, collection)
-        ok_ids = [r["doc_id"] for r in rows if r["verdict"] == "OK_VERSOIX" and r["doc_id"]]
+        rows = totals[collection]["rows"]
+        ok_ids = [
+            r["doc_id"] for r in rows
+            if r["verdict"] in ("OK_VERSOIX", "OK_FORENSIC_VERSOIX") and r["doc_id"]
+        ]
+        forensic_ids = [
+            r["doc_id"] for r in rows
+            if r["verdict"] == "OK_FORENSIC_VERSOIX" and r["doc_id"]
+        ]
         if not ok_ids:
             print(f"  {collection}: 0 doc à migrer (skip)")
             continue
-        # Filtre safe : id IN ok_ids AND club_id orphelin (re-vérification)
         result = await coll.update_many(
             {"id": {"$in": ok_ids}, **ORPHAN_FILTER},
             {"$set": {"club_id": DEFAULT_CLUB_ID, "club_id_migrated_at": now_iso}},
         )
-        print(f"  {collection}: matched={result.matched_count}, modified={result.modified_count}")
+        forensic_note = f" (dont {len(forensic_ids)} via preuve forensique)" if forensic_ids else ""
+        print(f"  {collection}: matched={result.matched_count}, modified={result.modified_count}{forensic_note}")
         grand_modified += result.modified_count
 
     # Vérification post-apply
@@ -214,7 +244,6 @@ async def main():
         await _apply(db)
 
     client.close()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

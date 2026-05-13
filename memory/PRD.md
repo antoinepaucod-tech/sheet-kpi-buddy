@@ -206,6 +206,13 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-13 — Sprint Hardening F.1+F.2+F.3+F.4 CLÔTURÉ) ✅
+- [x] **F.1 Audit baseline post-Bloc 2** : delta = 0 vs baseline (29 orphelins confirmés, 0 nouveau créé depuis patches). Plages temporelles 100% pré-Bloc 2.
+- [x] **F.2 Dry-run migration** : `/app/backend/scripts/migrate_orphan_club_id.py` créé. 27 OK_VERSOIX + 2 OK_FORENSIC_VERSOIX (preuve via activity_log antérieur) = 29 docs safe à migrer, 0 anomalie cross-club.
+- [x] **F.3 --apply migration** : 29/29 docs migrés vers Versoix avec champ d'audit `club_id_migrated_at`. Vérification post-apply : 0 orphelin sur 15 collections critiques (5 706 docs au total). Confirmation interactive `yes` requise.
+- [x] **F.4 Rapport final consolidé** : `/app/memory/SPRINT_HARDENING_REPORT.md` (9 sections : inserts patchés, auth, helpers, tests, bugs collatéraux, migration, backlog, état base, architecture défense en profondeur).
+- [x] **Bilan Sprint Hardening** : 26 inserts protégés, 13 endpoints avec auth Bearer, 29 orphelins migrés, 0 anomalie résiduelle, pattern défensif uniforme appliqué sur tous les routeurs critiques.
+
 ## Completed Tasks (Session 2026-05-13 — Anomalies prod F1 + G1 + G4) ✅
 - [x] **G4 — Flag `is_expired` + Badge EXPIRÉ** :
   - Backend `GET /api/members` & `GET /api/members/{id}` ajoutent `is_expired: bool` calculé read-only (subscription_end_date < today AND not archived_at). Aucune migration data.
@@ -226,10 +233,8 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Testing iter_87** : 14/14 backend pytest PASS + tous flows frontend PASS. Aucune mutation prod Atlas. Test file réutilisable : `/app/backend/tests/test_g1_g4_f1_iter87.py`.
 
 ## Upcoming Tasks
-- (P0) **Sprint Hardening club_id — Étape F (Audit baseline post-Bloc 2 + migration data)** :
-  - Re-runner audit orphans (~29 docs historiques)
-  - Dry-run migration des orphelins vers Versoix
-  - Reporting final consolidé du Sprint Hardening
+- (P2) **Audit `billing_enabled=true` sans `payment_schedules`** : repérer les membres avec billing actif mais sans échéancier
+- (P2) **Audit historique `monthly_kpis`** : croiser avec backups pour détecter écrasements zéro silencieux passés
 - (P1) **🆕 Sprint Hardening club_id** — 2-3h dédiées :
   - Audit exhaustif des 43 inserts critiques (catégorisation 🟢 OK / 🟡 Vulnérable conditionnel / 🔴 Aucun club_id explicite)
   - Échantillon 🔴 déjà identifié : `routers/payments.py:372,437`, `routers/coaches.py:209`, `routers/members.py:1175,1205,1231`, `routers/ghl.py:266,282,298,314,348,393`
