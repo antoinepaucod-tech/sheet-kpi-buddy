@@ -206,6 +206,12 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-13 — Sprint P1 backend filter /api/payments?month=) ✅
+- [x] **Backend** `GET /api/payments` étendu : param `month` (regex strict `^\d{4}-(0[1-9]|1[0-2])$`, 400 si invalide), `Depends(get_current_user)` ajouté (Sprint Hardening sweep). Conversion `month → {$gte, $lte}` sur `due_date`. Priorité `month > due_from/due_to`. Backward compat strict.
+- [x] **Frontend** PaymentsPage : query `["payments","all"]` SUPPRIMÉE (chargeait 241 docs + filtre JS). Remplacée par `unifiedData.payments` (déjà filtré server-side via `/payments/unified?month=`). Helpers `patchPaymentInCache` / `removePaymentFromCache` mis à jour pour patcher le nouveau shape `{payments:[...], historical:[...]}` sur queryKey `["payments","unified", selectedMonth]` avec `exact:true`.
+- [x] **Performance** : 79 docs (mai) au lieu de 233 → gain ~66% bande passante, scaling linéaire.
+- [x] **Testing iter_88** : 24/24 backend pytest PASS + flows frontend PASS (réseau vérifié — aucun call legacy `/api/payments` sans param). Aucune mutation prod Atlas. Test file : `/app/backend/tests/test_sprint_p1_payments_filter_iter88.py`.
+
 ## Completed Tasks (Session 2026-05-13 — Sprint Hardening F.1+F.2+F.3+F.4 CLÔTURÉ) ✅
 - [x] **F.1 Audit baseline post-Bloc 2** : delta = 0 vs baseline (29 orphelins confirmés, 0 nouveau créé depuis patches). Plages temporelles 100% pré-Bloc 2.
 - [x] **F.2 Dry-run migration** : `/app/backend/scripts/migrate_orphan_club_id.py` créé. 27 OK_VERSOIX + 2 OK_FORENSIC_VERSOIX (preuve via activity_log antérieur) = 29 docs safe à migrer, 0 anomalie cross-club.
