@@ -206,7 +206,30 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-13 — Anomalies prod F1 + G1 + G4) ✅
+- [x] **G4 — Flag `is_expired` + Badge EXPIRÉ** :
+  - Backend `GET /api/members` & `GET /api/members/{id}` ajoutent `is_expired: bool` calculé read-only (subscription_end_date < today AND not archived_at). Aucune migration data.
+  - Frontend MembersPage badge rouge `EXPIRÉ` (data-testid `member-expired-badge-{id}`) sur les lignes concernées (10 membres expirés actifs sur Versoix, dont Alex Giraud).
+- [x] **G1 — Toggle "Inclure abonnements coach" + Badge PASS COACH** :
+  - Frontend MembersPage toggle `members-include-coach-toggle` (OFF par défaut, persisté localStorage `members_include_coach_toggle`).
+  - Quand ON : la vue `view=active` inclut `coaches` (tous, actifs + expirés). Sprint C préservé quand OFF.
+  - Badge orange `PASS COACH` (data-testid `member-coach-badge-{id}`) remplace l'ancien badge bleu COACH.
+  - Use case validé : Alex Giraud (THE COACH PASS MENSUEL, end=2026-04-30) → visible avec les 2 badges (PASS COACH + EXPIRÉ).
+- [x] **F1 — Endpoint `/api/payments/unified` + UI Historique** :
+  - Backend `GET /api/payments/unified?month=YYYY-MM` (auth + club_id_guard) retourne `{payments, historical, total, breakdown}`.
+  - Dédup cascade D : (A) `payment_id` direct (lien fort, 221 matches sur 2026-Q1) → (B) fallback `member_name.lower() + date exact + amount` (55 matches additionnels, 0 ambiguïté). Priorité `payments` en conflit.
+  - Filtre Type B (membres archivés exclus) + résolution club_id via `resolve_club_id_or_fallback`.
+  - Validation : 400 sur format invalide, 405 sur POST (lecture seule pure).
+  - Frontend PaymentsPage fusionne payments + historical, badge gris `📜 HISTORIQUE` (data-testid `payment-historical-badge-{id}`) + ligne `opacity-60 cursor-not-allowed`, actions remplacées par "Lecture seule".
+  - 6e stat card `historical-stat-card` informative (montant + nombre de lignes).
+- [x] **Audits read-only** archivés : `/app/backend/scripts/audit_f1_payments.py`, `audit_f1_passe2.py`, `audit_g1_g4_coach.py`. Chiffres clés : 2026-05 = 79 payments + 2 historical (dédup cascade D filtre 48 acct_tx) ; 2026-02 = pur historique (108) ; 2026-04 = 77 + 13.
+- [x] **Testing iter_87** : 14/14 backend pytest PASS + tous flows frontend PASS. Aucune mutation prod Atlas. Test file réutilisable : `/app/backend/tests/test_g1_g4_f1_iter87.py`.
+
 ## Upcoming Tasks
+- (P0) **Sprint Hardening club_id — Étape F (Audit baseline post-Bloc 2 + migration data)** :
+  - Re-runner audit orphans (~29 docs historiques)
+  - Dry-run migration des orphelins vers Versoix
+  - Reporting final consolidé du Sprint Hardening
 - (P1) **🆕 Sprint Hardening club_id** — 2-3h dédiées :
   - Audit exhaustif des 43 inserts critiques (catégorisation 🟢 OK / 🟡 Vulnérable conditionnel / 🔴 Aucun club_id explicite)
   - Échantillon 🔴 déjà identifié : `routers/payments.py:372,437`, `routers/coaches.py:209`, `routers/members.py:1175,1205,1231`, `routers/ghl.py:266,282,298,314,348,393`
