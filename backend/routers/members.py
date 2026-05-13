@@ -79,7 +79,16 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
     # Add computed is_coach field
     for d in docs:
         d["is_coach"] = _is_coach(d.get("membership", ""))
-    
+
+    # G4 — compute is_expired flag (read-only, no DB write)
+    # Logic: subscription_end_date < today AND not archived
+    # subscription_end_date null/empty → is_expired = false
+    for d in docs:
+        end_date = d.get("subscription_end_date")
+        d["is_expired"] = bool(
+            end_date and end_date < today_iso_d and not d.get("archived_at")
+        )
+
     # Separate current vs departed (departed = exit_date in the past only)
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     current_docs = [d for d in docs if not d.get("exit_date") or d["exit_date"] in [None, "", "None"] or d["exit_date"] >= today_str]
@@ -513,6 +522,12 @@ async def get_member(member_id: str):
     today_d = datetime.now(timezone.utc).date()
     today_iso_d = today_d.isoformat()
     doc["on_pause"] = _is_on_pause(doc, today_iso_d)
+
+    # G4 — is_expired flag (read-only)
+    end_date = doc.get("subscription_end_date")
+    doc["is_expired"] = bool(
+        end_date and end_date < today_iso_d and not doc.get("archived_at")
+    )
 
     # Sprint D Bonus — engagement_recent widget data (4 dernières semaines).
     # Volontairement nul si membre archivé.

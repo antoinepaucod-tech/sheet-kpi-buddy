@@ -1,0 +1,56 @@
+{
+  "summary": "Iteration 87 — Sprint G1 (toggle 'Inclure abonnements coach' + localStorage), G4 (badge EXPIRÉ + flag is_expired), F1 (/api/payments/unified + UI HISTORIQUE). 14/14 backend tests PASS, all frontend flows PASS. Cible Versoix Atlas — aucune mutation prod.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "tests_executed": {
+    "BACKEND_G4_members_list_is_expired_field": "PASS — toutes les fiches retournent is_expired:bool",
+    "BACKEND_G4_alex_giraud": "PASS — is_expired calculé selon règle (sub_end<today AND not archived), is_coach=true",
+    "BACKEND_G4_archived_never_expired": "PASS — 0 membre archivé avec is_expired=true",
+    "BACKEND_G4_member_detail_is_expired": "PASS — GET /api/members/{id} retourne is_expired",
+    "BACKEND_F1_unified_2026_05": "PASS — payments=79, historical=2 (match exact spec)",
+    "BACKEND_F1_unified_2026_02_pure_historical": "PASS — payments=0, historical=108 (match exact spec)",
+    "BACKEND_F1_unified_2026_04_dedup_active": "PASS — payments=77, historical=13 (match exact spec)",
+    "BACKEND_F1_unified_invalid_month_400": "PASS — 'invalid','2026','2026-13','2026/05','2026-1','abcd-ef' tous → 400",
+    "BACKEND_F1_unified_post_405": "PASS — POST /api/payments/unified → 405 Method Not Allowed",
+    "BACKEND_F1_unified_no_dedup_overlap": "PASS — aucune (name+date+amount) partagée entre payments et historical sur 2026-05",
+    "BACKEND_NR_payments_list": "PASS",
+    "BACKEND_NR_payments_late": "PASS",
+    "BACKEND_NR_payments_upcoming": "PASS",
+    "BACKEND_NR_members_stats": "PASS",
+    "FRONTEND_G1_toggle_present_default_OFF": "PASS — data-testid='members-include-coach-toggle' data-state='unchecked' au 1er mount",
+    "FRONTEND_G1_localStorage_persistence": "PASS — clé 'members_include_coach_toggle' = 'off' initial, 'on' après click, persistée après reload (toggle reste data-state='checked')",
+    "FRONTEND_G1_G4_alex_giraud_badges": "PASS — recherche 'Alex Giraud' avec toggle ON → 1 badge member-coach-badge-* (texte 'PASS COACH') + 1 badge member-expired-badge-* (texte 'EXPIRÉ')",
+    "FRONTEND_F1_historical_stat_card": "PASS — data-testid='historical-stat-card' affiché sur PaymentsPage mois 2026-05 : '📜 Historique 2 442 CHF — 2 lignes (lecture seule)'",
+    "FRONTEND_F1_historical_rows_styling": "PASS — 2 badges payment-historical-badge-* (texte '📜 HISTORIQUE'), classes row contiennent opacity-60 cursor-not-allowed, texte 'Lecture seule' présent",
+    "FRONTEND_F1_payment_rows_actions_preserved": "PASS — 34 boutons mark-paid-* présents sur les lignes payments (non-régression Sprint A/B/C/D)",
+    "CLEANUP": "PASS — toggle remis sur OFF en fin de test pour éviter pollution état UI (localStorage='off')"
+  },
+  "critical_code_review_comments": [
+    "OK — /api/payments/unified correctement déclaré AVANT /api/payments (ordre des routes FastAPI critique, sinon collision avec /payments/{id}). Validé par le 200 sur /payments/unified et 405 sur POST.",
+    "OK — Dédup cascade A (payment_id direct) puis B (member_name.lower() + date exact + amount float) bien implémentée. Le test no_overlap confirme strict 0 doublon sémantique sur 2026-05.",
+    "OK — Filtre Type B (archived_members) appliqué côté payments du mois — cohérent avec /payments.",
+    "OK — Flag is_expired computed read-only (pas d'écriture DB), respectant la contrainte 'no mutation prod Atlas'.",
+    "OBSERVATION (non bloquant) — La validation YYYY-MM accepte format strict longueur=7 et tiret en position 4. Bien.",
+    "OBSERVATION (non bloquant) — historical-stat-card sur PaymentsPage utilise des couleurs cohérentes (gris ambre) ; les lignes historical sont en opacity-60 + curseur not-allowed comme spécifié. Le 'Made with Emergent' badge ne masque pas les actions sur 1920x1080.",
+    "OBSERVATION (non bloquant) — Default toggle G1 = OFF respecte 'Sprint C préservé' (le toggle ne casse pas l'UX existante)."
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_g1_g4_f1_iter87.py",
+    "/app/test_reports/pytest/iter87_results.xml"
+  ],
+  "action_items": [],
+  "updated_files": [
+    "/app/backend/tests/test_g1_g4_f1_iter87.py (nouveau, 14 tests pytest)"
+  ],
+  "success_rate": {"backend": "100% (14/14)", "frontend": "100% (toutes les assertions G1+G4+F1 passent)"},
+  "test_credentials": "Super Admin antoine.paucod@the-coach.pro / TheCoach1290. — Club Versoix 0a327bf5-c759-49eb-87e4-551913f78bdb",
+  "seed_data_creation": "Aucune. Tous les tests en lecture, sauf toggle localStorage qui est remis à OFF en fin de run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Sprint G1+G4+F1 livré et 100% validé. Backend test file réutilisable : /app/backend/tests/test_g1_g4_f1_iter87.py. Valeurs confirmées via API : 2026-05=79+2, 2026-02=0+108, 2026-04=77+13 — match exact des attentes problème. Pour ré-exécuter : pytest /app/backend/tests/test_g1_g4_f1_iter87.py -v. Le test test_alex_giraud_is_expired_true vérifie la cohérence règle is_expired plutôt qu'une valeur dure, donc résilient au passage du temps.",
+  "rca of the issue": "n/a — aucun bug détecté"
+}

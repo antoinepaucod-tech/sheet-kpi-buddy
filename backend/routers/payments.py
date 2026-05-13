@@ -214,6 +214,120 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
 
 
 # Payment Routes
+@router.get("/payments/unified")
+async def get_payments_unified(
+    month: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    """F1 — Vue unifiée paiements + historique accounting_transactions (lecture seule).
+
+    Stratégie de dédup cascade D:
+      A) payment_id direct (lien fort posé par le code applicatif)
+      B) fallback (member_name + date EXACT + amount) — strict, 0 ambiguïté
+
+    Priorité en cas de conflit: `payments` (cycle court, source de vérité statut).
+    Les accounting_transactions matchés sont écartés du retour 'historical'.
+
+    Réponse: {payments:[...], historical:[...], total:int, breakdown:{payments:int, historical:int}}
+    """
+    # Validation format mois YYYY-MM
+    if not month or len(month) != 7 or month[4] != "-":
+        raise HTTPException(status_code=400, detail="Format 'month' invalide. Attendu: YYYY-MM")
+    try:
+        year_i, month_i = int(month[:4]), int(month[5:7])
+        if not (1 <= month_i <= 12):
+            raise ValueError("month out of range")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Format 'month' invalide. Attendu: YYYY-MM")
+
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="payments.unified",
+    )
+
+    # === 1) PAYMENTS du mois ===
+    p_query = _cq(resolved_club_id)
+    last_day = monthrange(year_i, month_i)[1]
+    p_query["due_date"] = {"$gte": f"{month}-01", "$lte": f"{month}-{last_day:02d}"}
+    p_docs = await db.payments.find(p_query, {"_id": 0}).sort("due_date", -1).to_list(2000)
+
+    # Filtre Type B silencieux : retirer payments de membres archivés
+    archived_ids = await get_archived_member_ids(resolved_club_id)
+    p_docs = [d for d in p_docs if d.get("member_id") not in archived_ids]
+
+    # Enrichir member_name (cohérent avec /payments)
+    member_ids = list({d.get("member_id") for d in p_docs if d.get("member_id")})
+    members_map = {}
+    if member_ids:
+        async for m in db.customer_members.find(
+            {"id": {"$in": member_ids}},
+            {"_id": 0, "id": 1, "name": 1}
+        ):
+            members_map[m["id"]] = m.get("name", "Inconnu")
+    for d in p_docs:
+        if not d.get("member_name"):
+            d["member_name"] = members_map.get(d.get("member_id"), "Inconnu")
+        d["source"] = "payments"
+
+    # === 2) ACCOUNTING_TRANSACTIONS revenue du mois ===
+    at_query = {"type": "revenue"}
+    if resolved_club_id:
+        at_query["club_id"] = resolved_club_id
+    at_query["date"] = {"$gte": f"{month}-01", "$lte": f"{month}-{last_day:02d}"}
+    at_docs = await db.accounting_transactions.find(at_query, {"_id": 0}).sort("date", -1).to_list(5000)
+
+    # === 3) DÉDUP CASCADE D ===
+    # Index pour stratégie A (payment_id)
+    p_id_set = {p["id"] for p in p_docs}
+    # Index pour stratégie B (member_name lower + date exact + amount)
+    p_keys_b = {}
+    for p in p_docs:
+        key = (
+            (p.get("member_name") or "").strip().lower(),
+            p.get("due_date"),
+            float(p.get("amount") or 0),
+        )
+        p_keys_b.setdefault(key, []).append(p)
+
+    historical = []
+    for tx in at_docs:
+        # Stratégie A : lien explicite
+        if tx.get("payment_id") and tx.get("payment_id") in p_id_set:
+            continue  # dédupé, payments gagne
+        # Stratégie B : fallback sémantique strict
+        cn = (tx.get("client_name") or "").strip().lower()
+        if cn:
+            key = (cn, tx.get("date"), float(tx.get("amount") or 0))
+            if key in p_keys_b:
+                continue  # dédupé
+        # Non-matché → historique
+        historical.append({
+            "id": tx.get("id"),
+            "member_name": tx.get("client_name") or tx.get("member_name"),
+            "due_date": tx.get("date"),
+            "paid_date": tx.get("date"),
+            "amount": tx.get("amount"),
+            "status": "paid",  # accounting_tx revenue = encaissé par définition
+            "payment_method": tx.get("payment_method"),
+            "category": tx.get("category"),
+            "club_id": tx.get("club_id"),
+            "source": "historical",
+            "notes": tx.get("notes") or tx.get("description"),
+        })
+
+    return {
+        "payments": p_docs,
+        "historical": historical,
+        "total": len(p_docs) + len(historical),
+        "breakdown": {
+            "payments": len(p_docs),
+            "historical": len(historical),
+        },
+    }
+
+
 @router.get("/payments")
 async def get_payments(
     member_id: Optional[str] = None,

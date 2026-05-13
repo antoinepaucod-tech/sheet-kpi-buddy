@@ -141,6 +141,15 @@ export default function PaymentsPage({ selectedMonth }) {
     queryFn: () => axios.get(`${API}/members`).then((r) => r.data),
   });
 
+  // F1 — Historique (accounting_transactions) du mois sélectionné, dédup cascade D côté backend
+  const { data: unifiedData = { historical: [], breakdown: { historical: 0 } } } = useQuery({
+    queryKey: ["payments", "unified", selectedMonth],
+    queryFn: () =>
+      axios.get(`${API}/payments/unified?month=${selectedMonth}`).then((r) => r.data),
+    enabled: !!selectedMonth,
+  });
+  const historicalPayments = unifiedData.historical || [];
+
   // Mutations
   // Helper: synchronously patch the cached payments arrays with an updated payment
   // (so the table re-renders <100ms instead of waiting for the network refetch).
@@ -273,9 +282,16 @@ export default function PaymentsPage({ selectedMonth }) {
     return payments.filter((p) => (p.due_date || "").startsWith(selectedMonth));
   }, [payments, selectedMonth]);
 
+  // F1 — Merge actionable payments + read-only historical (source flag)
+  const mergedMonthPayments = useMemo(() => {
+    const actionable = monthScopedPayments.map((p) => ({ ...p, source: p.source || "payments" }));
+    const hist = historicalPayments.map((h) => ({ ...h, source: "historical" }));
+    return [...actionable, ...hist];
+  }, [monthScopedPayments, historicalPayments]);
+
   // Filter payments
   const filteredPayments = useMemo(() => {
-    let result = monthScopedPayments;
+    let result = mergedMonthPayments;
     
     if (filterStatus !== "all") {
       result = result.filter((p) => p.status === filterStatus);
@@ -290,17 +306,19 @@ export default function PaymentsPage({ selectedMonth }) {
     }
     
     return result;
-  }, [monthScopedPayments, filterStatus, search]);
+  }, [mergedMonthPayments, filterStatus, search]);
 
-  // Enrich payments with member names
+  // Enrich payments with member names (skip enrichment for historical — already named)
   const enrichedPayments = useMemo(() => {
     return filteredPayments.map((p) => {
+      if (p.source === "historical") return p;
       const member = members.find((m) => m.id === p.member_id);
-      return { ...p, member_name: member?.name || "Inconnu" };
+      return { ...p, member_name: member?.name || p.member_name || "Inconnu" };
     });
   }, [filteredPayments, members]);
 
   // Stats — scoped to the selected month so KPI cards reflect the visible list
+  // Historical = read-only, excluded from actionable counts but tracked separately
   const stats = useMemo(() => {
     const scopedLate = monthScopedPayments.filter((p) => p.status === "late");
     return {
@@ -310,13 +328,16 @@ export default function PaymentsPage({ selectedMonth }) {
       paid: monthScopedPayments.filter((p) => p.status === "paid").length,
       totalAmount: monthScopedPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
       lateAmount: scopedLate.reduce((sum, p) => sum + (p.amount || 0), 0),
+      // F1 — Historical (accounting_tx, read-only)
+      historicalCount: historicalPayments.length,
+      historicalAmount: historicalPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
       // Upcoming and schedules remain global (not month-scoped) — they are
       // forward-looking by nature (next 7 days / active recurring plans).
       upcomingAmount: upcomingPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
       schedulesAmount: schedules.filter(s => s.is_active).reduce((sum, s) => sum + (s.amount || 0), 0),
       activeSchedules: schedules.filter(s => s.is_active).length,
     };
-  }, [monthScopedPayments, upcomingPayments, schedules]);
+  }, [monthScopedPayments, historicalPayments, upcomingPayments, schedules]);
 
   const openMarkPaid = (payment) => {
     setSelectedPayment(payment);
@@ -358,7 +379,7 @@ export default function PaymentsPage({ selectedMonth }) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 tf-stagger">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 tf-stagger">
         <div className="tf-stat">
           <p className="tf-stat-label">Total paiements</p>
           <p className="tf-number-large" style={{ marginTop: 'var(--space-2)' }}>{stats.total}</p>
@@ -382,6 +403,15 @@ export default function PaymentsPage({ selectedMonth }) {
             <DollarSign size={12} /> Montant en retard
           </p>
           <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: 'var(--color-danger)' }}>{stats.lateAmount.toLocaleString("fr-CH")} CHF</p>
+        </div>
+        <div className="tf-stat" data-testid="historical-stat-card" style={{ borderColor: 'rgba(142,142,147,0.3)' }}>
+          <p className="tf-stat-label flex items-center gap-1" style={{ color: '#8E8E93' }}>
+            📜 Historique
+          </p>
+          <p className="tf-number-large" style={{ marginTop: 'var(--space-2)', color: '#8E8E93' }} data-testid="historical-amount">
+            {stats.historicalAmount.toLocaleString("fr-CH")} CHF
+          </p>
+          <p className="text-[10px] text-[var(--color-text-tertiary)] mt-1">{stats.historicalCount} ligne{stats.historicalCount > 1 ? "s" : ""} (lecture seule)</p>
         </div>
       </div>
 
@@ -457,12 +487,31 @@ export default function PaymentsPage({ selectedMonth }) {
                   </TableRow>
                 ) : (
                   enrichedPayments.map((payment) => {
+                    const isHistorical = payment.source === "historical";
                     const StatusIcon = STATUS_CONFIG[payment.status]?.icon || Clock;
                     const daysLate = payment.status === "late" ? differenceInDays(new Date(), parseISO(payment.due_date)) : 0;
                     
                     return (
-                      <TableRow key={payment.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)]" data-testid={`payment-${payment.id}`}>
-                        <TableCell className="text-white font-medium">{payment.member_name}</TableCell>
+                      <TableRow
+                        key={`${payment.source || "p"}-${payment.id}`}
+                        className={`border-[var(--color-border)] ${isHistorical ? "opacity-60 cursor-not-allowed" : "hover:bg-[var(--color-bg-tertiary)]"}`}
+                        data-testid={`payment-${payment.id}`}
+                        data-source={payment.source}
+                      >
+                        <TableCell className="text-white font-medium">
+                          <div className="flex items-center gap-2">
+                            <span>{payment.member_name}</span>
+                            {isHistorical && (
+                              <Badge
+                                className="bg-[rgba(142,142,147,0.18)] text-[#8E8E93] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider"
+                                data-testid={`payment-historical-badge-${payment.id}`}
+                                title="Source: accounting_transactions (lecture seule)"
+                              >
+                                📜 HISTORIQUE
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-[var(--color-text-secondary)]">
                           {format(parseISO(payment.due_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
@@ -481,40 +530,44 @@ export default function PaymentsPage({ selectedMonth }) {
                           {payment.paid_date ? format(parseISO(payment.paid_date), "dd/MM/yyyy") : "-"}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {payment.status !== "paid" && (
-                              <Button
-                                size="sm"
-                                onClick={() => openMarkPaid(payment)}
-                                className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
-                                data-testid={`mark-paid-${payment.id}`}
-                              >
-                                <Check size={14} className="mr-1" /> Payé
-                              </Button>
-                            )}
-                            {payment.status === "paid" && (
+                          {isHistorical ? (
+                            <span className="text-[var(--color-text-tertiary)] text-xs italic">Lecture seule</span>
+                          ) : (
+                            <div className="flex justify-end gap-2">
+                              {payment.status !== "paid" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => openMarkPaid(payment)}
+                                  className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:opacity-85"
+                                  data-testid={`mark-paid-${payment.id}`}
+                                >
+                                  <Check size={14} className="mr-1" /> Payé
+                                </Button>
+                              )}
+                              {payment.status === "paid" && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setRevertPaymentDialog({ open: true, payment })}
+                                  className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.08)]"
+                                  title="Repasser en impayé"
+                                  data-testid={`revert-payment-${payment.id}`}
+                                >
+                                  <RotateCcw size={14} className="mr-1" />
+                                  Impayé
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => setRevertPaymentDialog({ open: true, payment })}
-                                className="text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[rgba(255,159,10,0.08)]"
-                                title="Repasser en impayé"
-                                data-testid={`revert-payment-${payment.id}`}
+                                onClick={() => deletePaymentMutation.mutate(payment.id)}
+                                className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
+                                data-testid={`delete-payment-${payment.id}`}
                               >
-                                <RotateCcw size={14} className="mr-1" />
-                                Impayé
+                                <Trash2 size={14} />
                               </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deletePaymentMutation.mutate(payment.id)}
-                              className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
-                              data-testid={`delete-payment-${payment.id}`}
-                            >
-                              <Trash2 size={14} />
-                            </Button>
-                          </div>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

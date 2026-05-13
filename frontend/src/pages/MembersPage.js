@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { format, differenceInDays, parseISO, addYears, addMonths, addDays } from "date-fns";
@@ -126,6 +126,21 @@ export default function MembersPage() {
   const [historyMemberId, setHistoryMemberId] = useState(null);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [includePaused, setIncludePaused] = useState(false);
+  // G1 — Toggle "Inclure abonnements coach" persisté localStorage
+  const [includeCoaches, setIncludeCoaches] = useState(() => {
+    try {
+      return localStorage.getItem("members_include_coach_toggle") === "on";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("members_include_coach_toggle", includeCoaches ? "on" : "off");
+    } catch {
+      /* ignore */
+    }
+  }, [includeCoaches]);
   const [archiveDialog, setArchiveDialog] = useState({ open: false, mode: "archive", member: null });
   const [pauseDialog, setPauseDialog] = useState({ open: false, mode: "set", member: null });
   const [formData, setFormData] = useState({
@@ -339,7 +354,7 @@ export default function MembersPage() {
   // Filter members
   const filteredMembers = useMemo(() => {
     let base = current; // Exclude departed by default
-    if (view === "active") base = activeMembersOnly;
+    if (view === "active") base = includeCoaches ? [...activeMembersOnly, ...coaches] : activeMembersOnly;
     else if (view === "coaches") base = activeCoaches;
     else if (view === "expired") base = [...expiredMembers, ...expiredCoaches];
     else if (view === "departed") base = departed;
@@ -403,7 +418,7 @@ export default function MembersPage() {
       }
     }
     return result;
-  }, [current, view, filterType, filterMembership, search, showExpiring, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed]);
+  }, [current, view, filterType, filterMembership, search, showExpiring, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed, includeCoaches, coaches]);
 
   // Stats
   const stats = useMemo(() => ({
@@ -649,6 +664,16 @@ export default function MembersPage() {
             {lang === "fr" ? "Inclure en pause" : "Include paused"}
           </span>
         </label>
+        <label className="flex items-center gap-2 cursor-pointer select-none ml-2">
+          <Switch
+            checked={includeCoaches}
+            onCheckedChange={setIncludeCoaches}
+            data-testid="members-include-coach-toggle"
+          />
+          <span className="text-xs text-[var(--color-text-secondary)]">
+            {lang === "fr" ? "Inclure abonnements coach" : "Include coach subscriptions"}
+          </span>
+        </label>
         <p className="text-xs text-[var(--color-text-tertiary)] ml-auto font-mono">{filteredMembers.length} résultats</p>
       </div>
 
@@ -762,7 +787,10 @@ export default function MembersPage() {
                           )}
                           <p className={`text-white font-medium ${member.is_duo && !member.duo_primary ? 'text-sm text-[var(--color-text-secondary)]' : ''}`}>{member.name}</p>
                           {member.is_coach && (
-                            <Badge className="bg-[rgba(10,132,255,0.2)] text-[var(--color-accent)] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid="coach-badge">COACH</Badge>
+                            <Badge className="bg-[rgba(255,159,10,0.18)] text-[#FF9F0A] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid={`member-coach-badge-${member.id}`}>PASS COACH</Badge>
+                          )}
+                          {member.is_expired && (
+                            <Badge className="bg-[rgba(255,69,58,0.18)] text-[#FF453A] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid={`member-expired-badge-${member.id}`}>EXPIRÉ</Badge>
                           )}
                           {member.is_duo && member.duo_primary && (
                             <Badge className="bg-[rgba(191,90,242,0.15)] text-[#BF5AF2] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid="duo-primary-badge">DUO</Badge>
