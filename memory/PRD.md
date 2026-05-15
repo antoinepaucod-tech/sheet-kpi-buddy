@@ -206,6 +206,13 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-15 — CRON hebdo enrichi avec billing audit P2) ✅
+- [x] **Service** `/app/backend/services/billing_audit.py` : `run_billing_audit(db, club_id)` retourne `{total_billing_on, red_count, orange_count, red_estimated_lost_revenue_chf, red_details (max 10), orange_details (max 10), scanned_at}`. Logique IDENTIQUE au script `audit_billing_without_schedules.py` (cascade Sprint C via `get_member_category`, exclut Coach/archived/expired).
+- [x] **Intégration CRON** : `services/orphan_audit.py` enrichi avec section Billing health (template HTML brandé TRANSFORM). Subject email adaptatif selon orphelins/billing/both/clean.
+- [x] **Logique d'envoi** : email envoyé si `orphans OR billing_alert OR force_email`. Kill switch `ORPHAN_AUDIT_RECIPIENT=""` toujours effectif.
+- [x] **Endpoint admin** `POST /api/admin/orphan-audit/run` renvoie maintenant payload combiné `{orphans + billing + email}` (auto via `run_weekly_orphan_audit`).
+- [x] **6/6 tests PASS** : anti-mutation, run force_email, kill switch, endpoint 401/200, payload combiné, math invariant billing.
+
 ## Completed Tasks (Session 2026-05-15 — Digest CRON hebdomadaire orphelins club_id P2) ✅
 - [x] **Service** `/app/backend/services/orphan_audit.py` : `run_orphan_audit(db)`, `send_audit_email(force=...)`, `run_weekly_orphan_audit(force_email, db)`. Logs structurés `WEEKLY_ORPHAN_AUDIT_CLEAN/ALERT/KILL_SWITCH`.
 - [x] **Wrapper standalone** `/app/backend/scripts/weekly_orphan_audit.py` (mode `--force-email`).

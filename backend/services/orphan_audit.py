@@ -77,13 +77,14 @@ def _build_html(audit_result: dict) -> str:
     total = audit_result["total_orphans"]
     n_coll = audit_result["collections_affected"]
     rows = audit_result["report"]
+    billing = audit_result.get("billing") or {}
 
+    # === SECTION ORPHELINS ===
     if total == 0:
-        body = (
+        orphans_body = (
             "<p style='font-size:14px;line-height:1.6;color:#fff;'>"
             "✅ <strong>Aucun document orphelin détecté.</strong><br>"
-            f"15 collections critiques analysées. Tout est propre.<br>"
-            f"<small style='color:#888'>Audit exécuté le {ts} UTC</small></p>"
+            "15 collections critiques analysées. Tout est propre.</p>"
         )
     else:
         table_rows = "".join(
@@ -98,7 +99,7 @@ def _build_html(audit_result: dict) -> str:
             f"<li style='margin-bottom:6px;color:#aaa;font-size:12px'><strong>{r['collection']}</strong>: {', '.join((sid or '—')[:8] for sid in r['sample_ids'])}</li>"
             for r in rows
         )
-        body = (
+        orphans_body = (
             f"<p style='font-size:14px;line-height:1.6;color:#fff;'>"
             f"🚨 <strong>{total} document(s) orphelin(s)</strong> détecté(s) sur <strong>{n_coll} collection(s)</strong>.</p>"
             f"<table style='width:100%;border-collapse:collapse;margin:16px 0;'>"
@@ -111,21 +112,86 @@ def _build_html(audit_result: dict) -> str:
             f"<tbody>{table_rows}</tbody></table>"
             f"<h3 style='color:#fff;font-size:13px;margin-top:24px'>Échantillons (5 premiers IDs/collection) :</h3>"
             f"<ul style='padding-left:20px'>{samples}</ul>"
-            f"<p style='font-size:13px;color:#aaa;margin-top:16px;padding-top:16px;border-top:1px solid #333;'>"
+            f"<p style='font-size:13px;color:#aaa;margin-top:16px;'>"
             f"<strong>Action recommandée</strong> : exécuter "
             f"<code style='background:#222;padding:2px 6px;border-radius:3px;color:#FF9F0A'>python scripts/migrate_orphan_club_id.py</code> "
             f"(dry-run) puis <code style='background:#222;padding:2px 6px;border-radius:3px;color:#FF9F0A'>--apply</code> après validation.</p>"
-            f"<p style='font-size:11px;color:#666;'>Pattern Sprint Hardening — voir <code>/app/memory/SPRINT_HARDENING_REPORT.md</code><br>"
-            f"Audit exécuté le {ts} UTC</p>"
         )
 
+    # === SECTION BILLING ===
+    billing_body = ""
+    if billing:
+        red_n = billing.get("red_count", 0)
+        orange_n = billing.get("orange_count", 0)
+        if red_n == 0 and orange_n == 0:
+            billing_body = (
+                "<p style='font-size:14px;line-height:1.6;color:#fff;margin-top:32px;padding-top:24px;border-top:1px solid #333;'>"
+                "💳 <strong>Billing health</strong> — ✅ Tout est sain "
+                f"(<span style='color:#888'>{billing.get('total_billing_on', 0)} membres `billing_enabled=true` scannés, 0 RED + 0 ORANGE</span>)"
+                "</p>"
+            )
+        else:
+            red_lost = billing.get("red_estimated_lost_revenue_chf", 0)
+            def _fmt_lost(r):
+                v = r.get('estimated_lost_revenue_chf')
+                return f"{v:.0f} CHF" if v else "—"
+
+            red_table = "".join(
+                f"<tr><td style='padding:6px;border-bottom:1px solid #333'>{(r.get('name') or '—')[:25]}</td>"
+                f"<td style='padding:6px;border-bottom:1px solid #333;font-size:11px;color:#aaa'>{(r.get('membership') or '—')[:30]}</td>"
+                f"<td style='padding:6px;border-bottom:1px solid #333;text-align:right'>{r.get('months_active', 0)}</td>"
+                f"<td style='padding:6px;border-bottom:1px solid #333;text-align:right;color:#FF453A'>{_fmt_lost(r)}</td></tr>"
+                for r in billing.get("red_details", [])
+            )
+            orange_table = "".join(
+                f"<tr><td style='padding:6px;border-bottom:1px solid #333'>{(r.get('name') or '—')[:25]}</td>"
+                f"<td style='padding:6px;border-bottom:1px solid #333;font-size:11px;color:#aaa'>{(r.get('membership') or '—')[:30]}</td>"
+                f"<td style='padding:6px;border-bottom:1px solid #333;text-align:right'>{r.get('n_payments', 0)}</td>"
+                f"<td style='padding:6px;border-bottom:1px solid #333;text-align:right;color:#FF9F0A'>{r.get('sum_payments_chf', 0):.0f} CHF</td></tr>"
+                for r in billing.get("orange_details", [])
+            )
+            red_section = (
+                f"<h3 style='color:#FF453A;font-size:13px;margin-top:24px'>🔴 RED — {red_n} membre(s) sans schedule ni paiement (revenu manqué estimé : {red_lost:.0f} CHF)</h3>"
+                f"<table style='width:100%;border-collapse:collapse;margin:8px 0 16px;'>"
+                f"<thead><tr style='background:#111;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:0.5px'>"
+                f"<th style='padding:6px;text-align:left'>Membre</th><th style='padding:6px;text-align:left'>Membership</th>"
+                f"<th style='padding:6px;text-align:right'>Mois actifs</th><th style='padding:6px;text-align:right'>Lost</th></tr></thead>"
+                f"<tbody>{red_table}</tbody></table>"
+            ) if red_n > 0 else ""
+            orange_section = (
+                f"<h3 style='color:#FF9F0A;font-size:13px;margin-top:16px'>🟠 ORANGE — {orange_n} membre(s) sans schedule mais avec paiements manuels</h3>"
+                f"<table style='width:100%;border-collapse:collapse;margin:8px 0 16px;'>"
+                f"<thead><tr style='background:#111;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:0.5px'>"
+                f"<th style='padding:6px;text-align:left'>Membre</th><th style='padding:6px;text-align:left'>Membership</th>"
+                f"<th style='padding:6px;text-align:right'># Pmt</th><th style='padding:6px;text-align:right'>Sum</th></tr></thead>"
+                f"<tbody>{orange_table}</tbody></table>"
+            ) if orange_n > 0 else ""
+            billing_body = (
+                "<div style='margin-top:32px;padding-top:24px;border-top:1px solid #333;'>"
+                f"<p style='font-size:14px;line-height:1.6;color:#fff;'>"
+                f"💳 <strong>Billing health</strong> — 🚨 <strong>{red_n} RED + {orange_n} ORANGE</strong> détecté(s) "
+                f"sur {billing.get('total_billing_on', 0)} membres scannés.</p>"
+                f"{red_section}{orange_section}"
+                f"<p style='font-size:12px;color:#aaa'>Détails complets via "
+                f"<code style='background:#222;padding:2px 6px;border-radius:3px;color:#FF9F0A'>python -m scripts.audit_billing_without_schedules</code></p>"
+                "</div>"
+            )
+
+    footer = (
+        f"<p style='font-size:11px;color:#666;margin-top:32px;padding-top:16px;border-top:1px solid #333;'>"
+        f"Pattern Sprint Hardening — voir <code>/app/memory/SPRINT_HARDENING_REPORT.md</code><br>"
+        f"Audit exécuté le {ts} UTC</p>"
+    )
+
     return f"""
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:640px;margin:0 auto;background:#09090B;color:#fff;padding:0;">
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:680px;margin:0 auto;background:#09090B;color:#fff;padding:0;">
       <div style="background:linear-gradient(135deg,#E11D48,#BE123C);padding:24px 32px;">
-        <h1 style="margin:0;font-size:18px;color:#fff;letter-spacing:0.3px">🛡️ TRANSFORM — Audit hebdomadaire orphelins club_id</h1>
+        <h1 style="margin:0;font-size:18px;color:#fff;letter-spacing:0.3px">🛡️ TRANSFORM — Tableau de bord santé prod (hebdo)</h1>
       </div>
       <div style="padding:32px;">
-        {body}
+        {orphans_body}
+        {billing_body}
+        {footer}
       </div>
     </div>
     """
@@ -133,11 +199,10 @@ def _build_html(audit_result: dict) -> str:
 
 async def send_audit_email(audit_result: dict, force: bool = False) -> dict:
     """Send email via Resend. Returns {sent: bool, reason, ...}.
-    - force=True envoie même si 0 orphelin (utilisé pour validation pipeline manuelle)
-    - force=False (default) n'envoie que si total_orphans > 0 (CRON automatique)
+    - force=True envoie même si tout est sain (utilisé pour validation pipeline)
+    - force=False (default) n'envoie que si total_orphans > 0 OU billing alert (CRON auto)
     """
     # Kill switch : si la variable est définie ET vide → aucun email
-    # Si la variable est absente → utiliser DEFAULT_RECIPIENT
     env_val = os.environ.get("ORPHAN_AUDIT_RECIPIENT")
     if env_val is None:
         recipient = DEFAULT_RECIPIENT
@@ -147,8 +212,11 @@ async def send_audit_email(audit_result: dict, force: bool = False) -> dict:
         logger.info("WEEKLY_ORPHAN_AUDIT_KILL_SWITCH — ORPHAN_AUDIT_RECIPIENT vide, aucun email envoyé.")
         return {"sent": False, "reason": "recipient_empty_kill_switch"}
 
-    if audit_result["total_orphans"] == 0 and not force:
-        return {"sent": False, "reason": "no_orphans_no_force"}
+    billing = audit_result.get("billing") or {}
+    has_orphans = audit_result["total_orphans"] > 0
+    has_billing_alert = (billing.get("red_count", 0) > 0) or (billing.get("orange_count", 0) > 0)
+    if not (has_orphans or has_billing_alert or force):
+        return {"sent": False, "reason": "no_alert_no_force"}
 
     if not resend.api_key:
         resend.api_key = os.environ.get("RESEND_API_KEY", "")
@@ -159,16 +227,23 @@ async def send_audit_email(audit_result: dict, force: bool = False) -> dict:
     total = audit_result["total_orphans"]
     n_coll = audit_result["collections_affected"]
     date_str = audit_result["timestamp"][:10]
-    if total > 0:
+    red_n = billing.get("red_count", 0)
+    orange_n = billing.get("orange_count", 0)
+    # Sujet adaptatif
+    if has_orphans and has_billing_alert:
+        subject = f"🚨 Santé prod TRANSFORM - {total} orphelins + {red_n} RED + {orange_n} ORANGE - {date_str}"
+    elif has_orphans:
         subject = f"🚨 Orphelins club_id détectés - {total} docs sur {n_coll} collections - {date_str}"
+    elif has_billing_alert:
+        subject = f"🚨 Billing health alert - {red_n} RED + {orange_n} ORANGE - {date_str}"
     else:
-        subject = f"✅ Audit orphelins club_id - 0 détecté - {date_str}"
+        subject = f"✅ Santé prod TRANSFORM - Tout est sain - {date_str}"
 
     html = _build_html(audit_result)
     params = {"from": SENDER_EMAIL, "to": [recipient], "subject": subject, "html": html}
     try:
         result = await asyncio.to_thread(resend.Emails.send, params)
-        logger.info(f"WEEKLY_ORPHAN_AUDIT_EMAIL_SENT to={recipient} total={total} resend_id={result.get('id') if isinstance(result, dict) else result}")
+        logger.info(f"WEEKLY_ORPHAN_AUDIT_EMAIL_SENT to={recipient} orphans={total} red={red_n} orange={orange_n} resend_id={result.get('id') if isinstance(result, dict) else result}")
         return {"sent": True, "recipient": recipient, "resend_id": (result.get("id") if isinstance(result, dict) else None)}
     except Exception as e:
         logger.error(f"WEEKLY_ORPHAN_AUDIT_EMAIL_FAILED: {e}")
@@ -177,8 +252,11 @@ async def send_audit_email(audit_result: dict, force: bool = False) -> dict:
 
 async def run_weekly_orphan_audit(force_email: bool = False, db=None) -> dict:
     """Entry point used by both APScheduler and the manual admin endpoint.
-    - force_email=True envoie l'email même si 0 orphelin (validation pipeline)
-    - db=None : ouvre une connexion temporaire (cas standalone), sinon réutilise."""
+    - force_email=True envoie l'email même si tout est sain (validation pipeline)
+    - db=None : ouvre une connexion temporaire (cas standalone), sinon réutilise.
+
+    Retourne un payload combiné {orphans audit + billing audit + email status}.
+    """
     close_after = False
     client = None
     if db is None:
@@ -188,6 +266,11 @@ async def run_weekly_orphan_audit(force_email: bool = False, db=None) -> dict:
 
     try:
         audit_result = await run_orphan_audit(db)
+        # Audit billing en complément (P2 — verrouille la régression PaymentSchedule)
+        from services.billing_audit import run_billing_audit
+        billing_result = await run_billing_audit(db)
+        audit_result["billing"] = billing_result
+
         if audit_result["total_orphans"] == 0:
             logger.info(
                 f"WEEKLY_ORPHAN_AUDIT_CLEAN timestamp={audit_result['timestamp']} "
@@ -200,6 +283,19 @@ async def run_weekly_orphan_audit(force_email: bool = False, db=None) -> dict:
                 f"collections_affected={audit_result['collections_affected']} "
                 f"collections={[r['collection'] for r in audit_result['report']]}"
             )
+
+        if billing_result["red_count"] == 0 and billing_result["orange_count"] == 0:
+            logger.info(
+                f"WEEKLY_BILLING_AUDIT_CLEAN total_billing_on={billing_result['total_billing_on']} "
+                "red=0 orange=0"
+            )
+        else:
+            logger.warning(
+                f"WEEKLY_BILLING_AUDIT_ALERT red={billing_result['red_count']} "
+                f"orange={billing_result['orange_count']} "
+                f"lost_revenue_chf={billing_result.get('red_estimated_lost_revenue_chf', 0)}"
+            )
+
         email_result = await send_audit_email(audit_result, force=force_email)
         audit_result["email"] = email_result
         return audit_result
