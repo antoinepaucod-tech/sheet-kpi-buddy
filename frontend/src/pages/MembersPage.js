@@ -141,6 +141,21 @@ export default function MembersPage() {
       /* ignore */
     }
   }, [includeCoaches]);
+  // G4+ — Toggle "Voir uniquement les EXPIRÉS" persisté localStorage
+  const [showOnlyExpired, setShowOnlyExpired] = useState(() => {
+    try {
+      return localStorage.getItem("members_show_only_expired") === "on";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("members_show_only_expired", showOnlyExpired ? "on" : "off");
+    } catch {
+      /* ignore */
+    }
+  }, [showOnlyExpired]);
   const [archiveDialog, setArchiveDialog] = useState({ open: false, mode: "archive", member: null });
   const [pauseDialog, setPauseDialog] = useState({ open: false, mode: "set", member: null });
   const [formData, setFormData] = useState({
@@ -354,7 +369,10 @@ export default function MembersPage() {
   // Filter members
   const filteredMembers = useMemo(() => {
     let base = current; // Exclude departed by default
-    if (view === "active") base = includeCoaches ? [...activeMembersOnly, ...coaches] : activeMembersOnly;
+    if (showOnlyExpired) {
+      // G4+ Force la base aux expirés (membres + coaches selon includeCoaches)
+      base = includeCoaches ? [...expiredMembers, ...expiredCoaches] : expiredMembers;
+    } else if (view === "active") base = includeCoaches ? [...activeMembersOnly, ...coaches] : activeMembersOnly;
     else if (view === "coaches") base = activeCoaches;
     else if (view === "expired") base = [...expiredMembers, ...expiredCoaches];
     else if (view === "departed") base = departed;
@@ -418,7 +436,7 @@ export default function MembersPage() {
       }
     }
     return result;
-  }, [current, view, filterType, filterMembership, search, showExpiring, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed, includeCoaches, coaches]);
+  }, [current, view, filterType, filterMembership, search, showExpiring, activeMembersOnly, activeCoaches, expiredMembers, expiredCoaches, departed, includeCoaches, coaches, showOnlyExpired]);
 
   // Stats
   const stats = useMemo(() => ({
@@ -674,7 +692,24 @@ export default function MembersPage() {
             {lang === "fr" ? "Inclure abonnements coach" : "Include coach subscriptions"}
           </span>
         </label>
-        <p className="text-xs text-[var(--color-text-tertiary)] ml-auto font-mono">{filteredMembers.length} résultats</p>
+        <label className="flex items-center gap-2 cursor-pointer select-none ml-2">
+          <Switch
+            checked={showOnlyExpired}
+            onCheckedChange={setShowOnlyExpired}
+            data-testid="members-show-only-expired-toggle"
+          />
+          <span className="text-xs text-[#FF453A]">
+            {lang === "fr" ? "Voir uniquement les EXPIRÉS" : "Show only EXPIRED"}
+          </span>
+        </label>
+        <p className="text-xs text-[var(--color-text-tertiary)] ml-auto font-mono">
+          {showOnlyExpired && (
+            <span data-testid="members-expired-count" className="text-[#FF453A] mr-3">
+              {filteredMembers.length} membre{filteredMembers.length > 1 ? "s" : ""} expiré{filteredMembers.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {filteredMembers.length} résultats
+        </p>
       </div>
 
       {/* Sprint B.4.4 — Bulk archive bar (sticky top) */}

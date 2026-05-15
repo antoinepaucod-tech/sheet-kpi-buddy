@@ -206,6 +206,13 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-13 — Toggle "Voir uniquement EXPIRÉS" P2) ✅
+- [x] **Frontend** MembersPage : toggle `members-show-only-expired-toggle` (label rouge) avec persistance localStorage `members_show_only_expired`. OFF par défaut.
+- [x] Quand ON : force la base aux `expiredMembers` (+ `expiredCoaches` si toggle Coach ON). Cumul OK avec recherche, catégorie, statut.
+- [x] **Compteur visuel** : `members-expired-count` (texte rouge "X membres expirés") affiché à côté du compteur résultats.
+- [x] Validation visuelle : 8 expirés (Coach OFF) → 9 (Coach ON, Alex Giraud inclus). Tous portent le badge EXPIRÉ + bouton Renouveler directement actionnable.
+- [x] Non-régression : Sprint C/B/A/Hardening/F1 inchangés.
+
 ## Completed Tasks (Session 2026-05-13 — Sprint P1 backend filter /api/payments?month=) ✅
 - [x] **Backend** `GET /api/payments` étendu : param `month` (regex strict `^\d{4}-(0[1-9]|1[0-2])$`, 400 si invalide), `Depends(get_current_user)` ajouté (Sprint Hardening sweep). Conversion `month → {$gte, $lte}` sur `due_date`. Priorité `month > due_from/due_to`. Backward compat strict.
 - [x] **Frontend** PaymentsPage : query `["payments","all"]` SUPPRIMÉE (chargeait 241 docs + filtre JS). Remplacée par `unifiedData.payments` (déjà filtré server-side via `/payments/unified?month=`). Helpers `patchPaymentInCache` / `removePaymentFromCache` mis à jour pour patcher le nouveau shape `{payments:[...], historical:[...]}` sur queryKey `["payments","unified", selectedMonth]` avec `exact:true`.
