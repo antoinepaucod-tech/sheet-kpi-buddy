@@ -206,6 +206,18 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-15 — Husky pre-commit ESLint guard P2) ✅
+- [x] **Install** : `husky` + `lint-staged@15` (yarn, devDeps)
+- [x] **Config** : `git config core.hooksPath frontend/.husky` (monorepo : git root=/app, frontend=/app/frontend)
+- [x] **Hook** `/app/frontend/.husky/pre-commit` (exec bit set) → `cd frontend && npx lint-staged`
+- [x] **lint-staged** `/app/frontend/.lintstagedrc.json` → `eslint --max-warnings=0` sur `*.{js,jsx}`
+- [x] **Script `prepare`** dans `package.json` → réactive `core.hooksPath` automatiquement après chaque `yarn install`/`git clone`
+- [x] **Test conditions réelles** :
+  - Syntax positional `invalidateQueries(['key'])` → **commit BLOQUÉ** avec message ESLint clair (TanStack Query v5 guard)
+  - Syntax object `invalidateQueries({queryKey: ['key']})` → commit passe
+  - Cleanup complet via `git reset --soft HEAD^` + suppression fichier test
+- [x] **Non-régression** : `yarn lint:rq` passe sans warning sur tout le repo
+
 ## Completed Tasks (Session 2026-05-15 — Test régression zero-overwrite GHL P2) ✅
 - [x] **Helper isolé** `/app/backend/core/ghl_protection.py` : `should_skip_zero_overwrite(total_pipeline_opps, existing)` (fonction pure, testable). Refactoring `routers/ghl.py` pour l'utiliser.
 - [x] **Tests régression** `/app/backend/tests/test_ghl_sync_zero_overwrite.py` (9 tests PASS) : cas révélateur 12/05, mois vraiment vide, GHL avec data, edge cases (cash seul, close seul, doc absent, None fields), log structuré, mock update_one quand pas de skip.

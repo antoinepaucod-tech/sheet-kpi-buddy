@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# Husky pre-commit hook — TRANSFORM SaaS
+# Lance ESLint via lint-staged sur les fichiers JS/JSX staged dans /app/frontend.
+# Bloque tout commit qui viole le guard TanStack Query v5 ou autres règles ESLint.
+
+cd "$(dirname "$0")/.." || exit 1
+npx lint-staged
