@@ -1,0 +1,728 @@
+{
+  "metadata": {
+    "audit_date": "2026-05-15",
+    "target_db": "club_management",
+    "target_club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+    "period": "2024-01 \u2192 2026-04",
+    "fix_date": "2026-05-12",
+    "already_restored_months": [
+      "2026-01"
+    ],
+    "backup_available": true,
+    "months_scanned": 28
+  },
+  "buckets_count": {
+    "PARTIAL_ZERO": 23,
+    "SUSPECT_OVERWRITE": 2,
+    "HEALTHY": 3,
+    "LEGIT_ZERO": 0,
+    "MISSING_KPI_DOC": 0
+  },
+  "stats": {
+    "suspect_total_lost_chf": 30171.0,
+    "suspect_to_review_chf": 30171.0
+  },
+  "SUSPECT_OVERWRITE": [
+    {
+      "month": "2026-04",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 0,
+        "close": 0,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 94,
+        "recurring_revenue": 8755.0,
+        "funnel_cash": 0
+      },
+      "accounting": {
+        "count": 141,
+        "sum_revenue": 30081.0
+      },
+      "estimated_real_cash_chf": 30081.0,
+      "backup_snapshot": null,
+      "already_restored": false
+    },
+    {
+      "month": "2024-02",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 0,
+        "close": 0,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 2,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 0
+      },
+      "accounting": {
+        "count": 2,
+        "sum_revenue": 90.0
+      },
+      "estimated_real_cash_chf": 90.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 0,
+        "close": 0,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 0
+      },
+      "already_restored": false
+    }
+  ],
+  "PARTIAL_ZERO": [
+    {
+      "month": "2024-01",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 1440.0,
+        "close": 2,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 2,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1440.0
+      },
+      "accounting": {
+        "count": 4,
+        "sum_revenue": 1620.0
+      },
+      "estimated_real_cash_chf": 1620.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 1440.0,
+        "close": 2,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1440.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-03",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 3700.0,
+        "close": 1,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 2,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 3700.0
+      },
+      "accounting": {
+        "count": 4,
+        "sum_revenue": 3790.0
+      },
+      "estimated_real_cash_chf": 3790.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 3700.0,
+        "close": 1,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 3700.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-04",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 2175.0,
+        "close": 5,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 6,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2175.0
+      },
+      "accounting": {
+        "count": 11,
+        "sum_revenue": 4600.0
+      },
+      "estimated_real_cash_chf": 4600.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 2175.0,
+        "close": 5,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2175.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-05",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 1100.0,
+        "close": 1,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 7,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1100.0
+      },
+      "accounting": {
+        "count": 9,
+        "sum_revenue": 1490.0
+      },
+      "estimated_real_cash_chf": 1490.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 1100.0,
+        "close": 1,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1100.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-06",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 58.0,
+        "close": 2,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 9,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 58.0
+      },
+      "accounting": {
+        "count": 12,
+        "sum_revenue": 648.0
+      },
+      "estimated_real_cash_chf": 648.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 58.0,
+        "close": 2,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 58.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-07",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 2300.0,
+        "close": 4,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 13,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2300.0
+      },
+      "accounting": {
+        "count": 22,
+        "sum_revenue": 6440.0
+      },
+      "estimated_real_cash_chf": 6440.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 2300.0,
+        "close": 4,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2300.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-08",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 3786.0,
+        "close": 6,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 17,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 3786.0
+      },
+      "accounting": {
+        "count": 27,
+        "sum_revenue": 5058.0
+      },
+      "estimated_real_cash_chf": 5058.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 3786.0,
+        "close": 6,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 3786.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-09",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 4855.0,
+        "close": 9,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 23,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 4855.0
+      },
+      "accounting": {
+        "count": 35,
+        "sum_revenue": 4845.0
+      },
+      "estimated_real_cash_chf": 4845.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 4855.0,
+        "close": 9,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 4855.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-10",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 2698.0,
+        "close": 6,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 28,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2698.0
+      },
+      "accounting": {
+        "count": 43,
+        "sum_revenue": 5379.0
+      },
+      "estimated_real_cash_chf": 5379.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 2698.0,
+        "close": 6,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2698.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-11",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 2281.0,
+        "close": 4,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 32,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2281.0
+      },
+      "accounting": {
+        "count": 46,
+        "sum_revenue": 5762.0
+      },
+      "estimated_real_cash_chf": 5762.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 2281.0,
+        "close": 4,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 2281.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2024-12",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 25552.0,
+        "close": 81,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 25,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 25552.0
+      },
+      "accounting": {
+        "count": 198,
+        "sum_revenue": 49696.0
+      },
+      "estimated_real_cash_chf": 49696.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 25552.0,
+        "close": 81,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 25552.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-01",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 7142.0,
+        "close": 52,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 75,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 7142.0
+      },
+      "accounting": {
+        "count": 223,
+        "sum_revenue": 35211.0
+      },
+      "estimated_real_cash_chf": 35211.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 7142.0,
+        "close": 52,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 7142.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-02",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 8847.0,
+        "close": 9,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 77,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 8847.0
+      },
+      "accounting": {
+        "count": 184,
+        "sum_revenue": 35409.0
+      },
+      "estimated_real_cash_chf": 35409.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 8847.0,
+        "close": 9,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 8847.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-03",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 23488.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 80,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 23488.0
+      },
+      "accounting": {
+        "count": 184,
+        "sum_revenue": 31389.0
+      },
+      "estimated_real_cash_chf": 31389.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 23488.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 23488.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-04",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 13205.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 84,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 13205.0
+      },
+      "accounting": {
+        "count": 182,
+        "sum_revenue": 34764.0
+      },
+      "estimated_real_cash_chf": 34764.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 13205.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 13205.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-05",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 1792.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 86,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1792.0
+      },
+      "accounting": {
+        "count": 172,
+        "sum_revenue": 30477.0
+      },
+      "estimated_real_cash_chf": 30477.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 1792.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1792.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-06",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 1398.0,
+        "close": 5,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 81,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1398.0
+      },
+      "accounting": {
+        "count": 167,
+        "sum_revenue": 20390.0
+      },
+      "estimated_real_cash_chf": 20390.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 1398.0,
+        "close": 5,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1398.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-07",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 5290.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 84,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 5290.0
+      },
+      "accounting": {
+        "count": 157,
+        "sum_revenue": 22493.0
+      },
+      "estimated_real_cash_chf": 22493.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 5290.0,
+        "close": 8,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 5290.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-08",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 10445.0,
+        "close": 16,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 94,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 10445.0
+      },
+      "accounting": {
+        "count": 158,
+        "sum_revenue": 30147.0
+      },
+      "estimated_real_cash_chf": 30147.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 10445.0,
+        "close": 16,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 10445.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-09",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 15943.0,
+        "close": 19,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 96,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 15943.0
+      },
+      "accounting": {
+        "count": 144,
+        "sum_revenue": 36715.0
+      },
+      "estimated_real_cash_chf": 36715.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 15943.0,
+        "close": 19,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 15943.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-10",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 1729.0,
+        "close": 12,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 55,
+        "recurring_revenue": 8965.0,
+        "funnel_cash": 1729.0
+      },
+      "accounting": {
+        "count": 135,
+        "sum_revenue": 16708.0
+      },
+      "estimated_real_cash_chf": 16708.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 1729.0,
+        "close": 12,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 1729.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2025-11",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 3905.0,
+        "close": 17,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 101,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 3905.0
+      },
+      "accounting": {
+        "count": 131,
+        "sum_revenue": 24745.0
+      },
+      "estimated_real_cash_chf": 24745.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 3905.0,
+        "close": 17,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 3905.0
+      },
+      "already_restored": false
+    },
+    {
+      "month": "2026-02",
+      "kpis": {
+        "leads": 0,
+        "cash_collected": 17399.0,
+        "close": 11,
+        "scheduled": 0,
+        "show": 0,
+        "active_members": 89,
+        "recurring_revenue": 8965.0,
+        "funnel_cash": 3066.0
+      },
+      "accounting": {
+        "count": 108,
+        "sum_revenue": 17888.0
+      },
+      "estimated_real_cash_chf": 17888.0,
+      "backup_snapshot": {
+        "leads": 0,
+        "cash_collected": 17399.0,
+        "close": 11,
+        "scheduled": 0,
+        "show": 0,
+        "recurring_revenue": 8555.0,
+        "funnel_cash": 3066.0
+      },
+      "already_restored": false
+    }
+  ],
+  "LEGIT_ZERO_months": [],
+  "HEALTHY_months": [
+    "2025-12",
+    "2026-01",
+    "2026-03"
+  ],
+  "MISSING_KPI_DOC_months": []
+}
