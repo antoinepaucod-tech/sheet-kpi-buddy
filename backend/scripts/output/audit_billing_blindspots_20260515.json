@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "audit_date": "2026-05-15",
+    "target_db": "club_management",
+    "target_club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+    "period": "2026-01-01 \u2192 2026-05-12",
+    "fix_date": "2026-05-12"
+  },
+  "angle_a_phantom_sales": {
+    "period": "2026-01-01 \u2192 2026-05-12",
+    "total_sales_in_period": 1,
+    "matched_count": 1,
+    "phantom_count": 0,
+    "phantom_details": []
+  },
+  "angle_b_false_blue": {
+    "blue_total": 26,
+    "blue_legit_count": 26,
+    "blue_suspect_count": 0,
+    "blue_legit_sample": [
+      {
+        "member_id": "b716c184-ec45-4732-9ee8-9908523db57e",
+        "name": "Safia Jiyar",
+        "email": "",
+        "membership": "THE COACH PASS MENSUEL",
+        "price": 0,
+        "monthly_price": null,
+        "is_recurring": true,
+        "is_pif": false,
+        "reason": "\u2014"
+      },
+      {
+        "member_id": "b89652f6-4ed9-4edf-bf7f-3a3ebac43649",
+        "name": "Jennifer Porraz",
+        "email": "",
+        "membership": "THE COACH PASS MENSUEL",
+        "price": 0,
+        "monthly_price": null,
+        "is_recurring": true,
+        "is_pif": false,
+        "reason": "\u2014"
+      },
+      {
+        "member_id": "425a3ccd-0726-44ab-a328-97ff0e2368e1",
+        "name": "Steven Nankoo",
+        "email": "",
+        "membership": "THE COACH PASS MENSUEL",
+        "price": 0,
+        "monthly_price": null,
+        "is_recurring": true,
+        "is_pif": false,
+        "reason": "\u2014"
+      },
+      {
+        "member_id": "469d5a37-bdc0-471d-9324-dd8d9fb9a15d",
+        "name": "Manda  Randriatsimihoatra",
+        "email": "",
+        "membership": "THE COACH PASS MENSUEL",
+        "price": 0,
+        "monthly_price": null,
+        "is_recurring": true,
+        "is_pif": false,
+        "reason": "\u2014"
+      },
+      {
+        "member_id": "fa97a498-2c02-4895-84a8-9b96da05b130",
+        "name": "Antoine Paucod",
+        "email": "",
+        "membership": "THE COACH PASS MENSUEL",
+        "price": 0,
+        "monthly_price": null,
+        "is_recurring": true,
+        "is_pif": false,
+        "reason": "\u2014"
+      }
+    ],
+    "blue_suspect_details": []
+  },
+  "verdict": {
+    "phantom_count": 0,
+    "suspect_blue_count": 0,
+    "audit_closed": true
+  }
+}
