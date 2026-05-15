@@ -145,15 +145,9 @@ async def sync_ghl(
     existing = await db.monthly_kpis.find_one({"month": kpi_month, "club_id": club_id_resolved})
 
     # Sprint Hardening — Protection anti zero-overwrite (2026-05-12).
-    # Si GHL renvoie 0 opportunités ET que le KPI existant contient déjà des
-    # données (leads/cash_collected/close > 0), on SKIP l'update pour préserver
-    # ces données. Sinon (nouveau mois, ou doc existant déjà à 0) le flow normal
-    # s'exécute (create/update).
-    if total_pipeline_opps == 0 and existing and (
-        (existing.get("leads") or 0) > 0
-        or (existing.get("cash_collected") or 0) > 0
-        or (existing.get("close") or 0) > 0
-    ):
+    # Logique extraite dans core/ghl_protection.should_skip_zero_overwrite (testable unitairement).
+    from core.ghl_protection import should_skip_zero_overwrite
+    if should_skip_zero_overwrite(total_pipeline_opps, existing):
         logger.warning(
             "GHL_SYNC_ZERO_OVERWRITE_PREVENTED endpoint=/api/ghl/sync month=%s club_id=%s user=%s existing_leads=%s existing_cash=%s",
             kpi_month,

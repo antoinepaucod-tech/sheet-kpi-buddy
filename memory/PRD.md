@@ -206,6 +206,14 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-15 — Test régression zero-overwrite GHL P2) ✅
+- [x] **Helper isolé** `/app/backend/core/ghl_protection.py` : `should_skip_zero_overwrite(total_pipeline_opps, existing)` (fonction pure, testable). Refactoring `routers/ghl.py` pour l'utiliser.
+- [x] **Tests régression** `/app/backend/tests/test_ghl_sync_zero_overwrite.py` (9 tests PASS) : cas révélateur 12/05, mois vraiment vide, GHL avec data, edge cases (cash seul, close seul, doc absent, None fields), log structuré, mock update_one quand pas de skip.
+- [x] **Marker pytest** `regression` registré dans `pytest.ini` (élimine PytestUnknownMarkWarning).
+- [x] **Non-régression** : 82/82 tests pytest PASS sur l'ensemble (test_ghl_sync_zero_overwrite + test_activity_log + test_member_categorization).
+- [x] **Anti-mutation** vérifié : seuls `AsyncMock.update_one` utilisés dans les tests (0 mutation Atlas).
+- [x] **Backend healthy** post-refactor (GET /api/members → 200).
+
 ## Completed Tasks (Session 2026-05-15 — Restauration KPIs 2026-04 + Audit zero-overwrite P2) ✅
 - [x] **Audit zero-overwrite historique** : `scripts/audit_kpis_zero_overwrite.py` (read-only, anti-mutation). Détection 2 SUSPECT_OVERWRITE : 2026-04 (30 081 CHF, critique) + 2024-02 (90 CHF, bénin via backup).
 - [x] **Restauration 2026-04** : `scripts/restore_monthly_kpis_2026_04.py` (dry-run/apply pattern Sprint A). update_one ciblé sur `{cash_collected: 30081, funnel_cash: 30081}`. Préservation explicite des champs survécus (total_revenue, active_members, recurring_revenue). Champ d'audit `kpis_restored_at` + idempotence native via filtre `{kpis_restored_at: None}`.
