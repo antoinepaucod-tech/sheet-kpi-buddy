@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "audit_date": "2026-05-15T12:19:31.809282+00:00",
+    "audit_date": "2026-05-15T12:21:30.359183+00:00",
     "target_db": "club_management",
     "target_club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
     "target_month": "2026-04",
-    "mode": "dry_run",
+    "mode": "apply",
     "restore_source": "audit_zero_overwrite_20260515"
   },
   "sources": {

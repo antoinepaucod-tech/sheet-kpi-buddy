@@ -206,6 +206,12 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-15 — Restauration KPIs 2026-04 + Audit zero-overwrite P2) ✅
+- [x] **Audit zero-overwrite historique** : `scripts/audit_kpis_zero_overwrite.py` (read-only, anti-mutation). Détection 2 SUSPECT_OVERWRITE : 2026-04 (30 081 CHF, critique) + 2024-02 (90 CHF, bénin via backup).
+- [x] **Restauration 2026-04** : `scripts/restore_monthly_kpis_2026_04.py` (dry-run/apply pattern Sprint A). update_one ciblé sur `{cash_collected: 30081, funnel_cash: 30081}`. Préservation explicite des champs survécus (total_revenue, active_members, recurring_revenue). Champ d'audit `kpis_restored_at` + idempotence native via filtre `{kpis_restored_at: None}`.
+- [x] **Audit enrichi** : nouveau bucket `RESTORED` détecté via `kpis_restored_at`. Re-run audit post-restauration confirme 2026-04 sort de SUSPECT et entre dans RESTORED.
+- [x] **Verdict final** : SUSPECT_OVERWRITE passe de 30 171 → 90 CHF (2024-02 seul, bénin). 23 PARTIAL_ZERO = pattern legacy GHL funnel non-rétroactif (non-actionable).
+
 ## Completed Tasks (Session 2026-05-15 — CRON hebdo enrichi avec billing audit P2) ✅
 - [x] **Service** `/app/backend/services/billing_audit.py` : `run_billing_audit(db, club_id)` retourne `{total_billing_on, red_count, orange_count, red_estimated_lost_revenue_chf, red_details (max 10), orange_details (max 10), scanned_at}`. Logique IDENTIQUE au script `audit_billing_without_schedules.py` (cascade Sprint C via `get_member_category`, exclut Coach/archived/expired).
 - [x] **Intégration CRON** : `services/orphan_audit.py` enrichi avec section Billing health (template HTML brandé TRANSFORM). Subject email adaptatif selon orphelins/billing/both/clean.

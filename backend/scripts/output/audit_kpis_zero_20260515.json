@@ -13,36 +13,17 @@
   },
   "buckets_count": {
     "PARTIAL_ZERO": 23,
-    "SUSPECT_OVERWRITE": 2,
+    "SUSPECT_OVERWRITE": 1,
     "HEALTHY": 3,
+    "RESTORED": 1,
     "LEGIT_ZERO": 0,
     "MISSING_KPI_DOC": 0
   },
   "stats": {
-    "suspect_total_lost_chf": 30171.0,
-    "suspect_to_review_chf": 30171.0
+    "suspect_total_lost_chf": 90.0,
+    "suspect_to_review_chf": 90.0
   },
   "SUSPECT_OVERWRITE": [
-    {
-      "month": "2026-04",
-      "kpis": {
-        "leads": 0,
-        "cash_collected": 0,
-        "close": 0,
-        "scheduled": 0,
-        "show": 0,
-        "active_members": 94,
-        "recurring_revenue": 8755.0,
-        "funnel_cash": 0
-      },
-      "accounting": {
-        "count": 141,
-        "sum_revenue": 30081.0
-      },
-      "estimated_real_cash_chf": 30081.0,
-      "backup_snapshot": null,
-      "already_restored": false
-    },
     {
       "month": "2024-02",
       "kpis": {

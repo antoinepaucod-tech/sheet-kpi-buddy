@@ -183,7 +183,14 @@ async def main():
         elif all_zero_major and (at["count"] == 0 or at["sum_revenue"] == 0):
             buckets["LEGIT_ZERO"].append(row)
         elif partial_zero:
-            buckets["PARTIAL_ZERO"].append(row)
+            # Si le doc a été restauré, le sortir du bucket PARTIAL_ZERO
+            if k.get("kpis_restored_at"):
+                row["restored_at"] = k.get("kpis_restored_at")
+                row["restored_from"] = k.get("kpis_restored_from")
+                row["restored_fields"] = k.get("kpis_restored_fields")
+                buckets["RESTORED"].append(row)
+            else:
+                buckets["PARTIAL_ZERO"].append(row)
         else:
             # Note : possible cas où cash_collected > 0 mais accounting sum=0
             # → cash collecté manuellement sans transaction enregistrée (informatif)
@@ -193,7 +200,7 @@ async def main():
     buckets["SUSPECT_OVERWRITE"].sort(key=lambda r: r["estimated_real_cash_chf"], reverse=True)
 
     # === Math invariant ===
-    total_classified = sum(len(buckets[k]) for k in ("SUSPECT_OVERWRITE", "LEGIT_ZERO", "PARTIAL_ZERO", "HEALTHY", "MISSING_KPI_DOC"))
+    total_classified = sum(len(buckets[k]) for k in ("SUSPECT_OVERWRITE", "LEGIT_ZERO", "PARTIAL_ZERO", "HEALTHY", "MISSING_KPI_DOC", "RESTORED"))
     assert total_classified == len(months_target), f"Math invariant broken: {total_classified} vs {len(months_target)}"
 
     # === Console output ===
@@ -203,6 +210,7 @@ async def main():
     print(f"  ⚪ LEGIT_ZERO        (vraiment vide)            : {len(buckets['LEGIT_ZERO']):>3}")
     print(f"  🟠 PARTIAL_ZERO      (3+ champs à 0 sur 5)      : {len(buckets['PARTIAL_ZERO']):>3}")
     print(f"  ✅ HEALTHY           (au moins 2 champs majeurs) : {len(buckets['HEALTHY']):>3}")
+    print(f"  🔧 RESTORED          (kpis_restored_at posé)    : {len(buckets['RESTORED']):>3}")
     print(f"  ❔ MISSING_KPI_DOC   (pas de doc KPI ce mois)    : {len(buckets['MISSING_KPI_DOC']):>3}")
     print(f"  {'TOTAL':<46} : {len(months_target):>3}")
 
