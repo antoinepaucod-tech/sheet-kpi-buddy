@@ -61,3 +61,20 @@ async def import_database(payload: dict, user=Depends(get_current_user)):
         results[col_name] = {"imported": len(docs)}
 
     return {"message": "Import terminé", "results": results}
+
+
+@router.post("/orphan-audit/run")
+async def trigger_orphan_audit(payload: dict | None = None, user=Depends(get_current_user)):
+    """Manual trigger for the weekly orphan audit (super_admin only).
+
+    Body (optional):
+      {"trigger_email": true}   # Force send email even if 0 orphan (validation pipeline)
+      {"trigger_email": false}  # Run audit but don't send email (dry-test)
+    Default: trigger_email=true
+    """
+    if user.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Super Admin requis")
+    trigger_email = True if payload is None else bool(payload.get("trigger_email", True))
+    from services.orphan_audit import run_weekly_orphan_audit
+    result = await run_weekly_orphan_audit(force_email=trigger_email, db=db)
+    return result

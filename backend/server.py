@@ -141,6 +141,17 @@ async def _scheduled_daily_rollover():
         logger.error(f"[Scheduler] Daily rollover failed: {e}")
 
 
+async def _scheduled_weekly_orphan_audit():
+    """Weekly read-only audit of orphan club_id docs across 15 critical collections.
+    Sends an email via Resend if orphans detected (kill switch via ORPHAN_AUDIT_RECIPIENT=empty).
+    """
+    from services.orphan_audit import run_weekly_orphan_audit
+    try:
+        await run_weekly_orphan_audit(force_email=False)
+    except Exception as e:
+        logger.error(f"[Scheduler] Weekly orphan audit failed: {e}")
+
+
 @app.on_event("startup")
 async def start_scheduler():
     scheduler.add_job(
@@ -155,5 +166,14 @@ async def start_scheduler():
         id="daily_rollover",
         replace_existing=True,
     )
+    scheduler.add_job(
+        _scheduled_weekly_orphan_audit,
+        trigger=CronTrigger(day_of_week="sun", hour=20, minute=0),
+        id="weekly_orphan_audit",
+        replace_existing=True,
+    )
     scheduler.start()
-    logger.info("[Scheduler] APScheduler started — Supabase sync every 1h, Daily rollover at 01:00.")
+    logger.info(
+        "[Scheduler] APScheduler started — Supabase sync every 1h, Daily rollover at 01:00 UTC, "
+        "Weekly orphan audit Sun 20:00 UTC."
+    )

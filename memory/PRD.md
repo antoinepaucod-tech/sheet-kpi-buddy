@@ -206,6 +206,16 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-15 — Digest CRON hebdomadaire orphelins club_id P2) ✅
+- [x] **Service** `/app/backend/services/orphan_audit.py` : `run_orphan_audit(db)`, `send_audit_email(force=...)`, `run_weekly_orphan_audit(force_email, db)`. Logs structurés `WEEKLY_ORPHAN_AUDIT_CLEAN/ALERT/KILL_SWITCH`.
+- [x] **Wrapper standalone** `/app/backend/scripts/weekly_orphan_audit.py` (mode `--force-email`).
+- [x] **APScheduler** job `_scheduled_weekly_orphan_audit` ajouté dans `server.py` (`CronTrigger(day_of_week='sun', hour=20, minute=0)` UTC).
+- [x] **Endpoint admin** `POST /api/admin/orphan-audit/run` (auth `super_admin`, body `{trigger_email: bool}`).
+- [x] **Email template HTML** brandé TRANSFORM (rose/noir) avec table orphelins par collection + samples IDs + action recommandée.
+- [x] **Kill switch** : `ORPHAN_AUDIT_RECIPIENT=""` désactive l'envoi (audit run mais aucun email).
+- [x] **Documentation** : `/app/backend/.env.example` créé (Resend + ORPHAN_AUDIT_RECIPIENT + Supabase + GHL + Meta).
+- [x] **Tests 5/5 PASS** : standalone clean, endpoint 401/200, simulation ALERT (insert+cleanup garanti), scheduler job chargé, kill switch effectif.
+
 ## Completed Tasks (Session 2026-05-13 — Toggle "Voir uniquement EXPIRÉS" P2) ✅
 - [x] **Frontend** MembersPage : toggle `members-show-only-expired-toggle` (label rouge) avec persistance localStorage `members_show_only_expired`. OFF par défaut.
 - [x] Quand ON : force la base aux `expiredMembers` (+ `expiredCoaches` si toggle Coach ON). Cumul OK avec recherche, catégorie, statut.
