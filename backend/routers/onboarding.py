@@ -3,12 +3,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from core.config import db, exclude_archived
 from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
+from core.member_categorization import get_member_category
 from core.activity_log import log_activity
 
 router = APIRouter(tags=["onboarding"])
+
+# Catégories INCLUSES dans le widget stats hebdo (performance commerciale)
+_WEEKLY_STATS_INCLUDED_CATEGORIES = {"HG", "OpenGym", "Challenge"}
 
 
 def _cq(club_id, base=None):
@@ -106,6 +112,92 @@ async def get_onboarding_history(club_id: Optional[str] = Depends(get_club_id)):
     
     filtered.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
     return filtered
+
+
+
+@router.get("/onboarding/stats/weekly")
+async def get_weekly_onboarding_stats(
+    current_user: dict = Depends(get_current_user),
+    club_id: Optional[str] = Depends(get_club_id),
+):
+    """Stats hebdo: onboardings complétés cette semaine ISO, groupés par utilisateur.
+
+    Périmètre commercial : inclut HG / OpenGym / Challenge.
+    Exclut : Coach, Partenaire, IFRC, Pret, Inconnu, archivés.
+    Semaine ISO calculée en Europe/Zurich (lundi 00:00 → dimanche 23:59:59).
+    """
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/onboarding/stats/weekly",
+    )
+
+    # Calcul semaine ISO courante (Europe/Zurich)
+    tz = ZoneInfo("Europe/Zurich")
+    now_local = datetime.now(tz)
+    iso_year, iso_week, iso_weekday = now_local.isocalendar()  # weekday 1..7 (lundi=1)
+    monday_local = (now_local - timedelta(days=iso_weekday - 1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    sunday_local_end = monday_local + timedelta(days=7) - timedelta(microseconds=1)
+
+    # Pour la query Mongo : `onboarding_completed_at` est stocké en ISO UTC.
+    # On convertit les bornes Zurich → UTC.
+    start_utc = monday_local.astimezone(timezone.utc)
+    end_utc = sunday_local_end.astimezone(timezone.utc)
+    start_iso = start_utc.isoformat()
+    end_iso = end_utc.isoformat()
+
+    # Charger membership_types pour catégorisation
+    types_list = await db.membership_types.find(
+        {"club_id": resolved_club_id}, {"_id": 0}
+    ).to_list(length=None)
+    types_by_name = {t.get("name"): t for t in types_list if t.get("name")}
+
+    # Query membres complétés cette semaine
+    query = exclude_archived({
+        "club_id": resolved_club_id,
+        "onboarding_completed": True,
+        "onboarding_completed_at": {"$gte": start_iso, "$lte": end_iso},
+    })
+    docs = await db.customer_members.find(query, {"_id": 0}).to_list(length=None)
+
+    # Filtrer par catégorie incluse
+    filtered = [
+        d for d in docs
+        if get_member_category(d, types_by_name) in _WEEKLY_STATS_INCLUDED_CATEGORIES
+    ]
+
+    # Agréger par utilisateur (onboarding_completed_by + name)
+    by_user: dict = {}
+    for d in filtered:
+        uid = d.get("onboarding_completed_by") or None
+        uname = (d.get("onboarding_completed_by_name") or "").strip() or None
+        key = uid or f"__unknown__::{uname or 'Inconnu'}"
+        if key not in by_user:
+            by_user[key] = {
+                "user_id": uid,
+                "user_name": uname or "Inconnu",
+                "count": 0,
+            }
+        by_user[key]["count"] += 1
+
+    # Tri DESC par count, ASC par name pour stabilité
+    by_user_list = sorted(
+        by_user.values(),
+        key=lambda x: (-x["count"], x["user_name"].lower()),
+    )
+
+    return {
+        "iso_year": iso_year,
+        "iso_week": iso_week,
+        "start_date": monday_local.date().isoformat(),
+        "end_date": (sunday_local_end.date()).isoformat(),
+        "timezone": "Europe/Zurich",
+        "total": len(filtered),
+        "by_user": by_user_list,
+    }
+
 
 
 

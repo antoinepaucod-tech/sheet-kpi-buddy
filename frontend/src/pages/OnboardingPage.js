@@ -55,6 +55,7 @@ import { Progress } from "../components/ui/progress";
 import { toast } from "sonner";
 import { useTranslations } from "../hooks/useTranslations";
 import { useMemberCategories, CATEGORY_LABELS, ONBOARDING_EXCLUDED_DEFAULT } from "../hooks/useMemberCategories";
+import { WeeklyOnboardingsWidget } from "../components/WeeklyOnboardingsWidget";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -323,6 +324,9 @@ export default function OnboardingPage() {
           {lang === "fr" ? "Suivi de l'intégration des nouveaux membres" : "New member integration tracking"}
         </p>
       </div>
+
+      {/* Widget — Onboardings de la semaine par utilisateur */}
+      <WeeklyOnboardingsWidget />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 tf-stagger">

@@ -206,6 +206,13 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-15 — Widget WeeklyOnboardings P2) ✅
+- [x] **Backend** `GET /api/onboarding/stats/weekly` (`routers/onboarding.py`) avec `get_current_user` + `get_club_id` + `resolve_club_id_or_fallback`. Calcul semaine ISO Europe/Zurich (lundi 00:00 → dimanche 23:59:59 local, converti UTC pour query). Agrégation par `onboarding_completed_by` + `onboarding_completed_by_name`. Exclut Coach/Partenaire/IFRC/Pret/Inconnu + archivés via `get_member_category` (inclut HG/OpenGym/Challenge). `null` → "Inconnu" préservé. Tri DESC count, ASC name.
+- [x] **Frontend** `components/WeeklyOnboardingsWidget.js` : dark mode `#09090B`, accent `#F97316`, polices `Bebas Neue` (titres) + `DM Sans` (table), import Google Fonts ajouté dans `index.css`. Header avec total + top-utilisateur badges, table par utilisateur, état empty & loading & error. Syntaxe TanStack Query v5 stricte (objet). queryKey `["onboarding","weekly-stats"]`, staleTime 5 min. data-testids : `weekly-onboardings-widget`, `weekly-onboardings-title`, `weekly-onboardings-total`, `weekly-onboardings-top-user`, `weekly-onboardings-row-{id}`, `weekly-onboardings-row-unknown-{idx}`.
+- [x] **Intégration** `pages/OnboardingPage.js` : widget placé entre header et stats grid (toujours visible).
+- [x] **Tests régression** `tests/test_onboarding_weekly_stats.py` : 2 tests PASS (shape/agrégation + exclusions catégories + tri, et empty). Validation manuelle curl Versoix : 27 onboardings semaine 20/2026, antoine.paucod = 27.
+- [x] **Smoke test e2e** : widget rendu OK preview (SEMAINE 20 · 2026, Total 27, top antoine.paucod · 27).
+
 ## Completed Tasks (Session 2026-05-15 — Husky pre-commit ESLint guard P2) ✅
 - [x] **Install** : `husky` + `lint-staged@15` (yarn, devDeps)
 - [x] **Config** : `git config core.hooksPath frontend/.husky` (monorepo : git root=/app, frontend=/app/frontend)
@@ -308,7 +315,7 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - (P2) Integration API GoHighLevel + Notifications
 - (P2) CRON renouvellement token Meta Ads (60 jours)
 - (P2) Alertes WhatsApp via Twilio
-- (P2) Widget dashboard "Onboardings de la semaine par utilisateur" (top 3)
+- (P2) Widget dashboard "Onboardings de la semaine par utilisateur" (top 3) ✅ LIVRÉ 2026-05-15 (mais en pleine liste — pas top 3)
 - (P2) Digest hebdo CRON dimanche : email aux coachs avec membres at_risk + transitions at_risk→engaged
 
 ## Completed Tasks (Session 2026-05-12 — Fix UX BulkActionBar + Raccourcis clavier)
