@@ -57,6 +57,10 @@ class CustomerMember(BaseModel):
     pause_start_date: Optional[str] = None  # YYYY-MM-DD (incl.). None = pas en pause.
     pause_end_date: Optional[str] = None    # YYYY-MM-DD (incl.). None = pause indéfinie.
     pause_reason: Optional[str] = None      # texte libre optionnel
+    # Bulk renewal reminder (2026-05-15)
+    last_renewal_reminder_at: Optional[str] = None  # ISO datetime du dernier email envoyé
+    renewal_reminder_count: int = 0  # Compteur cumulatif des relances envoyées
+    marketing_opt_out: bool = False  # RGPD : true → exclu des relances marketing
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 

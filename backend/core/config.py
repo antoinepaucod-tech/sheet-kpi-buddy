@@ -34,6 +34,14 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'kpibuddy-secret-key-change-in-product
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
 
+# Marketing unsubscribe (distinct secret, scope = unsubscribe only)
+UNSUBSCRIBE_SECRET = os.environ.get('UNSUBSCRIBE_SECRET', '')
+UNSUBSCRIBE_EXPIRATION_DAYS = 30
+
+# Renewal reminder
+RENEWAL_REMINDER_COOLDOWN_DAYS = 7
+RENEWAL_WHATSAPP_NUMBER = "41774966626"  # +41 77 496 66 26 (sans + ni espaces pour wa.me)
+
 # CORS
 CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*').split(',')
 

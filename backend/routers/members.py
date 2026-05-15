@@ -1402,3 +1402,180 @@ async def get_member_activity_log(member_id: str):
     return await db.activity_logs.find(
         {"member_id": member_id}, {"_id": 0}
     ).sort("created_at", -1).to_list(200)
+
+
+
+# ── Bulk renewal reminder (2026-05-15) ────────────────────────────────────────
+
+@router.post("/bulk-renewal-reminder")
+async def bulk_renewal_reminder(
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+    club_id: Optional[str] = Depends(get_club_id),
+):
+    """Envoie une relance de renouvellement à un batch de membres expirés.
+
+    Body : { "member_ids": [str, ...] } — cap 50.
+    Filtres serveur (défense en profondeur) :
+      - membre existe et club_id correspond (sécurité multi-tenant)
+      - is_expired calculé : subscription_end_date < today AND not archived
+      - cooldown 7j : last_renewal_reminder_at + 7j > now → skip
+      - marketing_opt_out true → skip
+      - email manquant → skip
+    Retourne breakdown { sent, skipped_cooldown, skipped_opt_out,
+                          skipped_not_expired, skipped_no_email, failed,
+                          details: [{member_id, name, status, reason?}] }.
+    """
+    import logging
+    from core.club_id_guard import resolve_club_id_or_fallback
+    from core.config import RENEWAL_REMINDER_COOLDOWN_DAYS
+    from core.notifications import send_renewal_reminder
+
+    logger = logging.getLogger(__name__)
+
+    member_ids = payload.get("member_ids") or []
+    if not isinstance(member_ids, list) or not member_ids:
+        raise HTTPException(status_code=400, detail="member_ids requis (liste non vide)")
+    if len(member_ids) > 50:
+        raise HTTPException(status_code=400, detail="Cap dépassé : maximum 50 membres par batch")
+
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/bulk-renewal-reminder",
+    )
+
+    today_iso_d = datetime.now(timezone.utc).date().isoformat()
+    now_dt = datetime.now(timezone.utc)
+    cooldown_threshold = now_dt - timedelta(days=RENEWAL_REMINDER_COOLDOWN_DAYS)
+
+    breakdown = {
+        "sent": 0,
+        "skipped_cooldown": 0,
+        "skipped_opt_out": 0,
+        "skipped_not_expired": 0,
+        "skipped_no_email": 0,
+        "failed": 0,
+        "details": [],
+    }
+
+    # Fetch tous les membres ciblés en 1 query
+    docs = await db.customer_members.find(
+        {"id": {"$in": member_ids}, "club_id": resolved_club_id},
+        {"_id": 0},
+    ).to_list(length=None)
+    by_id = {d["id"]: d for d in docs if d.get("id")}
+
+    # Resolve club_name once (best-effort)
+    club_doc = await db.clubs.find_one({"id": resolved_club_id}, {"_id": 0, "name": 1})
+    club_name = (club_doc or {}).get("name") or "TRANSFORM"
+
+    for mid in member_ids:
+        m = by_id.get(mid)
+        if not m:
+            breakdown["failed"] += 1
+            breakdown["details"].append({
+                "member_id": mid, "name": None, "status": "failed",
+                "reason": "not_found_or_wrong_club",
+            })
+            continue
+
+        name = m.get("name") or ""
+        end_date = m.get("subscription_end_date")
+        archived = bool(m.get("archived_at"))
+        is_expired = bool(end_date and end_date < today_iso_d and not archived)
+        if not is_expired:
+            breakdown["skipped_not_expired"] += 1
+            breakdown["details"].append({
+                "member_id": mid, "name": name, "status": "skipped",
+                "reason": "not_expired",
+            })
+            continue
+
+        if m.get("marketing_opt_out"):
+            breakdown["skipped_opt_out"] += 1
+            breakdown["details"].append({
+                "member_id": mid, "name": name, "status": "skipped",
+                "reason": "opt_out",
+            })
+            continue
+
+        last_iso = m.get("last_renewal_reminder_at")
+        if last_iso:
+            try:
+                last_dt = datetime.fromisoformat(last_iso.replace("Z", "+00:00"))
+                if last_dt.tzinfo is None:
+                    last_dt = last_dt.replace(tzinfo=timezone.utc)
+                if last_dt > cooldown_threshold:
+                    breakdown["skipped_cooldown"] += 1
+                    breakdown["details"].append({
+                        "member_id": mid, "name": name, "status": "skipped",
+                        "reason": "cooldown_7d",
+                    })
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        email = (m.get("email") or "").strip()
+        if not email:
+            breakdown["skipped_no_email"] += 1
+            breakdown["details"].append({
+                "member_id": mid, "name": name, "status": "skipped",
+                "reason": "no_email",
+            })
+            continue
+
+        try:
+            result = await send_renewal_reminder(
+                to_email=email,
+                member_name=name,
+                member_id=mid,
+                club_name=club_name,
+            )
+            # Update mutations Atlas seulement après succès Resend
+            now_iso = datetime.now(timezone.utc).isoformat()
+            await db.customer_members.update_one(
+                {"id": mid},
+                {
+                    "$set": {"last_renewal_reminder_at": now_iso, "updated_at": now_iso},
+                    "$inc": {"renewal_reminder_count": 1},
+                },
+            )
+            breakdown["sent"] += 1
+            breakdown["details"].append({
+                "member_id": mid, "name": name, "status": "sent",
+                "resend_id": result.get("resend_id"),
+            })
+        except Exception as e:
+            breakdown["failed"] += 1
+            breakdown["details"].append({
+                "member_id": mid, "name": name, "status": "failed",
+                "reason": str(e)[:200],
+            })
+            logger.error(f"BULK_RENEWAL_REMINDER_FAIL member={mid} error={e}")
+
+    # 1 log d'activité pour l'action globale (pas un par membre)
+    await log_activity(
+        db,
+        action="bulk_renewal_reminder_sent",
+        description=(
+            f"Bulk relance — envoyés:{breakdown['sent']} "
+            f"cooldown:{breakdown['skipped_cooldown']} "
+            f"opt_out:{breakdown['skipped_opt_out']} "
+            f"not_expired:{breakdown['skipped_not_expired']} "
+            f"no_email:{breakdown['skipped_no_email']} "
+            f"failed:{breakdown['failed']}"
+        ),
+        current_user=current_user,
+    )
+    logger.info(
+        "BULK_RENEWAL_REMINDER_DONE "
+        f"club={resolved_club_id} "
+        f"sent={breakdown['sent']} "
+        f"cooldown={breakdown['skipped_cooldown']} "
+        f"opt_out={breakdown['skipped_opt_out']} "
+        f"not_expired={breakdown['skipped_not_expired']} "
+        f"no_email={breakdown['skipped_no_email']} "
+        f"failed={breakdown['failed']}"
+    )
+    return breakdown

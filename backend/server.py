@@ -17,7 +17,8 @@ from models.kpi import ClubSettings
 from routers import (
     auth, members, payments, annual_reviews, followups, onboarding,
     settings, coaches, challenges, kpis, transactions, trainings,
-    courses, alerts, reports, notifications, ghl, clubs, meta, franchise, admin, sync, rollover
+    courses, alerts, reports, notifications, ghl, clubs, meta, franchise, admin, sync, rollover,
+    marketing,
 )
 
 # App setup
@@ -51,6 +52,7 @@ api_router.include_router(franchise.router)
 api_router.include_router(admin.router)
 api_router.include_router(sync.router)
 api_router.include_router(rollover.router)
+api_router.include_router(marketing.router)
 
 
 from core.security import get_club_id as _get_club_id
