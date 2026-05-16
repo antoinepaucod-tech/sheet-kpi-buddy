@@ -206,12 +206,18 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
   - `invalidateQueries({queryKey:["payments"]})` (prefix) continue d'invalider les 3 caches enfants → comportement inchangé après mutation
   - Validation e2e screenshot : 5/5 tests PASS (mai/avril/mars 2026 KPIs dynamiques, listes correctes, non-régression Dashboard/Transactions)
 
+## Completed Tasks (Session 2026-05-16 — Bulk Renewal Reminder EXPIRÉS + Dark Mode Hardening) ✅
+- [x] **Backend** : 3 champs ajoutés au modèle `CustomerMember` (`last_renewal_reminder_at`, `renewal_reminder_count`, `marketing_opt_out`). Endpoint `POST /api/members/bulk-renewal-reminder` (auth + club_id_guard, cap 50, filtres serveur : is_expired/cooldown 7j/opt_out/no_email, séquentiel, breakdown détaillé `{sent, skipped_cooldown, skipped_opt_out, skipped_not_expired, skipped_no_email, failed, details[]}`, log_activity global unique).
+- [x] **Public router** `routers/marketing.py` + `GET /api/marketing/unsubscribe?token=...` (sans auth, JWT scope=unsubscribe exp 30j, `UNSUBSCRIBE_SECRET` distinct de `JWT_SECRET`). Page HTML brandée TRANSFORM/Hybrid Gym (success / expired / invalid / déjà désinscrit).
+- [x] **Core helpers** : `core/notifications.py` (template Bebas Neue + DM Sans, palette dark Hybrid Gym, CTA WhatsApp `+41 77 496 66 26`, "Train Without Limits" tagline, `build_unsubscribe_token`/`decode_unsubscribe_token`, `send_renewal_reminder`). `core/club_branding.py` avec helper `get_club_public_name(db, club_id)` (cascade `public_name → name → "HYBRID GYM"`).
+- [x] **Migration Atlas** `scripts/migrate_add_public_name.py` (pattern Sprint A : dry-run + apply + confirmation `yes` + idempotence). Versoix migré : `public_name="Hybrid Gym Geneva"` + `public_name_migrated_at`. `name="Transform Versoix"` INCHANGÉ. 3 autres clubs non touchés (préservés pour activation future).
+- [x] **Dark mode hardening v3** (5 techniques) : `<meta color-scheme>` + `<meta supported-color-schemes>`, wrapper outer `<table>` 100% bgcolor + `!important`, gradient subtil `linear-gradient(180deg, #09090B → #0D0D0F)`, MSO conditional comments Outlook, sélecteurs `[data-ogsc]`/`[data-ogsb]` Gmail mobile (49 `!important` inline). Palette : `#09090B` bg, `#111113` card, `#E5E7EB` body, `#9CA3AF` muted, `#2C2C2E` border, `#F97316` accent. 0 em-dash/en-dash dans rendu HTML.
+- [x] **Frontend** : `useBulkRenewalReminder` hook (1 seul appel HTTP, TanStack v5 strict), `BulkRenewalConfirmDialog` (confirm/running/results breakdown + détail échecs collapsible), extension `BulkActionBar` avec prop `renewal={{ onAction, disabled, disabledTooltip }}`. Intégration `MembersPage` : bouton contextuel orange "Relancer X expirés" visible seulement si sélection contient au moins 1 membre, disabled + tooltip si non-expirés mixés.
+- [x] **Tests** : `tests/test_renewal_reminder.py` 10/10 PASS (401 sans auth, 200 happy path, cooldown skip, opt_out skip, not_expired skip, no_email skip, cap 50, unsubscribe valid/expired/invalid). Régression globale 88/88 PASS.
+- [x] **Test E2E live** : 3 envois réels via membre `_TEMP_TEST_` cleanup garanti — Resend IDs validés, counters DB incrémentés, `last_renewal_reminder_at` stampé, `get_club_public_name` retourne `'Hybrid Gym Geneva'` ✅.
+- [x] **Deploy prod** : v2 puis v3 déployées sur `https://club.transform-os.ch`. Post-deploy test non-mutant validé (login + /members + toggle EXPIRÉS + bouton "Relancer 8 expirés" visible, 0 envoi réel).
+
 ## Completed Tasks (Session 2026-05-15 — Widget WeeklyOnboardings P2) ✅
-- [x] **Backend** `GET /api/onboarding/stats/weekly` (`routers/onboarding.py`) avec `get_current_user` + `get_club_id` + `resolve_club_id_or_fallback`. Calcul semaine ISO Europe/Zurich (lundi 00:00 → dimanche 23:59:59 local, converti UTC pour query). Agrégation par `onboarding_completed_by` + `onboarding_completed_by_name`. Exclut Coach/Partenaire/IFRC/Pret/Inconnu + archivés via `get_member_category` (inclut HG/OpenGym/Challenge). `null` → "Inconnu" préservé. Tri DESC count, ASC name.
-- [x] **Frontend** `components/WeeklyOnboardingsWidget.js` : dark mode `#09090B`, accent `#F97316`, polices `Bebas Neue` (titres) + `DM Sans` (table), import Google Fonts ajouté dans `index.css`. Header avec total + top-utilisateur badges, table par utilisateur, état empty & loading & error. Syntaxe TanStack Query v5 stricte (objet). queryKey `["onboarding","weekly-stats"]`, staleTime 5 min. data-testids : `weekly-onboardings-widget`, `weekly-onboardings-title`, `weekly-onboardings-total`, `weekly-onboardings-top-user`, `weekly-onboardings-row-{id}`, `weekly-onboardings-row-unknown-{idx}`.
-- [x] **Intégration** `pages/OnboardingPage.js` : widget placé entre header et stats grid (toujours visible).
-- [x] **Tests régression** `tests/test_onboarding_weekly_stats.py` : 2 tests PASS (shape/agrégation + exclusions catégories + tri, et empty). Validation manuelle curl Versoix : 27 onboardings semaine 20/2026, antoine.paucod = 27.
-- [x] **Smoke test e2e** : widget rendu OK preview (SEMAINE 20 · 2026, Total 27, top antoine.paucod · 27).
 
 ## Completed Tasks (Session 2026-05-15 — Husky pre-commit ESLint guard P2) ✅
 - [x] **Install** : `husky` + `lint-staged@15` (yarn, devDeps)
@@ -347,6 +353,7 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 ## Backlog
 - (P3) Refactoring MembersPage.js (>1500 lines) et Dashboard.js (>900 lines)
 - (P3) Responsive Mobile / PWA optimization
+- (P3) **Gmail auto-light-mode renewal reminder template** : limitation connue Gmail (web + mobile). Gmail force light mode sur les emails dark malgré meta tags + `[data-ogsc]/[data-ogsb]` + MSO comments. Non-critique : le mail reste lisible et fonctionnel sur Gmail (rendu en light mode). Dark correct sur Apple Mail / Outlook desktop / ProtonMail. Pas de fix viable à date côté HTML email — workaround possible : passer en design "light mode first" (palette claire) si trafic Gmail >> autres clients, à arbitrer plus tard. Documenté 2026-05-16.
 
 ### Audit Data Integrity (P2, ajouté 2026-05-12)
 - **Membres avec `billing_enabled=true` mais 0 `payment_schedules`** : suite au bug pré-existant `from models.members import PaymentSchedule` corrigé pendant Sprint Hardening Sous-bloc CRITIQUE. Aggregation MongoDB suggérée :
