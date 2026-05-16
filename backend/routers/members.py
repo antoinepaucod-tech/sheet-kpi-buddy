@@ -89,6 +89,11 @@ async def get_members(expiring_soon: Optional[bool] = None, member_type: Optiona
         d["is_expired"] = bool(
             end_date and end_date < today_iso_d and not d.get("archived_at")
         )
+        # Bulk renewal reminder fields (2026-05-16) — expose defaults sûrs
+        # même quand le doc Mongo n'a pas encore ces champs (jamais relancé)
+        d.setdefault("last_renewal_reminder_at", None)
+        d.setdefault("renewal_reminder_count", 0)
+        d.setdefault("marketing_opt_out", False)
 
     # Separate current vs departed (departed = exit_date in the past only)
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -529,6 +534,10 @@ async def get_member(member_id: str):
     doc["is_expired"] = bool(
         end_date and end_date < today_iso_d and not doc.get("archived_at")
     )
+    # Bulk renewal reminder fields (2026-05-16) — defaults sûrs
+    doc.setdefault("last_renewal_reminder_at", None)
+    doc.setdefault("renewal_reminder_count", 0)
+    doc.setdefault("marketing_opt_out", False)
 
     # Sprint D Bonus — engagement_recent widget data (4 dernières semaines).
     # Volontairement nul si membre archivé.

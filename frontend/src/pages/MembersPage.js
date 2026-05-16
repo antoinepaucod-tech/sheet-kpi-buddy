@@ -65,6 +65,7 @@ import { EngagementWidget } from "../components/EngagementWidget";
 import { BulkActionBar } from "../components/BulkActionBar";
 import { BulkArchiveConfirmDialog } from "../components/BulkArchiveConfirmDialog";
 import { BulkRenewalConfirmDialog } from "../components/BulkRenewalConfirmDialog";
+import { RenewalReminderBadge } from "../components/RenewalReminderBadge";
 import { useBulkArchiveAction, MAX_BULK_SIZE } from "../hooks/useBulkArchiveAction";
 import { useBulkRenewalReminder } from "../hooks/useBulkRenewalReminder";
 import { Checkbox } from "../components/ui/checkbox";
@@ -845,6 +846,13 @@ export default function MembersPage() {
                           )}
                           {member.is_expired && (
                             <Badge className="bg-[rgba(255,69,58,0.18)] text-[#FF453A] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid={`member-expired-badge-${member.id}`}>EXPIRÉ</Badge>
+                          )}
+                          {showOnlyExpired && member.is_expired && (
+                            <RenewalReminderBadge
+                              lastReminderAt={member.last_renewal_reminder_at}
+                              count={member.renewal_reminder_count}
+                              testid={`member-renewal-reminder-badge-${member.id}`}
+                            />
                           )}
                           {member.is_duo && member.duo_primary && (
                             <Badge className="bg-[rgba(191,90,242,0.15)] text-[#BF5AF2] border-0 text-[9px] px-1.5 py-0 font-bold tracking-wider" data-testid="duo-primary-badge">DUO</Badge>
