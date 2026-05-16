@@ -98,32 +98,35 @@ def renewal_reminder_template(
 
     bebas = "'Bebas Neue', 'Impact', 'Inter', -apple-system, sans-serif"
     dmsans = "'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+    # Palette Hybrid Gym dark (validée 2026-05-16)
     accent = "#F97316"
-    bg = "#09090B"
-    bg_card = "#18181B"
-    border = "rgba(255,255,255,0.08)"
-    text_main = "#FFFFFF"
-    text_sec = "rgba(235,235,245,0.65)"
-    text_muted = "rgba(235,235,245,0.35)"
+    bg = "#09090B"           # noir-bleu profond
+    bg_card = "#111113"      # carte interne, démarcation subtile
+    text_main = "#FFFFFF"    # titres
+    text_sec = "#E5E7EB"     # body lisible sur dark
+    text_muted = "#9CA3AF"   # secondaire / footer
+    border = "#2C2C2E"       # séparateur subtle
 
     html = f"""<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="supported-color-schemes" content="dark light">
   <title>{subject}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:{bg};font-family:{dmsans};color:{text_main};-webkit-font-smoothing:antialiased;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:{bg};padding:32px 16px;">
+<body bgcolor="{bg}" style="margin:0;padding:0;background:{bg};background-color:{bg};font-family:{dmsans};color:{text_main};-webkit-font-smoothing:antialiased;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="{bg}" style="background:{bg};background-color:{bg};padding:32px 16px;">
     <tr>
-      <td align="center">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="max-width:560px;background:{bg_card};border:1px solid {border};border-radius:14px;overflow:hidden;">
+      <td align="center" bgcolor="{bg}" style="background:{bg};">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" bgcolor="{bg_card}" style="max-width:560px;background:{bg_card};background-color:{bg_card};border:1px solid {border};border-radius:14px;overflow:hidden;">
           <!-- Header -->
           <tr>
-            <td style="padding:28px 32px 18px;border-bottom:1px solid {border};">
+            <td bgcolor="{bg_card}" style="padding:28px 32px 18px;border-bottom:1px solid {border};background-color:{bg_card};">
               <div style="font-family:{dmsans};font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:{accent};margin-bottom:8px;">
                 {club_name} · Ton coach
               </div>
@@ -138,13 +141,13 @@ def renewal_reminder_template(
 
           <!-- Body -->
           <tr>
-            <td style="padding:28px 32px 8px;font-family:{dmsans};">
+            <td bgcolor="{bg_card}" style="padding:28px 32px 8px;font-family:{dmsans};background-color:{bg_card};">
               <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{text_sec};">
                 Salut <strong style="color:{text_main};">{first}</strong>,
               </p>
               <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{text_sec};">
                 Ton abonnement vient d'arriver à échéance et on s'est rendu compte qu'on ne t'avait pas vu ces derniers jours.
-                On voulait juste prendre des nouvelles — pas de pression, juste savoir si tout va bien de ton côté.
+                On voulait juste prendre des nouvelles. Pas de pression, juste savoir si tout va bien de ton côté.
               </p>
               <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:{text_sec};">
                 Si t'as envie de remettre les chaussures et qu'on continue ensemble, on serait ravi de te revoir.
@@ -156,7 +159,7 @@ def renewal_reminder_template(
                 <tr>
                   <td align="center" style="padding:6px 0 24px;">
                     <a href="{whatsapp_url}"
-                       style="display:inline-block;background:{accent};color:#0B0B0B;text-decoration:none;font-family:{dmsans};font-size:15px;font-weight:700;letter-spacing:0.02em;padding:14px 28px;border-radius:10px;">
+                       style="display:inline-block;background:{accent};background-color:{accent};color:#FFFFFF;text-decoration:none;font-family:{dmsans};font-size:15px;font-weight:700;letter-spacing:0.02em;padding:14px 28px;border-radius:10px;">
                       💬 Renouveler en 30 secondes
                     </a>
                     <div style="margin-top:10px;font-family:{dmsans};font-size:12px;color:{text_muted};">
@@ -180,7 +183,7 @@ def renewal_reminder_template(
 
           <!-- Footer -->
           <tr>
-            <td style="padding:18px 32px 24px;border-top:1px solid {border};font-family:{dmsans};font-size:11px;line-height:1.5;color:{text_muted};">
+            <td bgcolor="{bg_card}" style="padding:18px 32px 24px;border-top:1px solid {border};background-color:{bg_card};font-family:{dmsans};font-size:11px;line-height:1.5;color:{text_muted};">
               Tu reçois ce message parce que tu fais partie de la communauté {club_name}.
               Si tu ne souhaites plus recevoir nos relances,
               <a href="{unsubscribe_url}" style="color:{accent};text-decoration:underline;">

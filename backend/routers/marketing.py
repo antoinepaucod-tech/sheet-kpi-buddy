@@ -109,7 +109,7 @@ async def unsubscribe(token: str = Query(..., min_length=10)):
     return _html_page(
         title="Désinscription confirmée",
         body_html=(
-            "C'est noté — tu ne recevras plus nos relances de renouvellement. "
+            "C'est noté, tu ne recevras plus nos relances de renouvellement. "
             "Si jamais tu changes d'avis, tu peux toujours nous contacter directement. "
             "Bonne continuation 💪"
         ),
