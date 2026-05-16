@@ -1465,9 +1465,9 @@ async def bulk_renewal_reminder(
     ).to_list(length=None)
     by_id = {d["id"]: d for d in docs if d.get("id")}
 
-    # Resolve club_name once (best-effort) — fallback HYBRID GYM (member-facing brand)
-    club_doc = await db.clubs.find_one({"id": resolved_club_id}, {"_id": 0, "name": 1})
-    club_name = (club_doc or {}).get("name") or "HYBRID GYM"
+    # Resolve club_name once (best-effort) — Option C : cascade public_name → name → fallback
+    from core.club_branding import get_club_public_name
+    club_name = await get_club_public_name(db, resolved_club_id)
 
     for mid in member_ids:
         m = by_id.get(mid)
