@@ -71,7 +71,7 @@ def build_unsubscribe_url(member_id: str) -> str:
 
 
 def build_whatsapp_url(first_name: Optional[str] = None) -> str:
-    text = "Salut, je souhaite renouveler"
+    text = "Salut ! Je veux renouveler mon abonnement 💪"
     return f"https://wa.me/{RENEWAL_WHATSAPP_NUMBER}?text={quote(text)}"
 
 
@@ -87,7 +87,7 @@ def renewal_reminder_template(
     member_name: str,
     unsubscribe_url: str,
     whatsapp_url: str,
-    club_name: str = "TRANSFORM",
+    club_name: str = "HYBRID GYM",
 ) -> tuple[str, str]:
     """Retourne (subject, html). Branding TRANSFORM dark + accent #F97316.
 
@@ -128,8 +128,11 @@ def renewal_reminder_template(
                 {club_name} · Ton coach
               </div>
               <h1 style="margin:0;font-family:{bebas};font-size:42px;line-height:1;letter-spacing:0.02em;color:{text_main};">
-                {first.upper()}, on a remarqué ton absence
+                {first.upper()}, ON NE T'A PAS VU CETTE SEMAINE
               </h1>
+              <div style="margin-top:10px;font-family:{dmsans};font-size:11px;font-style:italic;color:{text_muted};letter-spacing:0.05em;">
+                Train Without Limits
+              </div>
             </td>
           </tr>
 
@@ -205,7 +208,7 @@ async def send_renewal_reminder(
     to_email: str,
     member_name: str,
     member_id: str,
-    club_name: str = "TRANSFORM",
+    club_name: str = "HYBRID GYM",
 ) -> dict:
     """Envoie 1 email de relance. Retourne {sent: bool, ...}.
 

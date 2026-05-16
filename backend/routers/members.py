@@ -9,6 +9,7 @@ from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id, get_current_user
 from core.activity_log import log_activity
 from core.club_id_guard import resolve_club_id_or_fallback
+from core.notifications import send_renewal_reminder
 from core.member_categorization import (
     get_member_category,
     _dedupe_partenaire,
@@ -1427,9 +1428,7 @@ async def bulk_renewal_reminder(
                           details: [{member_id, name, status, reason?}] }.
     """
     import logging
-    from core.club_id_guard import resolve_club_id_or_fallback
     from core.config import RENEWAL_REMINDER_COOLDOWN_DAYS
-    from core.notifications import send_renewal_reminder
 
     logger = logging.getLogger(__name__)
 
@@ -1466,9 +1465,9 @@ async def bulk_renewal_reminder(
     ).to_list(length=None)
     by_id = {d["id"]: d for d in docs if d.get("id")}
 
-    # Resolve club_name once (best-effort)
+    # Resolve club_name once (best-effort) — fallback HYBRID GYM (member-facing brand)
     club_doc = await db.clubs.find_one({"id": resolved_club_id}, {"_id": 0, "name": 1})
-    club_name = (club_doc or {}).get("name") or "TRANSFORM"
+    club_name = (club_doc or {}).get("name") or "HYBRID GYM"
 
     for mid in member_ids:
         m = by_id.get(mid)

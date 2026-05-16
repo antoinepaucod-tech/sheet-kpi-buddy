@@ -64,7 +64,9 @@ import { PauseMemberDialog } from "../components/PauseMemberDialog";
 import { EngagementWidget } from "../components/EngagementWidget";
 import { BulkActionBar } from "../components/BulkActionBar";
 import { BulkArchiveConfirmDialog } from "../components/BulkArchiveConfirmDialog";
+import { BulkRenewalConfirmDialog } from "../components/BulkRenewalConfirmDialog";
 import { useBulkArchiveAction, MAX_BULK_SIZE } from "../hooks/useBulkArchiveAction";
+import { useBulkRenewalReminder } from "../hooks/useBulkRenewalReminder";
 import { Checkbox } from "../components/ui/checkbox";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -365,6 +367,10 @@ export default function MembersPage() {
   const bulkArchive = useBulkArchiveAction("member");
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const shiftHeldRef = useRef(false);
+
+  // P1 — Bulk renewal reminder (2026-05-15)
+  const bulkRenewal = useBulkRenewalReminder();
+  const [bulkRenewalDialogOpen, setBulkRenewalDialogOpen] = useState(false);
 
   // Filter members
   const filteredMembers = useMemo(() => {
@@ -720,6 +726,19 @@ export default function MembersPage() {
         action="archive"
         onAction={() => setBulkDialogOpen(true)}
         onClear={() => bulkArchive.clear()}
+        renewal={(() => {
+          if (bulkArchive.selected.size === 0) return null;
+          const selectedMembers = filteredMembers.filter((m) => bulkArchive.selected.has(m.id));
+          const nonExpired = selectedMembers.filter((m) => !m.is_expired);
+          const allExpired = selectedMembers.length > 0 && nonExpired.length === 0;
+          return {
+            onAction: () => setBulkRenewalDialogOpen(true),
+            disabled: !allExpired,
+            disabledTooltip: !allExpired
+              ? `${nonExpired.length} membre${nonExpired.length > 1 ? "s" : ""} non expiré${nonExpired.length > 1 ? "s" : ""} dans la sélection — décoche-les ou active le toggle EXPIRÉS`
+              : "",
+          };
+        })()}
       />
 
       {/* Table */}
@@ -1887,6 +1906,43 @@ export default function MembersPage() {
               toast.error(`Échec — ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
             } else {
               toast.warning(`${successes.length} ${successes.length > 1 ? "archivés" : "archivé"} ✅, ${errors.length} erreur${errors.length > 1 ? "s" : ""}`);
+            }
+          }
+        }}
+      />
+
+      {/* P1 — Bulk renewal reminder (2026-05-15) */}
+      <BulkRenewalConfirmDialog
+        open={bulkRenewalDialogOpen}
+        count={bulkArchive.selected.size}
+        running={bulkRenewal.running}
+        summary={bulkRenewal.summary}
+        error={bulkRenewal.error}
+        onClose={() => {
+          setBulkRenewalDialogOpen(false);
+          bulkRenewal.reset();
+          if (bulkRenewal.summary && bulkRenewal.summary.sent > 0) {
+            // Reset sélection après succès
+            bulkArchive.clear();
+          }
+        }}
+        onConfirm={async () => {
+          const ids = Array.from(bulkArchive.selected);
+          const data = await bulkRenewal.run(ids);
+          if (data) {
+            const { sent, failed, skipped_cooldown, skipped_opt_out } = data;
+            const totalSkipped = (skipped_cooldown || 0) + (skipped_opt_out || 0);
+            if (failed === 0 && totalSkipped === 0) {
+              toast.success(`${sent} relance${sent > 1 ? "s" : ""} envoyée${sent > 1 ? "s" : ""} ✅`);
+            } else if (sent === 0) {
+              const reason = failed > 0
+                ? `${failed} échec${failed > 1 ? "s" : ""}`
+                : `Tous skippés (cooldown/opt-out)`;
+              toast.warning(`Aucun envoi — ${reason}`);
+            } else {
+              toast.success(
+                `${sent} envoyé${sent > 1 ? "s" : ""} ✅ · ${totalSkipped} skippé${totalSkipped > 1 ? "s" : ""}${failed > 0 ? ` · ${failed} échec${failed > 1 ? "s" : ""}` : ""}`,
+              );
             }
           }
         }}

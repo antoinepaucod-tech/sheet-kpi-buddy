@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Archive, Undo2, X } from "lucide-react";
+import { Archive, Undo2, X, Mail } from "lucide-react";
 import { Button } from "./ui/button";
 
 /**
@@ -11,6 +11,10 @@ import { Button } from "./ui/button";
  *
  * Raccourci clavier : Échap → désélectionne tout (sauf si une modale
  * Radix Dialog/AlertDialog est ouverte — dans ce cas Échap ferme la modale).
+ *
+ * P1 (2026-05-15) — Bouton secondaire "Relancer X membres" via prop `renewal`:
+ *   { onAction, disabled, disabledTooltip }
+ * Visible si l'objet est passé. Le parent contrôle quand l'afficher.
  */
 export function BulkActionBar({
   count,
@@ -20,6 +24,7 @@ export function BulkActionBar({
   onAction,
   onClear,
   disabled = false,
+  renewal = null, // { onAction, disabled?, disabledTooltip? } | null
 }) {
   // Listener global Échap → onClear (sauf si modale ouverte).
   // Attaché en phase CAPTURE pour fire AVANT que Radix Dialog ferme la modale,
@@ -73,6 +78,19 @@ export function BulkActionBar({
             <X size={14} />
             Désélectionner
           </Button>
+          {renewal && (
+            <Button
+              size="sm"
+              disabled={!!renewal.disabled}
+              onClick={renewal.onAction}
+              title={renewal.disabled ? renewal.disabledTooltip || "" : ""}
+              className="gap-1 bg-[#F97316] hover:bg-[#F97316]/85 text-black font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+              data-testid="bulk-renewal-btn"
+            >
+              <Mail size={14} />
+              Relancer {count} expiré{count > 1 ? "s" : ""}
+            </Button>
+          )}
           <Button
             size="sm"
             disabled={disabled}
