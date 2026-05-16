@@ -118,22 +118,41 @@ def renewal_reminder_template(
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Gmail mobile dark-mode override : Gmail wrappe certaines couleurs dans [data-ogsc]/[data-ogsb]
+       quand il auto-light-mode-ifies un email dark. On force nos hex pour annuler l'inversion. */
+    [data-ogsc] .tf-bg, [data-ogsb] .tf-bg {{ background: {bg} !important; background-color: {bg} !important; }}
+    [data-ogsc] .tf-card, [data-ogsb] .tf-card {{ background: {bg_card} !important; background-color: {bg_card} !important; }}
+    [data-ogsc] .tf-text-main {{ color: {text_main} !important; }}
+    [data-ogsc] .tf-text-sec {{ color: {text_sec} !important; }}
+    [data-ogsc] .tf-text-muted {{ color: {text_muted} !important; }}
+    [data-ogsc] .tf-accent {{ color: {accent} !important; }}
+    [data-ogsc] .tf-cta {{ background: {accent} !important; background-color: {accent} !important; color: #FFFFFF !important; }}
+    /* Système OS dark mode (Apple Mail, ProtonMail), déjà OK mais on consolide */
+    @media (prefers-color-scheme: dark) {{
+      .tf-bg {{ background: {bg} !important; background-color: {bg} !important; }}
+      .tf-card {{ background: {bg_card} !important; background-color: {bg_card} !important; }}
+    }}
+  </style>
 </head>
-<body bgcolor="{bg}" style="margin:0;padding:0;background:{bg};background-color:{bg};font-family:{dmsans};color:{text_main};-webkit-font-smoothing:antialiased;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="{bg}" style="background:{bg};background-color:{bg};padding:32px 16px;">
+<body class="tf-bg" bgcolor="{bg}" style="margin:0 !important;padding:0 !important;background:{bg} !important;background-color:{bg} !important;font-family:{dmsans};color:{text_main} !important;-webkit-font-smoothing:antialiased;">
+  <!--[if mso]>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="{bg}"><tr><td bgcolor="{bg}">
+  <![endif]-->
+  <table role="presentation" class="tf-bg" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="{bg}" style="background:{bg};background:linear-gradient(180deg, {bg} 0%, #0D0D0F 100%);background-color:{bg} !important;padding:32px 16px;">
     <tr>
-      <td align="center" bgcolor="{bg}" style="background:{bg};">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" bgcolor="{bg_card}" style="max-width:560px;background:{bg_card};background-color:{bg_card};border:1px solid {border};border-radius:14px;overflow:hidden;">
+      <td align="center" class="tf-bg" bgcolor="{bg}" style="background:{bg} !important;background-color:{bg} !important;">
+        <table role="presentation" class="tf-card" cellspacing="0" cellpadding="0" border="0" width="560" bgcolor="{bg_card}" style="max-width:560px;background:{bg_card} !important;background-color:{bg_card} !important;border:1px solid {border};border-radius:14px;overflow:hidden;">
           <!-- Header -->
           <tr>
-            <td bgcolor="{bg_card}" style="padding:28px 32px 18px;border-bottom:1px solid {border};background-color:{bg_card};">
-              <div style="font-family:{dmsans};font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:{accent};margin-bottom:8px;">
+            <td class="tf-card" bgcolor="{bg_card}" style="padding:28px 32px 18px;border-bottom:1px solid {border};background:{bg_card} !important;background-color:{bg_card} !important;">
+              <div class="tf-accent" style="font-family:{dmsans};font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:{accent} !important;margin-bottom:8px;">
                 {club_name} · Ton coach
               </div>
-              <h1 style="margin:0;font-family:{bebas};font-size:42px;line-height:1;letter-spacing:0.02em;color:{text_main};">
+              <h1 class="tf-text-main" style="margin:0;font-family:{bebas};font-size:42px;line-height:1;letter-spacing:0.02em;color:{text_main} !important;">
                 {first.upper()}, ON NE T'A PAS VU CETTE SEMAINE
               </h1>
-              <div style="margin-top:10px;font-family:{dmsans};font-size:11px;font-style:italic;color:{text_muted};letter-spacing:0.05em;">
+              <div class="tf-text-muted" style="margin-top:10px;font-family:{dmsans};font-size:11px;font-style:italic;color:{text_muted} !important;letter-spacing:0.05em;">
                 Train Without Limits
               </div>
             </td>
@@ -141,15 +160,15 @@ def renewal_reminder_template(
 
           <!-- Body -->
           <tr>
-            <td bgcolor="{bg_card}" style="padding:28px 32px 8px;font-family:{dmsans};background-color:{bg_card};">
-              <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{text_sec};">
-                Salut <strong style="color:{text_main};">{first}</strong>,
+            <td class="tf-card" bgcolor="{bg_card}" style="padding:28px 32px 8px;font-family:{dmsans};background:{bg_card} !important;background-color:{bg_card} !important;">
+              <p class="tf-text-sec" style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{text_sec} !important;">
+                Salut <strong class="tf-text-main" style="color:{text_main} !important;">{first}</strong>,
               </p>
-              <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{text_sec};">
+              <p class="tf-text-sec" style="margin:0 0 14px;font-size:15px;line-height:1.65;color:{text_sec} !important;">
                 Ton abonnement vient d'arriver à échéance et on s'est rendu compte qu'on ne t'avait pas vu ces derniers jours.
                 On voulait juste prendre des nouvelles. Pas de pression, juste savoir si tout va bien de ton côté.
               </p>
-              <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:{text_sec};">
+              <p class="tf-text-sec" style="margin:0 0 22px;font-size:15px;line-height:1.65;color:{text_sec} !important;">
                 Si t'as envie de remettre les chaussures et qu'on continue ensemble, on serait ravi de te revoir.
                 Le plus simple : un petit message WhatsApp et on s'occupe du reste.
               </p>
@@ -158,24 +177,24 @@ def renewal_reminder_template(
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
                   <td align="center" style="padding:6px 0 24px;">
-                    <a href="{whatsapp_url}"
-                       style="display:inline-block;background:{accent};background-color:{accent};color:#FFFFFF;text-decoration:none;font-family:{dmsans};font-size:15px;font-weight:700;letter-spacing:0.02em;padding:14px 28px;border-radius:10px;">
+                    <a class="tf-cta" href="{whatsapp_url}"
+                       style="display:inline-block;background:{accent} !important;background-color:{accent} !important;color:#FFFFFF !important;text-decoration:none;font-family:{dmsans};font-size:15px;font-weight:700;letter-spacing:0.02em;padding:14px 28px;border-radius:10px;">
                       💬 Renouveler en 30 secondes
                     </a>
-                    <div style="margin-top:10px;font-family:{dmsans};font-size:12px;color:{text_muted};">
+                    <div class="tf-text-muted" style="margin-top:10px;font-family:{dmsans};font-size:12px;color:{text_muted} !important;">
                       Discussion directe sur WhatsApp · +41 77 496 66 26
                     </div>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:{text_muted};">
+              <p class="tf-text-muted" style="margin:0 0 14px;font-size:13px;line-height:1.6;color:{text_muted} !important;">
                 Et si t'as besoin d'une pause, c'est OK aussi. On reste là quand t'es prêt(e) à revenir.
               </p>
-              <p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:{text_sec};">
+              <p class="tf-text-sec" style="margin:0 0 6px;font-size:14px;line-height:1.6;color:{text_sec} !important;">
                 À très vite,
               </p>
-              <p style="margin:0 0 4px;font-family:{bebas};font-size:22px;letter-spacing:0.04em;color:{text_main};">
+              <p class="tf-text-main" style="margin:0 0 4px;font-family:{bebas};font-size:22px;letter-spacing:0.04em;color:{text_main} !important;">
                 L'ÉQUIPE {club_name.upper()}
               </p>
             </td>
@@ -183,22 +202,27 @@ def renewal_reminder_template(
 
           <!-- Footer -->
           <tr>
-            <td bgcolor="{bg_card}" style="padding:18px 32px 24px;border-top:1px solid {border};background-color:{bg_card};font-family:{dmsans};font-size:11px;line-height:1.5;color:{text_muted};">
-              Tu reçois ce message parce que tu fais partie de la communauté {club_name}.
-              Si tu ne souhaites plus recevoir nos relances,
-              <a href="{unsubscribe_url}" style="color:{accent};text-decoration:underline;">
-                clique ici pour te désinscrire
-              </a>.
+            <td class="tf-card" bgcolor="{bg_card}" style="padding:18px 32px 24px;border-top:1px solid {border};background:{bg_card} !important;background-color:{bg_card} !important;font-family:{dmsans};font-size:11px;line-height:1.5;color:{text_muted} !important;">
+              <span class="tf-text-muted" style="color:{text_muted} !important;">
+                Tu reçois ce message parce que tu fais partie de la communauté {club_name}.
+                Si tu ne souhaites plus recevoir nos relances,
+                <a class="tf-accent" href="{unsubscribe_url}" style="color:{accent} !important;text-decoration:underline;">
+                  clique ici pour te désinscrire
+                </a>.
+              </span>
             </td>
           </tr>
         </table>
 
-        <div style="margin-top:14px;font-family:{dmsans};font-size:11px;color:{text_muted};">
+        <div class="tf-text-muted" style="margin-top:14px;font-family:{dmsans};font-size:11px;color:{text_muted} !important;">
           {club_name} · Genève · contact@thecoachswitzerland.ch
         </div>
       </td>
     </tr>
   </table>
+  <!--[if mso]>
+  </td></tr></table>
+  <![endif]-->
 </body>
 </html>"""
     return subject, html

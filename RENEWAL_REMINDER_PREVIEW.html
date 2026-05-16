@@ -9,22 +9,41 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Gmail mobile dark-mode override : Gmail wrappe certaines couleurs dans [data-ogsc]/[data-ogsb]
+       quand il auto-light-mode-ifies un email dark. On force nos hex pour annuler l'inversion. */
+    [data-ogsc] .tf-bg, [data-ogsb] .tf-bg { background: #09090B !important; background-color: #09090B !important; }
+    [data-ogsc] .tf-card, [data-ogsb] .tf-card { background: #111113 !important; background-color: #111113 !important; }
+    [data-ogsc] .tf-text-main { color: #FFFFFF !important; }
+    [data-ogsc] .tf-text-sec { color: #E5E7EB !important; }
+    [data-ogsc] .tf-text-muted { color: #9CA3AF !important; }
+    [data-ogsc] .tf-accent { color: #F97316 !important; }
+    [data-ogsc] .tf-cta { background: #F97316 !important; background-color: #F97316 !important; color: #FFFFFF !important; }
+    /* Système OS dark mode (Apple Mail, ProtonMail), déjà OK mais on consolide */
+    @media (prefers-color-scheme: dark) {
+      .tf-bg { background: #09090B !important; background-color: #09090B !important; }
+      .tf-card { background: #111113 !important; background-color: #111113 !important; }
+    }
+  </style>
 </head>
-<body bgcolor="#09090B" style="margin:0;padding:0;background:#09090B;background-color:#09090B;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;color:#FFFFFF;-webkit-font-smoothing:antialiased;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#09090B" style="background:#09090B;background-color:#09090B;padding:32px 16px;">
+<body class="tf-bg" bgcolor="#09090B" style="margin:0 !important;padding:0 !important;background:#09090B !important;background-color:#09090B !important;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;color:#FFFFFF !important;-webkit-font-smoothing:antialiased;">
+  <!--[if mso]>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#09090B"><tr><td bgcolor="#09090B">
+  <![endif]-->
+  <table role="presentation" class="tf-bg" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#09090B" style="background:#09090B;background:linear-gradient(180deg, #09090B 0%, #0D0D0F 100%);background-color:#09090B !important;padding:32px 16px;">
     <tr>
-      <td align="center" bgcolor="#09090B" style="background:#09090B;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" bgcolor="#111113" style="max-width:560px;background:#111113;background-color:#111113;border:1px solid #2C2C2E;border-radius:14px;overflow:hidden;">
+      <td align="center" class="tf-bg" bgcolor="#09090B" style="background:#09090B !important;background-color:#09090B !important;">
+        <table role="presentation" class="tf-card" cellspacing="0" cellpadding="0" border="0" width="560" bgcolor="#111113" style="max-width:560px;background:#111113 !important;background-color:#111113 !important;border:1px solid #2C2C2E;border-radius:14px;overflow:hidden;">
           <!-- Header -->
           <tr>
-            <td bgcolor="#111113" style="padding:28px 32px 18px;border-bottom:1px solid #2C2C2E;background-color:#111113;">
-              <div style="font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#F97316;margin-bottom:8px;">
+            <td class="tf-card" bgcolor="#111113" style="padding:28px 32px 18px;border-bottom:1px solid #2C2C2E;background:#111113 !important;background-color:#111113 !important;">
+              <div class="tf-accent" style="font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#F97316 !important;margin-bottom:8px;">
                 Hybrid Gym Geneva · Ton coach
               </div>
-              <h1 style="margin:0;font-family:'Bebas Neue', 'Impact', 'Inter', -apple-system, sans-serif;font-size:42px;line-height:1;letter-spacing:0.02em;color:#FFFFFF;">
+              <h1 class="tf-text-main" style="margin:0;font-family:'Bebas Neue', 'Impact', 'Inter', -apple-system, sans-serif;font-size:42px;line-height:1;letter-spacing:0.02em;color:#FFFFFF !important;">
                 _TEMP_TEST_, ON NE T'A PAS VU CETTE SEMAINE
               </h1>
-              <div style="margin-top:10px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:11px;font-style:italic;color:#9CA3AF;letter-spacing:0.05em;">
+              <div class="tf-text-muted" style="margin-top:10px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:11px;font-style:italic;color:#9CA3AF !important;letter-spacing:0.05em;">
                 Train Without Limits
               </div>
             </td>
@@ -32,15 +51,15 @@
 
           <!-- Body -->
           <tr>
-            <td bgcolor="#111113" style="padding:28px 32px 8px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;background-color:#111113;">
-              <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#E5E7EB;">
-                Salut <strong style="color:#FFFFFF;">_TEMP_TEST_</strong>,
+            <td class="tf-card" bgcolor="#111113" style="padding:28px 32px 8px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;background:#111113 !important;background-color:#111113 !important;">
+              <p class="tf-text-sec" style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#E5E7EB !important;">
+                Salut <strong class="tf-text-main" style="color:#FFFFFF !important;">_TEMP_TEST_</strong>,
               </p>
-              <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#E5E7EB;">
+              <p class="tf-text-sec" style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#E5E7EB !important;">
                 Ton abonnement vient d'arriver à échéance et on s'est rendu compte qu'on ne t'avait pas vu ces derniers jours.
                 On voulait juste prendre des nouvelles. Pas de pression, juste savoir si tout va bien de ton côté.
               </p>
-              <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#E5E7EB;">
+              <p class="tf-text-sec" style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#E5E7EB !important;">
                 Si t'as envie de remettre les chaussures et qu'on continue ensemble, on serait ravi de te revoir.
                 Le plus simple : un petit message WhatsApp et on s'occupe du reste.
               </p>
@@ -49,24 +68,24 @@
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
                   <td align="center" style="padding:6px 0 24px;">
-                    <a href="https://wa.me/41774966626?text=Salut%20%21%20Je%20veux%20renouveler%20mon%20abonnement%20%F0%9F%92%AA"
-                       style="display:inline-block;background:#F97316;background-color:#F97316;color:#FFFFFF;text-decoration:none;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:15px;font-weight:700;letter-spacing:0.02em;padding:14px 28px;border-radius:10px;">
+                    <a class="tf-cta" href="https://wa.me/41774966626?text=Salut%20%21%20Je%20veux%20renouveler%20mon%20abonnement%20%F0%9F%92%AA"
+                       style="display:inline-block;background:#F97316 !important;background-color:#F97316 !important;color:#FFFFFF !important;text-decoration:none;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:15px;font-weight:700;letter-spacing:0.02em;padding:14px 28px;border-radius:10px;">
                       💬 Renouveler en 30 secondes
                     </a>
-                    <div style="margin-top:10px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:12px;color:#9CA3AF;">
+                    <div class="tf-text-muted" style="margin-top:10px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:12px;color:#9CA3AF !important;">
                       Discussion directe sur WhatsApp · +41 77 496 66 26
                     </div>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:#9CA3AF;">
+              <p class="tf-text-muted" style="margin:0 0 14px;font-size:13px;line-height:1.6;color:#9CA3AF !important;">
                 Et si t'as besoin d'une pause, c'est OK aussi. On reste là quand t'es prêt(e) à revenir.
               </p>
-              <p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#E5E7EB;">
+              <p class="tf-text-sec" style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#E5E7EB !important;">
                 À très vite,
               </p>
-              <p style="margin:0 0 4px;font-family:'Bebas Neue', 'Impact', 'Inter', -apple-system, sans-serif;font-size:22px;letter-spacing:0.04em;color:#FFFFFF;">
+              <p class="tf-text-main" style="margin:0 0 4px;font-family:'Bebas Neue', 'Impact', 'Inter', -apple-system, sans-serif;font-size:22px;letter-spacing:0.04em;color:#FFFFFF !important;">
                 L'ÉQUIPE HYBRID GYM GENEVA
               </p>
             </td>
@@ -74,21 +93,26 @@
 
           <!-- Footer -->
           <tr>
-            <td bgcolor="#111113" style="padding:18px 32px 24px;border-top:1px solid #2C2C2E;background-color:#111113;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:11px;line-height:1.5;color:#9CA3AF;">
-              Tu reçois ce message parce que tu fais partie de la communauté Hybrid Gym Geneva.
-              Si tu ne souhaites plus recevoir nos relances,
-              <a href="https://club.transform-os.ch/api/marketing/unsubscribe?token=X" style="color:#F97316;text-decoration:underline;">
-                clique ici pour te désinscrire
-              </a>.
+            <td class="tf-card" bgcolor="#111113" style="padding:18px 32px 24px;border-top:1px solid #2C2C2E;background:#111113 !important;background-color:#111113 !important;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:11px;line-height:1.5;color:#9CA3AF !important;">
+              <span class="tf-text-muted" style="color:#9CA3AF !important;">
+                Tu reçois ce message parce que tu fais partie de la communauté Hybrid Gym Geneva.
+                Si tu ne souhaites plus recevoir nos relances,
+                <a class="tf-accent" href="https://club.transform-os.ch/api/marketing/unsubscribe?token=X" style="color:#F97316 !important;text-decoration:underline;">
+                  clique ici pour te désinscrire
+                </a>.
+              </span>
             </td>
           </tr>
         </table>
 
-        <div style="margin-top:14px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:11px;color:#9CA3AF;">
+        <div class="tf-text-muted" style="margin-top:14px;font-family:'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;font-size:11px;color:#9CA3AF !important;">
           Hybrid Gym Geneva · Genève · contact@thecoachswitzerland.ch
         </div>
       </td>
     </tr>
   </table>
+  <!--[if mso]>
+  </td></tr></table>
+  <![endif]-->
 </body>
 </html>
