@@ -9,7 +9,15 @@ from core.config import db, exclude_archived, check_member_not_archived
 from core.security import get_club_id, get_current_user
 from core.activity_log import log_activity
 from core.club_id_guard import resolve_club_id_or_fallback
-from core.notifications import send_renewal_reminder
+from core.notifications import (
+    send_renewal_reminder,
+    send_resend_email,
+    build_unsubscribe_url,
+    build_whatsapp_url,
+    _first_name,
+    _renewal_reminder_fallback_v3,
+)
+from core.email_templates import render_with_fallback
 from core.member_categorization import (
     get_member_category,
     _dedupe_partenaire,
@@ -1534,11 +1542,28 @@ async def bulk_renewal_reminder(
             continue
 
         try:
-            result = await send_renewal_reminder(
+            # Cutover 2026-05-18 — Render via DB template (cascade club > global)
+            # avec fallback automatique V3 si template absent / render fail.
+            first = _first_name(name)
+            whatsapp_url = build_whatsapp_url(first)
+            unsubscribe_url = build_unsubscribe_url(mid)
+            render_ctx = {
+                "first": first or "",
+                "club_name": club_name or "HYBRID GYM",
+                "whatsapp_url": whatsapp_url,
+                "unsubscribe_url": unsubscribe_url,
+            }
+            rendered = await render_with_fallback(
+                db,
+                template_key="renewal_reminder",
+                club_id=resolved_club_id,
+                context=render_ctx,
+                fallback_fn=_renewal_reminder_fallback_v3,
+            )
+            sent_result = await send_resend_email(
                 to_email=email,
-                member_name=name,
-                member_id=mid,
-                club_name=club_name,
+                subject=rendered.subject,
+                html=rendered.html,
             )
             # Update mutations Atlas seulement après succès Resend
             now_iso = datetime.now(timezone.utc).isoformat()
@@ -1552,7 +1577,9 @@ async def bulk_renewal_reminder(
             breakdown["sent"] += 1
             breakdown["details"].append({
                 "member_id": mid, "name": name, "status": "sent",
-                "resend_id": result.get("resend_id"),
+                "resend_id": sent_result.get("resend_id"),
+                "used_fallback": rendered.used_fallback,
+                "template_id": rendered.template_id,
             })
         except Exception as e:
             breakdown["failed"] += 1

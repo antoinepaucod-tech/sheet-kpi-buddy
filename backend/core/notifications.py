@@ -258,3 +258,58 @@ async def send_renewal_reminder(
     result = await asyncio.to_thread(resend.Emails.send, params)
     resend_id = result.get("id") if isinstance(result, dict) else None
     return {"sent": True, "resend_id": resend_id, "subject": subject}
+
+
+
+# ── Fallback V3 + Resend send helper (cutover 2026-05-18) ─────────────────────
+
+def _renewal_reminder_fallback_v3(context: dict) -> dict:
+    """Fallback hardcodé V3 du template renewal_reminder.
+
+    Utilisé par `core.email_templates.render_with_fallback` quand le doc DB
+    est absent, désactivé, ou que son render échoue (StrictUndefined etc.).
+
+    Args:
+        context: doit contenir les 4 mêmes variables Jinja2 que le seed DB :
+            - first (str) : prénom du membre
+            - club_name (str) : nom public du club (ex "Hybrid Gym Geneva")
+            - whatsapp_url (str) : URL WhatsApp pré-remplie
+            - unsubscribe_url (str) : URL JWT signée de désinscription
+
+    Returns:
+        {"subject": str, "html": str, "text": str}. Aucun side-effect.
+    """
+    first_val = (context.get("first") or "").strip() or "champion"
+    club_val = (context.get("club_name") or "").strip() or "HYBRID GYM"
+    wa_val = context.get("whatsapp_url") or ""
+    unsub_val = context.get("unsubscribe_url") or ""
+
+    # On reconstitue un `member_name` pour l'API existante (qui extrait `first`
+    # via `_first_name(name)`). `first` étant un seul mot, on ajoute un suffixe
+    # pour respecter la sémantique "espace + suite". `_first_name` re-prend
+    # alors la même valeur que `first_val`.
+    member_name = f"{first_val} Member" if " " not in first_val else first_val
+
+    subject, html = renewal_reminder_template(
+        member_name=member_name,
+        unsubscribe_url=unsub_val,
+        whatsapp_url=wa_val,
+        club_name=club_val,
+    )
+    return {"subject": subject, "html": html, "text": ""}
+
+
+async def send_resend_email(to_email: str, subject: str, html: str) -> dict:
+    """Wrapper Resend pour envoi 1 email arbitraire (sujet+HTML déjà rendus).
+
+    Lève RuntimeError si RESEND_API_KEY absent. Propage les exceptions Resend.
+    """
+    if not resend.api_key:
+        resend.api_key = os.environ.get("RESEND_API_KEY", "")
+    if not resend.api_key:
+        raise RuntimeError("RESEND_API_KEY not configured")
+
+    params = {"from": SENDER_EMAIL, "to": [to_email], "subject": subject, "html": html}
+    result = await asyncio.to_thread(resend.Emails.send, params)
+    resend_id = result.get("id") if isinstance(result, dict) else None
+    return {"sent": True, "resend_id": resend_id}

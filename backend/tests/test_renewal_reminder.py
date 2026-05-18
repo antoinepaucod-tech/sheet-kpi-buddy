@@ -142,15 +142,21 @@ def patched_db(app_with_overrides):
         mock_clubs.find_one = AsyncMock(side_effect=_find_one_club)
         mock_al.insert_one = AsyncMock(side_effect=_activity_insert)
 
-        # Patch send_renewal_reminder : succès silencieux par défaut
-        with patch("routers.members.send_renewal_reminder", new=AsyncMock(return_value={"sent": True, "resend_id": "fake_id_123"})) as mock_send:
-            yield {
-                "set_members": _set_members,
-                "members_in_db": members_in_db,
-                "update_calls": update_calls,
-                "insert_calls": insert_calls,
-                "mock_send": mock_send,
-            }
+        # Patch send_resend_email IN ROUTER (cutover 2026-05-18 — replaces send_renewal_reminder)
+        # Patch email_templates.find_one to return None → forces fallback path (legacy behaviour)
+        async def _et_find_one(*_a, **_kw):
+            return None
+
+        with patch.object(core_config.db, "email_templates") as mock_et:
+            mock_et.find_one = AsyncMock(side_effect=_et_find_one)
+            with patch("routers.members.send_resend_email", new=AsyncMock(return_value={"sent": True, "resend_id": "fake_id_123"})) as mock_send:
+                yield {
+                    "set_members": _set_members,
+                    "members_in_db": members_in_db,
+                    "update_calls": update_calls,
+                    "insert_calls": insert_calls,
+                    "mock_send": mock_send,
+                }
 
 
 # ── BULK RENEWAL REMINDER ────────────────────────────────────────────────────
