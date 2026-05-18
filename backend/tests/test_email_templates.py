@@ -208,3 +208,17 @@ async def test_ensure_indexes_idempotent():
     # Re-appel idempotent (Mongo créera pas un 2e index)
     await ensure_indexes(db)
     assert db.email_templates.create_index.await_count == 2
+
+
+@pytest.mark.regression
+def test_seed_jinja_equals_v3_fallback_char_by_char():
+    """Régression critique : le template seedé doit produire un HTML strictement
+    identique à celui généré par `renewal_reminder_template` (V3 fallback).
+    Tout drift du template V3 ou du seed sera détecté ici.
+    """
+    from scripts.seed_email_templates import extract_jinja_template, diff_check
+
+    extracted = extract_jinja_template()
+    diff = diff_check(extracted)
+    assert diff["subject_ok"], f"subject diverge: seed={diff['subject_seed']!r} vs v3={diff['subject_v3']!r}"
+    assert diff["html_ok"], f"html diverge: {diff['first_diff']}"
