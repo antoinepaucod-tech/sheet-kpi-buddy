@@ -1,0 +1,115 @@
+{
+  "generated_at": "2026-05-18T13:55:20.429183+00:00",
+  "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+  "fix_date": "2026-05-12",
+  "totals": {
+    "billing_enabled_total": 95,
+    "pre_fix": 95,
+    "has_active_schedule": 93,
+    "orphans_real": 1,
+    "pif_probable": 1,
+    "revenue_manque_estime_total_chf": 470.0
+  },
+  "orphans": [
+    {
+      "id": "d0b6a5d2-9ec4-4609-ba4c-c669c375de27",
+      "name": "Norman Pilller",
+      "membership": "THE COACH PASS MENSUEL",
+      "category": "Coach",
+      "member_type": "Membres Généraux Récurrents",
+      "billing_amount": 470.0,
+      "type_price": 0.0,
+      "type_duration_months": 1,
+      "monthly_estimated": 470.0,
+      "theoretical_total": 470.0,
+      "revenue_received": 0.0,
+      "is_pif_type": false,
+      "is_coach_type": true,
+      "ref_date": "2026-04-01",
+      "archived_at": null,
+      "exit_date": null,
+      "months_exposed_capped_fix": 1,
+      "revenue_manque_estime": 470.0,
+      "is_pif_probable": false,
+      "is_archived": false,
+      "is_exited": false
+    }
+  ],
+  "pif_probable": [
+    {
+      "id": "0022b625-4606-4a09-93f5-facedd83ac8d",
+      "name": "Camille Astier",
+      "membership": "HUBFIT",
+      "category": "HG",
+      "member_type": "Membres Généraux Récurrents",
+      "billing_amount": 100.0,
+      "type_price": 0.0,
+      "type_duration_months": 1,
+      "monthly_estimated": 100.0,
+      "theoretical_total": 100.0,
+      "revenue_received": 7588.0,
+      "is_pif_type": false,
+      "is_coach_type": false,
+      "ref_date": "2024-04-15",
+      "archived_at": "2026-04-23",
+      "exit_date": "2025-12-01",
+      "months_exposed_capped_fix": 20,
+      "revenue_manque_estime": 0,
+      "is_pif_probable": true,
+      "is_archived": true,
+      "is_exited": true
+    }
+  ],
+  "has_schedule_summary": [
+    {
+      "id": "f3a677db-2fee-401f-b778-32694207eafc",
+      "name": "Laura Segarra",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "ae34e45d-8c19-4c3e-86b1-de3bb060570c",
+      "name": "Gilda D'Aiuto",
+      "membership": "UNLIMITED ACCESS - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "a972aa06-5a70-4d92-99de-b72c57b27223",
+      "name": "Nabil Darazzi",
+      "membership": "UNLIMITED ACCESS SANS EMGAGEMENT - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "b12728bd-c682-49d3-9764-aa3806abb9c1",
+      "name": "Anne-Lucie Luana",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "8ea00cfe-b4d6-43c5-9656-28a70ffea960",
+      "name": "Maria Castillo Garcia",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "7189361a-b660-46ad-8359-fa1d15edc97b",
+      "name": "Yasmine Injai",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    },
+    {
+      "id": "b716c184-ec45-4732-9ee8-9908523db57e",
+      "name": "Safia Jiyar",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "1716c0dd-5363-43b6-bec4-70d5c6fa6331",
+      "name": "Paolo Cabrele",
+      "membership": "IFRC"
+    },
+    {
+      "id": "b89652f6-4ed9-4edf-bf7f-3a3ebac43649",
+      "name": "Jennifer Porraz",
+      "membership": "THE COACH PASS MENSUEL"
+    },
+    {
+      "id": "27772560-7dc8-4671-8f64-77b9ac0f836f",
+      "name": "Audrey Bernard",
+      "membership": "HYBRID FULL - PAIEMENT MENSUEL"
+    }
+  ]
+}
