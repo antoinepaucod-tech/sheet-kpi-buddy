@@ -317,8 +317,18 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-19 — Phase 1 Audit follow-up orphelins club_id) ✅
+- [x] **Script** `/app/backend/scripts/audit_orphan_club_id_followup.py` créé en READ-ONLY strict (cap 200 docs/coll, projection complète, classification timeline + origin). 0 mutation DB.
+- [x] **Audit live Atlas preview** : 5 orphelins détectés sur 4 collections (payments x2, monthly_kpis x1, annual_reviews x1, challenge_participants x1). **AUCUN PREVIEW_NOISE** (pas de pattern test), **AUCUN cross-club** (les 4 membres liés sont tous Versoix).
+- [x] **Classification** : 4 REGRESSION_CODE + 1 UNCLASSIFIED (monthly_kpis 2026-06 sans created_at). Signal fort : 2 payments créés à 09:43 UTC le 19/05, ~2 min avant un test endpoint live → endpoint actif crée des payments sans propager club_id.
+- [x] **Endpoints suspects identifiés** : payments.py (auto-generate), rollover.py (monthly_kpis 2026-06), annual_reviews.py (auto-generate ou manuel), challenges.py (participants).
+- [x] **Output JSON** `/app/backend/audit_results/orphan_club_id_followup_20260519_114814.json` (4 689 bytes).
+
 ## Upcoming Tasks
-- (P2) **Audit `billing_enabled=true` sans `payment_schedules`** : repérer les membres avec billing actif mais sans échéancier ✅ RÉSOLU 2026-05-19 (1 orphelin Norman Pilller remédiait + verrouillage CRON hebdo)
+- (P1) Phase 2 — Trace READ-ONLY des 4 routeurs suspects pour identifier l'insert_one sans club_id
+- (P1) Phase 3 — Patch endpoints + tests régression (1 test pytest par endpoint : POST sans X-Club-Id → 400)
+- (P1) Phase 4 — Étendre migrate_orphan_club_id.py aux 4 nouvelles collections (dry-run + apply avec confirmation `yes`)
+- (P2) Audit `billing_enabled=true` sans `payment_schedules` : repérer les membres avec billing actif mais sans échéancier ✅ RÉSOLU 2026-05-19 (1 orphelin Norman Pilller remédiait + verrouillage CRON hebdo)
 - (P2) **Audit historique `monthly_kpis`** : croiser avec backups pour détecter écrasements zéro silencieux passés
 - (P1) **🆕 Sprint Hardening club_id** — 2-3h dédiées :
   - Audit exhaustif des 43 inserts critiques (catégorisation 🟢 OK / 🟡 Vulnérable conditionnel / 🔴 Aucun club_id explicite)

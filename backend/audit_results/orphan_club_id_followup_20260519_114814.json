@@ -1,0 +1,148 @@
+{
+  "generated_at": "2026-05-19T11:48:14.477696+00:00",
+  "db": "club_management",
+  "default_club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+  "timeline_anchors": {
+    "sprint_hardening_close": "2026-05-12",
+    "digest_enriched_live": "2026-05-19"
+  },
+  "summary": {
+    "total_orphans": 5,
+    "collections_affected": {
+      "payments": 2,
+      "monthly_kpis": 1,
+      "annual_reviews": 1,
+      "challenge_participants": 1
+    },
+    "by_timeline": {
+      "AFTER_18": 3,
+      "UNKNOWN": 1,
+      "WINDOW_12_18": 1
+    },
+    "by_origin_class": {
+      "REGRESSION_CODE": 4,
+      "UNCLASSIFIED": 1
+    },
+    "by_member_state": {
+      "member_found": 4,
+      "no_member_id": 1
+    }
+  },
+  "orphans": [
+    {
+      "collection": "payments",
+      "_id": "6a0c30b29566c91a04a54726",
+      "id": "ff3c9a59-5175-458a-9e38-93fdc1b99dc9",
+      "created_at": "2026-05-19T09:43:14.806030+00:00",
+      "timeline": "AFTER_18",
+      "origin_class": "REGRESSION_CODE",
+      "preview_noise_signal": false,
+      "member_context": {
+        "found": true,
+        "name": "Mauricio Herrera Soto",
+        "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+        "archived": false
+      },
+      "doc_fields": {
+        "id": "ff3c9a59-5175-458a-9e38-93fdc1b99dc9",
+        "_id": "6a0c30b29566c91a04a54726",
+        "member_id": "f05c0c7d-62ca-41ef-9bf2-c7fe9944e1ab",
+        "member_name": "Mauricio Herrera Soto",
+        "amount": 196.0,
+        "status": "pending",
+        "created_at": "2026-05-19T09:43:14.806030+00:00",
+        "updated_at": "2026-05-19T09:43:14.806040+00:00"
+      }
+    },
+    {
+      "collection": "payments",
+      "_id": "6a0c30b39566c91a04a54727",
+      "id": "10e632d4-cb4b-4b88-a628-3a2ad82e6320",
+      "created_at": "2026-05-19T09:43:15.014310+00:00",
+      "timeline": "AFTER_18",
+      "origin_class": "REGRESSION_CODE",
+      "preview_noise_signal": false,
+      "member_context": {
+        "found": true,
+        "name": "Valentina Zaharana ",
+        "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+        "archived": false
+      },
+      "doc_fields": {
+        "id": "10e632d4-cb4b-4b88-a628-3a2ad82e6320",
+        "_id": "6a0c30b39566c91a04a54727",
+        "member_id": "fc8f0d45-3c7e-4a3f-af8e-93ea572b2cf6",
+        "member_name": "Valentina Zaharana ",
+        "amount": 139.0,
+        "status": "pending",
+        "created_at": "2026-05-19T09:43:15.014310+00:00",
+        "updated_at": "2026-05-19T09:43:15.014318+00:00"
+      }
+    },
+    {
+      "collection": "monthly_kpis",
+      "_id": "6a0c178d647aeedac59de59d",
+      "id": null,
+      "created_at": null,
+      "timeline": "UNKNOWN",
+      "origin_class": "UNCLASSIFIED",
+      "preview_noise_signal": false,
+      "member_context": {
+        "found": false,
+        "reason": "no_member_id"
+      },
+      "doc_fields": {
+        "_id": "6a0c178d647aeedac59de59d",
+        "month": "2026-06",
+        "updated_at": "2026-05-19T07:55:57.780509+00:00"
+      }
+    },
+    {
+      "collection": "annual_reviews",
+      "_id": "6a0717828ed587cb8cf44e0e",
+      "id": "849f43c7-35a5-4837-a409-e83199bc159a",
+      "created_at": "2026-05-15T12:54:26.636421+00:00",
+      "timeline": "WINDOW_12_18",
+      "origin_class": "REGRESSION_CODE",
+      "preview_noise_signal": false,
+      "member_context": {
+        "found": true,
+        "name": "Christine Wambaa",
+        "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+        "archived": false
+      },
+      "doc_fields": {
+        "id": "849f43c7-35a5-4837-a409-e83199bc159a",
+        "_id": "6a0717828ed587cb8cf44e0e",
+        "member_id": "e2720c3c-e52f-4ebf-8e5d-de4b98b01817",
+        "status": "scheduled",
+        "review_date": "2026-05-12",
+        "created_at": "2026-05-15T12:54:26.636421+00:00",
+        "updated_at": "2026-05-15T12:54:26.636430+00:00"
+      }
+    },
+    {
+      "collection": "challenge_participants",
+      "_id": "6a0c16b276473e881690b69a",
+      "id": "7b71ca8f-f6b7-413b-8ab9-d132c3ce5bea",
+      "created_at": "2026-05-19T07:52:18.462706+00:00",
+      "timeline": "AFTER_18",
+      "origin_class": "REGRESSION_CODE",
+      "preview_noise_signal": false,
+      "member_context": {
+        "found": true,
+        "name": "Julia De Pietro",
+        "club_id": "0a327bf5-c759-49eb-87e4-551913f78bdb",
+        "archived": false
+      },
+      "doc_fields": {
+        "id": "7b71ca8f-f6b7-413b-8ab9-d132c3ce5bea",
+        "_id": "6a0c16b276473e881690b69a",
+        "member_id": "85d983f6-8634-4796-b381-7e78501088c1",
+        "member_name": "Julia De Pietro",
+        "created_at": "2026-05-19T07:52:18.462706+00:00",
+        "updated_at": "2026-05-19T07:52:18.462726+00:00"
+      }
+    }
+  ]
+}
