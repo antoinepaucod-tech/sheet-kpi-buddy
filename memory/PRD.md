@@ -317,6 +317,14 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 3 — Patch club_id payments.py) ✅
+- [x] **3 endpoints patchés** dans `routers/payments.py` : `POST /payment-schedules` L57 (0 Depends → patchés), `POST /payments/sync-with-members` L137+L225 (2 inserts fragiles 🟡 → fixés), `POST /payments/generate/{year}/{month}` L762 (🐛 origine confirmée Mauricio + Valentina 19/05). Commentaire explicite `Phase 3 fix 19/05` sur le 3ème.
+- [x] **Optimisation cascade** : `resolved_club_id` calculé 1x hors boucle pour les 3 endpoints à boucle → 1 seul `MISSING_CLUB_ID` log même pour N inserts (testé jusqu'à N=4 dans `sync`).
+- [x] **7 tests pytest régression PASS** `/app/backend/tests/test_payments_club_id_guard.py` : 2 cas par endpoint (header / fallback) + test backward compat `skips_amount_zero` + test perf single log. Marker `regression` + `asyncio`. 0 mutation DB.
+- [x] **Non-régression** : 113/113 tests PASS (7 Batch 3 + 5 Batch 2 + 9 Batch 1 + 92 connexes). Diff +43/-9 lignes. Backward compat strict.
+- [x] **Fichier payments.py 100% clean** sur club_id propagation : tous les 6 inserts patchés ou déjà OK Sprint Hardening (L529 CRUD + L605 mark-paid).
+- [x] **Note collatérale** : `sync-with-members` a un `delete_many({})` non scopé si pas de header (bug latent, hors scope batch).
+
 ## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 2 — Patch club_id challenges.py) ✅
 - [x] **2 endpoints + cascade x6 patchés** dans `routers/challenges.py` (origine Julia De Pietro 19/05 + multiplicateur x6 annual_reviews) : `add_challenge_participant` L146 + cascade bilans L181 + `auto_generate_bilans` L256. Avant : AUCUN `Depends(get_club_id)` ni `Depends(get_current_user)` sur ces endpoints.
 - [x] **Cascade `challenge.club_id`** : parent single source > header > Versoix. `resolved_club_id` calculé 1x → 1 seul `MISSING_CLUB_ID` log même pour 7 inserts (1 participant + 6 bilans hebdo).

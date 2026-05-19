@@ -41,9 +41,19 @@ async def get_payment_schedules(member_id: Optional[str] = None, active_only: Op
 
 
 @router.post("/payment-schedules")
-async def create_payment_schedule(data: PaymentScheduleCreate):
+async def create_payment_schedule(
+    data: PaymentScheduleCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     schedule = PaymentSchedule(**data.model_dump())
     doc = schedule.model_dump()
+    # Phase 3 Batch 3 — défense en profondeur club_id (Sprint Hardening pattern)
+    doc["club_id"] = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/payment-schedules (POST)",
+    )
     await db.payment_schedules.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -69,7 +79,10 @@ async def delete_payment_schedule(schedule_id: str):
 
 
 @router.post("/payments/sync-with-members")
-async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_id)):
+async def sync_payments_with_members(
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Full sync: regenerate payment_schedules and payments from billing_enabled members."""
     now = datetime.now(timezone.utc)
     today_str = now.strftime("%Y-%m-%d")
@@ -77,6 +90,14 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
     current_month = now.month
     days_in_month = monthrange(current_year, current_month)[1]
     month_str = f"{current_year}-{current_month:02d}"
+
+    # Phase 3 Batch 3 — défense en profondeur club_id (Sprint Hardening pattern).
+    # Résolu UNE seule fois : 1 seul log MISSING_CLUB_ID si fallback (vs N inserts).
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/payments/sync-with-members",
+    )
 
     # 1. Get all billing_enabled active members (including coaches)
     all_members = await db.customer_members.find(
@@ -111,9 +132,8 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
             "start_date": m.get("contract_signed_date", today_str),
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
+            "club_id": resolved_club_id,  # Phase 3 Batch 3 — défense en profondeur
         }
-        if club_id:
-            schedule["club_id"] = club_id
         await db.payment_schedules.insert_one(schedule)
         schedules_created += 1
 
@@ -200,9 +220,8 @@ async def sync_payments_with_members(club_id: Optional[str] = Depends(get_club_i
             "payment_method": m.get("billing_payment_method", "prelevement"),
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
+            "club_id": resolved_club_id,  # Phase 3 Batch 3 — défense en profondeur
         }
-        if club_id:
-            payment["club_id"] = club_id
         await db.payments.insert_one(payment)
         payments_created += 1
 
@@ -632,14 +651,28 @@ async def revert_payment_to_unpaid(payment_id: str):
 
 
 @router.post("/payments/generate/{year}/{month}")
-async def generate_monthly_payments(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
+async def generate_monthly_payments(
+    year: int,
+    month: int,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Generate payments for a month based on active billing-enabled members"""
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
-    
+
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     month_str = f"{year}-{month:02d}"
     days_in_month = monthrange(year, month)[1]
+
+    # Phase 3 Batch 3 fix 19/05 : club_id propagation orphan-detected.
+    # Origine confirmée des 2 payments Mauricio + Valentina créés 19/05 09:43 UTC.
+    # Résolu UNE seule fois (1 seul log MISSING_CLUB_ID si fallback, vs N membres).
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/payments/generate/{year}/{month}",
+    )
     
     # Get billing-enabled members (active, including coaches and offerts, non-departed, non-archived)
     all_members = await db.customer_members.find(
@@ -724,7 +757,8 @@ async def generate_monthly_payments(year: int, month: int, club_id: Optional[str
         )
         doc = payment.model_dump()
         doc["member_name"] = member["name"]
-        
+        doc["club_id"] = resolved_club_id  # Phase 3 Batch 3 — défense en profondeur
+
         await db.payments.insert_one(doc)
         doc.pop('_id', None)
         created.append(doc)
