@@ -309,8 +309,16 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Apply Atlas** : `payment_schedule.id=61caa259-4593-4471-8b1d-a6c194aee58e` inséré. `activity_log.id=70c81c80-7868-4ba0-9dbc-aaefa877e56e` (action=`payment_schedule_remediation`).
 - [x] **Bouclage** : re-run audit post-apply → 0 orphelin réel. Re-run dry-run → NO_ACTION (idempotent).
 
+## Completed Tasks (Session 2026-05-19 — Digest hebdo CRON enrichi `billing_without_schedule`) ✅
+- [x] **Service** `services/orphan_audit.py::check_billing_without_schedule(db, club_id)` ajouté (read-only strict, 0 mutation DB). Hérite logique script 18/05 (filtre PIF ≥80% prix théorique via accounting_transactions, inclut les Coaches contrairement à `billing_audit.py`). Exception-safe : log warning structuré `WEEKLY_BILLING_WITHOUT_SCHEDULE_CHECK_FAILED` + payload vide sur erreur DB, ne bloque pas le digest.
+- [x] **Intégration digest** : `run_weekly_orphan_audit` appelle la nouvelle fonction, stocke dans `audit_result["billing_without_schedule"]`. Logs `WEEKLY_BILLING_WITHOUT_SCHEDULE_CLEAN/ALERT` selon le résultat.
+- [x] **Email HTML** : nouvelle section "Billing sans payment_schedule" dédiée (tableau membre/membership/monthly/ref_date), affichée uniquement si `orphan_count > 0`. Action recommandée pointe vers `scripts/audit_billing_without_schedule.py` + `scripts/remediate_norman_payment_schedule.py`.
+- [x] **Déclencheur enrichi** : `send_audit_email` envoie maintenant si `orphans OR billing_alert OR bws_alert OR force_email`. Subject email adaptatif liste les 3 types d'alertes (`X orphelins / Y RED+Z ORANGE / W sans schedule`). Kill switch `ORPHAN_AUDIT_RECIPIENT=""` préservé.
+- [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
+- [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
+
 ## Upcoming Tasks
-- (P2) **Audit `billing_enabled=true` sans `payment_schedules`** : repérer les membres avec billing actif mais sans échéancier ✅ RÉSOLU 2026-05-19 (1 orphelin Norman Pilller remédiait)
+- (P2) **Audit `billing_enabled=true` sans `payment_schedules`** : repérer les membres avec billing actif mais sans échéancier ✅ RÉSOLU 2026-05-19 (1 orphelin Norman Pilller remédiait + verrouillage CRON hebdo)
 - (P2) **Audit historique `monthly_kpis`** : croiser avec backups pour détecter écrasements zéro silencieux passés
 - (P1) **🆕 Sprint Hardening club_id** — 2-3h dédiées :
   - Audit exhaustif des 43 inserts critiques (catégorisation 🟢 OK / 🟡 Vulnérable conditionnel / 🔴 Aucun club_id explicite)
