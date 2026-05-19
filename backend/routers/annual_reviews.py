@@ -8,6 +8,7 @@ import logging
 
 from core.config import db, exclude_archived, check_member_not_archived, get_archived_member_ids
 from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from core.activity_log import log_activity
 from models.members import AnnualReview, AnnualReviewCreate
 
@@ -327,7 +328,10 @@ async def create_review(data: AnnualReviewCreate, club_id: Optional[str] = Depen
 
 
 @router.post("/auto-generate")
-async def auto_generate_reviews(club_id: Optional[str] = Depends(get_club_id)):
+async def auto_generate_reviews(
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Scan ALL active members and create missing scheduled reviews.
     Rules:
     - Only members with annual_review_enabled=True
@@ -337,6 +341,14 @@ async def auto_generate_reviews(club_id: Optional[str] = Depends(get_club_id)):
     - Frequency: monthly for all (unless member has a specific review_frequency)
     """
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Phase 3 Batch 1 — défense en profondeur club_id (Sprint Hardening pattern).
+    # Résolu UNE seule fois ici (perf + un seul log MISSING_CLUB_ID si fallback).
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/annual-reviews/auto-generate",
+    )
 
     # Get ALL members (excluding archived — Type B filter)
     members = await db.customer_members.find(
@@ -434,7 +446,9 @@ async def auto_generate_reviews(club_id: Optional[str] = Depends(get_club_id)):
             review_type=freq,
             status="scheduled"
         )
-        await db.annual_reviews.insert_one(new_review.model_dump())
+        doc = new_review.model_dump()
+        doc["club_id"] = resolved_club_id  # défense en profondeur Phase 3 Batch 1
+        await db.annual_reviews.insert_one(doc)
 
         await db.customer_members.update_one(
             {"id": member_id},
@@ -465,6 +479,7 @@ async def update_review(review_id: str, body: dict):
 async def complete_review(
     review_id: str,
     body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
     """Complete a review with all measurements and notes"""
@@ -517,7 +532,14 @@ async def complete_review(
             review_type="monthly",
             status="scheduled"
         )
-        await db.annual_reviews.insert_one(next_review.model_dump())
+        doc = next_review.model_dump()
+        # Phase 3 Batch 1 — cascade : existing.club_id (single source of truth) > header > fallback Versoix
+        doc["club_id"] = existing.get("club_id") or resolve_club_id_or_fallback(
+            club_id=club_id,
+            current_user=current_user,
+            endpoint="/api/annual-reviews/complete",
+        )
+        await db.annual_reviews.insert_one(doc)
 
         await db.customer_members.update_one(
             {"id": existing["member_id"]},
@@ -531,6 +553,7 @@ async def complete_review(
 async def skip_review(
     review_id: str,
     body: dict = {},
+    club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
     """Skip a review - mark as skipped, log activity, auto-schedule next one"""
@@ -578,7 +601,14 @@ async def skip_review(
         review_type=freq,
         status="scheduled",
     )
-    await db.annual_reviews.insert_one(next_review.model_dump())
+    doc = next_review.model_dump()
+    # Phase 3 Batch 1 — cascade : existing.club_id (single source of truth) > header > fallback Versoix
+    doc["club_id"] = existing.get("club_id") or resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/annual-reviews/skip",
+    )
+    await db.annual_reviews.insert_one(doc)
 
     await db.customer_members.update_one(
         {"id": existing["member_id"]},
