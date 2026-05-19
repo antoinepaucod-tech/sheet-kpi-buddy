@@ -317,6 +317,13 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 2 — Patch club_id challenges.py) ✅
+- [x] **2 endpoints + cascade x6 patchés** dans `routers/challenges.py` (origine Julia De Pietro 19/05 + multiplicateur x6 annual_reviews) : `add_challenge_participant` L146 + cascade bilans L181 + `auto_generate_bilans` L256. Avant : AUCUN `Depends(get_club_id)` ni `Depends(get_current_user)` sur ces endpoints.
+- [x] **Cascade `challenge.club_id`** : parent single source > header > Versoix. `resolved_club_id` calculé 1x → 1 seul `MISSING_CLUB_ID` log même pour 7 inserts (1 participant + 6 bilans hebdo).
+- [x] **5 tests pytest régression PASS** `/app/backend/tests/test_challenges_club_id_guard.py` : cascade challenge / fallback header / 1 seul log pour 7 inserts / auto-generate header + fallback. Marker `regression` + `asyncio`. 0 mutation DB.
+- [x] **Non-régression** : 106/106 tests PASS (5 Batch 2 + 9 Batch 1 + 92 connexes). Diff +32/-3 lignes. Backward compat strict.
+- [x] **Signalement résiduel** : `POST /challenges` (L88 create_challenge) reste 🟡 conditionnel (`if club_id: doc["club_id"] = club_id` sans fallback). Hors scope batch 2 — à patcher futur.
+
 ## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 1 — Patch club_id annual_reviews.py) ✅
 - [x] **3 inserts orphelins patchés** dans `routers/annual_reviews.py` (origine confirmée de Christine Wambaa 15/05) : `auto-generate` (L451), `complete` (L542), `skip` (L611). Pattern uniforme défense en profondeur (Sprint Hardening) : `doc["club_id"] = existing.get("club_id") or resolve_club_id_or_fallback(...)`.
 - [x] **Optimisation auto-generate** : `resolved_club_id` calculé UNE seule fois avant la boucle (perf + 1 seul `MISSING_CLUB_ID` log au lieu de N).

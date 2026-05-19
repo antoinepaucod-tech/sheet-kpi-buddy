@@ -4,7 +4,8 @@ from typing import Optional
 from datetime import datetime, timezone
 
 from core.config import db, exclude_archived, check_member_not_archived
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from models.challenges import (
     SixWeeksChallenge, SixWeeksChallengeCreate,
     ChallengeParticipant, ChallengeParticipantCreate
@@ -111,7 +112,12 @@ async def delete_challenge(challenge_id: str):
 
 
 @router.post("/{challenge_id}/participants")
-async def add_challenge_participant(challenge_id: str, data: ChallengeParticipantCreate):
+async def add_challenge_participant(
+    challenge_id: str,
+    data: ChallengeParticipantCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     challenge = await db.six_weeks_challenges.find_one({"id": challenge_id})
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge introuvable")
@@ -125,8 +131,18 @@ async def add_challenge_participant(challenge_id: str, data: ChallengeParticipan
     if existing:
         raise HTTPException(status_code=400, detail="Ce membre participe déjà au challenge")
 
+    # Phase 3 Batch 2 — défense en profondeur club_id (Sprint Hardening pattern).
+    # Cascade : challenge.club_id (parent, single source) > header > Versoix.
+    # Calculé UNE seule fois pour propagation cohérente sur participant + 6 bilans hebdo.
+    resolved_club_id = challenge.get("club_id") or resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/challenges/{id}/participants",
+    )
+
     participant = ChallengeParticipant(**data.model_dump())
     doc = participant.model_dump()
+    doc["club_id"] = resolved_club_id
     await db.challenge_participants.insert_one(doc)
     doc.pop("_id", None)
 
@@ -161,6 +177,7 @@ async def add_challenge_participant(challenge_id: str, data: ChallengeParticipan
                 status="scheduled",
             )
             bilan_doc = bilan.model_dump()
+            bilan_doc["club_id"] = resolved_club_id  # Phase 3 Batch 2 — cascade
             await db.annual_reviews.insert_one(bilan_doc)
 
     # Update member bilan frequency to weekly
@@ -174,7 +191,10 @@ async def add_challenge_participant(challenge_id: str, data: ChallengeParticipan
 
 
 @router.post("/auto-generate-bilans")
-async def auto_generate_bilans():
+async def auto_generate_bilans(
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Auto-generate monthly bilans for all non-challenge active members."""
     from models.members import AnnualReview
     from datetime import timedelta
@@ -182,6 +202,14 @@ async def auto_generate_bilans():
     today = datetime.now(timezone.utc)
     today_str = today.strftime("%Y-%m-%d")
     next_month = (today.replace(day=1) + timedelta(days=32)).replace(day=1).strftime("%Y-%m-%d")
+
+    # Phase 3 Batch 2 — défense en profondeur club_id.
+    # Résolu UNE seule fois (perf + 1 seul log MISSING_CLUB_ID si fallback).
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/challenges/auto-generate-bilans",
+    )
 
     # Get all active members (excluding archived — Type B filter)
     members = await db.customer_members.find(
@@ -224,6 +252,7 @@ async def auto_generate_bilans():
             status="scheduled",
         )
         bilan_doc = bilan.model_dump()
+        bilan_doc["club_id"] = resolved_club_id  # Phase 3 Batch 2 — défense en profondeur
         await db.annual_reviews.insert_one(bilan_doc)
         created += 1
 
