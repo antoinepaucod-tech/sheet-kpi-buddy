@@ -301,8 +301,16 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Audits read-only** archivés : `/app/backend/scripts/audit_f1_payments.py`, `audit_f1_passe2.py`, `audit_g1_g4_coach.py`. Chiffres clés : 2026-05 = 79 payments + 2 historical (dédup cascade D filtre 48 acct_tx) ; 2026-02 = pur historique (108) ; 2026-04 = 77 + 13.
 - [x] **Testing iter_87** : 14/14 backend pytest PASS + tous flows frontend PASS. Aucune mutation prod Atlas. Test file réutilisable : `/app/backend/tests/test_g1_g4_f1_iter87.py`.
 
+## Completed Tasks (Session 2026-05-18 / 2026-05-19 — Remédiation Norman Pilller `payment_schedule` orphelin) ✅
+- [x] **Audit read-only** `audit_billing_without_schedule.py` (Versoix, billing_enabled=True pré-fix 2026-05-12) : 1 orphelin réel détecté (Norman Pilller, 470 CHF/mois, THE COACH PASS MENSUEL).
+- [x] **Décision utilisateur** : option c (démarrage propre 2026-06-01, pas de rattrapage rétroactif avril+mai car facturés via accounting_transactions).
+- [x] **Script Sprint A** `/app/backend/scripts/remediate_norman_payment_schedule.py` : dry-run par défaut, --apply avec confirmation `yes` interactive, idempotent (NO_ACTION si schedule actif existe), garde-fous (cible DB, club_id, archived_at, billing_enabled).
+- [x] **Audit trail dédié** : champs `remediation_reason`, `remediation_date`, `created_by_user_id`, `created_by_email` résolus en DB via lookup `antoine.paucod@the-coach.pro` super_admin. `notes` laissé vide (back-office, mais défense en profondeur).
+- [x] **Apply Atlas** : `payment_schedule.id=61caa259-4593-4471-8b1d-a6c194aee58e` inséré. `activity_log.id=70c81c80-7868-4ba0-9dbc-aaefa877e56e` (action=`payment_schedule_remediation`).
+- [x] **Bouclage** : re-run audit post-apply → 0 orphelin réel. Re-run dry-run → NO_ACTION (idempotent).
+
 ## Upcoming Tasks
-- (P2) **Audit `billing_enabled=true` sans `payment_schedules`** : repérer les membres avec billing actif mais sans échéancier
+- (P2) **Audit `billing_enabled=true` sans `payment_schedules`** : repérer les membres avec billing actif mais sans échéancier ✅ RÉSOLU 2026-05-19 (1 orphelin Norman Pilller remédiait)
 - (P2) **Audit historique `monthly_kpis`** : croiser avec backups pour détecter écrasements zéro silencieux passés
 - (P1) **🆕 Sprint Hardening club_id** — 2-3h dédiées :
   - Audit exhaustif des 43 inserts critiques (catégorisation 🟢 OK / 🟡 Vulnérable conditionnel / 🔴 Aucun club_id explicite)
