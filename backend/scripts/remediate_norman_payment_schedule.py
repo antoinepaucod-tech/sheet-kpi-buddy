@@ -17,6 +17,16 @@ Décision utilisateur (2026-05-18)
     `billing_cycle_type=monthly_day` + `billing_cycle_value=1` du membre)
   - amount = 470 CHF (confirmé)
   - frequency = monthly (recurrence_type=monthly_day)
+  - payment_method = "prelevement" (À CONFIRMER PAR ANTOINE avant --apply)
+
+Ajustements V2 (2026-05-18 — review utilisateur)
+-----------------------------------------------
+- `notes` = "" (le champ peut potentiellement être rendu côté UI un jour)
+- Ajout `remediation_reason` + `remediation_date` (audit trail dédié,
+  invisible UI, pattern Sprint Hardening doc 04)
+- Ajout `created_by_user_id` + `created_by_email` (audit trail acteur,
+  pattern défense en profondeur 12/05). Résolus en DB via lookup email
+  super_admin = antoine.paucod@the-coach.pro.
 
 Pattern Sprint A
 ----------------
@@ -43,7 +53,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -57,24 +66,27 @@ from core.config import db, client, MONGO_URL, DB_NAME  # noqa: E402
 # --- Cibles --------------------------------------------------------------
 NORMAN_ID = "d0b6a5d2-9ec4-4609-ba4c-c669c375de27"
 VERSOIX_CLUB_ID = "0a327bf5-c759-49eb-87e4-551913f78bdb"
+OPERATOR_EMAIL = "antoine.paucod@the-coach.pro"
 
 # Plan d'insertion validé par l'utilisateur (option c)
-PLANNED_SCHEDULE = {
+PLANNED_SCHEDULE_BASE = {
     "member_id": NORMAN_ID,
     "amount": 470.0,
     "recurrence_type": "monthly_day",
     "recurrence_value": 1,
     "start_date": "2026-06-01",
     "end_date": None,
-    "payment_method": "prelevement",
+    "payment_method": "prelevement",  # ⚠️ à confirmer par Antoine avant --apply
     "is_active": True,
-    "notes": (
-        "Remédiation manuelle 2026-05-18 : payment_schedule manquant "
-        "(détecté par audit billing_without_schedule). Démarrage propre au "
-        "2026-06-01, avril+mai facturés en accounting_transactions."
-    ),
+    "notes": "",  # ⚠️ vide volontairement (peut potentiellement être rendu UI)
     "club_id": VERSOIX_CLUB_ID,
 }
+
+REMEDIATION_REASON = (
+    "Remédiation manuelle : payment_schedule manquant détecté par audit "
+    "billing_without_schedule (2026-05-18). Démarrage propre au 2026-06-01, "
+    "avril+mai facturés en accounting_transactions (pas de rattrapage)."
+)
 
 
 def _redact_mongo_uri(uri: str) -> str:
@@ -118,6 +130,18 @@ async def _check_member() -> dict | None:
     return member
 
 
+async def _resolve_operator() -> dict | None:
+    """Résout l'opérateur (super_admin) qui exécute le script."""
+    user = await db.users.find_one({"email": OPERATOR_EMAIL}, {"_id": 0})
+    if not user:
+        print(
+            f"ERREUR : Operator user '{OPERATOR_EMAIL}' introuvable en DB. "
+            "Audit trail créateur non résolvable, abort."
+        )
+        return None
+    return user
+
+
 async def _check_existing_schedule() -> dict | None:
     """Retourne le schedule actif existant pour Norman, ou None."""
     return await db.payment_schedules.find_one(
@@ -125,18 +149,23 @@ async def _check_existing_schedule() -> dict | None:
     )
 
 
-def _build_schedule_doc() -> dict:
+def _build_schedule_doc(operator: dict) -> dict:
     """Construit le doc final à insérer (UUID + timestamps frais à chaque run)."""
     now_iso = datetime.now(timezone.utc).isoformat()
     return {
         "id": str(uuid.uuid4()),
-        **PLANNED_SCHEDULE,
+        **PLANNED_SCHEDULE_BASE,
         "created_at": now_iso,
         "updated_at": now_iso,
+        # Audit trail (pattern Sprint Hardening doc 04)
+        "remediation_reason": REMEDIATION_REASON,
+        "remediation_date": now_iso,
+        "created_by_user_id": operator.get("id"),
+        "created_by_email": operator.get("email"),
     }
 
 
-async def _log_activity(schedule_id: str) -> None:
+async def _log_activity(schedule_id: str, operator: dict) -> None:
     """Log activity_log (best effort, non bloquant)."""
     try:
         await db.activity_log.insert_one({
@@ -147,6 +176,8 @@ async def _log_activity(schedule_id: str) -> None:
             "member_id": NORMAN_ID,
             "member_name": "Norman Pilller",
             "club_id": VERSOIX_CLUB_ID,
+            "actor_user_id": operator.get("id"),
+            "actor_email": operator.get("email"),
             "notes": "Script remediate_norman_payment_schedule.py --apply",
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
@@ -167,18 +198,29 @@ def _confirm_apply() -> bool:
 async def main(apply: bool) -> int:
     _print_db_target()
     print()
-    print(f"[1/4] Vérification du membre Norman ({NORMAN_ID})...")
+    print(f"[1/5] Vérification du membre Norman ({NORMAN_ID})...")
     member = await _check_member()
     if not member:
         return 2
     print(
         f"  → OK : {member['name']} | membership={member['membership']} | "
         f"billing_amount={member['billing_amount']} | "
-        f"billing_cycle={member.get('billing_cycle_type')}/{member.get('billing_cycle_value')}"
+        f"billing_cycle={member.get('billing_cycle_type')}/{member.get('billing_cycle_value')} | "
+        f"billing_payment_method (member doc)={member.get('billing_payment_method')!r}"
     )
 
     print()
-    print("[2/4] Vérification de l'absence d'un schedule actif (idempotence)...")
+    print(f"[2/5] Résolution de l'opérateur audit trail ({OPERATOR_EMAIL})...")
+    operator = await _resolve_operator()
+    if not operator:
+        return 3
+    print(
+        f"  → OK : user_id={operator.get('id')} | email={operator.get('email')} | "
+        f"role={operator.get('role')}"
+    )
+
+    print()
+    print("[3/5] Vérification de l'absence d'un schedule actif (idempotence)...")
     existing = await _check_existing_schedule()
     if existing:
         print("  → NO_ACTION : Un payment_schedule actif existe déjà.")
@@ -187,24 +229,24 @@ async def main(apply: bool) -> int:
     print("  → OK : aucun schedule actif. Insertion nécessaire.")
 
     print()
-    print("[3/4] Document qui sera inséré :")
-    planned_doc = _build_schedule_doc()
+    print("[4/5] Document qui sera inséré :")
+    planned_doc = _build_schedule_doc(operator)
     print(json.dumps(planned_doc, default=str, indent=2))
 
     print()
     if not apply:
-        print("[4/4] DRY-RUN — aucune insertion effectuée.")
+        print("[5/5] DRY-RUN — aucune insertion effectuée.")
         print("    Pour appliquer : python scripts/remediate_norman_payment_schedule.py --apply")
         return 0
 
     if not _confirm_apply():
-        print("[4/4] ANNULÉ — confirmation 'yes' non reçue.")
+        print("[5/5] ANNULÉ — confirmation 'yes' non reçue.")
         return 1
 
-    print("[4/4] Insertion en cours...")
+    print("[5/5] Insertion en cours...")
     await db.payment_schedules.insert_one(planned_doc)
     planned_doc.pop("_id", None)
-    await _log_activity(planned_doc["id"])
+    await _log_activity(planned_doc["id"], operator)
 
     # Re-fetch pour confirmation
     inserted = await db.payment_schedules.find_one(
