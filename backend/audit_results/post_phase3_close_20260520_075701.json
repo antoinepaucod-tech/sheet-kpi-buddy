@@ -1,0 +1,81 @@
+{
+  "snapshot_date": "2026-05-20T07:56:58.949338+00:00",
+  "phase_3_status": "CLOSED",
+  "phase_3_close_anchor": "2026-05-19",
+  "total_inserts_patched_phase_3": 31,
+  "total_tests_regression": 94,
+  "total_orphans_found": 5,
+  "expected_orphans_phase_1": 5,
+  "delta_vs_expected": 0,
+  "verdict_status": "READY_FOR_PHASE_4",
+  "verdict_message": "✅ BASELINE COHÉRENTE — prêt pour Phase 4 migration",
+  "by_collection": {
+    "payments": 2,
+    "monthly_kpis": 1,
+    "annual_reviews": 1,
+    "challenge_participants": 1
+  },
+  "by_classification": {
+    "pre_phase_2": 4,
+    "unknown_date": 1
+  },
+  "regression_alerts": [],
+  "orphans": [
+    {
+      "collection": "payments",
+      "_id": "6a0c30b29566c91a04a54726",
+      "id": "ff3c9a59-5175-458a-9e38-93fdc1b99dc9",
+      "member_id": "f05c0c7d-62ca-41ef-9bf2-c7fe9944e1ab",
+      "name": "Mauricio Herrera Soto",
+      "month": null,
+      "amount": 196.0,
+      "created_at": "2026-05-19T09:43:14.806030+00:00",
+      "classification": "pre_phase_2"
+    },
+    {
+      "collection": "payments",
+      "_id": "6a0c30b39566c91a04a54727",
+      "id": "10e632d4-cb4b-4b88-a628-3a2ad82e6320",
+      "member_id": "fc8f0d45-3c7e-4a3f-af8e-93ea572b2cf6",
+      "name": "Valentina Zaharana ",
+      "month": null,
+      "amount": 139.0,
+      "created_at": "2026-05-19T09:43:15.014310+00:00",
+      "classification": "pre_phase_2"
+    },
+    {
+      "collection": "monthly_kpis",
+      "_id": "6a0c178d647aeedac59de59d",
+      "id": null,
+      "member_id": null,
+      "name": null,
+      "month": "2026-06",
+      "amount": null,
+      "created_at": null,
+      "classification": "unknown_date"
+    },
+    {
+      "collection": "annual_reviews",
+      "_id": "6a0717828ed587cb8cf44e0e",
+      "id": "849f43c7-35a5-4837-a409-e83199bc159a",
+      "member_id": "e2720c3c-e52f-4ebf-8e5d-de4b98b01817",
+      "name": null,
+      "month": null,
+      "amount": null,
+      "created_at": "2026-05-15T12:54:26.636421+00:00",
+      "classification": "pre_phase_2"
+    },
+    {
+      "collection": "challenge_participants",
+      "_id": "6a0c16b276473e881690b69a",
+      "id": "7b71ca8f-f6b7-413b-8ab9-d132c3ce5bea",
+      "member_id": "85d983f6-8634-4796-b381-7e78501088c1",
+      "name": "Julia De Pietro",
+      "month": null,
+      "amount": null,
+      "created_at": "2026-05-19T07:52:18.462706+00:00",
+      "classification": "pre_phase_2"
+    }
+  ],
+  "default_club_id_for_phase_4": "0a327bf5-c759-49eb-87e4-551913f78bdb"
+}
