@@ -317,6 +317,14 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-19 — Phase 3 Bonus — CRUD primary residuals) ✅
+- [x] **2 patches CRUD primaires** : `annual_reviews.py::create_review` (L317) + `challenges.py::create_challenge` (L82). Pattern legacy `if club_id` remplacé par `resolve_club_id_or_fallback`. Signatures alignées avec `Depends(get_current_user)`.
+- [x] **+4 tests régression** : 2 dans `test_annual_reviews_club_id_guard.py` (header + fallback CRUD) + 2 dans `test_challenges_club_id_guard.py` (idem). Petit fix collatéral : `check_member_not_archived` mocké dans `_patch_db`.
+- [x] **Phase 3 COMPLÈTE** : 31 inserts/upserts patchés au total sur 8 fichiers (annual_reviews, challenges, payments, rollover, kpis, transactions x2). **94 tests régression PASS en 1.10s**.
+- [x] **Husky pre-push hook live OK** : 94/94 PASS, push autorisé.
+- [x] **Aucun `if club_id` résiduel avant insert** dans les 2 fichiers (grep retourne 0). 3 `if club_id` restants sont des filtres de query GET/list (lecture, hors scope).
+- [x] **Diff propre** : +22/-6 lignes, 0 mutation DB tests, backward compat strict.
+
 ## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 6 — Patch club_id transactions.py + Husky pre-push) ✅
 - [x] **Audit ÉTAPE 0 enrichi** : 11 inserts détectés vs 8 signalés (3 cas cachés sans aucun club_id : L231 cascade rec create, L268 excluded insert, L499 recurring create cascade, L556 validate_recurring).
 - [x] **11 inserts patchés** dans `routers/transactions.py` avec pattern uniforme (Sprint Hardening). Cascade `existing.club_id > header > Versoix` appliquée aux cas dérivés (DELETE excluded, validate_recurring, restore). Optimisation `resolved_club_id` 1x hors boucle pour bulk/generate.

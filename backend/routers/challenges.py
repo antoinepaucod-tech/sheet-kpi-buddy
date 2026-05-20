@@ -80,11 +80,19 @@ async def get_challenge(challenge_id: str):
 
 
 @router.post("")
-async def create_challenge(data: SixWeeksChallengeCreate, club_id: Optional[str] = Depends(get_club_id)):
+async def create_challenge(
+    data: SixWeeksChallengeCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     challenge = SixWeeksChallenge(**data.model_dump())
     doc = challenge.model_dump()
-    if club_id:
-        doc["club_id"] = club_id
+    # Phase 3 Bonus — pattern uniforme défense en profondeur
+    doc["club_id"] = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/challenges (POST)",
+    )
     await db.six_weeks_challenges.insert_one(doc)
     doc.pop("_id", None)
     return doc

@@ -92,6 +92,8 @@ def _patch_db(monkeypatch, db):
     (l'endpoint /complete et /skip log une activity_log, on stub)."""
     monkeypatch.setattr(ar, "db", db)
     monkeypatch.setattr(ar, "log_activity", AsyncMock(return_value=None))
+    # Phase 3 Bonus : create_review appelle check_member_not_archived → stub
+    monkeypatch.setattr(ar, "check_member_not_archived", AsyncMock(return_value=None))
 
 
 def _eligible_member(mid="m_eligible", name="Alice", contract="2026-01-01"):
@@ -306,6 +308,51 @@ async def test_skip_fallback_versoix(monkeypatch, caplog):
         await ar.skip_review(
             review_id="r1",
             body={},
+            club_id=None,
+            current_user={"id": "u1", "email": "u@a.com"},
+        )
+
+    assert inserted[0]["club_id"] == DEFAULT_CLUB_ID
+    assert any("MISSING_CLUB_ID" in r.message for r in caplog.records)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#                  POST /annual-reviews (create_review CRUD)
+#                  Phase 3 Bonus — 2026-05-19
+# ════════════════════════════════════════════════════════════════════════════
+
+
+async def test_create_review_uses_header_club_id(monkeypatch):
+    """CRUD primaire : header X-Club-Id valide → propagation directe."""
+    db, inserted = _make_db()
+    _patch_db(monkeypatch, db)
+
+    await ar.create_review(
+        data=ar.AnnualReviewCreate(
+            member_id="m1",
+            review_date="2026-06-01",
+            review_type="monthly",
+        ),
+        club_id="CLUB_HEADER",
+        current_user={"id": "u1", "email": "u@a.com"},
+    )
+
+    assert len(inserted) == 1
+    assert inserted[0]["club_id"] == "CLUB_HEADER"
+
+
+async def test_create_review_fallback_versoix_no_header(monkeypatch, caplog):
+    """CRUD primaire : pas de header → fallback DEFAULT_CLUB_ID + warning log."""
+    db, inserted = _make_db()
+    _patch_db(monkeypatch, db)
+
+    with caplog.at_level("WARNING"):
+        await ar.create_review(
+            data=ar.AnnualReviewCreate(
+                member_id="m1",
+                review_date="2026-06-01",
+                review_type="monthly",
+            ),
             club_id=None,
             current_user={"id": "u1", "email": "u@a.com"},
         )

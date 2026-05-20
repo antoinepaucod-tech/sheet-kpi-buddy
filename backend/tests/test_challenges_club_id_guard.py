@@ -264,3 +264,60 @@ async def test_auto_generate_bilans_fallback_single_log(monkeypatch, caplog):
     assert len(missing_logs) == 1, (
         f"1 seul log attendu (resolve hors boucle), got {len(missing_logs)}"
     )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#                  POST /challenges (create_challenge CRUD)
+#                  Phase 3 Bonus — 2026-05-19
+# ════════════════════════════════════════════════════════════════════════════
+
+
+def _make_create_challenge_db():
+    inserted: list[dict] = []
+    coll = MagicMock()
+
+    async def _insert(d):
+        inserted.append(d)
+        return MagicMock(inserted_id="ch-mock")
+
+    coll.insert_one = AsyncMock(side_effect=_insert)
+    db = MagicMock(); db.six_weeks_challenges = coll
+    return db, inserted
+
+
+def _challenge_payload():
+    return ch.SixWeeksChallengeCreate(
+        name="Spring Challenge",
+        start_date="2026-06-01",
+    )
+
+
+async def test_create_challenge_uses_header_club_id(monkeypatch):
+    """CRUD primaire : header X-Club-Id valide → propagation directe."""
+    db, inserted = _make_create_challenge_db()
+    monkeypatch.setattr(ch, "db", db)
+
+    await ch.create_challenge(
+        data=_challenge_payload(),
+        club_id="CLUB_HEADER",
+        current_user={"id": "u1", "email": "u@a.com"},
+    )
+
+    assert len(inserted) == 1
+    assert inserted[0]["club_id"] == "CLUB_HEADER"
+
+
+async def test_create_challenge_fallback_versoix_no_header(monkeypatch, caplog):
+    """CRUD primaire : pas de header → fallback DEFAULT_CLUB_ID + warning log."""
+    db, inserted = _make_create_challenge_db()
+    monkeypatch.setattr(ch, "db", db)
+
+    with caplog.at_level("WARNING"):
+        await ch.create_challenge(
+            data=_challenge_payload(),
+            club_id=None,
+            current_user={"id": "u1", "email": "u@a.com"},
+        )
+
+    assert inserted[0]["club_id"] == DEFAULT_CLUB_ID
+    assert any("MISSING_CLUB_ID" in r.message for r in caplog.records)
