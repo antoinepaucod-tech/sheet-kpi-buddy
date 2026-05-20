@@ -317,6 +317,15 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 6 — Patch club_id transactions.py + Husky pre-push) ✅
+- [x] **Audit ÉTAPE 0 enrichi** : 11 inserts détectés vs 8 signalés (3 cas cachés sans aucun club_id : L231 cascade rec create, L268 excluded insert, L499 recurring create cascade, L556 validate_recurring).
+- [x] **11 inserts patchés** dans `routers/transactions.py` avec pattern uniforme (Sprint Hardening). Cascade `existing.club_id > header > Versoix` appliquée aux cas dérivés (DELETE excluded, validate_recurring, restore). Optimisation `resolved_club_id` 1x hors boucle pour bulk/generate.
+- [x] **11 tests pytest régression PASS** incluant 3 tests cascade explicites + 2 tests `single log for N inserts` (preuve perf optimisation).
+- [x] **Husky pre-push hook livré** : `/app/frontend/.husky/pre-push` lance `pytest -m regression -q` automatiquement. Push bloqué si test régression échoue. Bypass `--no-verify` documenté. Hook testé en live : succès (90/90 PASS 1.22s) + échec (test cassé bloque).
+- [x] **README.md** mis à jour (3 lignes : hook + bypass + debug).
+- [x] **Non-régression globale** : 90/90 tests régression PASS en 1.06s (collected 90/512, deselected 422 par marker). Backward compat strict.
+- [x] **Diff propre** : `transactions.py` +112/-28. Grep `if club_id:` avant insert retourne 0 résiduel.
+
 ## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 5 — Patch club_id upserts kpis.py + transactions.py) ✅
 - [x] **Découverte audit ÉTAPE 0** : 4/6 cibles déjà patchées Sprint Hardening (kpis.py L70+L118, ghl.py L179+L477). Mon audit Phase 2 avait des faux positifs en ne vérifiant pas les lignes ±5. **Vrai scope = 2 upserts vulnérables.**
 - [x] **2 upserts patchés** : `kpis.py::recalculate_month` (L570) + `transactions.py::_auto_recalculate_kpis` (L96). Pattern adapté job/helper : `club_id is None → log structuré + skip` (vs créer orphelin/cross-club). Bonus : `update["club_id"] = club_id` injecté dans `$set` pour cohérence filter+$set.

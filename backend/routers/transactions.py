@@ -6,7 +6,8 @@ from calendar import monthrange
 from pydantic import BaseModel
 
 from core.config import db, MONTHS_FR
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from models.transactions import (
     AccountingCategory, CategoryCreate,
     AccountingTransaction, TransactionCreate,
@@ -119,12 +120,22 @@ async def get_transactions(month: Optional[str] = None, limit: int = 500, skip: 
 
 
 @router.post("/transactions")
-async def create_transaction(data: TransactionCreate, club_id: Optional[str] = Depends(get_club_id)):
+async def create_transaction(
+    data: TransactionCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     excluded = await db.excluded_recurring_expenses.find_one({
         "category": data.category, "description": data.description
     })
     if excluded:
         raise HTTPException(status_code=400, detail="Cette transaction a été exclue précédemment")
+
+    # Phase 3 Batch 6 — défense en profondeur club_id (résolu 1x pour couvrir
+    # transaction principale + cascade recurring_transactions auto-create).
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/transactions (POST)"
+    )
 
     # Extract is_recurring and recurrence_day before creating transaction
     is_recurring = data.is_recurring
@@ -135,8 +146,7 @@ async def create_transaction(data: TransactionCreate, club_id: Optional[str] = D
     tx_data.pop("recurrence_day", None)
     tx = AccountingTransaction(**tx_data)
     doc = tx.model_dump()
-    if club_id:
-        doc["club_id"] = club_id
+    doc["club_id"] = resolved_club_id
     # Auto-fill year/month from date
     if doc.get("date") and len(doc["date"]) >= 7:
         try:
@@ -170,8 +180,7 @@ async def create_transaction(data: TransactionCreate, club_id: Optional[str] = D
                 is_active=True,
             )
             rec_doc = rec.model_dump()
-            if club_id:
-                rec_doc["club_id"] = club_id
+            rec_doc["club_id"] = resolved_club_id  # Phase 3 Batch 6
             await db.recurring_transactions.insert_one(rec_doc)
             rec_doc.pop('_id', None)
 
@@ -191,10 +200,20 @@ class TransactionUpdate(BaseModel):
 
 
 @router.put("/transactions/{transaction_id}")
-async def update_transaction(transaction_id: str, data: TransactionUpdate, club_id: Optional[str] = Depends(get_club_id)):
+async def update_transaction(
+    transaction_id: str,
+    data: TransactionUpdate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     tx = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction introuvable")
+
+    # Phase 3 Batch 6 — cascade existing > header > Versoix
+    resolved_club_id = tx.get("club_id") or resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/transactions/{id} (PUT)"
+    )
 
     is_recurring = data.is_recurring
     recurrence_day = data.recurrence_day
@@ -228,6 +247,7 @@ async def update_transaction(transaction_id: str, data: TransactionUpdate, club_
                 amount=amt, recurrence_day=day, is_active=True,
             )
             rec_doc = rec.model_dump()
+            rec_doc["club_id"] = resolved_club_id  # Phase 3 Batch 6
             await db.recurring_transactions.insert_one(rec_doc)
     elif is_recurring is False:
         desc = updates.get("description", tx.get("description", ""))
@@ -246,7 +266,11 @@ async def update_transaction(transaction_id: str, data: TransactionUpdate, club_
 
 
 @router.delete("/transactions/{transaction_id}")
-async def delete_transaction(transaction_id: str, club_id: Optional[str] = Depends(get_club_id)):
+async def delete_transaction(
+    transaction_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     tx = await db.accounting_transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction introuvable")
@@ -256,6 +280,10 @@ async def delete_transaction(transaction_id: str, club_id: Optional[str] = Depen
         "description": tx.get("description", ""),
     }, {"_id": 0})
     if recurring:
+        # Phase 3 Batch 6 — cascade existing > header > Versoix
+        resolved_club_id = tx.get("club_id") or resolve_club_id_or_fallback(
+            club_id=club_id, current_user=current_user, endpoint="/api/transactions/{id} (DELETE)"
+        )
         excl = ExcludedRecurringExpense(
             original_transaction_id=transaction_id,
             category=tx.get('category', ''),
@@ -265,14 +293,24 @@ async def delete_transaction(transaction_id: str, club_id: Optional[str] = Depen
             sub_type=tx.get('sub_type'),
             date=tx.get('date'),
         )
-        await db.excluded_recurring_expenses.insert_one(excl.model_dump())
+        excl_doc = excl.model_dump()
+        excl_doc["club_id"] = resolved_club_id
+        await db.excluded_recurring_expenses.insert_one(excl_doc)
     await db.accounting_transactions.delete_one({"id": transaction_id})
     await _auto_recalculate_kpis(tx.get("date", ""), club_id)
     return {"message": "Transaction supprimée"}
 
 
 @router.post("/transactions/bulk")
-async def bulk_import_transactions(transactions: List[TransactionCreate], club_id: Optional[str] = Depends(get_club_id)):
+async def bulk_import_transactions(
+    transactions: List[TransactionCreate],
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    # Phase 3 Batch 6 — résolu 1x hors boucle (perf + 1 seul log si fallback)
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/transactions/bulk"
+    )
     imported, skipped = [], []
     for data in transactions:
         excluded = await db.excluded_recurring_expenses.find_one({
@@ -283,8 +321,7 @@ async def bulk_import_transactions(transactions: List[TransactionCreate], club_i
             continue
         tx = AccountingTransaction(**data.model_dump())
         doc = tx.model_dump()
-        if club_id:
-            doc["club_id"] = club_id
+        doc["club_id"] = resolved_club_id
         await db.accounting_transactions.insert_one(doc)
         doc.pop('_id', None)
         imported.append(doc)
@@ -299,11 +336,17 @@ async def get_categories(club_id: Optional[str] = Depends(get_club_id)):
 
 
 @router.post("/categories")
-async def create_category(data: CategoryCreate, club_id: Optional[str] = Depends(get_club_id)):
+async def create_category(
+    data: CategoryCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     cat = AccountingCategory(**data.model_dump())
     doc = cat.model_dump()
-    if club_id:
-        doc["club_id"] = club_id
+    # Phase 3 Batch 6
+    doc["club_id"] = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/categories (POST)"
+    )
     await db.accounting_categories.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -338,11 +381,20 @@ async def get_excluded(club_id: Optional[str] = Depends(get_club_id)):
 
 
 @router.delete("/excluded/{excluded_id}")
-async def remove_from_exclusions(excluded_id: str, club_id: Optional[str] = Depends(get_club_id)):
+async def remove_from_exclusions(
+    excluded_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     # Find the excluded record first
     excl = await db.excluded_recurring_expenses.find_one({"id": excluded_id}, {"_id": 0})
     if not excl:
         raise HTTPException(status_code=404, detail="Exclusion introuvable")
+
+    # Phase 3 Batch 6 — cascade existing > header > Versoix
+    resolved_club_id = excl.get("club_id") or resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/excluded/{id} (DELETE)"
+    )
 
     # Restore the transaction back to accounting_transactions
     restored_tx = AccountingTransaction(
@@ -353,8 +405,7 @@ async def remove_from_exclusions(excluded_id: str, club_id: Optional[str] = Depe
         category=excl.get("category", ""),
     )
     doc = restored_tx.model_dump()
-    if club_id:
-        doc["club_id"] = club_id
+    doc["club_id"] = resolved_club_id
     await db.accounting_transactions.insert_one(doc)
     doc.pop("_id", None)
 
@@ -436,11 +487,17 @@ async def get_all_recurring(club_id: Optional[str] = Depends(get_club_id)):
 
 
 @router.post("/recurring-transactions")
-async def create_recurring_transaction(data: RecurringTransactionCreate, club_id: Optional[str] = Depends(get_club_id)):
+async def create_recurring_transaction(
+    data: RecurringTransactionCreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     rec = RecurringTransaction(**data.model_dump())
     doc = rec.model_dump()
-    if club_id:
-        doc["club_id"] = club_id
+    # Phase 3 Batch 6
+    doc["club_id"] = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/recurring-transactions (POST)"
+    )
     await db.recurring_transactions.insert_one(doc)
     doc.pop('_id', None)
     return doc
@@ -465,9 +522,19 @@ async def delete_recurring_transaction(rec_id: str):
 
 
 @router.post("/recurring-transactions/generate/{year}/{month}")
-async def generate_monthly_transactions(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
+async def generate_monthly_transactions(
+    year: int,
+    month: int,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Mois invalide (1-12)")
+    # Phase 3 Batch 6 — résolu 1x hors boucle
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user,
+        endpoint="/api/recurring-transactions/generate/{year}/{month}",
+    )
     recurring = await db.recurring_transactions.find(_cq(club_id, {"is_active": True}), {"_id": 0}).to_list(1000)
     if not recurring:
         raise HTTPException(status_code=404, detail="Aucune transaction récurrente active")
@@ -494,8 +561,7 @@ async def generate_monthly_transactions(year: int, month: int, club_id: Optional
             sub_type=rec.get("sub_type")
         )
         doc = tx.model_dump()
-        if club_id:
-            doc["club_id"] = club_id
+        doc["club_id"] = resolved_club_id  # Phase 3 Batch 6
         await db.accounting_transactions.insert_one(doc)
         doc.pop('_id', None)
         created.append(doc)
@@ -525,7 +591,11 @@ async def get_recurring_validations(year_month: str, club_id: Optional[str] = De
 
 
 @router.post("/recurring-validations")
-async def validate_recurring(body: dict):
+async def validate_recurring(
+    body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Validate (confirm payment/receipt) a recurring transaction for a month."""
     recurring_id = body.get("recurring_id")
     month = body.get("month")
@@ -542,6 +612,11 @@ async def validate_recurring(body: dict):
     if not rec:
         raise HTTPException(status_code=404, detail="Transaction récurrente introuvable")
 
+    # Phase 3 Batch 6 — cascade rec.club_id > header > Versoix
+    resolved_club_id = rec.get("club_id") or resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/recurring-validations"
+    )
+
     validation = {
         "id": str(__import__("uuid").uuid4()),
         "recurring_id": recurring_id,
@@ -552,6 +627,7 @@ async def validate_recurring(body: dict):
         "type": rec.get("type", "expense"),
         "validated": True,
         "validated_at": datetime.now(timezone.utc).isoformat(),
+        "club_id": resolved_club_id,
     }
     await db.recurring_validations.insert_one(validation)
     validation.pop("_id", None)
@@ -637,9 +713,18 @@ class MonthlyAmountUpdate(BaseModel):
 
 
 @router.put("/transactions/update-monthly-amount")
-async def update_monthly_amount(data: MonthlyAmountUpdate, club_id: Optional[str] = Depends(get_club_id)):
+async def update_monthly_amount(
+    data: MonthlyAmountUpdate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Update or create a transaction for a specific category/month."""
     month_str = f"{data.year}-{data.month:02d}"
+
+    # Phase 3 Batch 6 — résolu 1x pour le potentiel insert
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id, current_user=current_user, endpoint="/api/transactions/update-monthly-amount"
+    )
 
     # Find existing transactions for this category/month
     existing = await db.accounting_transactions.find(
@@ -680,8 +765,7 @@ async def update_monthly_amount(data: MonthlyAmountUpdate, club_id: Optional[str
             month_name=MONTH_NAMES.get(data.month, ""),
         )
         doc = tx.model_dump()
-        if club_id:
-            doc["club_id"] = club_id
+        doc["club_id"] = resolved_club_id  # Phase 3 Batch 6
         await db.accounting_transactions.insert_one(doc)
         doc.pop("_id", None)
     else:
