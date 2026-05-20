@@ -21,6 +21,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from fastapi import HTTPException
 
 from routers import payments as pm
 
@@ -164,3 +165,41 @@ async def test_sync_with_members_delete_filters_always_contain_club_id(monkeypat
         assert filter_dict["club_id"], (
             f"delete_many appelé avec `club_id` vide/falsy : {filter_dict}"
         )
+
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#   Option B (hardening strict) : pas de fallback Versoix sur op delete.
+#   Header `X-Club-Id` explicitement requis sur sync-with-members.
+# ════════════════════════════════════════════════════════════════════════════
+
+
+async def test_sync_with_members_raises_400_without_club_id_header(monkeypatch):
+    """Garantie Option B (Phase 5 Batch 1.A hardening) : sur une opération
+    delete cross-tenant à fort impact, on N'AUTORISE PAS le fallback
+    silencieux vers `DEFAULT_CLUB_ID` (Versoix). Le header `X-Club-Id` doit
+    être présent, sinon HTTPException 400.
+
+    Élimine le risque de wipe silencieux du club Versoix par un appel
+    super_admin sans header.
+
+    RED avant patch (le code actuel résout via `resolve_club_id_or_fallback`
+    et exécute les deletes sur Versoix).
+    GREEN après patch (guard `if not club_id: raise HTTPException(400)` avant
+    le resolver).
+    """
+    db = _make_sync_db_with_delete_spies()
+    monkeypatch.setattr(pm, "db", db)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await pm.sync_payments_with_members(
+            club_id=None,  # header X-Club-Id absent
+            current_user={"id": "user-1", "email": "u@a.com"},
+        )
+
+    assert exc_info.value.status_code == 400
+    assert "X-Club-Id" in exc_info.value.detail
+
+    # Critique : AUCUN delete ne doit avoir été appelé avant le raise.
+    db.payment_schedules.delete_many.assert_not_called()
+    db.payments.delete_many.assert_not_called()
