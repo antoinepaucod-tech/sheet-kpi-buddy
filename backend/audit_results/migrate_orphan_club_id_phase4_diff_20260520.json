@@ -1,0 +1,60 @@
+{
+  "before_snapshot": "post_phase3_close_20260520_075701.json",
+  "after_snapshot": "post_phase3_close_20260520_081035.json",
+  "before_total_orphans": 5,
+  "after_total_orphans": 0,
+  "migrated_count": 5,
+  "before_by_collection": {
+    "payments": 2,
+    "monthly_kpis": 1,
+    "annual_reviews": 1,
+    "challenge_participants": 1
+  },
+  "after_by_collection": {},
+  "orphans_migrated": [
+    {
+      "collection": "payments",
+      "doc_id": "ff3c9a59-5175-458a-9e38-93fdc1b99dc9",
+      "member_id": "f05c0c7d-62ca-41ef-9bf2-c7fe9944e1ab",
+      "name": "Mauricio Herrera Soto",
+      "month": null,
+      "created_at": "2026-05-19T09:43:14.806030+00:00"
+    },
+    {
+      "collection": "payments",
+      "doc_id": "10e632d4-cb4b-4b88-a628-3a2ad82e6320",
+      "member_id": "fc8f0d45-3c7e-4a3f-af8e-93ea572b2cf6",
+      "name": "Valentina Zaharana ",
+      "month": null,
+      "created_at": "2026-05-19T09:43:15.014310+00:00"
+    },
+    {
+      "collection": "monthly_kpis",
+      "doc_id": "6a0c178d647aeedac59de59d",
+      "member_id": null,
+      "name": null,
+      "month": "2026-06",
+      "created_at": null
+    },
+    {
+      "collection": "annual_reviews",
+      "doc_id": "849f43c7-35a5-4837-a409-e83199bc159a",
+      "member_id": "e2720c3c-e52f-4ebf-8e5d-de4b98b01817",
+      "name": null,
+      "month": null,
+      "created_at": "2026-05-15T12:54:26.636421+00:00"
+    },
+    {
+      "collection": "challenge_participants",
+      "doc_id": "7b71ca8f-f6b7-413b-8ab9-d132c3ce5bea",
+      "member_id": "85d983f6-8634-4796-b381-7e78501088c1",
+      "name": "Julia De Pietro",
+      "month": null,
+      "created_at": "2026-05-19T07:52:18.462706+00:00"
+    }
+  ],
+  "activity_logs_created": 5,
+  "activity_log_action": "orphan_club_id_migration_phase_4",
+  "regression_tests_pass": "94/94",
+  "verdict": "✅ PHASE 4 COMPLÈTE — 5/5 orphelins migrés vers Versoix, 0 reste, 94 tests régression OK"
+}

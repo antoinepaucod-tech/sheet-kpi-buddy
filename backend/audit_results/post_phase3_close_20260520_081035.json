@@ -1,0 +1,17 @@
+{
+  "snapshot_date": "2026-05-20T08:10:32.770437+00:00",
+  "phase_3_status": "CLOSED",
+  "phase_3_close_anchor": "2026-05-19",
+  "total_inserts_patched_phase_3": 31,
+  "total_tests_regression": 94,
+  "total_orphans_found": 0,
+  "expected_orphans_phase_1": 5,
+  "delta_vs_expected": -5,
+  "verdict_status": "ANOMALY_FEWER",
+  "verdict_message": "🟡 ANOMALIE : moins d'orphelins qu'attendu — investigation requise",
+  "by_collection": {},
+  "by_classification": {},
+  "regression_alerts": [],
+  "orphans": [],
+  "default_club_id_for_phase_4": "0a327bf5-c759-49eb-87e4-551913f78bdb"
+}

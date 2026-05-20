@@ -317,6 +317,18 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-20 — Phase 4 — Migration data orphan club_id) ✅
+- [x] **Étape A snapshot baseline** `/app/backend/scripts/snapshot_orphan_audit_phase3_close.py` (READ-ONLY, classification timeline pre_phase_2 / post_phase_3, alerte régression). Résultat : 5/5 orphelins exacts, 0 régression post-Phase 3 → ✅ baseline cohérente.
+- [x] **Pré-checks** : pas de doublon KPI 2026-06 Versoix, cross-refs Versoix validées sur les 4 membres, cascade Julia x6 infirmée (1 seul review, déjà avec club_id Versoix).
+- [x] **Étape B extension** `scripts/migrate_orphan_club_id.py` (+135/-64) avec flag CLI `--phase4` (rétro-compat strict F.3). Constante `NO_MEMBER_REF_COLLECTIONS = {"monthly_kpis"}` + verdict `OK_VERSOIX_NO_MEMBER_REF` + anti-doublon préventif + fallback `_id` ObjectId pour docs legacy sans UUID. Champ `club_id_migrated_at` traçabilité.
+- [x] **Dry-run** : 5/5 OK_VERSOIX, 0 anomalie.
+- [x] **Apply confirmé `yes`** : 4/5 migrés via update_many UUID + 1/5 via update_one `_id` ObjectId (correction d'un bug de projection découvert post-apply). **Total : 5/5 ✅**.
+- [x] **5 activity_logs créés** (action=`orphan_club_id_migration_phase_4`, actor=antoine.paucod@the-coach.pro).
+- [x] **Re-snapshot post-apply** : 0 orphelin restant sur les 4 collections (delta -5 vs baseline).
+- [x] **Tests régression 94/94 PASS** en 1.16s (non-régression confirmée post-mutation DB).
+- [x] **JSON comparaison** `audit_results/migrate_orphan_club_id_phase4_diff_20260520.json` (1 916 bytes).
+- [x] **PHASE 3+4 COMPLET** : 31 inserts patchés (code) + 5 docs migrés (data) + 94 tests régression + Husky pre-push verrou. Cycle audit → patch → migration → vérification clôturé.
+
 ## Completed Tasks (Session 2026-05-19 — Phase 3 Bonus — CRUD primary residuals) ✅
 - [x] **2 patches CRUD primaires** : `annual_reviews.py::create_review` (L317) + `challenges.py::create_challenge` (L82). Pattern legacy `if club_id` remplacé par `resolve_club_id_or_fallback`. Signatures alignées avec `Depends(get_current_user)`.
 - [x] **+4 tests régression** : 2 dans `test_annual_reviews_club_id_guard.py` (header + fallback CRUD) + 2 dans `test_challenges_club_id_guard.py` (idem). Petit fix collatéral : `check_member_not_archived` mocké dans `_patch_db`.
