@@ -91,6 +91,15 @@ async def sync_payments_with_members(
     days_in_month = monthrange(current_year, current_month)[1]
     month_str = f"{current_year}-{current_month:02d}"
 
+    # Phase 5 Batch 1.A Option B — guard strict delete op
+    # cf. audit 2026-05-20. Pas de fallback Versoix sur delete.
+    if not club_id:
+        raise HTTPException(
+            status_code=400,
+            detail="X-Club-Id header required for sync-with-members"
+                   " (delete operation, no fallback allowed)"
+        )
+
     # Phase 3 Batch 3 — défense en profondeur club_id (Sprint Hardening pattern).
     # Résolu UNE seule fois : 1 seul log MISSING_CLUB_ID si fallback (vs N inserts).
     resolved_club_id = resolve_club_id_or_fallback(
