@@ -448,6 +448,48 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - (P1) Integration API bsport
 - (P1) Integration Revolut Business API + Category mapping
 
+## 🛡️ Phase 5 Multi-tenant Hardening (Baseline 2026-05-20)
+
+**Status** : Baseline audit AST terminée. Patches en attente — session séparée tête fraîche (décision Antoine).
+
+**Rapport** : `/app/backend/audit_results/multitenant_isolation_audit_20260520_082750.{json,md}`
+
+**Bilan AST** :
+- 🔴 10 CATASTROPHIQUE_CROSS_CLUB (delete/update_many sans `club_id`)
+- 🟠 91 FUITE_READ (find/aggregate/count_documents sans scope)
+- 🟡 228 MOYEN_DOC_WRONG (find_one/update_one/delete_one sans scope)
+- 🟢 94 SAFE, ⚪ 87 OUT_OF_SCOPE
+
+**Plan d'exécution validé par Antoine (à exécuter en session séparée)** :
+- **Batch 1** (P0) — `routers/payments.py:119,145` sync-with-members (canari connu, victoire rapide)
+- **Batch 2** (P0) — `routers/members.py` (878, 897, 971, 1008, 1341) cascade payments/annual_reviews
+- **Batch 3** (P0) — `routers/courses.py` (168, 532) + `routers/challenges.py:118`
+- **Batch 4** (P1) — Fuites Read prioritaires, **commencer par investigation `routers/franchise.py`** (5 sites 🟠 : ALLOWLIST légitime super_admin vs fuite — nécessite lecture code, pas grep statique)
+- **Batch 5+** (P2) — 228 MOYEN_DOC_WRONG, fix incrémental par fichier
+
+**Décisions process actées** :
+- Q1 ✅ Ordre Batch 1 → 5 (sync-with-members en premier comme canari)
+- Q2 ⏳ franchise.py = investigation Batch 4 (auth gating super_admin + filter `club_ids` autorisé à confirmer par lecture code)
+- Q3 ✅ Toujours ajouter `club_id` au filtre même si redondant (défense en profondeur uniforme)
+- Q4 ✅ **TDD strict** : test rouge prouve le bug → patch → test vert (preuve commerciale "multi-tenant isolation tested")
+- Q5 ✅ Pattern `AsyncMock` pur uniquement (cohérent Phase 3, zéro touch DB Atlas). Pas de snapshot DB nécessaire. Si un jour un test integration touch Atlas → `try/finally` strict + cleanup `_TEMP_TEST_*` obligatoire (Sprint A).
+
+**Pattern fix obligatoire** :
+```python
+filter = {"id": entity_id, "club_id": resolved_club_id}
+# Pour update_many/delete_many cascade :
+await db.collection.update_many(
+    {"member_id": member_id, "club_id": resolved_club_id, ...},
+    {"$set": ...}
+)
+```
+
+**Commit Git séparé requis** (à faire via "Save to GitHub" UI) :
+- Message : `feat(audit): multi-tenant isolation baseline (10 critical + 91 read leak + 228 medium classified)`
+- Files : `backend/audit_results/multitenant_isolation_audit_*.{json,md}` + `backend/scripts/audit_multitenant_isolation.py`
+
+---
+
 ## Backlog
 - (P3) Refactoring MembersPage.js (>1500 lines) et Dashboard.js (>900 lines)
 - (P3) Responsive Mobile / PWA optimization
