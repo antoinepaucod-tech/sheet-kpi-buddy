@@ -27,6 +27,15 @@ async def _auto_recalculate_kpis(tx_date: str, club_id: str = None):
     """Auto-recalculate KPIs for the month of the given transaction date."""
     if not tx_date or len(tx_date) < 7:
         return
+    # Phase 3 Batch 5 — défense en profondeur : skip si pas de club_id pour
+    # éviter de créer un monthly_kpis orphelin via upsert (filter cross-club).
+    if not club_id:
+        import logging
+        logging.getLogger(__name__).warning(
+            "KPI_AUTO_RECALC_MISSING_CLUB_ID event=skip_auto_recalculate "
+            f"tx_date={tx_date} club_id={club_id!r}"
+        )
+        return
     month = tx_date[:7]  # "YYYY-MM"
 
     cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
@@ -93,6 +102,9 @@ async def _auto_recalculate_kpis(tx_date: str, club_id: str = None):
         elif eng in update:
             update[fr] = update[eng]
     
+    # Phase 3 Batch 5 — défense en profondeur : inclure club_id dans $set
+    # pour cohérence filter+$set (anti-orphan + anti cross-club upsert).
+    update["club_id"] = club_id
     await db.monthly_kpis.update_one(_cq(club_id, {"month": month}), {"$set": update}, upsert=True)
 
 

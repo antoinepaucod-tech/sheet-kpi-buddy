@@ -317,6 +317,14 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 5 — Patch club_id upserts kpis.py + transactions.py) ✅
+- [x] **Découverte audit ÉTAPE 0** : 4/6 cibles déjà patchées Sprint Hardening (kpis.py L70+L118, ghl.py L179+L477). Mon audit Phase 2 avait des faux positifs en ne vérifiant pas les lignes ±5. **Vrai scope = 2 upserts vulnérables.**
+- [x] **2 upserts patchés** : `kpis.py::recalculate_month` (L570) + `transactions.py::_auto_recalculate_kpis` (L96). Pattern adapté job/helper : `club_id is None → log structuré + skip` (vs créer orphelin/cross-club). Bonus : `update["club_id"] = club_id` injecté dans `$set` pour cohérence filter+$set.
+- [x] **Origine orphelin 2026-06 confirmée** : un appel sans `X-Club-Id` à `recalculate_month` ou `_auto_recalculate_kpis` créait un doc orphelin via upsert. Désormais bloqué par le garde-fou.
+- [x] **6 tests pytest régression PASS** `/app/backend/tests/test_kpis_recalc_club_id_guard.py` incluant **test critique cross-club** : 2 upserts même mois sur clubs différents → filters scopés indépendants, $set portent leur propre club_id (preuve absence de fuite).
+- [x] **Non-régression** : 125/125 tests PASS (6 Batch 5 + 6 Batch 4 + 7 Batch 3 + 5 Batch 2 + 9 Batch 1 + 92 connexes). Diff +24/-0 lignes. Backward compat strict.
+- [x] **Signalement futur batch** : `transactions.py` a 8 inserts conditionnels sans fallback (L127, 162, 274, 294, 345, 431, 486, 672) — cohérent avec pattern legacy Sprint Hardening, à patcher batch dédié.
+
 ## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 4 — Patch club_id rollover.py) ✅
 - [x] **Audit read-only `audit_clubs_null_id.py`** : 4/4 docs `clubs` ont un id valide → hypothèse Phase 2 (doc legacy clubs sans id) **INFIRMÉE**. L'orphelin `monthly_kpis 2026-06` vient probablement de `kpis.py / ghl.py / transactions.py` (5 autres call paths identifiés, hors scope batch).
 - [x] **`_ensure_kpi_exists` patché** : garde-fou `if not club_id → log structuré ROLLOVER_MISSING_CLUB_ID + SKIP` (vs créer orphelin). Bonus traçabilité : `created_at` + `updated_at` ISO ajoutés au doc inséré (l'orphelin `2026-06` avait `created_at=null`).

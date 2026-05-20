@@ -336,6 +336,15 @@ async def recalculate_month_route(month: str, club_id: Optional[str] = Depends(g
 
 
 async def recalculate_month(month: str, club_id: Optional[str] = None):
+    # Phase 3 Batch 5 — défense en profondeur : si pas de club_id, skip plutôt que
+    # créer un orphelin via upsert (filter sans club_id matcherait cross-club).
+    if not club_id:
+        import logging
+        logging.getLogger(__name__).warning(
+            "KPI_RECALC_MISSING_CLUB_ID event=skip_recalculate_month "
+            f"month={month} club_id={club_id!r}"
+        )
+        return {"error": "club_id required for recalculate"}
     cats = await db.accounting_categories.find(_cq(club_id), {"_id": 0}).to_list(1000)
     cat_map = {c["name"]: c for c in cats}
 
@@ -567,6 +576,9 @@ async def recalculate_month(month: str, club_id: Optional[str] = None):
         if eng in totals_by_col:
             update[fr] = totals_by_col[eng]
 
+    # Phase 3 Batch 5 — défense en profondeur : inclure club_id dans $set
+    # pour empêcher l'upsert de créer un doc orphelin (filter + $set cohérents).
+    update["club_id"] = club_id
     await db.monthly_kpis.update_one(_cq(club_id, {"month": month}), {"$set": update}, upsert=True)
     doc = await db.monthly_kpis.find_one(_cq(club_id, {"month": month}), {"_id": 0})
 
