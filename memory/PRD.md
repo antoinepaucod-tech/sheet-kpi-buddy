@@ -317,6 +317,14 @@ Application SaaS pour la gestion multi-clubs (franchise) de salles de fitness/co
 - [x] **Endpoint manuel** `POST /api/admin/orphan-audit/run` retourne la nouvelle clé `billing_without_schedule` (pas de breaking change). Testé live preview → `orphan_count: 0` cohérent avec remédiation Norman 18/05.
 - [x] **Tests pytest 10/10 PASS** `/app/backend/tests/test_orphan_audit_billing_without_schedule.py` : no_orphan / orphan_detected (repro Norman) / pif_filtered / archived_skipped / exception_swallowed / email triggers (clean/bws-only/kill-switch) / HTML rendering (présence/absence section). Tous sous marker `regression`. 0 mutation DB confirmée par grep dans diff.
 
+## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 4 — Patch club_id rollover.py) ✅
+- [x] **Audit read-only `audit_clubs_null_id.py`** : 4/4 docs `clubs` ont un id valide → hypothèse Phase 2 (doc legacy clubs sans id) **INFIRMÉE**. L'orphelin `monthly_kpis 2026-06` vient probablement de `kpis.py / ghl.py / transactions.py` (5 autres call paths identifiés, hors scope batch).
+- [x] **`_ensure_kpi_exists` patché** : garde-fou `if not club_id → log structuré ROLLOVER_MISSING_CLUB_ID + SKIP` (vs créer orphelin). Bonus traçabilité : `created_at` + `updated_at` ISO ajoutés au doc inséré (l'orphelin `2026-06` avait `created_at=null`).
+- [x] **`run_rollover_all_clubs` patché** : garde-fou itération sur `db.clubs` skip docs legacy sans id avec log `event=skip_legacy_club_doc`. Robuste pour multi-club futur.
+- [x] **6 tests pytest régression PASS** `/app/backend/tests/test_rollover_club_id_guard.py` (insert avec traçabilité / idempotence / skip None / skip empty string / mix OK+legacy / cas nominal 4 clubs). Marker `regression` + `asyncio`. 0 mutation DB.
+- [x] **Non-régression** : 119/119 tests PASS (6 Batch 4 + 7 Batch 3 + 5 Batch 2 + 9 Batch 1 + 92 connexes). Diff +26/-3 lignes. Backward compat strict.
+- [x] **Signalement futurs batches** : `routers/kpis.py:71/119/570` + `routers/transactions.py:96` + `routers/ghl.py:180/478` (6 inserts/upserts monthly_kpis hors rollover.py, à patcher).
+
 ## Completed Tasks (Session 2026-05-19 — Phase 3 Batch 3 — Patch club_id payments.py) ✅
 - [x] **3 endpoints patchés** dans `routers/payments.py` : `POST /payment-schedules` L57 (0 Depends → patchés), `POST /payments/sync-with-members` L137+L225 (2 inserts fragiles 🟡 → fixés), `POST /payments/generate/{year}/{month}` L762 (🐛 origine confirmée Mauricio + Valentina 19/05). Commentaire explicite `Phase 3 fix 19/05` sur le 3ème.
 - [x] **Optimisation cascade** : `resolved_club_id` calculé 1x hors boucle pour les 3 endpoints à boucle → 1 seul `MISSING_CLUB_ID` log même pour N inserts (testé jusqu'à N=4 dans `sync`).

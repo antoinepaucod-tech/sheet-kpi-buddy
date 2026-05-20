@@ -173,11 +173,24 @@ async def _mark_late_payments(club_id: str) -> int:
     return result.modified_count
 
 
-async def _ensure_kpi_exists(year: int, month: int, club_id: str):
-    """Ensure a monthly_kpis record exists for the given month."""
+async def _ensure_kpi_exists(year: int, month: int, club_id: Optional[str]):
+    """Ensure a monthly_kpis record exists for the given month.
+
+    Phase 3 Batch 4 (2026-05-19) — défense en profondeur :
+      - Garde-fou `club_id is None` : log structuré + SKIP (vs créer orphelin)
+      - Bonus : injection `created_at` + `updated_at` pour traçabilité audit
+        (l'orphelin monthly_kpis 2026-06 détecté Phase 1 avait `created_at=null`)
+    """
+    if not club_id:
+        logger.warning(
+            "ROLLOVER_MISSING_CLUB_ID event=skip_ensure_kpi "
+            f"year={year} month={month} club_id={club_id!r}"
+        )
+        return None
     month_str = f"{year}-{month:02d}"
     existing = await db.monthly_kpis.find_one(_cq(club_id, {"month": month_str}))
     if not existing:
+        now_iso = datetime.now(timezone.utc).isoformat()
         await db.monthly_kpis.insert_one({
             "month": month_str,
             "club_id": club_id,
@@ -193,6 +206,8 @@ async def _ensure_kpi_exists(year: int, month: int, club_id: str):
             "cash_collected": 0,
             "roas": 0,
             "cac": 0,
+            "created_at": now_iso,  # Phase 3 Batch 4 — traçabilité
+            "updated_at": now_iso,
         })
 
 
@@ -230,7 +245,15 @@ async def run_rollover_all_clubs():
     results = []
 
     for club in clubs:
-        club_id = club["id"]
+        club_id = club.get("id")
+        if not club_id:
+            # Phase 3 Batch 4 — défense en profondeur : skip docs legacy sans id
+            logger.warning(
+                "ROLLOVER_MISSING_CLUB_ID event=skip_legacy_club_doc "
+                f"club_name={club.get('name')!r}"
+            )
+            results.append({"club_id": None, "error": "legacy_club_doc_without_id"})
+            continue
         try:
             result = await run_monthly_rollover_for_club(club_id)
             results.append(result)
