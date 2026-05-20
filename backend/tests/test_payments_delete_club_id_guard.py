@@ -21,7 +21,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import HTTPException
 
 from routers import payments as pm
 
@@ -121,28 +120,47 @@ async def test_sync_with_members_scopes_delete_payments(monkeypatch):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#       Safety net : si resolver lève, AUCUN delete_many n'est exécuté
+#       Invariant structurel : TOUT delete_many DOIT contenir un club_id non-vide
 # ════════════════════════════════════════════════════════════════════════════
 
 
-async def test_sync_with_members_never_calls_delete_without_club_id(monkeypatch):
-    """Garde-fou : si pour une raison X la résolution lève (mode strict futur),
-    aucun delete_many ne doit avoir été appelé. Protège contre tout retour
-    accidentel à `delete_many({})`.
+async def test_sync_with_members_delete_filters_always_contain_club_id(monkeypatch):
+    """Invariant structurel multi-tenant : peu importe le chemin d'exécution
+    (header présent ou absent), CHAQUE appel à `delete_many` sur
+    `payment_schedules` et `payments` doit contenir une clé `club_id` non-vide
+    dans son filtre.
+
+    Protège contre tout retour accidentel à `delete_many({})` ou à un filtre
+    sans `club_id` (cross-club wipe).
+
+    RED avec code actuel (branche `else:` L119/L145 → filtre sans `club_id`).
+    GREEN après patch (usage uniforme `resolved_club_id`).
     """
     db = _make_sync_db_with_delete_spies()
     monkeypatch.setattr(pm, "db", db)
+    monkeypatch.setattr(
+        pm,
+        "resolve_club_id_or_fallback",
+        lambda club_id, current_user, endpoint: "CLUB_A",
+    )
 
-    def _raise(*_a, **_kw):
-        raise HTTPException(status_code=400, detail="club_id manquant")
+    await pm.sync_payments_with_members(
+        club_id=None,
+        current_user={"id": "u1", "email": "u@a.com"},
+    )
 
-    monkeypatch.setattr(pm, "resolve_club_id_or_fallback", _raise)
+    all_delete_calls = (
+        list(db.payment_schedules.delete_many.call_args_list)
+        + list(db.payments.delete_many.call_args_list)
+    )
+    assert all_delete_calls, "Au moins un delete_many doit être appelé"
 
-    with pytest.raises(HTTPException):
-        await pm.sync_payments_with_members(
-            club_id=None,
-            current_user={"id": "u1", "email": "u@a.com"},
+    for call in all_delete_calls:
+        # `call.args[0]` = premier arg positionnel = filter dict Mongo
+        filter_dict = call.args[0] if call.args else call.kwargs.get("filter", {})
+        assert "club_id" in filter_dict, (
+            f"delete_many appelé sans clé `club_id` : {filter_dict}"
         )
-
-    db.payment_schedules.delete_many.assert_not_called()
-    db.payments.delete_many.assert_not_called()
+        assert filter_dict["club_id"], (
+            f"delete_many appelé avec `club_id` vide/falsy : {filter_dict}"
+        )
