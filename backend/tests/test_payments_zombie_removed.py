@@ -3,6 +3,10 @@ zombies de `routers/payments.py` (audit SB B.3a — ZOMBIE_CONFIRMED) :
   - PUT `/api/payment-schedules/{id}` (ex-L62-70 `update_payment_schedule`)
   - PUT `/api/payments/{id}`           (ex-L541-551 `update_payment`)
 
+Approche κ : inspection directe du registry FastAPI (`app.routes`) plutôt
+qu'appel HTTP via TestClient. Évite l'ambiguïté HTTP 404 (route inconnue vs
+handler métier "introuvable") et les problèmes asyncio TestClient + Motor.
+
 Justification suppression (cf. rapport B.3a) :
   - 0 trace sur 9 zones investiguées (backend, frontend, scripts, tests,
     docs, logs preview).
@@ -17,7 +21,6 @@ Git tag rollback : `pre-batch-1b-zombie-removal`.
 from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
 
 from server import app
 
@@ -26,35 +29,38 @@ pytestmark = [pytest.mark.regression]
 
 
 def test_put_payment_schedule_endpoint_removed():
-    """Garantie : PUT /api/payment-schedules/{id} n'existe plus.
+    """Garantie : PUT /api/payment-schedules/{id} n'est PLUS déclaré dans le
+    routeur FastAPI (zombie supprimé Batch 1.B SB B.3b). On inspecte
+    directement le registry pour éviter l'ambiguïté HTTP 404 (route inconnue
+    vs handler métier "introuvable").
 
-    RED tant que la route est encore définie (renvoie 200/422/401).
-    GREEN après suppression : 404 (route inconnue) ou 405 (méthode non
-    autorisée si d'autres méthodes restent définies sur le path).
+    RED tant que la route PUT est encore déclarée.
+    GREEN après suppression L62-70.
     """
-    client = TestClient(app)
-    response = client.put(
-        "/api/payment-schedules/any-id-fake",
-        json={"foo": "bar"},
-    )
-    assert response.status_code in (404, 405), (
-        f"Endpoint zombie toujours actif : status={response.status_code} "
-        f"body={response.text[:200]}"
+    methods_on_path = set()
+    for route in app.routes:
+        if getattr(route, "path", None) == "/api/payment-schedules/{schedule_id}":
+            methods_on_path |= set(route.methods or [])
+
+    assert "PUT" not in methods_on_path, (
+        f"Route PUT toujours déclarée. Méthodes actuelles : "
+        f"{sorted(methods_on_path)}"
     )
 
 
 def test_put_payment_endpoint_removed():
-    """Garantie : PUT /api/payments/{id} n'existe plus.
+    """Garantie : PUT /api/payments/{id} n'est plus déclaré dans le registry
+    FastAPI.
 
-    RED tant que la route est encore définie.
-    GREEN après suppression : 404 ou 405.
+    RED tant que la route PUT est encore déclarée.
+    GREEN après suppression L541-551.
     """
-    client = TestClient(app)
-    response = client.put(
-        "/api/payments/any-id-fake",
-        json={"paid_date": "2026-05-20"},
-    )
-    assert response.status_code in (404, 405), (
-        f"Endpoint zombie toujours actif : status={response.status_code} "
-        f"body={response.text[:200]}"
+    methods_on_path = set()
+    for route in app.routes:
+        if getattr(route, "path", None) == "/api/payments/{payment_id}":
+            methods_on_path |= set(route.methods or [])
+
+    assert "PUT" not in methods_on_path, (
+        f"Route PUT toujours déclarée. Méthodes actuelles : "
+        f"{sorted(methods_on_path)}"
     )
