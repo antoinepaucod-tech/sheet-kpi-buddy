@@ -113,10 +113,8 @@ async def sync_payments_with_members(
         active_billing.append(m)
 
     # 2. Sync payment_schedules: clear and recreate (ALL billing members, including amount=0)
-    if club_id:
-        await db.payment_schedules.delete_many({"club_id": club_id})
-    else:
-        await db.payment_schedules.delete_many({})
+    # Phase 5 Batch 1.A — scope club_id strict (cf. audit 2026-05-20 L119 🔴).
+    await db.payment_schedules.delete_many({"club_id": resolved_club_id})
     schedules_created = 0
     for m in active_billing:
         cycle_value = m.get("billing_cycle_value") or m.get("billing_day") or 1
@@ -139,10 +137,10 @@ async def sync_payments_with_members(
 
     # 3. Sync payments for current month (including 0 CHF for offerts)
     # First: delete only pending/late payments to recreate them
-    if club_id:
-        await db.payments.delete_many({"club_id": club_id, "status": {"$in": ["pending", "late"]}})
-    else:
-        await db.payments.delete_many({"status": {"$in": ["pending", "late"]}})
+    # Phase 5 Batch 1.A — scope club_id strict (cf. audit 2026-05-20 L145 🔴).
+    await db.payments.delete_many(
+        {"club_id": resolved_club_id, "status": {"$in": ["pending", "late"]}}
+    )
     payments_created = 0
     import uuid
 
