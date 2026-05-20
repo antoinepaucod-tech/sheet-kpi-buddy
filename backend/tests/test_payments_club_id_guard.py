@@ -259,22 +259,34 @@ async def test_sync_uses_header_club_id(monkeypatch):
     assert all(d["club_id"] == "CLUB_HEADER" for d in p_inserted)
 
 
-async def test_sync_fallback_single_log_for_N_inserts(monkeypatch, caplog):
-    """N membres → 4 inserts (2 schedules + 2 payments) → 1 SEUL log fallback."""
+async def test_sync_no_log_when_club_id_header_present(monkeypatch, caplog):
+    """Post-Option B (Phase 5 Batch 1.A SB2.3.2) : `sync-with-members` raise
+    HTTPException 400 sans header `X-Club-Id` (cf. test_payments_delete_club_id_guard
+    test 4). Ce test garantit le chemin nominal :
+        header présent → 4 inserts scopés + 0 log de fallback.
+
+    Le pattern observabilité « 1 log unique MISSING_CLUB_ID pour N inserts »
+    reste couvert par `test_generate_fallback_single_log_for_N_members`
+    (endpoint `generate_monthly_payments`, qui accepte encore le fallback).
+
+    Ex-`test_sync_fallback_single_log_for_N_inserts` — adaptation Option ε
+    suite à incompatibilité sémantique du fallback Versoix avec le guard
+    delete-op strict.
+    """
     members = [_billing_member(mid="m1"), _billing_member(mid="m2")]
     db, ps_inserted, p_inserted = _make_sync_db(members)
     monkeypatch.setattr(pm, "db", db)
 
     with caplog.at_level("WARNING"):
         await pm.sync_payments_with_members(
-            club_id=None,
-            current_user={"id": "u1", "email": "u@a.com"},
+            club_id="CLUB_HEADER",
+            current_user={"id": "u1", "email": "u@a.com", "active_club_id": "CLUB_HEADER"},
         )
 
     all_inserted = ps_inserted + p_inserted
     assert len(all_inserted) == 4
-    assert all(d["club_id"] == DEFAULT_CLUB_ID for d in all_inserted)
+    assert all(d["club_id"] == "CLUB_HEADER" for d in all_inserted)
     missing = [r for r in caplog.records if "MISSING_CLUB_ID" in r.message]
-    assert len(missing) == 1, (
-        f"1 seul log attendu (resolve hors boucle), got {len(missing)}"
+    assert len(missing) == 0, (
+        f"Aucun log MISSING_CLUB_ID attendu quand header est présent, got {len(missing)}"
     )

@@ -72,47 +72,38 @@ def _make_sync_db_with_delete_spies():
 
 
 async def test_sync_with_members_scopes_delete_payment_schedules(monkeypatch):
-    """Branche fallback : header X-Club-Id absent, resolver retourne CLUB_A.
-    Le `delete_many` sur `payment_schedules` DOIT être appelé exactement avec
+    """Header `X-Club-Id` présent (CLUB_A). Le `delete_many` sur
+    `payment_schedules` DOIT être appelé exactement avec
     `{"club_id": "CLUB_A"}` — JAMAIS avec `{}`.
 
-    RED avec code actuel (L119 = `delete_many({})`).
-    GREEN après patch (usage uniforme `resolved_club_id`).
+    Post-Option B : le guard L96 raise 400 si header absent, donc on teste
+    ici le chemin nominal (header fourni).
+
+    Discriminance vérifiée par mutation manuelle (SB2.3.4).
     """
     db = _make_sync_db_with_delete_spies()
     monkeypatch.setattr(pm, "db", db)
-    monkeypatch.setattr(
-        pm,
-        "resolve_club_id_or_fallback",
-        lambda club_id, current_user, endpoint: "CLUB_A",
-    )
 
     await pm.sync_payments_with_members(
-        club_id=None,
-        current_user={"id": "u1", "email": "u@a.com"},
+        club_id="CLUB_A",
+        current_user={"id": "user-1", "active_club_id": "CLUB_A", "email": "u@a.com"},
     )
 
     db.payment_schedules.delete_many.assert_called_once_with({"club_id": "CLUB_A"})
 
 
 async def test_sync_with_members_scopes_delete_payments(monkeypatch):
-    """Branche fallback : le `delete_many` sur `payments` DOIT inclure
+    """Header présent (CLUB_A). Le `delete_many` sur `payments` DOIT inclure
     `club_id` + le filtre status. JAMAIS `{"status": {"$in": ...}}` seul.
 
-    RED avec code actuel (L145 = pas de club_id).
-    GREEN après patch.
+    Discriminance vérifiée par mutation manuelle (SB2.3.4).
     """
     db = _make_sync_db_with_delete_spies()
     monkeypatch.setattr(pm, "db", db)
-    monkeypatch.setattr(
-        pm,
-        "resolve_club_id_or_fallback",
-        lambda club_id, current_user, endpoint: "CLUB_A",
-    )
 
     await pm.sync_payments_with_members(
-        club_id=None,
-        current_user={"id": "u1", "email": "u@a.com"},
+        club_id="CLUB_A",
+        current_user={"id": "user-1", "active_club_id": "CLUB_A", "email": "u@a.com"},
     )
 
     db.payments.delete_many.assert_called_once_with(
@@ -126,28 +117,21 @@ async def test_sync_with_members_scopes_delete_payments(monkeypatch):
 
 
 async def test_sync_with_members_delete_filters_always_contain_club_id(monkeypatch):
-    """Invariant structurel multi-tenant : peu importe le chemin d'exécution
-    (header présent ou absent), CHAQUE appel à `delete_many` sur
-    `payment_schedules` et `payments` doit contenir une clé `club_id` non-vide
-    dans son filtre.
+    """Invariant structurel multi-tenant : sur le chemin nominal (header
+    présent), CHAQUE appel à `delete_many` sur `payment_schedules` et
+    `payments` doit contenir une clé `club_id` non-vide dans son filtre.
 
     Protège contre tout retour accidentel à `delete_many({})` ou à un filtre
     sans `club_id` (cross-club wipe).
 
-    RED avec code actuel (branche `else:` L119/L145 → filtre sans `club_id`).
-    GREEN après patch (usage uniforme `resolved_club_id`).
+    Discriminance vérifiée par mutation manuelle (SB2.3.4).
     """
     db = _make_sync_db_with_delete_spies()
     monkeypatch.setattr(pm, "db", db)
-    monkeypatch.setattr(
-        pm,
-        "resolve_club_id_or_fallback",
-        lambda club_id, current_user, endpoint: "CLUB_A",
-    )
 
     await pm.sync_payments_with_members(
-        club_id=None,
-        current_user={"id": "u1", "email": "u@a.com"},
+        club_id="CLUB_A",
+        current_user={"id": "user-1", "active_club_id": "CLUB_A", "email": "u@a.com"},
     )
 
     all_delete_calls = (
