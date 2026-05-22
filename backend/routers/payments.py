@@ -10,7 +10,7 @@ from core.security import get_club_id, get_current_user
 from core.club_id_guard import resolve_club_id_or_fallback
 from models.payments import (
     PaymentSchedule, PaymentScheduleCreate,
-    Payment, PaymentCreate, PaymentUpdate
+    Payment, PaymentCreate
 )
 
 router = APIRouter(tags=["payments"])
@@ -57,17 +57,6 @@ async def create_payment_schedule(
     await db.payment_schedules.insert_one(doc)
     doc.pop('_id', None)
     return doc
-
-
-@router.put("/payment-schedules/{schedule_id}")
-async def update_payment_schedule(schedule_id: str, body: dict):
-    existing = await db.payment_schedules.find_one({"id": schedule_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Planning de paiement introuvable")
-    
-    body["updated_at"] = datetime.now(timezone.utc).isoformat()
-    await db.payment_schedules.update_one({"id": schedule_id}, {"$set": body})
-    return await db.payment_schedules.find_one({"id": schedule_id}, {"_id": 0})
 
 
 @router.delete("/payment-schedules/{schedule_id}")
@@ -536,19 +525,6 @@ async def create_payment(
     await db.payments.insert_one(doc)
     doc.pop('_id', None)
     return doc
-
-
-@router.put("/payments/{payment_id}")
-async def update_payment(payment_id: str, data: PaymentUpdate):
-    existing = await db.payments.find_one({"id": payment_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Paiement introuvable")
-    
-    update = {k: v for k, v in data.model_dump().items() if v is not None}
-    update["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
-    await db.payments.update_one({"id": payment_id}, {"$set": update})
-    return await db.payments.find_one({"id": payment_id}, {"_id": 0})
 
 
 @router.post("/payments/{payment_id}/mark-paid")
