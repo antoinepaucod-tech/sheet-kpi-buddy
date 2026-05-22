@@ -876,7 +876,7 @@ async def update_member(
     old_exit = existing.get("exit_date")
     if new_exit and new_exit != old_exit:
         cancelled = await db.payments.update_many(
-            {"member_id": member_id, "status": {"$in": ["pending", "late"]}},
+            {"member_id": member_id, "club_id": club_id_resolved, "status": {"$in": ["pending", "late"]}},
             {"$set": {"status": "cancelled", "notes": "Membre parti", "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
         if cancelled.modified_count > 0:
@@ -896,6 +896,7 @@ async def update_member(
         # Delete all scheduled reviews for this member
         deleted = await db.annual_reviews.delete_many({
             "member_id": member_id,
+            "club_id": club_id_resolved,
             "status": "scheduled",
         })
         # Create a new scheduled review with the correct frequency
@@ -969,7 +970,7 @@ async def update_member(
     old_amount = existing.get("billing_amount")
     if new_amount is not None and new_amount != old_amount and new_amount > 0:
         await db.payments.update_many(
-            {"member_id": member_id, "status": {"$in": ["pending", "late"]}},
+            {"member_id": member_id, "club_id": club_id_resolved, "status": {"$in": ["pending", "late"]}},
             {"$set": {"amount": new_amount, "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
 
@@ -1006,7 +1007,7 @@ async def update_member(
                 if month_start <= due_dt <= month_end:
                     new_due = due_dt.strftime("%Y-%m-%d")
                     await db.payments.update_many(
-                        {"member_id": member_id, "due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["pending", "late"]}},
+                        {"member_id": member_id, "club_id": club_id_resolved, "due_date": {"$regex": f"^{month_str}"}, "status": {"$in": ["pending", "late"]}},
                         {"$set": {"due_date": new_due, "updated_at": now.isoformat()}}
                     )
             except (ValueError, TypeError):
@@ -1339,7 +1340,7 @@ async def renew_membership(
         # Also sync amount to existing pending/late payments on renewal
         if "billing_amount" in body and body["billing_amount"] > 0:
             await db.payments.update_many(
-                {"member_id": member_id, "status": {"$in": ["pending", "late"]}},
+                {"member_id": member_id, "club_id": club_id_resolved, "status": {"$in": ["pending", "late"]}},
                 {"$set": {"amount": body["billing_amount"], "updated_at": datetime.now(timezone.utc).isoformat()}}
             )
     
