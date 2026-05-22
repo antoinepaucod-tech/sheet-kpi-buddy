@@ -60,8 +60,24 @@ async def create_payment_schedule(
 
 
 @router.delete("/payment-schedules/{schedule_id}")
-async def delete_payment_schedule(schedule_id: str):
-    result = await db.payment_schedules.delete_one({"id": schedule_id})
+async def delete_payment_schedule(
+    schedule_id: str,
+    current_user: dict = Depends(get_current_user),
+    club_id: Optional[str] = Depends(get_club_id),
+):
+    # Phase 5 Batch 1.B.1 — auth gating + scope club_id strict.
+    # cf. audit 2026-05-20. Filter composite défense en profondeur :
+    # si l'id appartient à un autre club, delete_one matche 0 → 404
+    # propre, pas de mutation cross-club même si fallback Versoix.
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="DELETE /api/payment-schedules/{id}",
+    )
+    result = await db.payment_schedules.delete_one({
+        "id": schedule_id,
+        "club_id": resolved_club_id,
+    })
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Planning de paiement introuvable")
     return {"message": "Planning de paiement supprimé"}
@@ -602,8 +618,21 @@ async def mark_payment_paid(
 
 
 @router.delete("/payments/{payment_id}")
-async def delete_payment(payment_id: str):
-    result = await db.payments.delete_one({"id": payment_id})
+async def delete_payment(
+    payment_id: str,
+    current_user: dict = Depends(get_current_user),
+    club_id: Optional[str] = Depends(get_club_id),
+):
+    # Phase 5 Batch 1.B.1 — auth gating + scope club_id strict.
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="DELETE /api/payments/{id}",
+    )
+    result = await db.payments.delete_one({
+        "id": payment_id,
+        "club_id": resolved_club_id,
+    })
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Paiement introuvable")
     return {"message": "Paiement supprimé"}
