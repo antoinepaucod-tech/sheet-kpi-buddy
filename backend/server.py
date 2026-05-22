@@ -11,6 +11,7 @@ import logging
 
 # Core imports
 from core.config import db, CORS_ORIGINS
+from core.security import get_current_user
 from models.kpi import ClubSettings
 
 # Router imports
@@ -23,13 +24,24 @@ from routers import (
 
 # App setup
 app = FastAPI(title="TRANSFORM API", version="3.0.0")
-api_router = APIRouter(prefix="/api")
+
+# Phase 5 Batch 2 SB B.2.2 — Strat. a (sub-router public).
+# Sub-router PUBLIC (PAS de dep auth globale) — login/register/unsubscribe.
+public_api_router = APIRouter(prefix="/api")
+public_api_router.include_router(auth.router)
+public_api_router.include_router(marketing.router)
+
+# Router protégé — dep auth globale `get_current_user`.
+# Tous les endpoints inclus ci-dessous → 401 sans token valide.
+api_router = APIRouter(
+    prefix="/api",
+    dependencies=[Depends(get_current_user)],
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Include all modular routers
-api_router.include_router(auth.router)
+# Include all modular routers (auth + marketing déjà dans public_api_router)
 api_router.include_router(members.router)
 api_router.include_router(payments.router)
 api_router.include_router(annual_reviews.router)
@@ -52,7 +64,6 @@ api_router.include_router(franchise.router)
 api_router.include_router(admin.router)
 api_router.include_router(sync.router)
 api_router.include_router(rollover.router)
-api_router.include_router(marketing.router)
 
 
 from core.security import get_club_id as _get_club_id
@@ -100,6 +111,8 @@ async def init_check():
 
 # ── App Setup ────────────────────────────────────────────────────────────────
 
+# CRITIQUE : public_api_router AVANT api_router pour matching prioritaire FastAPI.
+app.include_router(public_api_router)
 app.include_router(api_router)
 
 app.add_middleware(
