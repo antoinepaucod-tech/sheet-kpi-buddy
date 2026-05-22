@@ -639,9 +639,20 @@ async def delete_payment(
 
 
 @router.post("/payments/{payment_id}/revert-to-unpaid")
-async def revert_payment_to_unpaid(payment_id: str):
+async def revert_payment_to_unpaid(
+    payment_id: str,
+    current_user: dict = Depends(get_current_user),
+    club_id: Optional[str] = Depends(get_club_id),
+):
     """Revert a paid payment back to pending or late based on due_date."""
-    doc = await db.payments.find_one({"id": payment_id})
+    # Phase 5 Batch 1.B.2 — auth gating + scope club_id strict.
+    # cf. audit 2026-05-20. Filter composite sur les 3 ops DB.
+    resolved_club_id = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="POST /api/payments/{id}/revert-to-unpaid",
+    )
+    doc = await db.payments.find_one({"id": payment_id, "club_id": resolved_club_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Paiement introuvable")
     if doc.get("status") != "paid":
@@ -652,10 +663,13 @@ async def revert_payment_to_unpaid(payment_id: str):
     new_status = "late" if due_date < today else "pending"
 
     await db.payments.update_one(
-        {"id": payment_id},
+        {"id": payment_id, "club_id": resolved_club_id},
         {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
-    updated = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    updated = await db.payments.find_one(
+        {"id": payment_id, "club_id": resolved_club_id},
+        {"_id": 0}
+    )
     warnings = await get_member_archived_warning(doc.get("member_id", ""))
     if warnings:
         return {**updated, "warnings": warnings}

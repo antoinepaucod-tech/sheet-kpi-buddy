@@ -113,6 +113,7 @@ async def test_revert_to_unpaid_scopes_find_to_club_id(monkeypatch):
         "resolve_club_id_or_fallback",
         lambda club_id, current_user, endpoint: "CLUB_A",
     )
+    monkeypatch.setattr(pm, "get_member_archived_warning", AsyncMock(return_value=[]))
 
     await pm.revert_payment_to_unpaid(**_call_kwargs())
 
@@ -145,6 +146,7 @@ async def test_revert_to_unpaid_scopes_update_to_club_id(monkeypatch):
         "resolve_club_id_or_fallback",
         lambda club_id, current_user, endpoint: "CLUB_A",
     )
+    monkeypatch.setattr(pm, "get_member_archived_warning", AsyncMock(return_value=[]))
 
     await pm.revert_payment_to_unpaid(**_call_kwargs())
 
