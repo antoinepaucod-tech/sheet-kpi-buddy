@@ -869,7 +869,7 @@ async def update_member(
             update_data["annual_review_date"] = review_date
     
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    await db.customer_members.update_one({"id": member_id}, {"$set": update_data})
+    await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": update_data})
 
     # Auto-cancel pending/late payments when member is marked as departed
     new_exit = update_data.get("exit_date")
@@ -929,7 +929,7 @@ async def update_member(
         await db.annual_reviews.insert_one(new_review_doc)
         update_data["annual_review_date"] = next_date.strftime("%Y-%m-%d")
         await db.customer_members.update_one(
-            {"id": member_id},
+            {"id": member_id, "club_id": club_id_resolved},
             {"$set": {"annual_review_date": next_date.strftime("%Y-%m-%d")}}
         )
         # Log activity
@@ -959,7 +959,7 @@ async def update_member(
         if partner_update:
             partner_update["updated_at"] = datetime.now(timezone.utc).isoformat()
             await db.customer_members.update_one(
-                {"id": existing["duo_partner_id"]}, {"$set": partner_update}
+                {"id": existing["duo_partner_id"], "club_id": club_id_resolved}, {"$set": partner_update}
             )
     
     # Update payment schedule if billing changed
@@ -1321,7 +1321,7 @@ async def renew_membership(
         except Exception:
             pass
     
-    await db.customer_members.update_one({"id": member_id}, {"$set": member_update})
+    await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": member_update})
     
     # Update payment schedule if billing cycle changed
     if any(k in body for k in ["billing_cycle_type", "billing_cycle_value", "billing_amount", "billing_payment_method"]):
