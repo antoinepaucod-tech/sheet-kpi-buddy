@@ -1134,7 +1134,11 @@ async def update_member(
 
 
 @router.post("/{member_id}/dissociate-duo")
-async def dissociate_duo(member_id: str):
+async def dissociate_duo(
+    member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Dissociate a DUO pair into two individual subscriptions."""
     member = await db.customer_members.find_one({"id": member_id})
     if not member:
@@ -1142,6 +1146,11 @@ async def dissociate_duo(member_id: str):
     if not member.get("is_duo"):
         raise HTTPException(status_code=400, detail="Ce membre n'est pas un DUO")
 
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}/dissociate-duo",
+    )
     partner_id = member.get("duo_partner_id")
     now = datetime.now(timezone.utc).isoformat()
 
@@ -1152,14 +1161,14 @@ async def dissociate_duo(member_id: str):
         "duo_primary": False,
         "updated_at": now,
     }
-    await db.customer_members.update_one({"id": member_id}, {"$set": duo_clear})
+    await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": duo_clear})
 
     # Remove DUO flags from partner
     if partner_id:
-        await db.customer_members.update_one({"id": partner_id}, {"$set": duo_clear})
+        await db.customer_members.update_one({"id": partner_id, "club_id": club_id_resolved}, {"$set": duo_clear})
         # Also clear reverse link if partner points back
-        await db.customer_members.update_one(
-            {"duo_partner_id": member_id}, {"$set": duo_clear}
+        await db.customer_members.update_many(
+            {"duo_partner_id": member_id, "club_id": club_id_resolved}, {"$set": duo_clear}
         )
 
     return {
