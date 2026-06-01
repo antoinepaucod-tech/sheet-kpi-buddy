@@ -648,16 +648,19 @@ async def set_member_pause(
     Body: { start_date: 'YYYY-MM-DD' (requis), end_date: 'YYYY-MM-DD' (optionnel), reason: str (optionnel) }.
     Refuse si le membre est archivé.
     """
-    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1, "archived_at": 1})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Membre introuvable")
-    if doc.get("archived_at"):
-        raise HTTPException(status_code=400, detail="Membre archivé — restaurer avant de mettre en pause")
     club_id_resolved = resolve_club_id_or_fallback(
         club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id}/pause",
     )
+    doc = await db.customer_members.find_one(
+        {"id": member_id, "club_id": club_id_resolved},
+        {"_id": 0, "id": 1, "archived_at": 1},
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if doc.get("archived_at"):
+        raise HTTPException(status_code=400, detail="Membre archivé — restaurer avant de mettre en pause")
 
     start = (payload or {}).get("start_date")
     end = (payload or {}).get("end_date")
@@ -698,14 +701,17 @@ async def remove_member_pause(
     current_user: dict = Depends(get_current_user),
 ):
     """Sprint D Phase 2 — Annuler la pause d'un membre."""
-    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Membre introuvable")
     club_id_resolved = resolve_club_id_or_fallback(
         club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id}/pause (DELETE)",
     )
+    doc = await db.customer_members.find_one(
+        {"id": member_id, "club_id": club_id_resolved},
+        {"_id": 0, "id": 1},
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
     await db.customer_members.update_one(
         {"id": member_id, "club_id": club_id_resolved},
         {"$set": {
@@ -1201,17 +1207,17 @@ async def delete_member(
     """B.5 — Redirect hard delete to soft delete. Member is archived instead of deleted."""
     import logging
     logger = logging.getLogger(__name__)
-    doc = await db.customer_members.find_one({"id": member_id})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Membre introuvable")
-    if doc.get("archived_at"):
-        logger.info(f"[SoftDelete] DELETE /members/{member_id} — already archived, no-op")
-        return {"message": "Soft delete applied (already archived)", "soft_delete": True}
     club_id_resolved = resolve_club_id_or_fallback(
         club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id} (DELETE)",
     )
+    doc = await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if doc.get("archived_at"):
+        logger.info(f"[SoftDelete] DELETE /members/{member_id} — already archived, no-op")
+        return {"message": "Soft delete applied (already archived)", "soft_delete": True}
     now = datetime.now(timezone.utc).isoformat()
     await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": {"archived_at": now, "updated_at": now}})
     logger.info(f"[SoftDelete] DELETE /members/{member_id} redirected to archive — name={doc.get('name')}")
@@ -1227,16 +1233,16 @@ async def archive_member(
     club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
-    doc = await db.customer_members.find_one({"id": member_id})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Membre introuvable")
-    if doc.get("archived_at"):
-        raise HTTPException(status_code=400, detail="Membre déjà archivé")
     club_id_resolved = resolve_club_id_or_fallback(
         club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id}/archive",
     )
+    doc = await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if doc.get("archived_at"):
+        raise HTTPException(status_code=400, detail="Membre déjà archivé")
     now = datetime.now(timezone.utc).isoformat()
     reason = (body or {}).get("reason") if isinstance(body, dict) else None
     update = {"archived_at": now, "updated_at": now}
@@ -1260,16 +1266,16 @@ async def restore_member(
     club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
-    doc = await db.customer_members.find_one({"id": member_id})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Membre introuvable")
-    if not doc.get("archived_at"):
-        raise HTTPException(status_code=400, detail="Membre déjà actif (non archivé)")
     club_id_resolved = resolve_club_id_or_fallback(
         club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id}/restore",
     )
+    doc = await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if not doc.get("archived_at"):
+        raise HTTPException(status_code=400, detail="Membre déjà actif (non archivé)")
     now = datetime.now(timezone.utc).isoformat()
     await db.customer_members.update_one(
         {"id": member_id, "club_id": club_id_resolved},

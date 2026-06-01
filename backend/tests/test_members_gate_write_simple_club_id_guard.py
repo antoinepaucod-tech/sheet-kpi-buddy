@@ -66,11 +66,23 @@ def _doc(**overrides):
 
 
 def _make_db_mock(member_doc):
-    """Mock minimal de `db.customer_members` retournant le doc fourni pour
-    TOUS les `find_one` (gate + retour final post-update). Aucune mutation Atlas.
+    """Mock minimal de `db.customer_members` simulant la sémantique Mongo :
+    `find_one(filter, ...)` ne retourne le doc QUE si TOUS les couples
+    clé/valeur du filtre matchent. Dès qu'une clé du filtre diverge du doc
+    (typiquement `club_id` cross-club), retourne None.
+
+    C'est ce comportement filtre-aware qui rend les tests discriminants pour
+    le scope : un gate non scopé (filter `{"id": ...}`) verra toujours le doc ;
+    un gate scopé (`{"id": ..., "club_id": header}`) verra None cross-club.
     """
+    async def _find_one_filtered(filter_dict, projection=None):
+        for k, v in (filter_dict or {}).items():
+            if member_doc.get(k) != v:
+                return None
+        return member_doc
+
     members_coll = MagicMock()
-    members_coll.find_one = AsyncMock(return_value=member_doc)
+    members_coll.find_one = AsyncMock(side_effect=_find_one_filtered)
     members_coll.update_one = AsyncMock(return_value=MagicMock(modified_count=0))
 
     db = MagicMock()
