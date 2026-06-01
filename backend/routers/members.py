@@ -520,14 +520,23 @@ async def get_members_at_risk(
 
 
 @router.get("/{member_id}")
-async def get_member(member_id: str):
-    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+async def get_member(
+    member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}",
+    )
+    doc = await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
     # Enrich duo info
     if doc.get("duo_partner_id"):
         partner = await db.customer_members.find_one(
-            {"id": doc["duo_partner_id"]}, {"_id": 0, "id": 1, "name": 1, "email": 1, "phone": 1}
+            {"id": doc["duo_partner_id"], "club_id": club_id_resolved}, {"_id": 0, "id": 1, "name": 1, "email": 1, "phone": 1}
         )
         if partner:
             doc["duo_partner_name"] = partner.get("name", "")
@@ -1403,8 +1412,17 @@ async def renew_membership(
 
 
 @router.get("/{member_id}/renewals")
-async def get_member_renewals(member_id: str):
-    return await db.member_renewals.find({"member_id": member_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+async def get_member_renewals(
+    member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}/renewals",
+    )
+    return await db.member_renewals.find({"member_id": member_id, "club_id": club_id_resolved}, {"_id": 0}).sort("created_at", -1).to_list(100)
 
 
 @router.put("/{member_id}/onboarding")
@@ -1469,17 +1487,35 @@ async def update_member_onboarding(
 
 
 @router.get("/{member_id}/annual-reviews")
-async def get_member_annual_reviews(member_id: str):
+async def get_member_annual_reviews(
+    member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Get all annual reviews for a specific member"""
-    return await db.annual_reviews.find({"member_id": member_id}, {"_id": 0}).sort("review_date", -1).to_list(50)
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}/annual-reviews",
+    )
+    return await db.annual_reviews.find({"member_id": member_id, "club_id": club_id_resolved}, {"_id": 0}).sort("review_date", -1).to_list(50)
 
 
 
 @router.get("/{member_id}/activity-log")
-async def get_member_activity_log(member_id: str):
+async def get_member_activity_log(
+    member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Get full activity log for a member"""
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}/activity-log",
+    )
     return await db.activity_logs.find(
-        {"member_id": member_id}, {"_id": 0}
+        {"member_id": member_id, "club_id": club_id_resolved}, {"_id": 0}
     ).sort("created_at", -1).to_list(200)
 
 
