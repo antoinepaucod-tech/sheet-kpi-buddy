@@ -1173,6 +1173,7 @@ async def delete_member(member_id: str):
 async def archive_member(
     member_id: str,
     body: Optional[dict] = None,
+    club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
     doc = await db.customer_members.find_one({"id": member_id})
@@ -1180,12 +1181,17 @@ async def archive_member(
         raise HTTPException(status_code=404, detail="Membre introuvable")
     if doc.get("archived_at"):
         raise HTTPException(status_code=400, detail="Membre déjà archivé")
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}/archive",
+    )
     now = datetime.now(timezone.utc).isoformat()
     reason = (body or {}).get("reason") if isinstance(body, dict) else None
     update = {"archived_at": now, "updated_at": now}
     if reason:
         update["archived_reason"] = reason
-    await db.customer_members.update_one({"id": member_id}, {"$set": update})
+    await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": update})
     await log_activity(
         db,
         action="member_archived",
@@ -1200,6 +1206,7 @@ async def archive_member(
 @router.post("/{member_id}/restore")
 async def restore_member(
     member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
     doc = await db.customer_members.find_one({"id": member_id})
@@ -1207,9 +1214,14 @@ async def restore_member(
         raise HTTPException(status_code=404, detail="Membre introuvable")
     if not doc.get("archived_at"):
         raise HTTPException(status_code=400, detail="Membre déjà actif (non archivé)")
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}/restore",
+    )
     now = datetime.now(timezone.utc).isoformat()
     await db.customer_members.update_one(
-        {"id": member_id},
+        {"id": member_id, "club_id": club_id_resolved},
         {"$set": {"archived_at": None, "updated_at": now}, "$unset": {"archived_reason": ""}}
     )
     await log_activity(
@@ -1357,6 +1369,7 @@ async def get_member_renewals(member_id: str):
 async def update_member_onboarding(
     member_id: str,
     body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
     """Update onboarding steps for a member.
@@ -1366,6 +1379,11 @@ async def update_member_onboarding(
     existing = await db.customer_members.find_one({"id": member_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Membre introuvable")
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/members/{id}/onboarding",
+    )
 
     update = {}
     onboarding_fields = [
@@ -1404,7 +1422,7 @@ async def update_member_onboarding(
         update["onboarding_completed_by_email"] = None
 
     update["updated_at"] = now_iso
-    await db.customer_members.update_one({"id": member_id}, {"$set": update})
+    await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": update})
     return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
 
 
