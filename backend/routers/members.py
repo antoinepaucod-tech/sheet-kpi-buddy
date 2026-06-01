@@ -1143,14 +1143,19 @@ async def dissociate_duo(
     member = await db.customer_members.find_one({"id": member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Membre introuvable")
-    if not member.get("is_duo"):
-        raise HTTPException(status_code=400, detail="Ce membre n'est pas un DUO")
 
     club_id_resolved = resolve_club_id_or_fallback(
         club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id}/dissociate-duo",
     )
+    # Gate B.3-bis : member hors club du requester → 404 silencieux (no-enumeration leak).
+    # Message identique au 404 "Membre introuvable" pour ne pas révéler l'existence cross-club.
+    if member.get("club_id") != club_id_resolved:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
+    if not member.get("is_duo"):
+        raise HTTPException(status_code=400, detail="Ce membre n'est pas un DUO")
+
     partner_id = member.get("duo_partner_id")
     now = datetime.now(timezone.utc).isoformat()
 

@@ -151,48 +151,76 @@ async def test_dissociate_duo_three_ops_scope_club_id_from_header(monkeypatch):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#   Test 2 — Cross-club : scope vient du HEADER, pas de member.club_id (A.2)
+#   Test 2 — Cross-club gate : member d'un autre club → 404 silencieux,
+#                              ZÉRO op DB déclenchée (ferme la fuite TRAP)
 # ════════════════════════════════════════════════════════════════════════════
 
 
-async def test_dissociate_duo_cross_club_uses_header_not_member_doc(monkeypatch):
-    """🎯 INVARIANT A.2 : le scope ne provient JAMAIS du document cible.
+async def test_dissociate_duo_cross_club_raises_404_and_no_db_ops(monkeypatch):
+    """🎯 GATE B.3-bis : si le membre cible appartient à un autre club que
+    celui du requester, l'endpoint doit raise 404 (message identique au 404
+    "Membre introuvable" pour no-enumeration leak) AVANT toute opération DB.
 
     Construction :
-      - header X-Club-Id = CLUB_A (requester)
-      - member retourné par find_one a club_id = CLUB_OTHER (leak/orphan)
-      - Les 3 filtres DB doivent scoper CLUB_A (header), PAS CLUB_OTHER (doc).
-
-    Si le code utilise `member.get("club_id")` dans le resolver,
-    les 3 filtres scoperont CLUB_OTHER → test RED → preuve violation A.2.
+      - header X-Club-Id = CLUB_A
+      - member retourné par find_one a club_id = CLUB_OTHER
+      - Attendu : HTTPException 404 + 0 update_one + 0 update_many
+        (preuve que la fuite via L1161 update_many reverse-lookup est fermée).
     """
     db = _make_db_mock(_existing_duo_member(club_id=CLUB_OTHER))
     _patch_common(monkeypatch, db)
 
-    result = await mb.dissociate_duo(
-        member_id="M1",
-        club_id=CLUB_A,  # header
-        current_user={"id": "u1", "email": "u@a.com"},
+    with pytest.raises(Exception) as exc_info:
+        await mb.dissociate_duo(
+            member_id="M1",
+            club_id=CLUB_A,
+            current_user={"id": "u1", "email": "u@a.com"},
+        )
+
+    # 404 attendu (HTTPException avec status_code 404)
+    assert getattr(exc_info.value, "status_code", None) == 404, (
+        f"Gate cross-club doit raise 404, got status={getattr(exc_info.value, 'status_code', None)} "
+        f"detail={getattr(exc_info.value, 'detail', None)}"
+    )
+    # ZÉRO op DB : ni update_one, ni update_many (gate AVANT toute mutation).
+    assert db.customer_members.update_one.call_count == 0, (
+        f"Cross-club gate doit empêcher TOUT update_one, "
+        f"got {db.customer_members.update_one.call_count} call(s). "
+        f"Fuite TRAP non fermée."
+    )
+    assert db.customer_members.update_many.call_count == 0, (
+        f"Cross-club gate doit empêcher update_many (reverse-lookup L1161), "
+        f"got {db.customer_members.update_many.call_count} call(s). "
+        f"Fuite TRAP non fermée."
     )
 
-    update_one_calls = db.customer_members.update_one.call_args_list
-    update_many_calls = db.customer_members.update_many.call_args_list
-    assert len(update_one_calls) >= 2
-    assert len(update_many_calls) == 1
 
-    f1 = update_one_calls[0].args[0]
-    f2 = update_one_calls[1].args[0]
-    f3 = update_many_calls[0].args[0]
+# ════════════════════════════════════════════════════════════════════════════
+#   Test 3 — Gate placé AVANT le check is_duo (no info-leak sur cross-club)
+# ════════════════════════════════════════════════════════════════════════════
 
-    # Les 3 filtres scopent CLUB_A (header), pas CLUB_OTHER (doc).
-    # RED si le code utilise member.club_id comme source de scope.
-    assert f1.get("club_id") == CLUB_A
-    assert f1.get("club_id") != CLUB_OTHER
-    assert f2.get("club_id") == CLUB_A
-    assert f2.get("club_id") != CLUB_OTHER
-    assert f3.get("club_id") == CLUB_A
-    assert f3.get("club_id") != CLUB_OTHER
 
-    # Retour normal : isolation par filtre, pas par exception.
-    assert isinstance(result, dict)
-    assert result.get("member_id") == "M1"
+async def test_dissociate_duo_cross_club_non_duo_raises_404_not_400(monkeypatch):
+    """🎯 GATE PLACEMENT : un member cross-club non-DUO doit retourner 404
+    (pas 400). Cela prouve que le gate cross-club s'exécute AVANT le check
+    `is_duo`, ce qui ferme tout info-leak (un user du club A ne peut pas
+    déterminer si un member id du club B est DUO ou non via le code de retour).
+    """
+    # Member cross-club ET non-DUO : si le check is_duo était devant le gate,
+    # on retournerait 400 "n'est pas un DUO" → fuite d'information.
+    db = _make_db_mock(_existing_duo_member(club_id=CLUB_OTHER, is_duo=False))
+    _patch_common(monkeypatch, db)
+
+    with pytest.raises(Exception) as exc_info:
+        await mb.dissociate_duo(
+            member_id="M1",
+            club_id=CLUB_A,
+            current_user={"id": "u1", "email": "u@a.com"},
+        )
+
+    status = getattr(exc_info.value, "status_code", None)
+    assert status == 404, (
+        f"Gate cross-club doit s'exécuter AVANT check is_duo : 404 attendu "
+        f"(no info-leak), got {status}. Si 400, le gate est mal placé "
+        f"(le code 400 révèle l'existence + la non-DUO-ness du member cross-club)."
+    )
