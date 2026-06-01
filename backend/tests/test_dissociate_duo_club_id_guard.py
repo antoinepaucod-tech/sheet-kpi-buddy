@@ -62,8 +62,19 @@ def _existing_duo_member(**overrides):
 
 
 def _make_db_mock(member_doc):
+    """Mock filtre-aware (sémantique Mongo) : find_one retourne `member_doc`
+    UNIQUEMENT si toutes les clés du filter matchent. Aligné avec C.2.A/C.2.B
+    où le scope se fait au niveau du `find_one` (filter composite) et non plus
+    via un gate post-read.
+    """
+    async def _find_one_filtered(filter_dict, projection=None):
+        for k, v in (filter_dict or {}).items():
+            if member_doc.get(k) != v:
+                return None
+        return member_doc
+
     members_coll = MagicMock()
-    members_coll.find_one = AsyncMock(return_value=member_doc)
+    members_coll.find_one = AsyncMock(side_effect=_find_one_filtered)
     members_coll.update_one = AsyncMock(return_value=MagicMock(modified_count=1))
     members_coll.update_many = AsyncMock(return_value=MagicMock(modified_count=1))
 
