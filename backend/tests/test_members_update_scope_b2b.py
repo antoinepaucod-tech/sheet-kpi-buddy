@@ -115,14 +115,21 @@ async def test_pause_cross_club_does_not_leak(monkeypatch):
     assert f.get("club_id") != CLUB_OTHER
 
 
-async def test_pause_non_versoix_uses_existing_club(monkeypatch):
-    """🎯 DISCRIMINANT PROJECTION : sans header X-Club-Id, le filter DOIT
-    scoper sur `existing.club_id` (Servette ici), PAS fallback Versoix.
+async def test_pause_no_header_scopes_by_USER_not_doc(monkeypatch):
+    """🎯 DISCRIMINANT INVARIANT A.2 : le scope `club_id` ne vient JAMAIS
+    du document cible (`doc.get("club_id")`). Sans header X-Club-Id, le
+    filter doit scoper sur le fallback resolver (Versoix), PAS sur le
+    `doc.club_id` retourné par find_one.
 
-    Ce test attrape le bug si la projection find_one n'expose pas `club_id` :
-    `existing.get('club_id') == None` → resolver renvoie Versoix → filter
-    scope Versoix → 0 match sur le membre Servette → mutation silencieuse
-    bloquée à tort.
+    Construction :
+      - PAS de header X-Club-Id (club_id=None)
+      - doc.club_id = Servette
+      - Resolver sans header → fallback Versoix
+      - Filter attendu = `{id, club_id: Versoix}` → 0 match sur doc Servette
+        → mutation cross-club bloquée par construction.
+
+    Si le code utilise `doc.get("club_id")` en cascade resolver, le filter
+    scope Servette → test fail (preuve qu'on utilise le doc, viol A.2).
     """
     db = _make_db_mock(_existing_member(club_id=CLUB_SERVETTE))
     _patch_common(monkeypatch, db)
@@ -135,10 +142,13 @@ async def test_pause_non_versoix_uses_existing_club(monkeypatch):
     )
 
     f = _update_filter(db)
-    assert f.get("club_id") == CLUB_SERVETTE, (
-        f"Sans header, le filter doit scoper sur existing.club_id ({CLUB_SERVETTE}), "
-        f"pas fallback Versoix. Got: {f.get('club_id')}. "
-        f"Cause probable : projection find_one ne contient pas 'club_id'."
+    assert f.get("club_id") != CLUB_SERVETTE, (
+        f"Violation A.2 : filter scope sur doc.club_id ({CLUB_SERVETTE}). "
+        f"Le scope ne doit JAMAIS provenir du document cible."
+    )
+    assert f.get("club_id") == CLUB_VERSOIX, (
+        f"Sans header, filter doit scoper sur le fallback resolver Versoix. "
+        f"Got: {f.get('club_id')}"
     )
 
 
@@ -180,8 +190,8 @@ async def test_remove_pause_cross_club_does_not_leak(monkeypatch):
     assert f.get("club_id") != CLUB_OTHER
 
 
-async def test_remove_pause_non_versoix_uses_existing_club(monkeypatch):
-    """🎯 DISCRIMINANT PROJECTION (idem pause) — sans header, scope sur existing."""
+async def test_remove_pause_no_header_scopes_by_USER_not_doc(monkeypatch):
+    """🎯 DISCRIMINANT INVARIANT A.2 (idem pause) : scope ne provient JAMAIS du doc."""
     db = _make_db_mock(_existing_member(club_id=CLUB_SERVETTE))
     _patch_common(monkeypatch, db)
 
@@ -192,9 +202,12 @@ async def test_remove_pause_non_versoix_uses_existing_club(monkeypatch):
     )
 
     f = _update_filter(db)
-    assert f.get("club_id") == CLUB_SERVETTE, (
-        f"Sans header, le filter doit scoper sur existing.club_id ({CLUB_SERVETTE}). "
-        f"Got: {f.get('club_id')}. Cause probable : projection find_one sans 'club_id'."
+    assert f.get("club_id") != CLUB_SERVETTE, (
+        f"Violation A.2 : filter scope sur doc.club_id ({CLUB_SERVETTE})."
+    )
+    assert f.get("club_id") == CLUB_VERSOIX, (
+        f"Sans header, filter doit scoper sur le fallback resolver Versoix. "
+        f"Got: {f.get('club_id')}"
     )
 
 
@@ -234,3 +247,24 @@ async def test_delete_member_cross_club_does_not_leak(monkeypatch):
     f = _update_filter(db)
     assert f.get("club_id") == CLUB_VERSOIX
     assert f.get("club_id") != CLUB_OTHER
+
+
+async def test_delete_member_no_header_scopes_by_USER_not_doc(monkeypatch):
+    """🎯 DISCRIMINANT INVARIANT A.2 : scope ne provient JAMAIS du doc."""
+    db = _make_db_mock(_existing_member(club_id=CLUB_SERVETTE))
+    _patch_common(monkeypatch, db)
+
+    await mb.delete_member(
+        member_id="mem-1",
+        club_id=None,
+        current_user={"id": "u1", "email": "u@a.com"},
+    )
+
+    f = _update_filter(db)
+    assert f.get("club_id") != CLUB_SERVETTE, (
+        f"Violation A.2 : filter scope sur doc.club_id ({CLUB_SERVETTE})."
+    )
+    assert f.get("club_id") == CLUB_VERSOIX, (
+        f"Sans header, filter doit scoper sur le fallback resolver Versoix. "
+        f"Got: {f.get('club_id')}"
+    )
