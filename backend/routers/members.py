@@ -628,17 +628,27 @@ async def get_member(member_id: str):
 
 
 @router.put("/{member_id}/pause")
-async def set_member_pause(member_id: str, payload: dict):
+async def set_member_pause(
+    member_id: str,
+    payload: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Sprint D Phase 2 — Mettre un membre en pause.
 
     Body: { start_date: 'YYYY-MM-DD' (requis), end_date: 'YYYY-MM-DD' (optionnel), reason: str (optionnel) }.
     Refuse si le membre est archivé.
     """
-    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1, "archived_at": 1})
+    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1, "archived_at": 1, "club_id": 1})
     if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
     if doc.get("archived_at"):
         raise HTTPException(status_code=400, detail="Membre archivé — restaurer avant de mettre en pause")
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id or doc.get("club_id"),
+        current_user=current_user,
+        endpoint="/api/members/{id}/pause",
+    )
 
     start = (payload or {}).get("start_date")
     end = (payload or {}).get("end_date")
@@ -665,7 +675,7 @@ async def set_member_pause(member_id: str, payload: dict):
         "pause_reason": reason,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    await db.customer_members.update_one({"id": member_id}, {"$set": update_fields})
+    await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": update_fields})
     updated = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
     today_iso_d = datetime.now(timezone.utc).date().isoformat()
     updated["on_pause"] = _is_on_pause(updated, today_iso_d)
@@ -673,13 +683,22 @@ async def set_member_pause(member_id: str, payload: dict):
 
 
 @router.delete("/{member_id}/pause")
-async def remove_member_pause(member_id: str):
+async def remove_member_pause(
+    member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Sprint D Phase 2 — Annuler la pause d'un membre."""
-    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1})
+    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0, "id": 1, "club_id": 1})
     if not doc:
         raise HTTPException(status_code=404, detail="Membre introuvable")
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id or doc.get("club_id"),
+        current_user=current_user,
+        endpoint="/api/members/{id}/pause (DELETE)",
+    )
     await db.customer_members.update_one(
-        {"id": member_id},
+        {"id": member_id, "club_id": club_id_resolved},
         {"$set": {
             "pause_start_date": None,
             "pause_end_date": None,
@@ -1151,7 +1170,11 @@ async def dissociate_duo(member_id: str):
 
 
 @router.delete("/{member_id}")
-async def delete_member(member_id: str):
+async def delete_member(
+    member_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """B.5 — Redirect hard delete to soft delete. Member is archived instead of deleted."""
     import logging
     logger = logging.getLogger(__name__)
@@ -1161,8 +1184,13 @@ async def delete_member(member_id: str):
     if doc.get("archived_at"):
         logger.info(f"[SoftDelete] DELETE /members/{member_id} — already archived, no-op")
         return {"message": "Soft delete applied (already archived)", "soft_delete": True}
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id or doc.get("club_id"),
+        current_user=current_user,
+        endpoint="/api/members/{id} (DELETE)",
+    )
     now = datetime.now(timezone.utc).isoformat()
-    await db.customer_members.update_one({"id": member_id}, {"$set": {"archived_at": now, "updated_at": now}})
+    await db.customer_members.update_one({"id": member_id, "club_id": club_id_resolved}, {"$set": {"archived_at": now, "updated_at": now}})
     logger.info(f"[SoftDelete] DELETE /members/{member_id} redirected to archive — name={doc.get('name')}")
     return {"message": "Soft delete applied", "soft_delete": True, "archived_at": now}
 
