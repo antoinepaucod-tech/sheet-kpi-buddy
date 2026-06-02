@@ -814,7 +814,7 @@ async def create_member(
 
         # Link primary to partner
         await db.customer_members.update_one(
-            {"id": doc["id"]},
+            {"id": doc["id"], "club_id": club_id},
             {"$set": {"is_duo": True, "duo_partner_id": partner_doc["id"], "duo_primary": True}}
         )
         doc["is_duo"] = True
@@ -823,11 +823,11 @@ async def create_member(
 
     # Auto-add to active challenge if membership is a challenge type
     if doc.get("membership") and "challenge" in doc["membership"].lower():
-        active_challenge = await db.six_weeks_challenges.find_one({"is_active": True}, {"_id": 0})
+        active_challenge = await db.six_weeks_challenges.find_one({"is_active": True, "club_id": club_id}, {"_id": 0})
         if active_challenge:
             # Check not already participant
             existing_p = await db.challenge_participants.find_one({
-                "challenge_id": active_challenge["id"], "member_id": doc["id"]
+                "challenge_id": active_challenge["id"], "member_id": doc["id"], "club_id": club_id
             })
             if not existing_p:
                 participant = ChallengeParticipant(
@@ -836,11 +836,13 @@ async def create_member(
                     member_name=doc["name"]
                 )
                 p_doc = participant.model_dump()
+                if club_id:
+                    p_doc["club_id"] = club_id
                 await db.challenge_participants.insert_one(p_doc)
 
     # Create accounting transaction for the initial payment
     if data.cash_collected and data.cash_collected > 0:
-        rev_cat = await db.accounting_categories.find_one({"type": "revenue", "kpi_column": "revenue_members"})
+        rev_cat = await db.accounting_categories.find_one({"type": "revenue", "kpi_column": "revenue_members", "club_id": club_id})
         cat_name = rev_cat["name"] if rev_cat else "ABONNEMENTS"
         tx_doc = {
             "id": f"member-{doc['id']}-initial",
@@ -853,7 +855,7 @@ async def create_member(
         }
         if club_id:
             tx_doc["club_id"] = club_id
-        existing_tx = await db.accounting_transactions.find_one({"id": tx_doc["id"]})
+        existing_tx = await db.accounting_transactions.find_one({"id": tx_doc["id"], "club_id": club_id})
         if not existing_tx:
             await db.accounting_transactions.insert_one(tx_doc)
             tx_doc.pop("_id", None)
