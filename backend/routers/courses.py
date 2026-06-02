@@ -4,7 +4,8 @@ from typing import Optional
 from datetime import datetime, timezone, date, timedelta
 
 from core.config import db, exclude_archived, MONTHS_FR
-from core.security import get_club_id
+from core.security import get_club_id, get_current_user
+from core.club_id_guard import resolve_club_id_or_fallback
 from models.courses import CourseKPI, CourseKPICreate
 from models.transactions import AccountingCategory, AccountingTransaction
 
@@ -176,8 +177,17 @@ async def update_course_type(type_id: str, data: dict, club_id: Optional[str] = 
 
 
 @router.get("/courses/{course_id}")
-async def get_course(course_id: str):
-    doc = await db.course_kpis.find_one({"id": course_id}, {"_id": 0})
+async def get_course(
+    course_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/{id} (GET)",
+    )
+    doc = await db.course_kpis.find_one({"id": course_id, "club_id": club_id_resolved}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Cours introuvable")
     return doc
@@ -212,8 +222,18 @@ async def bulk_create_courses(courses_data: list[CourseKPICreate], club_id: Opti
 
 
 @router.put("/courses/{course_id}")
-async def update_course(course_id: str, body: dict):
-    existing = await db.course_kpis.find_one({"id": course_id})
+async def update_course(
+    course_id: str,
+    body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/{id} (PUT)",
+    )
+    existing = await db.course_kpis.find_one({"id": course_id, "club_id": club_id_resolved})
     if not existing:
         raise HTTPException(status_code=404, detail="Cours introuvable")
 
@@ -225,13 +245,22 @@ async def update_course(course_id: str, body: dict):
     body["attendance_rate"] = _compute_attendance_rate(merged)
     body["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    await db.course_kpis.update_one({"id": course_id}, {"$set": body})
-    return await db.course_kpis.find_one({"id": course_id}, {"_id": 0})
+    await db.course_kpis.update_one({"id": course_id, "club_id": club_id_resolved}, {"$set": body})
+    return await db.course_kpis.find_one({"id": course_id, "club_id": club_id_resolved}, {"_id": 0})
 
 
 @router.delete("/courses/{course_id}")
-async def delete_course(course_id: str):
-    result = await db.course_kpis.delete_one({"id": course_id})
+async def delete_course(
+    course_id: str,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/{id} (DELETE)",
+    )
+    result = await db.course_kpis.delete_one({"id": course_id, "club_id": club_id_resolved})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Cours introuvable")
     return {"message": "Cours supprimé"}
