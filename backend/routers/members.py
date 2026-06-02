@@ -1297,16 +1297,15 @@ async def renew_membership(
     club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
-    member = await db.customer_members.find_one({"id": member_id})
-    if not member:
-        raise HTTPException(status_code=404, detail="Membre introuvable")
-
-    # Cascade : header > member.club_id > user > Versoix
+    # Sprint C.2.D — A.2 strict : header (puis fallback resolver) seul, JAMAIS doc.club_id.
     club_id_resolved = resolve_club_id_or_fallback(
-        club_id=club_id or member.get("club_id"),
+        club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id}/renew",
     )
+    member = await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved})
+    if not member:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
 
     new_end_date = body.get("new_end_date")
     renewal_duration = body.get("renewal_duration", "12 mois")
@@ -1343,10 +1342,10 @@ async def renew_membership(
     # Auto-add to challenge if new membership is challenge type
     new_membership = body.get("new_membership", member.get("membership", ""))
     if new_membership and "challenge" in new_membership.lower():
-        active_challenge = await db.six_weeks_challenges.find_one({"is_active": True}, {"_id": 0})
+        active_challenge = await db.six_weeks_challenges.find_one({"is_active": True, "club_id": club_id_resolved}, {"_id": 0})
         if active_challenge:
             existing_p = await db.challenge_participants.find_one({
-                "challenge_id": active_challenge["id"], "member_id": member_id
+                "challenge_id": active_challenge["id"], "member_id": member_id, "club_id": club_id_resolved
             })
             if not existing_p:
                 participant = ChallengeParticipant(
@@ -1392,7 +1391,7 @@ async def renew_membership(
     
     # Update payment schedule if billing cycle changed
     if any(k in body for k in ["billing_cycle_type", "billing_cycle_value", "billing_amount", "billing_payment_method"]):
-        existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "is_active": True})
+        existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "club_id": club_id_resolved, "is_active": True})
         if existing_schedule:
             schedule_update = {"updated_at": datetime.now(timezone.utc).isoformat()}
             if "billing_cycle_type" in body:
@@ -1403,7 +1402,7 @@ async def renew_membership(
                 schedule_update["amount"] = body["billing_amount"]
             if "billing_payment_method" in body:
                 schedule_update["payment_method"] = body["billing_payment_method"]
-            await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": schedule_update})
+            await db.payment_schedules.update_one({"id": existing_schedule["id"], "club_id": club_id_resolved}, {"$set": schedule_update})
         # Also sync amount to existing pending/late payments on renewal
         if "billing_amount" in body and body["billing_amount"] > 0:
             await db.payments.update_many(
@@ -1411,7 +1410,7 @@ async def renew_membership(
                 {"$set": {"amount": body["billing_amount"], "updated_at": datetime.now(timezone.utc).isoformat()}}
             )
     
-    doc = await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    doc = await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved}, {"_id": 0})
     return {"member": doc, "message": "Abonnement renouvelé"}
 
 
