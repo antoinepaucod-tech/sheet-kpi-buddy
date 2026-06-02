@@ -313,26 +313,26 @@ async def test_update_member_log_activity_uses_resolved_not_raw_header(monkeypat
     au lieu de `explicit_club_id=club_id_resolved`. Si header None → log posé
     sans club_id (audit trail dégradé).
 
-    Construction : header=None + doc club A → cible : log doit recevoir
-    explicit_club_id != None (soit resolved=FALLBACK, soit le club du resolver).
+    Construction post-patch C.2.C : pour observer la différence header brut vs
+    resolved, on a besoin que (a) le handler aille jusqu'à log_activity, (b) le
+    header soit ≠ du resolved. Trick : header=None + resolver fallback FALLBACK,
+    et doc en base avec club_id=FALLBACK → find_one scopé match. Si le code utilise
+    `club_id` brut, le log reçoit None ; s'il utilise `club_id_resolved`, il reçoit
+    FALLBACK_VERSOIX.
     """
-    doc = _existing_member(club_id=CLUB_A)
+    doc = _existing_member(club_id=FALLBACK)
     db = _make_db_mock(doc)
     log_mock = AsyncMock()
     _patch_common(monkeypatch, db)
     monkeypatch.setattr(mb, "log_activity", log_mock)
 
-    try:
-        await mb.update_member(
-            member_id="M1",
-            data=_payload(),
-            club_id=None,  # ← header absent
-            current_user={"id": "u1", "email": "u@a.com"},
-        )
-    except Exception:
-        pass
+    await mb.update_member(
+        member_id="M1",
+        data=_payload(),
+        club_id=None,  # ← header absent → resolver tombe sur FALLBACK ≠ None
+        current_user={"id": "u1", "email": "u@a.com"},
+    )
 
-    # log_activity peut être appelé 1+ fois — chercher le call principal.
     main_log_calls = [
         c for c in log_mock.call_args_list
         if c.kwargs.get("action") == "member_updated"
@@ -342,11 +342,10 @@ async def test_update_member_log_activity_uses_resolved_not_raw_header(monkeypat
         f"Calls : {log_mock.call_args_list}"
     )
     explicit = main_log_calls[0].kwargs.get("explicit_club_id")
-    assert explicit is not None and explicit != CLUB_OTHER, (
+    assert explicit == FALLBACK, (
         f"❌ RED W13 : log_activity explicit_club_id={explicit!r} — utilisé "
-        f"`club_id` (raw header) au lieu de `club_id_resolved`. "
-        f"Cible : explicit_club_id = club_id_resolved (jamais None, jamais "
-        f"issu de existing.club_id cross-club)."
+        f"`club_id` (raw header={None!r}) au lieu de `club_id_resolved` "
+        f"({FALLBACK!r}). Cible : explicit_club_id = club_id_resolved."
     )
 
 

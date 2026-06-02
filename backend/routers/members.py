@@ -881,16 +881,15 @@ async def update_member(
     club_id: Optional[str] = Depends(get_club_id),
     current_user: dict = Depends(get_current_user),
 ):
-    existing = await db.customer_members.find_one({"id": member_id})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Membre introuvable")
-
-    # Sprint Hardening — cascade club_id (header > member.club_id > user > Versoix)
+    # Sprint C.2.C — A.2 strict : header (puis fallback resolver) seul, JAMAIS doc.club_id.
     club_id_resolved = resolve_club_id_or_fallback(
-        club_id=club_id or existing.get("club_id"),
+        club_id=club_id,
         current_user=current_user,
         endpoint="/api/members/{id} (PUT)",
     )
+    existing = await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Membre introuvable")
 
     update_data = data.model_dump()
     update_data.pop("club_id", None)  # Ne jamais écraser club_id via PUT
@@ -937,7 +936,7 @@ async def update_member(
         delta = FREQUENCY_DELTA.get(new_freq, relativedelta(months=1))
         # Base: last completed review, or contract_signed_date
         last_completed = await db.annual_reviews.find_one(
-            {"member_id": member_id, "status": "completed"},
+            {"member_id": member_id, "club_id": club_id_resolved, "status": "completed"},
             {"_id": 0, "review_date": 1},
             sort=[("review_date", -1)]
         )
@@ -997,7 +996,7 @@ async def update_member(
             )
     
     # Update payment schedule if billing changed
-    existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "is_active": True})
+    existing_schedule = await db.payment_schedules.find_one({"member_id": member_id, "club_id": club_id_resolved, "is_active": True})
     
     # Sync billing_amount to existing pending/late payments
     new_amount = update_data.get("billing_amount")
@@ -1057,7 +1056,7 @@ async def update_member(
         }
         
         if existing_schedule:
-            await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": schedule_update})
+            await db.payment_schedules.update_one({"id": existing_schedule["id"], "club_id": club_id_resolved}, {"$set": schedule_update})
         else:
             schedule = PaymentSchedule(
                 member_id=member_id,
@@ -1068,9 +1067,11 @@ async def update_member(
                 payment_method=data.billing_payment_method,
                 is_active=True
             )
-            await db.payment_schedules.insert_one(schedule.model_dump())
+            schedule_doc = schedule.model_dump()
+            schedule_doc["club_id"] = club_id_resolved
+            await db.payment_schedules.insert_one(schedule_doc)
     elif existing_schedule and not data.billing_enabled:
-        await db.payment_schedules.update_one({"id": existing_schedule["id"]}, {"$set": {"is_active": False}})
+        await db.payment_schedules.update_one({"id": existing_schedule["id"], "club_id": club_id_resolved}, {"$set": {"is_active": False}})
     
     # Auto-generate payment for current month if billing enabled, amount > 0, and no payment exists
     if data.billing_enabled and data.billing_amount > 0:
@@ -1088,6 +1089,7 @@ async def update_member(
         
         existing_payment = await db.payments.find_one({
             "member_id": member_id,
+            "club_id": club_id_resolved,
             "due_date": {"$regex": f"^{month_str}"}
         })
         
@@ -1141,10 +1143,10 @@ async def update_member(
         description=f"Fiche membre modifiée : {data.name}",
         member_id=member_id,
         current_user=current_user,
-        explicit_club_id=club_id,
+        explicit_club_id=club_id_resolved,
     )
 
-    return await db.customer_members.find_one({"id": member_id}, {"_id": 0})
+    return await db.customer_members.find_one({"id": member_id, "club_id": club_id_resolved}, {"_id": 0})
 
 
 
