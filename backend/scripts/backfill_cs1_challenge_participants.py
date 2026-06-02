@@ -111,14 +111,17 @@ async def _classify(orphans: list[dict]) -> tuple[list[dict], list[dict]]:
 
 
 def _print_table(orphans: list[dict]):
-    print(f"\n{'#':<3} {'participant_id':<40} {'member_id':<40} {'parent.name':<30} {'verdict':<35}")
-    print("-" * 150)
+    print(f"\n{'#':<3} {'participant_id':<40} {'member_id':<40} {'parent.name':<28} {'parent.club_id (brut)':<40} {'verdict':<35}")
+    print("-" * 190)
     for i, o in enumerate(orphans, 1):
         parent = o.get("_parent") or {}
+        parent_club_raw = parent.get("club_id") if parent else None
+        parent_club_display = parent_club_raw if parent_club_raw is not None else "<PARENT_INTROUVABLE>"
         print(
             f"{i:<3} {(o.get('id') or '—')[:38]:<40} "
             f"{(o.get('member_id') or '—')[:38]:<40} "
-            f"{(parent.get('name') or '—')[:28]:<30} "
+            f"{(parent.get('name') or '—')[:26]:<28} "
+            f"{str(parent_club_display)[:38]:<40} "
             f"{o.get('_verdict', '—'):<35}"
         )
 
