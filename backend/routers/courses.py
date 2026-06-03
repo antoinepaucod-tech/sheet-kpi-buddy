@@ -163,34 +163,51 @@ async def create_course_type(
 
 
 @router.put("/course-types/{type_id}")
-async def update_course_type(type_id: str, data: dict, club_id: Optional[str] = Depends(get_club_id)):
+async def update_course_type(
+    type_id: str,
+    data: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Update a course type name and propagate to all course_kpis."""
     new_name = data.get("name", "").strip()
     if not new_name:
         raise HTTPException(status_code=400, detail="Nom requis")
-    
-    existing = await db.course_types.find_one({"id": type_id})
+
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/course-types/{id}",
+    )
+
+    existing = await db.course_types.find_one({"id": type_id, "club_id": club_id_resolved})
     if not existing:
         raise HTTPException(status_code=404, detail="Type de cours introuvable")
-    
+
     old_name = existing.get("name", "")
     if old_name == new_name:
         return {"id": type_id, "name": new_name}
-    
-    # Check for duplicate name
-    duplicate = await db.course_types.find_one(_cq(club_id, {"name": new_name, "id": {"$ne": type_id}}))
+
+    # Check for duplicate name (scoped au club résolu)
+    duplicate = await db.course_types.find_one(
+        {"name": new_name, "id": {"$ne": type_id}, "club_id": club_id_resolved}
+    )
     if duplicate:
         raise HTTPException(status_code=400, detail="Ce nom existe déjà")
-    
-    # Update the course type
-    await db.course_types.update_one({"id": type_id}, {"$set": {"name": new_name}})
-    
-    # Propagate name change to all course_kpis referencing this course type
-    await db.course_kpis.update_many(
-        {"course_name": old_name},
-        {"$set": {"course_name": new_name}}
+
+    # Update the course type (défense en profondeur A.2 : scope dans le filter)
+    await db.course_types.update_one(
+        {"id": type_id, "club_id": club_id_resolved},
+        {"$set": {"name": new_name}},
     )
-    
+
+    # Propagate name change to all course_kpis referencing this course type
+    # (cascade scopée par le MÊME club_id_resolved que le parent — méta-leçon #12).
+    await db.course_kpis.update_many(
+        {"course_name": old_name, "club_id": club_id_resolved},
+        {"$set": {"course_name": new_name}},
+    )
+
     return {"id": type_id, "name": new_name, "renamed_from": old_name}
 
 
