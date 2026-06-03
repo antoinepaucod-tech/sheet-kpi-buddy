@@ -586,16 +586,20 @@ async def generate_salary_expenses(year: int, month: int, club_id: Optional[str]
     if not salary_by_coach:
         return {"message": "Aucune rémunération à générer", "transactions": []}
 
-    salary_cat = await db.accounting_categories.find_one({"kpi_column": "salaires_coachs"})
+    salary_cat = await db.accounting_categories.find_one({"kpi_column": "salaires_coachs", "club_id": club_id})
     if not salary_cat:
         salary_cat = AccountingCategory(
             name="SALAIRES COACHS", kpi_column="salaires_coachs",
             type="expense", color="#8B5CF6"
         ).model_dump()
+        # Sprint A pattern — défense en profondeur : injection explicite du club_id
+        # APRÈS le model_dump() (l'AccountingCategory Pydantic model ne le connaît pas).
+        salary_cat["club_id"] = club_id
         await db.accounting_categories.insert_one(salary_cat)
 
     month_str = f"{year}-{month:02d}"
     await db.accounting_transactions.delete_many({
+        "club_id": club_id,
         "category": "SALAIRES COACHS",
         "date": {"$regex": f"^{month_str}"},
         "description": {"$regex": "^\\[Auto\\]"}
