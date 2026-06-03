@@ -120,24 +120,44 @@ async def get_courses(year: Optional[int] = None, month: Optional[int] = None, c
 
 
 @router.get("/course-types")
-async def get_course_types(club_id: Optional[str] = Depends(get_club_id)):
+async def get_course_types(
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Get all course type categories."""
-    return await db.course_types.find(_cq(club_id), {"_id": 0}).sort("name", 1).to_list(100)
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/course-types (GET)",
+    )
+    return await db.course_types.find({"club_id": club_id_resolved}, {"_id": 0}).sort("name", 1).to_list(100)
 
 
 @router.post("/course-types")
-async def create_course_type(data: dict, club_id: Optional[str] = Depends(get_club_id)):
+async def create_course_type(
+    data: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Create a new course type category."""
     import uuid
     name = data.get("name", "").strip()
     if not name:
         raise HTTPException(status_code=400, detail="Nom requis")
-    existing = await db.course_types.find_one(_cq(club_id, {"name": name}))
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/course-types (POST)",
+    )
+    existing = await db.course_types.find_one({"name": name, "club_id": club_id_resolved})
     if existing:
         raise HTTPException(status_code=400, detail="Ce type de cours existe déjà")
-    doc = {"id": str(uuid.uuid4()), "name": name, "created_at": datetime.now(timezone.utc).isoformat()}
-    if club_id:
-        doc["club_id"] = club_id
+    doc = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "club_id": club_id_resolved,
+    }
     await db.course_types.insert_one(doc)
     return {"id": doc["id"], "name": name}
 
