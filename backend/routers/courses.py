@@ -332,20 +332,31 @@ async def get_courses_summary(year: int, month: int, club_id: Optional[str] = De
 
 
 @router.post("/courses/copy-planning/{year}/{month}")
-async def copy_planning_from_previous_month(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
+async def copy_planning_from_previous_month(
+    year: int,
+    month: int,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/copy-planning/{year}/{month}",
+    )
+
     if month == 1:
         prev_month, prev_year = 12, year - 1
     else:
         prev_month, prev_year = month - 1, year
 
-    existing = await db.course_kpis.find(_cq(club_id, {"year": year, "month": month}), {"_id": 0}).to_list(500)
+    existing = await db.course_kpis.find(_cq(club_id_resolved, {"year": year, "month": month}), {"_id": 0}).to_list(500)
     if existing:
         return {
             "message": f"Le mois {MONTHS_FR[month-1]} {year} contient déjà {len(existing)} cours.",
             "existing_count": len(existing), "copied": 0
         }
 
-    prev_courses = await db.course_kpis.find(_cq(club_id, {"year": prev_year, "month": prev_month}), {"_id": 0}).to_list(500)
+    prev_courses = await db.course_kpis.find(_cq(club_id_resolved, {"year": prev_year, "month": prev_month}), {"_id": 0}).to_list(500)
     if not prev_courses:
         return {"message": f"Aucun cours trouvé pour {MONTHS_FR[prev_month-1]} {prev_year}", "copied": 0}
 
@@ -368,6 +379,10 @@ async def copy_planning_from_previous_month(year: int, month: int, club_id: Opti
             notes=""
         )
         doc = new_course.model_dump()
+        # Sprint A pattern — injection explicite du club_id résolu APRÈS model_dump
+        # (écrase tout club_id traîné par le model — méta-leçon #12 : la cascade
+        # hérite du resolved parent, JAMAIS de existing.club_id).
+        doc["club_id"] = club_id_resolved
         await db.course_kpis.insert_one(doc)
         doc.pop('_id', None)
         copied.append(doc)
