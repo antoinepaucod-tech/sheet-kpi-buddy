@@ -110,8 +110,18 @@ async def get_iso_weeks_for_month(year: int, month: int):
 
 
 @router.get("/courses")
-async def get_courses(year: Optional[int] = None, month: Optional[int] = None, club_id: Optional[str] = Depends(get_club_id)):
-    query = _cq(club_id)
+async def get_courses(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses (GET)",
+    )
+    query = _cq(club_id_resolved)
     if year:
         query["year"] = year
     if month:
@@ -324,8 +334,18 @@ async def delete_course(
 
 
 @router.get("/courses/summary/{year}/{month}")
-async def get_courses_summary(year: int, month: int, club_id: Optional[str] = Depends(get_club_id)):
-    docs = await db.course_kpis.find(_cq(club_id, {"year": year, "month": month}), {"_id": 0}).to_list(500)
+async def get_courses_summary(
+    year: int,
+    month: int,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/summary/{year}/{month}",
+    )
+    docs = await db.course_kpis.find(_cq(club_id_resolved, {"year": year, "month": month}), {"_id": 0}).to_list(500)
     if not docs:
         return {
             "year": year, "month": month,

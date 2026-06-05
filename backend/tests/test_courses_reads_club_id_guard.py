@@ -155,7 +155,7 @@ async def test_get_courses_no_header_leaks_other_club_docs(monkeypatch):
     db = _make_find_mock([DOC_VERSOIX, DOC_TRAP_CLUB_B])
     monkeypatch.setattr(co, "db", db)
 
-    payload = await co.get_courses(year=None, month=None, club_id=None)
+    payload = await co.get_courses(year=None, month=None, club_id=None, current_user=None)
 
     assert isinstance(payload, list), f"Attendu list, got {type(payload)}"
 
@@ -187,7 +187,7 @@ async def test_get_courses_header_club_b_returns_only_club_b_docs(monkeypatch):
     db = _make_find_mock([DOC_VERSOIX, DOC_TRAP_CLUB_B])
     monkeypatch.setattr(co, "db", db)
 
-    payload = await co.get_courses(year=None, month=None, club_id=CLUB_B)
+    payload = await co.get_courses(year=None, month=None, club_id=CLUB_B, current_user=None)
 
     assert isinstance(payload, list)
 
@@ -231,7 +231,7 @@ async def test_get_courses_summary_no_header_leaks_other_club_docs(monkeypatch):
     db = _make_find_mock([DOC_VERSOIX, DOC_TRAP_CLUB_B])
     monkeypatch.setattr(co, "db", db)
 
-    payload = await co.get_courses_summary(year=YEAR, month=MONTH, club_id=None)
+    payload = await co.get_courses_summary(year=YEAR, month=MONTH, club_id=None, current_user=None)
 
     assert isinstance(payload, dict), f"Attendu dict, got {type(payload)}"
 
@@ -264,7 +264,7 @@ async def test_get_courses_summary_header_club_b_returns_only_club_b_summary(mon
     db = _make_find_mock([DOC_VERSOIX, DOC_TRAP_CLUB_B])
     monkeypatch.setattr(co, "db", db)
 
-    payload = await co.get_courses_summary(year=YEAR, month=MONTH, club_id=CLUB_B)
+    payload = await co.get_courses_summary(year=YEAR, month=MONTH, club_id=CLUB_B, current_user=None)
 
     assert isinstance(payload, dict)
 
