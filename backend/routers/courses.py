@@ -420,8 +420,17 @@ def _course_dedup_key(course: dict) -> tuple[str, str, str]:
 
 
 @router.post("/courses/copy-month/preview")
-async def copy_month_preview(body: dict, club_id: Optional[str] = Depends(get_club_id)):
+async def copy_month_preview(
+    body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Sprint D.2 — Pré-calcul avant recopie : combien créés / écrasés / conservés."""
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/copy-month/preview",
+    )
     source_year, source_month = _parse_month_param(body.get("source_month"))
     dest_year, dest_month = _parse_month_param(body.get("dest_month"))
 
@@ -429,10 +438,10 @@ async def copy_month_preview(body: dict, club_id: Optional[str] = Depends(get_cl
         raise HTTPException(status_code=400, detail="Source et destination identiques")
 
     source_courses = await db.course_kpis.find(
-        _cq(club_id, {"year": source_year, "month": source_month}), {"_id": 0}
+        _cq(club_id_resolved, {"year": source_year, "month": source_month}), {"_id": 0}
     ).to_list(500)
     dest_courses = await db.course_kpis.find(
-        _cq(club_id, {"year": dest_year, "month": dest_month}), {"_id": 0}
+        _cq(club_id_resolved, {"year": dest_year, "month": dest_month}), {"_id": 0}
     ).to_list(500)
 
     dest_by_key = {_course_dedup_key(c): c for c in dest_courses}
@@ -454,7 +463,11 @@ async def copy_month_preview(body: dict, club_id: Optional[str] = Depends(get_cl
 
 
 @router.post("/courses/copy-month")
-async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
+async def copy_month(
+    body: dict,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Sprint D.2 — Recopier planning source_month → dest_month, avec option overwrite.
 
     Body : { source_month: "YYYY-MM", dest_month: "YYYY-MM", overwrite: bool }.
@@ -467,6 +480,11 @@ async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
       - Sinon → création (nouveau ID, attendances repartent à 0).
       - Les cours dest sans équivalent source ne sont **jamais** touchés (conservés).
     """
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/copy-month",
+    )
     source_year, source_month = _parse_month_param(body.get("source_month"))
     dest_year, dest_month = _parse_month_param(body.get("dest_month"))
     overwrite = bool(body.get("overwrite", True))
@@ -475,7 +493,7 @@ async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
         raise HTTPException(status_code=400, detail="Source et destination identiques")
 
     source_courses = await db.course_kpis.find(
-        _cq(club_id, {"year": source_year, "month": source_month}), {"_id": 0}
+        _cq(club_id_resolved, {"year": source_year, "month": source_month}), {"_id": 0}
     ).to_list(500)
     if not source_courses:
         return {
@@ -484,7 +502,7 @@ async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
         }
 
     dest_courses = await db.course_kpis.find(
-        _cq(club_id, {"year": dest_year, "month": dest_month}), {"_id": 0}
+        _cq(club_id_resolved, {"year": dest_year, "month": dest_month}), {"_id": 0}
     ).to_list(500)
     dest_by_key = {_course_dedup_key(c): c for c in dest_courses}
 
@@ -512,7 +530,12 @@ async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
                 "monthly_expenses": float(src.get("monthly_expenses") or 0),
                 "updated_at": now_iso,
             }
-            await db.course_kpis.update_one({"id": existing["id"]}, {"$set": update_fields})
+            # Pattern B (A.2 défense en profondeur) : filter composite avec
+            # club_id_resolved (header). JAMAIS existing.club_id (cascade A.2).
+            await db.course_kpis.update_one(
+                {"id": existing["id"], "club_id": club_id_resolved},
+                {"$set": update_fields},
+            )
             overwritten += 1
         else:
             new_course = CourseKPI(
@@ -526,8 +549,9 @@ async def copy_month(body: dict, club_id: Optional[str] = Depends(get_club_id)):
                 monthly_expenses=float(src.get("monthly_expenses") or 0),
             )
             doc = new_course.model_dump()
-            if club_id:
-                doc["club_id"] = club_id
+            # Sprint A pattern — injection explicite INCONDITIONNELLE du club_id
+            # résolu APRÈS model_dump (méta-leçon #12 : jamais source.club_id).
+            doc["club_id"] = club_id_resolved
             await db.course_kpis.insert_one(doc)
             created += 1
 

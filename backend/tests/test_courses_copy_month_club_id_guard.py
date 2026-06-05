@@ -287,3 +287,62 @@ async def test_copy_month_insert_no_orphan_uses_resolved(monkeypatch):
         f"Si =={SOURCE_X!r}, le patch dérive de `source.club_id` "
         f"(TRAP A.2 cassée — pendant de la cascade A.2). Si None, orphelin maintenu."
     )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#   TEST 5 — DISCRIMINANCE anti-hardcode : header CLUB_B (≠ VERSOIX/DEFAULT)
+# ════════════════════════════════════════════════════════════════════════════
+
+
+CLUB_B = "club-B-explicit-non-default"
+
+
+async def test_copy_month_value_flow_from_header_not_hardcoded_default(monkeypatch):
+    """🎯 DISCRIMINANCE anti-faux-vert : un patch qui hardcoderait
+    `doc["club_id"] = DEFAULT_CLUB_ID` (au lieu d'utiliser le resolved du
+    header) passerait les tests 1-4 (qui utilisent header=None ⇒ fallback
+    DEFAULT, ou header=VERSOIX qui se trouve == DEFAULT_CLUB_ID).
+
+    Ici on tape avec header=CLUB_B explicitement DIFFÉRENT de DEFAULT_CLUB_ID,
+    et on exerce SIMULTANÉMENT :
+      - 1 read scopé (L462 ou L471) — doit porter `club_id=CLUB_B`
+      - la cascade update_one L500 (Pattern B) — filter doit porter `club_id=CLUB_B`
+
+    Si un patch GREEN utilise `DEFAULT_CLUB_ID` au lieu du resolved, cette
+    assertion FAIL → preuve que le value-flow part bien du header.
+    """
+    same_key = {"day_of_week": "Lundi", "time_slot": "08:00", "course_name": "Hyrox"}
+    course_kpis = MagicMock()
+    course_kpis.find = _chain_find_iter(
+        [_course(id="src-key1", **same_key)],
+        [_course(id="dest-1", club_id=SOURCE_X, **same_key)],
+    )
+    course_kpis.update_one = AsyncMock(return_value=MagicMock(matched_count=1, modified_count=1))
+    course_kpis.insert_one = AsyncMock()
+    db = MagicMock()
+    db.course_kpis = course_kpis
+    monkeypatch.setattr(co, "db", db)
+    _patch_resolver_priority_header(monkeypatch)
+
+    await co.copy_month(
+        body={"source_month": "2026-05", "dest_month": "2026-06", "overwrite": True},
+        club_id=CLUB_B,  # ← header non-default
+        current_user=_user(),
+    )
+
+    # Read L462 (source) : club_id == CLUB_B
+    f_source = course_kpis.find.call_args_list[0].args[0]
+    assert f_source.get("club_id") == CLUB_B, (
+        f"copy_month L462 find filter `club_id`={f_source.get('club_id')!r}, "
+        f"attendu {CLUB_B!r} (header explicite, non-default). Si "
+        f"=={DEFAULT_CLUB_ID!r}, value-flow hardcodé sur DEFAULT au lieu du "
+        f"resolved (faux-vert anti-tautologie déclenché)."
+    )
+
+    # Cascade update_one L500 : club_id == CLUB_B
+    update_filter = course_kpis.update_one.call_args.args[0]
+    assert update_filter.get("club_id") == CLUB_B, (
+        f"copy_month L500 update_one filter `club_id`={update_filter.get('club_id')!r}, "
+        f"attendu {CLUB_B!r} (header explicite). Si =={DEFAULT_CLUB_ID!r}, "
+        f"cascade A.2 hardcodée sur DEFAULT (faux-vert anti-tautologie)."
+    )
