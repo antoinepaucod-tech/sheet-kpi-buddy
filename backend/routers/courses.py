@@ -231,27 +231,47 @@ async def get_course(
 
 
 @router.post("/courses")
-async def create_course(data: CourseKPICreate, club_id: Optional[str] = Depends(get_club_id)):
+async def create_course(
+    data: CourseKPICreate,
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses (POST)",
+    )
     month_name = MONTHS_FR[data.month - 1] if 1 <= data.month <= 12 else ""
     course = CourseKPI(**data.model_dump(), month_name=month_name)
     doc = course.model_dump()
-    if club_id:
-        doc["club_id"] = club_id
+    # Sprint A pattern — injection explicite INCONDITIONNELLE du club_id
+    # résolu APRÈS model_dump (ferme la fuite F.2/CS1 raw-header conditionnel).
+    doc["club_id"] = club_id_resolved
     await db.course_kpis.insert_one(doc)
     doc.pop('_id', None)
     return doc
 
 
 @router.post("/courses/bulk")
-async def bulk_create_courses(courses_data: list[CourseKPICreate], club_id: Optional[str] = Depends(get_club_id)):
+async def bulk_create_courses(
+    courses_data: list[CourseKPICreate],
+    club_id: Optional[str] = Depends(get_club_id),
+    current_user: dict = Depends(get_current_user),
+):
     """Create multiple courses at once."""
+    # Doctrine 1 var / handler : resolve UNE fois HORS boucle, réutilise par item.
+    club_id_resolved = resolve_club_id_or_fallback(
+        club_id=club_id,
+        current_user=current_user,
+        endpoint="/api/courses/bulk (POST)",
+    )
     created = []
     for data in courses_data:
         month_name = MONTHS_FR[data.month - 1] if 1 <= data.month <= 12 else ""
         course = CourseKPI(**data.model_dump(), month_name=month_name)
         doc = course.model_dump()
-        if club_id:
-            doc["club_id"] = club_id
+        # Sprint A pattern — injection INCONDITIONNELLE par item (TRAP boucle).
+        doc["club_id"] = club_id_resolved
         await db.course_kpis.insert_one(doc)
         doc.pop('_id', None)
         created.append(doc)
