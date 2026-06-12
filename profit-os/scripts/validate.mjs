@@ -1,6 +1,6 @@
 // End-to-end validation: auth, RLS, calculations on demo data, scenario save/load.
 import { createClient } from '@supabase/supabase-js'
-import { computeMonth, consolidate } from '../src/lib/calc.js'
+import { computeEntryFull, consolidate } from '../src/lib/calc.js'
 
 const URL = process.env.VITE_SUPABASE_URL || 'https://tnmpphysbtoezzjfqxcd.supabase.co'
 const KEY =
@@ -45,9 +45,13 @@ const owner = createClient(URL, KEY)
   check('Owner voit 2 entrées démo (Versoix)', entries?.length === 2)
 
   // 3. Manual verification of computed KPIs (April 2026, Versoix)
+  const { data: capexList } = await owner.from('profit_capex').select('*')
+  const { data: financingList } = await owner.from('profit_financing').select('*')
+  check('Owner voit les CAPEX (2 lignes Versoix)', capexList?.length >= 2)
+  check('Owner voit le financement (1 prêt Versoix)', financingList?.length >= 1)
   const versoixSettings = settings.find((s) => s.club_id === '36e06074-f9e6-404c-a81b-ec4350ad76f0')
   const april = entries.find((e) => e.month === '2026-04-01')
-  const c = computeMonth(april, versoixSettings)
+  const c = computeEntryFull(april, versoixSettings, capexList ?? [], financingList ?? [])
 
   // Fiscal layer: ARPU 179 TTC, VAT 8.1%, employer charges 17%, profit tax 14%
   const arpuHT = 179 / 1.081
@@ -55,20 +59,23 @@ const owner = createClient(URL, KEY)
   check('CAC avril = 5500/24 = 229.17', close(c.cac, 5500 / 24), c.cac.toFixed(2))
   check('LTV = ARPU HT × 30 = 4967.62', close(c.ltv, arpuHT * 30), c.ltv.toFixed(2))
   check('Payback = CAC/ARPU HT = 1.38 mois', close(c.paybackMonths, 5500 / 24 / arpuHT), c.paybackMonths.toFixed(2))
-  check('Amortissement = 180000/60 = 3000 (lissé)', close(c.equipmentAmort, 3000))
+  check('Amortissements CAPEX = 250000/120 + 180000/60 = 5083.33', close(c.equipmentAmort, 5083.33, 0.01))
   check('Charges sociales = 18000×17% = 3060', close(c.socialCharges, 3060))
   check('OPEX hors amort = 30610', close(c.opexTotal, 30610), String(c.opexTotal))
   check('Revenus HT = 43240/1.081 = 40000', close(c.revenueTotal, 40000), c.revenueTotal.toFixed(2))
   check('EBITDA = 3890', close(c.ebitda, 3890), c.ebitda.toFixed(2))
-  check('EBIT = 890', close(c.ebit, 890), c.ebit.toFixed(2))
-  check('Impôt = 124.60', close(c.tax, 124.6), c.tax.toFixed(2))
-  check('Résultat net = 765.40', close(c.netProfit, 765.4), c.netProfit.toFixed(2))
-  check('Break-even = 205 membres', c.breakEvenMembers === 205, String(c.breakEvenMembers))
+  check('EBIT = −1193.33', close(c.ebit, -1193.33, 0.01), c.ebit.toFixed(2))
+  check('Intérêts dette ≈ 1090.61 (dans le P&L)', close(c.interest, 1090.61, 0.5), c.interest.toFixed(2))
+  check('Impôt = 0 (résultat avant impôt négatif)', c.tax === 0)
+  check('Résultat net ≈ −2283.95', close(c.netProfit, -2283.95, 0.5), c.netProfit.toFixed(2))
+  check('Cash flow ≈ −280 ≠ résultat net (capital hors P&L)', close(c.cashFlow, -280.05, 1) && Math.abs(c.cashFlow - c.netProfit) > 1000, c.cashFlow.toFixed(2))
+  check('Break-even = 224 membres', c.breakEvenMembers === 224, String(c.breakEvenMembers))
+  check('Churn avril = 3.33% / durée déduite 30 mois', close(c.churnRate, 7 / 210) && close(c.impliedDuration, 30))
 
   // 4. Consolidated view = exact sum of clubs (April: only Versoix has data)
   const aprilEntries = entries.filter((e) => e.month === '2026-04-01')
   const computedList = aprilEntries.map((e) =>
-    computeMonth(e, settings.find((s) => s.club_id === e.club_id))
+    computeEntryFull(e, settings.find((s) => s.club_id === e.club_id), capexList ?? [], financingList ?? [])
   )
   const group = consolidate(computedList, aprilEntries)
   const sumNet = computedList.reduce((a, x) => a + x.netProfit, 0)

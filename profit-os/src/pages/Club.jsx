@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid,
+  ResponsiveContainer, ComposedChart, Area, Bar, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid,
 } from 'recharts'
-import { useClubs, useSettings, useEntries } from '../hooks/useData'
-import { computeMonth, DEFAULT_SETTINGS } from '../lib/calc'
+import { useClubs, useSettings, useEntries, useCapex, useFinancing } from '../hooks/useData'
+import { computeEntryFull, roiForClub, DEFAULT_SETTINGS } from '../lib/calc'
 import { fmtMoney, fmtMoney2, fmtPct, fmtRatio, fmtMonths, fmtNum, monthLabel } from '../lib/format'
 import { Card, KpiCard, SectionTitle, ClubSelect, Spinner } from '../components/ui'
 
@@ -13,6 +13,8 @@ export default function Club() {
   const { data: clubs, isLoading: l1 } = useClubs()
   const { data: settings, isLoading: l2 } = useSettings()
   const { data: entries, isLoading: l3 } = useEntries()
+  const { data: capex } = useCapex()
+  const { data: financing } = useFinancing()
   const [clubId, setClubId] = useState(null)
 
   const selected = clubId ?? clubs?.[0]?.id ?? null
@@ -20,10 +22,24 @@ export default function Club() {
   const rows = useMemo(() => {
     if (!entries || !selected) return []
     const s = (settings ?? []).find((x) => x.club_id === selected) ?? DEFAULT_SETTINGS
+    let cumul = 0
     return entries
       .filter((e) => e.club_id === selected)
-      .map((e) => ({ entry: e, c: computeMonth(e, s) }))
-  }, [entries, settings, selected])
+      .map((e) => {
+        const c = computeEntryFull(e, s, capex ?? [], financing ?? [])
+        cumul += c.cashFlow
+        return { entry: e, c, cumulativeCash: cumul }
+      })
+  }, [entries, settings, selected, capex, financing])
+
+  const roi = useMemo(
+    () =>
+      roiForClub(
+        rows.map((r) => r.c),
+        (capex ?? []).filter((x) => x.club_id === selected)
+      ),
+    [rows, capex, selected]
+  )
 
   if (l1 || l2 || l3) return <Spinner />
 
@@ -70,6 +86,29 @@ export default function Club() {
             />
             <KpiCard label={t('kpi.newMembers')} value={fmtNum(latest.entry.new_members)} sub={`${t('kpi.leads')}: ${fmtNum(latest.entry.leads_generated)}`} />
             <KpiCard label={t('kpi.arpu')} value={fmtMoney2(latest.c.arpu)} />
+            <KpiCard
+              label={t('kpi.churn')}
+              value={fmtPct(latest.c.churnRate)}
+              sub={`${t('kpi.netGrowth')}: ${latest.c.netGrowth >= 0 ? '+' : ''}${fmtNum(latest.c.netGrowth)}`}
+              tone={latest.c.netGrowth >= 0 ? 'pos' : 'neg'}
+            />
+            <KpiCard
+              label={t('kpi.impliedDuration')}
+              value={fmtMonths(latest.c.impliedDuration)}
+              sub={t('kpi.configuredDuration', { value: fmtNum(latest.c.duration) })}
+            />
+            <KpiCard
+              label={t('kpi.roi')}
+              value={fmtPct(roi.roi)}
+              sub={roi.totalInvest ? `CAPEX: ${fmtMoney(roi.totalInvest)}` : null}
+              tone="accent"
+            />
+            <KpiCard
+              label={t('kpi.treasury')}
+              value={fmtMoney(latest.cumulativeCash)}
+              tone={latest.cumulativeCash >= 0 ? 'pos' : 'neg'}
+              sub={`${t('kpi.cashFlow')}: ${fmtMoney(latest.c.cashFlow)}`}
+            />
           </div>
 
           <Card>
@@ -89,6 +128,66 @@ export default function Club() {
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
+          </Card>
+
+          <Card>
+            <h3 className="mb-3 text-sm font-medium text-white/80">{t('club.growth')}</h3>
+            <div className="h-56">
+              <ResponsiveContainer>
+                <ComposedChart
+                  data={rows.map(({ entry, c }) => ({
+                    name: monthLabel(entry.month),
+                    [t('kpi.newMembers')]: entry.new_members,
+                    [t('kpi.cancellations')]: -entry.cancellations,
+                    [t('kpi.members')]: entry.active_members,
+                  }))}
+                >
+                  <CartesianGrid stroke="#26262C" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill: '#8E8E96', fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="flow" tick={{ fill: '#8E8E96', fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false} width={36} />
+                  <YAxis yAxisId="stock" orientation="right" tick={{ fill: '#8E8E96', fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false} width={42} />
+                  <Tooltip contentStyle={{ background: '#1A1A1F', border: '1px solid #26262C', borderRadius: 12, fontFamily: 'Inter', fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'Inter' }} />
+                  <Bar yAxisId="flow" dataKey={t('kpi.newMembers')} fill="#22C55E" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="flow" dataKey={t('kpi.cancellations')} fill="#EF4444" radius={[4, 4, 0, 0]} />
+                  <Line yAxisId="stock" dataKey={t('kpi.members')} stroke="#F97316" strokeWidth={2} dot={{ r: 3 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card>
+            <h3 className="mb-3 text-sm font-medium text-white/80">{t('club.cash')}</h3>
+            <div className="mb-4 h-56">
+              <ResponsiveContainer>
+                <ComposedChart
+                  data={rows.map(({ entry, c, cumulativeCash }) => ({
+                    name: monthLabel(entry.month),
+                    [t('kpi.cashFlow')]: Math.round(c.cashFlow),
+                    [t('kpi.treasury')]: Math.round(cumulativeCash),
+                  }))}
+                >
+                  <CartesianGrid stroke="#26262C" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill: '#8E8E96', fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#8E8E96', fontSize: 11, fontFamily: 'Inter' }} axisLine={false} tickLine={false} width={48} />
+                  <Tooltip contentStyle={{ background: '#1A1A1F', border: '1px solid #26262C', borderRadius: 12, fontFamily: 'Inter', fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'Inter' }} />
+                  <Bar dataKey={t('kpi.cashFlow')} fill="#F97316" radius={[4, 4, 0, 0]} />
+                  <Line dataKey={t('kpi.treasury')} stroke="#22C55E" strokeWidth={2} dot={{ r: 3 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            {[...rows].reverse().map(({ entry, c, cumulativeCash }) => (
+              <div key={entry.id} className="border-t border-line py-2">
+                <p className="num mb-1 text-xs font-semibold uppercase tracking-wider text-muted">{monthLabel(entry.month)}</p>
+                <Row label={t('club.cashNet')} value={fmtMoney(c.netProfit)} />
+                <Row label={t('club.cashAmort')} value={fmtMoney(c.equipmentAmort)} />
+                <Row label={t('club.cashPrincipal')} value={fmtMoney(-c.principalRepayment)} />
+                <Row label={t('club.cashCapex')} value={fmtMoney(-c.capexPaid)} />
+                <Row label={t('club.cashMonth')} value={fmtMoney(c.cashFlow)} bold tone={c.cashFlow >= 0 ? 'pos' : 'neg'} />
+                <Row label={t('club.cashCumul')} value={fmtMoney(cumulativeCash)} tone={cumulativeCash >= 0 ? 'pos' : 'neg'} />
+              </div>
+            ))}
           </Card>
 
           {[...rows].reverse().map(({ entry, c }) => (
@@ -146,6 +245,8 @@ function PnlCard({ entry, c }) {
       <Row label={t('club.ebitda')} value={fmtMoney(c.ebitda)} bold tone={c.ebitda >= 0 ? 'pos' : 'neg'} />
       <Row label={t('club.amort')} value={fmtMoney(-c.equipmentAmort)} />
       <Row label={t('club.ebit')} value={fmtMoney(c.ebit)} bold tone={c.ebit >= 0 ? 'pos' : 'neg'} />
+      <Row label={t('club.interest')} value={fmtMoney(-c.interest)} />
+      <Row label={t('club.ebt')} value={fmtMoney(c.ebt)} bold tone={c.ebt >= 0 ? 'pos' : 'neg'} />
       <Row label={t('club.tax', { rate: fmtPct(c.taxRate) })} value={fmtMoney(-c.tax)} />
       <Row
         label={`${t('kpi.netProfit')} (${fmtPct(c.netMargin)})`}

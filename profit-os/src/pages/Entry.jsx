@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useClubs, useSettings, useEntries, useUpsertEntry, useMyRole } from '../hooks/useData'
-import { computeMonth, DEFAULT_SETTINGS, EMPTY_ENTRY } from '../lib/calc'
+import { useClubs, useSettings, useEntries, useUpsertEntry, useMyRole, useCapex, useFinancing } from '../hooks/useData'
+import { computeEntryFull, DEFAULT_SETTINGS, EMPTY_ENTRY } from '../lib/calc'
 import { fmtMoney, fmtMoney2, fmtPct, fmtRatio, fmtMonths, fmtNum, monthValue } from '../lib/format'
 import { Card, KpiCard, SectionTitle, ClubSelect, MonthPicker, NumField, Button, Spinner } from '../components/ui'
 
@@ -11,6 +11,8 @@ export default function Entry() {
   const { data: settings, isLoading: l2 } = useSettings()
   const { data: entries, isLoading: l3 } = useEntries()
   const { data: role } = useMyRole()
+  const { data: capex } = useCapex()
+  const { data: financing } = useFinancing()
   const upsert = useUpsertEntry()
 
   const [clubId, setClubId] = useState(null)
@@ -38,7 +40,12 @@ export default function Entry() {
     }
   }, [existing, selected, month])
 
-  const computed = computeMonth(form, clubSettings)
+  const computed = computeEntryFull(
+    { ...form, club_id: selected, month: `${month}-01` },
+    clubSettings,
+    capex ?? [],
+    financing ?? []
+  )
   const set = (key) => (v) => setForm((f) => ({ ...f, [key]: v }))
 
   async function save() {
@@ -73,6 +80,7 @@ export default function Entry() {
           <NumField label={t('entry.videoFees')} value={form.video_fees} onChange={set('video_fees')} disabled={readOnly} />
           <NumField label={t('entry.leads')} value={form.leads_generated} onChange={set('leads_generated')} disabled={readOnly} />
           <NumField label={t('entry.newMembers')} value={form.new_members} onChange={set('new_members')} disabled={readOnly} />
+          <NumField label={t('entry.cancellations')} value={form.cancellations} onChange={set('cancellations')} disabled={readOnly} />
         </div>
       </Card>
 
@@ -129,6 +137,22 @@ export default function Entry() {
           <KpiCard label={t('kpi.ltvCac')} value={fmtRatio(computed.ltvCac)} tone="accent" />
           <KpiCard label={t('kpi.payback')} value={fmtMonths(computed.paybackMonths)} />
           <KpiCard label={t('kpi.breakEven')} value={`${fmtNum(computed.breakEvenMembers)} ${t('kpi.breakEvenUnit')}`} />
+          <KpiCard
+            label={t('kpi.churn')}
+            value={fmtPct(computed.churnRate)}
+            sub={`${t('kpi.netGrowth')}: ${computed.netGrowth >= 0 ? '+' : ''}${fmtNum(computed.netGrowth)}`}
+          />
+          <KpiCard
+            label={t('kpi.impliedDuration')}
+            value={fmtMonths(computed.impliedDuration)}
+            sub={t('kpi.configuredDuration', { value: fmtNum(computed.duration) })}
+          />
+          <KpiCard label={t('kpi.interest')} value={fmtMoney(computed.interest)} />
+          <KpiCard
+            label={t('kpi.cashFlow')}
+            value={fmtMoney(computed.cashFlow)}
+            tone={computed.cashFlow >= 0 ? 'pos' : 'neg'}
+          />
           <KpiCard label={t('kpi.revenue')} value={fmtMoney(computed.revenueTotal)} sub={`${t('club.ttc')}: ${fmtMoney(computed.revenueTotalTTC)}`} />
           <KpiCard label={t('kpi.opex')} value={fmtMoney(computed.opexTotal + computed.equipmentAmort)} />
           <KpiCard

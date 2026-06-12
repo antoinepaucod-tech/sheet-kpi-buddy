@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  useClubs, useSettings, useEntries, useScenarios, useSaveScenario, useDeleteScenario, useMyRole,
+  useClubs, useSettings, useEntries, useScenarios, useSaveScenario, useDeleteScenario, useMyRole, useFinancing, useCapex,
 } from '../hooks/useData'
-import { computeMonth, DEFAULT_SETTINGS, EMPTY_ENTRY } from '../lib/calc'
+import { computeMonth, computeEntryFull, financingForMonth, DEFAULT_SETTINGS, EMPTY_ENTRY } from '../lib/calc'
+import Forecast from './Forecast'
 import { fmtMoney, fmtMoney2, fmtPct, fmtRatio, fmtMonths, fmtNum, monthLabel, monthValue } from '../lib/format'
 import { Card, KpiCard, SectionTitle, ClubSelect, MonthPicker, SliderField, Button, Spinner } from '../components/ui'
 
@@ -14,6 +15,7 @@ const SIM_DEFAULTS = {
   vat_rate: 8.1,
   employer_charges_rate: 17,
   profit_tax_rate: 14,
+  interest: 0,
   active_members: 150,
   new_members: 20,
   leads_generated: 100,
@@ -36,6 +38,9 @@ export default function Simulator() {
   const { data: entries, isLoading: l3 } = useEntries()
   const { data: scenarios } = useScenarios()
   const { data: role } = useMyRole()
+  const { data: financing } = useFinancing()
+  const { data: capex } = useCapex()
+  const [mode, setMode] = useState('scenario')
   const saveScenario = useSaveScenario()
   const deleteScenario = useDeleteScenario()
 
@@ -57,7 +62,7 @@ export default function Simulator() {
 
   // Simulator always carries its own ARPU/duration so sliders work standalone
   const simComputed = computeMonth(sim, clubSettings)
-  const realComputed = real ? computeMonth(real, clubSettings) : null
+  const realComputed = real ? computeEntryFull(real, clubSettings, capex ?? [], financing ?? []) : null
   const readOnly = role === 'viewer'
   const set = (key) => (v) => setSim((s) => ({ ...s, [key]: v }))
 
@@ -71,6 +76,9 @@ export default function Simulator() {
       vat_rate: clubSettings.vat_rate ?? 8.1,
       employer_charges_rate: clubSettings.employer_charges_rate ?? 17,
       profit_tax_rate: clubSettings.profit_tax_rate ?? 14,
+      interest: Math.round(
+        financingForMonth((financing ?? []).filter((f) => f.club_id === selected), month).interest
+      ),
       equipment_amort_override:
         fields.equipment_amort_override ??
         Math.round(clubSettings.equipment_value / clubSettings.equipment_amort_months),
@@ -106,6 +114,24 @@ export default function Simulator() {
     <div className="flex flex-col gap-5 py-2">
       <SectionTitle>{t('simulator.title')}</SectionTitle>
 
+      <div className="flex rounded-xl border border-line bg-card p-1">
+        {['scenario', 'forecast'].map((m) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
+              mode === m ? 'bg-accent text-black' : 'text-muted'
+            }`}
+          >
+            {t(m === 'scenario' ? 'simulator.modeScenario' : 'simulator.modeForecast')}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'forecast' ? (
+        <Forecast />
+      ) : (
+        <>
       <div className="grid grid-cols-2 gap-3">
         <ClubSelect clubs={clubs} value={selected} onChange={setClubId} />
         <MonthPicker value={month} onChange={setMonth} />
@@ -157,6 +183,7 @@ export default function Simulator() {
         <SliderField label={t('settings.vatRate')} value={sim.vat_rate} onChange={set('vat_rate')} min={0} max={15} step={0.1} format={(v) => `${fmtNum(v)} %`} />
         <SliderField label={t('settings.chargesRate')} value={sim.employer_charges_rate} onChange={set('employer_charges_rate')} min={0} max={30} step={0.5} format={(v) => `${fmtNum(v)} %`} />
         <SliderField label={t('settings.taxRate')} value={sim.profit_tax_rate} onChange={set('profit_tax_rate')} min={0} max={25} step={0.1} format={(v) => `${fmtNum(v)} %`} />
+        <SliderField label={t('simulator.interest')} value={sim.interest} onChange={set('interest')} min={0} max={10000} step={50} format={money} />
       </Card>
 
       <Card>
@@ -222,6 +249,8 @@ export default function Simulator() {
           </div>
         )}
       </Card>
+        </>
+      )}
     </div>
   )
 }
@@ -234,6 +263,8 @@ function CompareTable({ sim, real }) {
     ['kpi.acquisition', 'acquisitionTotal', fmtMoney],
     ['kpi.ebitda', 'ebitda', fmtMoney],
     ['kpi.ebit', 'ebit', fmtMoney],
+    ['kpi.interest', 'interest', fmtMoney],
+    ['kpi.ebt', 'ebt', fmtMoney],
     ['kpi.tax', 'tax', fmtMoney],
     ['kpi.netProfit', 'netProfit', fmtMoney],
     ['kpi.netMargin', 'netMargin', fmtPct],

@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useClubs, useSettings, useUpsertSettings, useMyRole } from '../hooks/useData'
-import { DEFAULT_SETTINGS, equipmentAmortMonthly } from '../lib/calc'
-import { fmtMoney } from '../lib/format'
+import {
+  useClubs, useSettings, useUpsertSettings, useMyRole,
+  useFinancing, useCapex, useAddFinancing, useDeleteFinancing, useAddCapex, useDeleteCapex,
+} from '../hooks/useData'
+import { DEFAULT_SETTINGS, equipmentAmortMonthly, loanPayment } from '../lib/calc'
+import { fmtMoney, fmtMoney2, fmtNum } from '../lib/format'
 import { Card, SectionTitle, ClubSelect, NumField, Button, Spinner } from '../components/ui'
 
 export default function Settings() {
@@ -85,6 +88,144 @@ export default function Settings() {
           </Button>
         ) : null}
       </Card>
+
+      <FinancingCard clubId={selected} readOnly={readOnly} />
+      <CapexCard clubId={selected} readOnly={readOnly} />
     </div>
+  )
+}
+
+const inputCls =
+  'num rounded-xl border border-line bg-card2 px-3 py-2 text-sm text-white outline-none focus:border-accent disabled:opacity-50'
+
+function FinancingCard({ clubId, readOnly }) {
+  const { t } = useTranslation()
+  const { data: financing } = useFinancing()
+  const add = useAddFinancing()
+  const del = useDeleteFinancing()
+  const [form, setForm] = useState({ label: '', principal: '', annual_rate: '', term_months: '', start_date: '' })
+
+  const items = (financing ?? []).filter((f) => f.club_id === clubId)
+  const set = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }))
+  const valid = form.label && Number(form.principal) > 0 && Number(form.term_months) > 0 && form.start_date
+
+  async function submit() {
+    await add.mutateAsync({
+      club_id: clubId,
+      label: form.label,
+      principal: Number(form.principal),
+      annual_rate: Number(form.annual_rate) || 0,
+      term_months: Number(form.term_months),
+      start_date: form.start_date,
+    })
+    setForm({ label: '', principal: '', annual_rate: '', term_months: '', start_date: '' })
+  }
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <div>
+        <h3 className="font-display text-xl uppercase text-accent">{t('settings.financing')}</h3>
+        <p className="text-xs text-muted">{t('settings.financingHint')}</p>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted">{t('settings.none')}</p>
+      ) : (
+        items.map((f) => (
+          <div key={f.id} className="flex items-center justify-between gap-2 rounded-xl bg-card2 px-3 py-2.5">
+            <div>
+              <p className="text-sm text-white">{f.label}</p>
+              <p className="num text-xs text-muted">
+                {fmtMoney(f.principal)} · {fmtNum(f.annual_rate)}% · {f.term_months} mois · {f.start_date}
+              </p>
+              <p className="num text-xs text-accent">
+                {t('settings.monthlyPayment')}: {fmtMoney2(loanPayment(f))}
+              </p>
+            </div>
+            {!readOnly ? (
+              <Button variant="danger" onClick={() => del.mutate(f.id)} className="px-3 py-1.5 text-xs">
+                {t('common.delete')}
+              </Button>
+            ) : null}
+          </div>
+        ))
+      )}
+      {!readOnly ? (
+        <div className="grid grid-cols-2 gap-2">
+          <input className={`${inputCls} col-span-2`} placeholder={t('settings.label')} value={form.label} onChange={set('label')} />
+          <input className={inputCls} type="number" placeholder={t('settings.principal')} value={form.principal} onChange={set('principal')} />
+          <input className={inputCls} type="number" step="0.1" placeholder={t('settings.annualRate')} value={form.annual_rate} onChange={set('annual_rate')} />
+          <input className={inputCls} type="number" placeholder={t('settings.termMonths')} value={form.term_months} onChange={set('term_months')} />
+          <input className={inputCls} type="date" value={form.start_date} onChange={set('start_date')} />
+          <Button onClick={submit} disabled={!valid || add.isPending} className="col-span-2">
+            {t('settings.add')}
+          </Button>
+        </div>
+      ) : null}
+    </Card>
+  )
+}
+
+function CapexCard({ clubId, readOnly }) {
+  const { t } = useTranslation()
+  const { data: capex } = useCapex()
+  const add = useAddCapex()
+  const del = useDeleteCapex()
+  const [form, setForm] = useState({ label: '', amount: '', date: '', amort_months: '' })
+
+  const items = (capex ?? []).filter((c) => c.club_id === clubId)
+  const set = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }))
+  const valid = form.label && Number(form.amount) > 0 && Number(form.amort_months) > 0 && form.date
+
+  async function submit() {
+    await add.mutateAsync({
+      club_id: clubId,
+      label: form.label,
+      amount: Number(form.amount),
+      date: form.date,
+      amort_months: Number(form.amort_months),
+    })
+    setForm({ label: '', amount: '', date: '', amort_months: '' })
+  }
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <div>
+        <h3 className="font-display text-xl uppercase text-accent">{t('settings.capex')}</h3>
+        <p className="text-xs text-muted">{t('settings.capexHint')}</p>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted">{t('settings.none')}</p>
+      ) : (
+        items.map((c) => (
+          <div key={c.id} className="flex items-center justify-between gap-2 rounded-xl bg-card2 px-3 py-2.5">
+            <div>
+              <p className="text-sm text-white">{c.label}</p>
+              <p className="num text-xs text-muted">
+                {fmtMoney(c.amount)} · {c.date} · {c.amort_months} mois
+              </p>
+              <p className="num text-xs text-accent">
+                {t('settings.monthlyAmort')}: {fmtMoney2(c.amount / c.amort_months)}
+              </p>
+            </div>
+            {!readOnly ? (
+              <Button variant="danger" onClick={() => del.mutate(c.id)} className="px-3 py-1.5 text-xs">
+                {t('common.delete')}
+              </Button>
+            ) : null}
+          </div>
+        ))
+      )}
+      {!readOnly ? (
+        <div className="grid grid-cols-2 gap-2">
+          <input className={`${inputCls} col-span-2`} placeholder={t('settings.label')} value={form.label} onChange={set('label')} />
+          <input className={inputCls} type="number" placeholder={t('settings.amount')} value={form.amount} onChange={set('amount')} />
+          <input className={inputCls} type="number" placeholder={t('settings.amortMonths')} value={form.amort_months} onChange={set('amort_months')} />
+          <input className={`${inputCls} col-span-2`} type="date" value={form.date} onChange={set('date')} />
+          <Button onClick={submit} disabled={!valid || add.isPending} className="col-span-2">
+            {t('settings.add')}
+          </Button>
+        </div>
+      ) : null}
+    </Card>
   )
 }

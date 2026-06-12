@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import {
   ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid,
 } from 'recharts'
-import { useClubs, useSettings, useEntries } from '../hooks/useData'
-import { computeMonth, consolidate, DEFAULT_SETTINGS } from '../lib/calc'
+import { useClubs, useSettings, useEntries, useCapex, useFinancing } from '../hooks/useData'
+import { computeEntryFull, consolidate, DEFAULT_SETTINGS } from '../lib/calc'
 import { fmtMoney, fmtPct, fmtRatio, fmtMonths, fmtNum, monthLabel } from '../lib/format'
 import { Card, KpiCard, SectionTitle, Spinner } from '../components/ui'
 
@@ -21,7 +21,9 @@ export function useGroupData() {
   const clubs = useClubs()
   const settings = useSettings()
   const entries = useEntries()
-  const loading = clubs.isLoading || settings.isLoading || entries.isLoading
+  const capex = useCapex()
+  const financing = useFinancing()
+  const loading = clubs.isLoading || settings.isLoading || entries.isLoading || capex.isLoading || financing.isLoading
 
   const data = useMemo(() => {
     if (loading) return null
@@ -30,16 +32,27 @@ export function useGroupData() {
     const groupEntries = (entries.data ?? []).filter((e) => clubIds.has(e.club_id))
     const months = [...new Set(groupEntries.map((e) => e.month.slice(0, 7)))].sort()
 
+    let cumulativeCash = 0
     const byMonth = months.map((m) => {
       const monthEntries = groupEntries.filter((e) => e.month.slice(0, 7) === m)
       const computed = monthEntries.map((e) =>
-        computeMonth(e, settingsByClub[e.club_id] ?? DEFAULT_SETTINGS)
+        computeEntryFull(e, settingsByClub[e.club_id] ?? DEFAULT_SETTINGS, capex.data ?? [], financing.data ?? [])
       )
-      return { month: m, entries: monthEntries, computed, group: consolidate(computed, monthEntries) }
+      const group = consolidate(computed, monthEntries)
+      cumulativeCash += group.cashFlow
+      return { month: m, entries: monthEntries, computed, group, cumulativeCash }
     })
 
-    return { clubs: clubs.data ?? [], settingsByClub, entries: groupEntries, months, byMonth }
-  }, [loading, clubs.data, settings.data, entries.data])
+    return {
+      clubs: clubs.data ?? [],
+      settingsByClub,
+      entries: groupEntries,
+      months,
+      byMonth,
+      capex: capex.data ?? [],
+      financing: financing.data ?? [],
+    }
+  }, [loading, clubs.data, settings.data, entries.data, capex.data, financing.data])
 
   return { data, loading }
 }
@@ -102,6 +115,17 @@ export default function Dashboard() {
               label={t('kpi.breakEven')}
               value={`${fmtNum(latest.group.breakEvenMembers)} ${t('kpi.breakEvenUnit')}`}
               sub={`${t('kpi.activeMembers')}: ${fmtNum(latest.group.activeMembers)}`}
+            />
+            <KpiCard
+              label={t('kpi.cashFlow')}
+              value={fmtMoney(latest.group.cashFlow)}
+              tone={latest.group.cashFlow >= 0 ? 'pos' : 'neg'}
+              sub={`${t('kpi.treasury')}: ${fmtMoney(latest.cumulativeCash)}`}
+            />
+            <KpiCard
+              label={t('kpi.churn')}
+              value={fmtPct(latest.group.churnRate)}
+              sub={`${t('kpi.netGrowth')}: ${latest.group.netGrowth >= 0 ? '+' : ''}${fmtNum(latest.group.netGrowth)}`}
             />
           </div>
 

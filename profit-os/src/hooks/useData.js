@@ -45,6 +45,54 @@ export function useEntries() {
   })
 }
 
+export function useFinancing() {
+  return useQuery({
+    queryKey: ['financing'],
+    queryFn: () =>
+      throwOnError(supabase.from('profit_financing').select('*').order('start_date', { ascending: true })),
+  })
+}
+
+export function useCapex() {
+  return useQuery({
+    queryKey: ['capex'],
+    queryFn: () =>
+      throwOnError(supabase.from('profit_capex').select('*').order('date', { ascending: true })),
+  })
+}
+
+export function useAddFinancing() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (row) => throwOnError(supabase.from('profit_financing').insert(row).select().single()),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['financing'] }),
+  })
+}
+
+export function useDeleteFinancing() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => throwOnError(supabase.from('profit_financing').delete().eq('id', id)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['financing'] }),
+  })
+}
+
+export function useAddCapex() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (row) => throwOnError(supabase.from('profit_capex').insert(row).select().single()),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['capex'] }),
+  })
+}
+
+export function useDeleteCapex() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => throwOnError(supabase.from('profit_capex').delete().eq('id', id)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['capex'] }),
+  })
+}
+
 export function useScenarios() {
   return useQuery({
     queryKey: ['scenarios'],
