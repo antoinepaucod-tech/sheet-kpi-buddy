@@ -52,6 +52,16 @@ Décisions prises en autonomie pendant le build (consigne : ne jamais bloquer, d
 36. **Forecast** : logé dans l'onglet Simulateur comme second mode (« Forecast 3-5 ans ») pour garder 5 onglets dans la bottom nav mobile. Hypothèses par club initialisées depuis le dernier mois réel (membres, ARPU, churn constaté, OPEX, acquisition), modifiables par sliders, horizon 36/48/60 mois. Membres(t+1) = membres(t) + nouveaux − membres(t) × churn. OPEX inflaté en continu ((1+i)^(mois/12)). Amortissements et intérêts projetés depuis les échéanciers réels CAPEX/dette (fin de prêt et fin d'amortissement respectées). Consolidé groupe = somme des projections des 4 clubs. Hypothèses **non persistées** (outil d'exploration ; la sauvegarde de scénarios forecast viendra avec la couche dashboards investisseur).
 37. **Saisie des flux investisseur** : financements et CAPEX se gèrent dans Réglages (liste + ajout + suppression par club), pas dans la saisie mensuelle — ce sont des événements ponctuels, pas des données de mois.
 
+## Couche investisseur — dashboards & valorisation (complément 2B)
+
+38. **Snapshot Investor View** : chaque club est photographié sur **son** dernier mois saisi (pas un mois commun forcé) — un club sans saisie affiche « — » et ne contribue pas aux sommes. Mention explicite « Snapshot : dernier mois saisi par club » dans l'UI et le PDF.
+39. **MRR en HT** (= membres actifs × ARPU HT) : cohérent avec tout le P&L ; libellé « MRR (HT) » pour lever l'ambiguïté. Revenu/membre et revenu/m² aussi en HT, sur le mois (pas annualisés).
+40. **Valorisation** = EBITDA **annualisé** (même base que le ROI : somme des 12 derniers mois réels disponibles ×12/n) × multiple paramétrable par club (`ebitda_multiple`, défaut 5x). **Valorisation groupe = somme des valorisations par club**, chaque club gardant son propre multiple — pas de multiple unique appliqué à l'EBITDA consolidé (les clubs peuvent se valoriser différemment). Vérifié par test : groupe 5x + 4x = somme exacte.
+41. **Taux d'occupation groupe** = Σ membres actifs / Σ capacités, restreint aux clubs ayant des données (inclure la capacité d'un club sans saisie écraserait artificiellement le taux).
+42. **Export PDF en jsPDF pur** (dessin programmatique, pas de capture html2canvas) : rendu net, fichier ~15 Ko, A4 sombre #09090B avec accent #F97316. **Bebas Neue est téléchargée à l'export et embarquée** dans le PDF ; fallback helvetica bold uppercase si la police est inaccessible (offline). Les espaces fines insécables du format fr-CH (U+202F) sont remplacées par des espaces normales (non mappées en WinAnsi, elles rendaient un glyphe parasite).
+43. **Surface/capacité seedées** pour les 4 clubs (Versoix 650 m²/350, La Servette 800/450, Grand-Saconnex 550/300, Lausanne 700/400) — valeurs plausibles à ajuster dans Réglages.
+44. **6e onglet « Investor »** dans la bottom nav (labels 10px uppercase, ça tient sur mobile) plutôt qu'un mode caché — c'est un écran de pilotage de premier rang pour le propriétaire.
+
 ## Frontend
 
 16. **JavaScript (JSX) plutôt que TypeScript** : cohérent avec le reste du repo, build plus simple, la logique métier est centralisée et testée dans `src/lib/calc.js` (21 assertions offline).

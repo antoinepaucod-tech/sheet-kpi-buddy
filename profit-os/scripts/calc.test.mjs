@@ -6,6 +6,7 @@ import {
   computeMonth, computeEntryFull, consolidate,
   loanPayment, loanForMonth, capexAmortForMonth, capexPaidInMonth,
   roiForClub, forecastSeries, consolidateForecast,
+  investorMetrics, consolidateInvestorMetrics,
 } from '../src/lib/calc.js'
 
 let failures = 0
@@ -154,6 +155,40 @@ check('Consolidé: impôt = somme des impôts par club', close(group.tax, c.tax 
 check('Consolidé: net = somme exacte', close(group.netProfit, c.netProfit + cOther.netProfit))
 check('Consolidé: cash flow = somme exacte', close(group.cashFlow, c.cashFlow + cOther.cashFlow))
 check('Consolidé: churn = résiliations/membres actifs groupe', close(group.churnRate, (7 + 9) / (210 + 300)))
+
+// ——— Investor metrics & valuation (Complément 2B) ———
+console.log('\n— Investor View —')
+const investorSettings = { ...versoixSettings, surface_m2: 650, max_capacity: 350, ebitda_multiple: 5 }
+const im = investorMetrics(cMay, may, investorSettings, [c, cMay])
+check('Marge EBITDA mai = 7835.88/43729.88 = 17.92%', close(im.ebitdaMargin, 7835.8797 / 43729.8797, 0.0001), (im.ebitdaMargin * 100).toFixed(2) + '%')
+check('Revenu/membre = 43729.88/228 = 191.80', close(im.revenuePerMember, 43729.8797 / 228, 0.01), im.revenuePerMember.toFixed(2))
+check('Revenu/m² = 43729.88/650 = 67.28', close(im.revenuePerM2, 43729.8797 / 650, 0.01), im.revenuePerM2.toFixed(2))
+check('Occupation = 228/350 = 65.14%', close(im.occupancy, 228 / 350), (im.occupancy * 100).toFixed(2) + '%')
+check('MRR (HT) = 228×179/1.081 = 37753.93', close(im.mrr, (228 * 179) / 1.081, 0.01), im.mrr.toFixed(2))
+check('Churn = 5.70% / LTV:CAC repris du mois', close(im.churnRate, 13 / 228) && close(im.ltvCac, cMay.ltvCac))
+check('EBITDA annualisé = 70355.28', close(im.annualEbitda, 70355.28, 0.5), im.annualEbitda.toFixed(2))
+check('Valorisation = 70355.28 × 5 = 351776.40', close(im.valuation, 351776.4, 2.5), im.valuation.toFixed(2))
+
+// no-data club -> null metrics, valuation excluded from sums
+const emptyMetrics = investorMetrics(null, null, { ...investorSettings, max_capacity: 400 }, [])
+check('Club sans données: valorisation null', emptyMetrics.valuation === null && emptyMetrics.mrr === null)
+
+// group = coherent sum: Versoix (5x) + a second club at 4x
+const clubB = computeEntryFull({ ...may, club_id: 'b' }, lausanneSettings, [], [])
+const settingsB = { ...lausanneSettings, surface_m2: 700, max_capacity: 400, ebitda_multiple: 4 }
+const imB = investorMetrics(clubB, { ...may, club_id: 'b' }, settingsB, [clubB])
+const perClub = [
+  { metrics: im, latestComputed: cMay, latestEntry: may, settings: investorSettings },
+  { metrics: imB, latestComputed: clubB, latestEntry: { ...may, club_id: 'b' }, settings: settingsB },
+  { metrics: emptyMetrics, latestComputed: null, latestEntry: null, settings: { max_capacity: 400 } },
+]
+const ginv = consolidateInvestorMetrics(perClub)
+check('Valorisation groupe = somme des valorisations par club (5x + 4x)', close(ginv.valuation, im.valuation + imB.valuation, 0.01), ginv.valuation.toFixed(2))
+check('EBITDA annualisé groupe = somme', close(ginv.annualEbitda, im.annualEbitda + imB.annualEbitda, 0.01))
+check('MRR groupe = somme des MRR', close(ginv.mrr, im.mrr + imB.mrr, 0.01))
+check('Occupation groupe = Σ actifs / Σ capacités (clubs avec données)', close(ginv.occupancy, (228 + 228) / (350 + 400)), (ginv.occupancy * 100).toFixed(2) + '%')
+check('Marge EBITDA groupe recalculée depuis les sommes', close(ginv.ebitdaMargin, (cMay.ebitda + clubB.ebitda) / (cMay.revenueTotal + clubB.revenueTotal), 0.0001))
+check('Revenu/m² groupe = Σ revenus / Σ surfaces', close(ginv.revenuePerM2, (cMay.revenueTotal + clubB.revenueTotal) / (650 + 700), 0.01))
 
 console.log(failures === 0 ? '\n🎉 Tous les calculs sont corrects' : `\n💥 ${failures} échec(s)`)
 process.exit(failures === 0 ? 0 : 1)

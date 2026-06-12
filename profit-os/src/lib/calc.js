@@ -28,6 +28,9 @@ export const DEFAULT_SETTINGS = {
   vat_rate: 8.1, // percent
   employer_charges_rate: 17, // percent
   profit_tax_rate: 14, // percent
+  surface_m2: 0,
+  max_capacity: 0,
+  ebitda_multiple: 5,
   currency: 'CHF',
 }
 
@@ -395,6 +398,79 @@ export function consolidate(computedList, entries = []) {
     churnRate,
     netGrowth: newMembers - cancellations,
     leads,
+  }
+}
+
+// ——— Investor metrics & valuation ———
+
+export function annualizedEbitda(computedMonths) {
+  if (!computedMonths?.length) return null
+  const trailing = computedMonths.slice(-12)
+  return (trailing.reduce((a, c) => a + n(c.ebitda), 0) * 12) / trailing.length
+}
+
+// Snapshot for one club: latestComputed/latestEntry = the club's most recent real month,
+// computedMonths = all its real months (for annualized EBITDA). Valuation = annualized EBITDA × multiple.
+export function investorMetrics(latestComputed, latestEntry, settings, computedMonths) {
+  const active = n(latestEntry?.active_members)
+  const surface = n(settings?.surface_m2)
+  const capacity = n(settings?.max_capacity)
+  const multiple = settings?.ebitda_multiple != null ? n(settings.ebitda_multiple) : 5
+  const annualEbitda = annualizedEbitda(computedMonths)
+  return {
+    ebitdaMargin:
+      latestComputed && latestComputed.revenueTotal > 0
+        ? latestComputed.ebitda / latestComputed.revenueTotal
+        : null,
+    revenuePerMember: latestComputed && active > 0 ? latestComputed.revenueTotal / active : null,
+    revenuePerM2: latestComputed && surface > 0 ? latestComputed.revenueTotal / surface : null,
+    occupancy: capacity > 0 && latestEntry ? active / capacity : null,
+    mrr: latestComputed ? latestComputed.revenueMembers : null, // HT, recurring membership revenue
+    ltvCac: latestComputed?.ltvCac ?? null,
+    churnRate: latestComputed?.churnRate ?? null,
+    annualEbitda,
+    multiple,
+    valuation: annualEbitda != null ? annualEbitda * multiple : null,
+  }
+}
+
+// Group view: monetary values summed, ratios recomputed from sums (clubs with data only);
+// group valuation = sum of per-club valuations (each club keeps its own multiple).
+export function consolidateInvestorMetrics(perClub) {
+  // perClub: [{ metrics, latestComputed, latestEntry, settings }]
+  const withData = perClub.filter((p) => p.latestComputed)
+  const sum = (f) => withData.reduce((a, p) => a + n(f(p)), 0)
+  const revenue = sum((p) => p.latestComputed.revenueTotal)
+  const ebitda = sum((p) => p.latestComputed.ebitda)
+  const active = sum((p) => p.latestEntry.active_members)
+  const cancellations = sum((p) => p.latestEntry.cancellations)
+  const newMembers = sum((p) => p.latestEntry.new_members)
+  const surface = sum((p) => p.settings?.surface_m2)
+  const capacity = sum((p) => p.settings?.max_capacity)
+  const mrr = sum((p) => p.latestComputed.revenueMembers)
+  const acquisition = sum((p) => p.latestComputed.acquisitionTotal)
+  const cac = newMembers > 0 ? acquisition / newMembers : null
+  const blendedArpu = active > 0 ? mrr / active : 0
+  const weightedDuration =
+    active > 0
+      ? sum((p) => p.latestComputed.duration * n(p.latestEntry.active_members)) / active
+      : 30
+  const ltv = blendedArpu * weightedDuration
+  const annualEbitda = perClub.reduce((a, p) => a + n(p.metrics.annualEbitda), 0)
+  const valuation = perClub.reduce((a, p) => a + n(p.metrics.valuation), 0)
+  return {
+    ebitdaMargin: revenue > 0 ? ebitda / revenue : null,
+    revenuePerMember: active > 0 ? revenue / active : null,
+    revenuePerM2: surface > 0 ? revenue / surface : null,
+    occupancy: capacity > 0 ? active / capacity : null,
+    mrr,
+    ltvCac: cac > 0 ? ltv / cac : null,
+    churnRate: active > 0 ? cancellations / active : null,
+    annualEbitda: withData.length ? annualEbitda : null,
+    valuation: withData.length ? valuation : null,
+    multiple: null, // per-club multiples, no single group figure
+    activeMembers: active,
+    capacity,
   }
 }
 

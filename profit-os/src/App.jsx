@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Club from './pages/Club'
 import Entry from './pages/Entry'
 import Simulator from './pages/Simulator'
+import InvestorView from './pages/InvestorView'
 import Settings from './pages/Settings'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="clubs" element={<Club />} />
           <Route path="entry" element={<Entry />} />
           <Route path="simulator" element={<Simulator />} />
+          <Route path="investor" element={<InvestorView />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Dashboard />} />
         </Route>

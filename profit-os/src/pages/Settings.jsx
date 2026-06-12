@@ -36,6 +36,9 @@ export default function Settings() {
         vat_rate: current.vat_rate,
         employer_charges_rate: current.employer_charges_rate,
         profit_tax_rate: current.profit_tax_rate,
+        surface_m2: current.surface_m2,
+        max_capacity: current.max_capacity,
+        ebitda_multiple: current.ebitda_multiple,
         currency: current.currency,
       })
     } else {
@@ -56,6 +59,9 @@ export default function Settings() {
       vat_rate: Number(form.vat_rate) || 0,
       employer_charges_rate: Number(form.employer_charges_rate) || 0,
       profit_tax_rate: Number(form.profit_tax_rate) || 0,
+      surface_m2: Number(form.surface_m2) || 0,
+      max_capacity: Number(form.max_capacity) || 0,
+      ebitda_multiple: Number(form.ebitda_multiple) || 5,
       currency: form.currency || 'CHF',
     })
     setFlash(t('common.saved'))
@@ -76,6 +82,9 @@ export default function Settings() {
         <NumField label={t('settings.vatRate')} value={form.vat_rate} onChange={set('vat_rate')} step="0.1" disabled={readOnly} />
         <NumField label={t('settings.chargesRate')} value={form.employer_charges_rate} onChange={set('employer_charges_rate')} step="0.1" disabled={readOnly} />
         <NumField label={t('settings.taxRate')} value={form.profit_tax_rate} onChange={set('profit_tax_rate')} step="0.1" disabled={readOnly} />
+        <NumField label={t('settings.surface')} value={form.surface_m2} onChange={set('surface_m2')} disabled={readOnly} />
+        <NumField label={t('settings.capacity')} value={form.max_capacity} onChange={set('max_capacity')} disabled={readOnly} />
+        <NumField label={t('settings.ebitdaMultiple')} value={form.ebitda_multiple} onChange={set('ebitda_multiple')} step="0.5" disabled={readOnly} />
         <NumField label={t('settings.equipmentValue')} value={form.equipment_value} onChange={set('equipment_value')} disabled={readOnly} />
         <NumField label={t('settings.equipmentMonths')} value={form.equipment_amort_months} onChange={set('equipment_amort_months')} disabled={readOnly} />
         <div className="flex items-center justify-between rounded-xl bg-card2 px-3 py-2.5">

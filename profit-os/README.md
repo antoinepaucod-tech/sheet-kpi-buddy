@@ -49,6 +49,7 @@ Taux TVA (défaut 8.1 %) · taux charges sociales employeur (défaut 17 %) · ta
 - **Dette** (`profit_financing`, gérée dans Réglages) : annuités constantes — **intérêts dans le P&L** (entre EBIT et impôt), **remboursement du capital dans le cash flow uniquement**, jamais dans le P&L.
 - **Cash flow** : résultat net + amortissements (non-cash) − remboursement capital − CAPEX du mois, avec trésorerie cumulée par club (graphe + détail mensuel).
 - **CAPEX** (`profit_capex`, géré dans Réglages) : prix d'acquisition, fit-out, machines — alimente automatiquement les amortissements du P&L (montant / durée). **ROI par club** = EBITDA annualisé / investissement total.
+- **Investor View** (onglet dédié) : marge EBITDA %, MRR (HT), revenu/membre, revenu/m² (surface paramétrable), taux d'occupation (capacité paramétrable), LTV:CAC, churn — par club et groupe consolidé. **Valorisation** = EBITDA annualisé × multiple paramétrable par club (défaut 5x) ; valorisation groupe = somme des valorisations par club. **Export PDF pitch-ready** brandé Transform OS (fond #09090B, accent #F97316, Bebas Neue embarquée avec fallback offline).
 
 ### Simulateur
 Sliders sur tous les drivers (membres, ARPU, durée, acquisition, OPEX), comparaison **scénario vs réel** (mois au choix), sauvegarde / rechargement de scénarios (`profit_scenarios`, jsonb). Un scénario démo « Versoix +20% membres » est seedé.
@@ -68,7 +69,8 @@ Migrations dans `supabase/migrations/` (déjà appliquées au projet) :
 
 ## Validation
 
-- `node scripts/calc.test.mjs` — vérifie offline tous les calculs (CPL/CAC/LTV/payback/TVA/charges sociales/EBITDA/EBIT/intérêts/impôt/break-even/churn/échéancier de prêt/amortissements CAPEX/cash flow ≠ P&L/ROI/forecast/consolidation) contre les valeurs démo seedées. 51/51 ✅
+- `node scripts/calc.test.mjs` — vérifie offline tous les calculs (CPL/CAC/LTV/payback/TVA/charges sociales/EBITDA/EBIT/intérêts/impôt/break-even/churn/échéancier de prêt/amortissements CAPEX/cash flow ≠ P&L/ROI/forecast/métriques investisseur/valorisation/consolidation) contre les valeurs démo seedées. 66/66 ✅
+- `node scripts/export-pdf.mjs` — génère le PDF Investor View depuis les seeds (`/tmp/profit-os-investor-view.pdf`) pour validation visuelle.
 - `node scripts/validate.mjs` — validation end-to-end (auth réelle + RLS + roundtrip scénario) à lancer depuis un environnement avec accès réseau à Supabase.
 - RLS validé en SQL par impersonation des 3 rôles : owner voit 4 clubs / écrit, viewer lit tout / ne peut rien écrire, anon ne voit rien.
 
@@ -78,5 +80,7 @@ Club **Hybrid Gym Versoix**, avril + mai 2026 (ARPU démo 179 CHF TTC). CAPEX : 
 
 Avril : revenus 43 240 TTC → **40 000 HT**, OPEX 30 610 (dont salaires bruts 18 000 + charges sociales 3 060), acquisition 5 500 → **EBITDA 3 890** → amortissements 5 083.33 → EBIT −1 193.33 → intérêts 1 090.61 → résultat avant impôt −2 283.95 → impôt 0 → **résultat net −2 283.95**. **Cash flow −280.05** (net + 5 083.33 d'amort non-cash − 3 079.43 de capital) ≠ P&L. Churn 3.33 % (durée déduite 30 mois = paramétrée), break-even 224 membres.
 Mai : EBITDA 7 835.88, net **+1 439.19**, cash flow **+3 431.54**, trésorerie cumulée +3 151.50, churn 5.7 %. ROI club = EBITDA annualisé 70 355 / 430 000 = **16.4 %**.
+
+Investor View (snapshot mai) : marge EBITDA **17.9 %**, MRR 37 754 HT, revenu/membre 191.80, revenu/m² 67.28 (650 m²), occupation **65.1 %** (228/350), **valorisation 351 776 CHF** (EBITDA annualisé 70 355 × 5).
 
 Voir `DECISIONS.md` pour les choix d'implémentation.

@@ -9,6 +9,7 @@ const fr = {
       clubs: 'Clubs',
       entry: 'Saisie',
       simulator: 'Simulateur',
+      investor: 'Investor',
       settings: 'Réglages',
     },
     auth: {
@@ -185,6 +186,25 @@ const fr = {
       yearSummary: 'EBITDA / résultat net projetés par année',
       year: 'Année {{n}}',
     },
+    investor: {
+      title: 'Investor View',
+      group: 'Groupe consolidé',
+      valuation: 'Valorisation',
+      valuationBasis: 'EBITDA annualisé × multiple {{multiple}}',
+      valuationBasisGroup: 'Somme des valorisations par club (multiple propre à chaque club)',
+      annualEbitda: 'EBITDA annualisé',
+      ebitdaMargin: 'Marge EBITDA',
+      mrr: 'MRR (HT)',
+      revenuePerMember: 'Revenu / membre',
+      revenuePerM2: 'Revenu / m²',
+      occupancy: 'Taux d’occupation',
+      occupancySub: '{{active}} / {{capacity}} places',
+      byClub: 'Par club',
+      export: 'Exporter PDF',
+      exporting: 'Génération…',
+      noData: 'Aucune donnée mensuelle pour ce club',
+      latestMonth: 'Snapshot : dernier mois saisi par club',
+    },
     settings: {
       title: 'Réglages',
       clubSettings: 'Paramètres du club',
@@ -193,6 +213,9 @@ const fr = {
       vatRate: 'Taux TVA (%)',
       chargesRate: 'Taux charges sociales employeur (%)',
       taxRate: 'Taux impôt sur le bénéfice (%)',
+      surface: 'Surface (m²)',
+      capacity: 'Capacité max (membres)',
+      ebitdaMultiple: 'Multiple EBITDA (valorisation)',
       equipmentValue: 'Valeur d’achat des machines',
       equipmentMonths: 'Durée d’amortissement (mois)',
       amortPreview: 'Charge mensuelle lissée',
@@ -222,7 +245,8 @@ const fr = {
 const en = {
   translation: {
     app: { name: 'Profit OS', tagline: 'Multi-club profitability' },
-    nav: { dashboard: 'Group', clubs: 'Clubs', entry: 'Entry', simulator: 'Simulator', settings: 'Settings' },
+    nav: { dashboard: 'Group', clubs: 'Clubs', entry: 'Entry', simulator: 'Simulator', investor: 'Investor', settings: 'Settings' },
+    investor: { title: 'Investor View', group: 'Group consolidated', valuation: 'Valuation', valuationBasis: 'Annualized EBITDA × {{multiple}} multiple', valuationBasisGroup: 'Sum of per-club valuations (each club keeps its own multiple)', annualEbitda: 'Annualized EBITDA', ebitdaMargin: 'EBITDA margin', mrr: 'MRR (excl. VAT)', revenuePerMember: 'Revenue / member', revenuePerM2: 'Revenue / m²', occupancy: 'Occupancy rate', occupancySub: '{{active}} / {{capacity}} spots', byClub: 'By club', export: 'Export PDF', exporting: 'Generating…', noData: 'No monthly data for this club', latestMonth: 'Snapshot: latest entered month per club' },
     auth: { title: 'Sign in', email: 'Email', password: 'Password', submit: 'Sign in', error: 'Invalid credentials', logout: 'Sign out', readonly: 'Read only' },
     common: { loading: 'Loading…', save: 'Save', saved: 'Saved', delete: 'Delete', cancel: 'Cancel', month: 'Month', club: 'Club', allClubs: 'All clubs', noData: 'No data for this period', error: 'Something went wrong' },
     kpi: { revenue: 'Revenue', opex: 'OPEX', acquisition: 'Acquisition', netProfit: 'Net profit', netMargin: 'Net margin', ebitda: 'EBITDA', ebit: 'EBIT', ebt: 'Pre-tax profit', tax: 'Tax', interest: 'Debt interest', churn: 'Churn', netGrowth: 'Net growth', impliedDuration: 'Implied duration (1/churn)', configuredDuration: 'configured: {{value}} months', roi: 'ROI', cashFlow: 'Cash flow', treasury: 'Cumulative cash', members: 'Members', cancellations: 'Cancellations', cpl: 'CPL', cac: 'CAC', ltv: 'LTV', ltvCac: 'LTV:CAC', payback: 'Payback', breakEven: 'Break-even', breakEvenUnit: 'members', activeMembers: 'Active members', newMembers: 'New members', leads: 'Leads', arpu: 'ARPU' },
@@ -231,7 +255,7 @@ const en = {
     entry: { title: 'Monthly entry', acquisition: 'Acquisition', opex: 'OPEX', revenue: 'Revenue', computed: 'Computed metrics', adSpend: 'Ad spend', agencyFees: 'Agency fees', videoFees: 'Video production fees', leads: 'Leads generated', newMembers: 'New members', cancellations: 'Cancellations', staff: 'Gross salaries (excl. charges)', staffHint: 'Employer social charges ({{rate}}) are added automatically', rent: 'Rent', cleaning: 'Cleaning', insurance: 'Insurance', energy: 'Energy', misc: 'Misc', amortAuto: 'Equipment amortization (auto)', amortHint: 'Derived from club settings: purchase value / duration', activeMembers: 'Active members', ttcNote: 'Amounts incl. VAT — the P&L is computed excl. VAT ({{rate}})', arpu: 'Monthly ARPU (incl. VAT)', arpuHint: 'Leave empty to use the club default ({{value}})', revenuePt: 'Personal training', revenueShop: 'Shop', revenueDropin: 'Drop-in', notes: 'Notes', saveSuccess: 'Month saved', existing: 'Existing entry loaded', viewerBlocked: 'Your role is read-only' },
     simulator: { title: 'Simulator', scenario: 'Scenario', baseOn: 'Start from actuals', blank: 'Start blank', compare: 'Scenario vs actuals', real: 'Actual', simulated: 'Scenario', delta: 'Delta', saveAs: 'Scenario name', save: 'Save scenario', load: 'Saved scenarios', loaded: 'Scenario loaded', savedOk: 'Scenario saved', deleted: 'Scenario deleted', none: 'No saved scenarios', duration: 'Average membership duration (months)', noReal: 'No actuals for this month', fiscal: 'Taxes & debt', interest: 'Debt interest / month', modeScenario: 'Monthly scenario', modeForecast: '3-5 year forecast' },
     forecast: { title: 'Forecast', horizon: 'Horizon', months: '{{count}} months', params: 'Assumptions — {{club}}', startMembers: 'Starting members', newPerMonth: 'New members / month', churnMonthly: 'Monthly churn (%)', arpu: 'ARPU (incl. VAT)', annex: 'Ancillary revenue / month (incl. VAT)', opexBase: 'Base monthly OPEX (excl. VAT)', opexInflation: 'OPEX inflation (% / year)', acquisitionMonthly: 'Acquisition / month', chart: 'P&L projection', consolidated: 'Group consolidated', fromReal: 'Assumptions initialized from the latest real month', noBase: 'No real data — default assumptions', yearSummary: 'Projected EBITDA / net profit per year', year: 'Year {{n}}' },
-    settings: { title: 'Settings', clubSettings: 'Club settings', avgDuration: 'Average membership duration (months)', defaultArpu: 'Default monthly ARPU (incl. VAT)', vatRate: 'VAT rate (%)', chargesRate: 'Employer social charges rate (%)', taxRate: 'Profit tax rate (%)', equipmentValue: 'Equipment purchase value', equipmentMonths: 'Amortization duration (months)', amortPreview: 'Smoothed monthly charge', equipmentLegacy: 'Equipment (simple mode — prefer the CAPEX module below)', financing: 'Financing (debt)', financingHint: 'Interest in the P&L, principal repayment in cash flow only', capex: 'CAPEX & acquisitions', capexHint: 'Acquisition price, fit-out, machines — feeds P&L amortization automatically', label: 'Label', principal: 'Principal', annualRate: 'Annual rate (%)', termMonths: 'Term (months)', startDate: 'Start date', amount: 'Amount', amortMonths: 'Amortization (months)', date: 'Date', add: 'Add', monthlyPayment: 'Monthly payment', monthlyAmort: 'Monthly amort.', none: 'No items', users: 'Users', role: 'Role' },
+    settings: { title: 'Settings', clubSettings: 'Club settings', avgDuration: 'Average membership duration (months)', defaultArpu: 'Default monthly ARPU (incl. VAT)', vatRate: 'VAT rate (%)', chargesRate: 'Employer social charges rate (%)', taxRate: 'Profit tax rate (%)', surface: 'Surface (m²)', capacity: 'Max capacity (members)', ebitdaMultiple: 'EBITDA multiple (valuation)', equipmentValue: 'Equipment purchase value', equipmentMonths: 'Amortization duration (months)', amortPreview: 'Smoothed monthly charge', equipmentLegacy: 'Equipment (simple mode — prefer the CAPEX module below)', financing: 'Financing (debt)', financingHint: 'Interest in the P&L, principal repayment in cash flow only', capex: 'CAPEX & acquisitions', capexHint: 'Acquisition price, fit-out, machines — feeds P&L amortization automatically', label: 'Label', principal: 'Principal', annualRate: 'Annual rate (%)', termMonths: 'Term (months)', startDate: 'Start date', amount: 'Amount', amortMonths: 'Amortization (months)', date: 'Date', add: 'Add', monthlyPayment: 'Monthly payment', monthlyAmort: 'Monthly amort.', none: 'No items', users: 'Users', role: 'Role' },
   },
 }
 
