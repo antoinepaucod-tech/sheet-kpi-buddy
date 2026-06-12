@@ -30,6 +30,9 @@ export default function Settings() {
         default_arpu: current.default_arpu,
         equipment_value: current.equipment_value,
         equipment_amort_months: current.equipment_amort_months,
+        vat_rate: current.vat_rate,
+        employer_charges_rate: current.employer_charges_rate,
+        profit_tax_rate: current.profit_tax_rate,
         currency: current.currency,
       })
     } else {
@@ -47,6 +50,9 @@ export default function Settings() {
       default_arpu: Number(form.default_arpu) || 0,
       equipment_value: Number(form.equipment_value) || 0,
       equipment_amort_months: Number(form.equipment_amort_months) || 60,
+      vat_rate: Number(form.vat_rate) || 0,
+      employer_charges_rate: Number(form.employer_charges_rate) || 0,
+      profit_tax_rate: Number(form.profit_tax_rate) || 0,
       currency: form.currency || 'CHF',
     })
     setFlash(t('common.saved'))
@@ -64,6 +70,9 @@ export default function Settings() {
         <h3 className="font-display text-xl uppercase text-accent">{t('settings.clubSettings')}</h3>
         <NumField label={t('settings.avgDuration')} value={form.avg_membership_months} onChange={set('avg_membership_months')} disabled={readOnly} />
         <NumField label={t('settings.defaultArpu')} value={form.default_arpu} onChange={set('default_arpu')} step="0.01" disabled={readOnly} />
+        <NumField label={t('settings.vatRate')} value={form.vat_rate} onChange={set('vat_rate')} step="0.1" disabled={readOnly} />
+        <NumField label={t('settings.chargesRate')} value={form.employer_charges_rate} onChange={set('employer_charges_rate')} step="0.1" disabled={readOnly} />
+        <NumField label={t('settings.taxRate')} value={form.profit_tax_rate} onChange={set('profit_tax_rate')} step="0.1" disabled={readOnly} />
         <NumField label={t('settings.equipmentValue')} value={form.equipment_value} onChange={set('equipment_value')} disabled={readOnly} />
         <NumField label={t('settings.equipmentMonths')} value={form.equipment_amort_months} onChange={set('equipment_amort_months')} disabled={readOnly} />
         <div className="flex items-center justify-between rounded-xl bg-card2 px-3 py-2.5">

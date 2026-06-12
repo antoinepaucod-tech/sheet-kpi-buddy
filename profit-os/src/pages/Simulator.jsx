@@ -9,8 +9,11 @@ import { Card, KpiCard, SectionTitle, ClubSelect, MonthPicker, SliderField, Butt
 
 const SIM_DEFAULTS = {
   ...EMPTY_ENTRY,
-  arpu: 159,
+  arpu: 179,
   avg_membership_months: 30,
+  vat_rate: 8.1,
+  employer_charges_rate: 17,
+  profit_tax_rate: 14,
   active_members: 150,
   new_members: 20,
   leads_generated: 100,
@@ -65,6 +68,9 @@ export default function Simulator() {
       ...fields,
       arpu: fields.arpu ?? clubSettings.default_arpu,
       avg_membership_months: clubSettings.avg_membership_months,
+      vat_rate: clubSettings.vat_rate ?? 8.1,
+      employer_charges_rate: clubSettings.employer_charges_rate ?? 17,
+      profit_tax_rate: clubSettings.profit_tax_rate ?? 14,
       equipment_amort_override:
         fields.equipment_amort_override ??
         Math.round(clubSettings.equipment_value / clubSettings.equipment_amort_months),
@@ -146,6 +152,13 @@ export default function Simulator() {
         <SliderField label={t('entry.misc')} value={sim.misc_opex} onChange={set('misc_opex')} min={0} max={10000} step={50} format={money} />
       </Card>
 
+      <Card className="flex flex-col gap-4">
+        <h3 className="font-display text-xl uppercase text-accent">{t('simulator.fiscal')}</h3>
+        <SliderField label={t('settings.vatRate')} value={sim.vat_rate} onChange={set('vat_rate')} min={0} max={15} step={0.1} format={(v) => `${fmtNum(v)} %`} />
+        <SliderField label={t('settings.chargesRate')} value={sim.employer_charges_rate} onChange={set('employer_charges_rate')} min={0} max={30} step={0.5} format={(v) => `${fmtNum(v)} %`} />
+        <SliderField label={t('settings.taxRate')} value={sim.profit_tax_rate} onChange={set('profit_tax_rate')} min={0} max={25} step={0.1} format={(v) => `${fmtNum(v)} %`} />
+      </Card>
+
       <Card>
         <h3 className="mb-3 font-display text-xl uppercase text-white/90">
           {t('simulator.compare')}
@@ -154,7 +167,12 @@ export default function Simulator() {
         <CompareTable sim={simComputed} real={realComputed} />
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <KpiCard
+          label={t('kpi.ebitda')}
+          value={fmtMoney(simComputed.ebitda)}
+          tone={simComputed.ebitda >= 0 ? 'pos' : 'neg'}
+        />
         <KpiCard
           label={t('kpi.netProfit')}
           value={fmtMoney(simComputed.netProfit)}
@@ -214,6 +232,9 @@ function CompareTable({ sim, real }) {
     ['kpi.revenue', 'revenueTotal', fmtMoney],
     ['kpi.opex', 'opexTotal', fmtMoney],
     ['kpi.acquisition', 'acquisitionTotal', fmtMoney],
+    ['kpi.ebitda', 'ebitda', fmtMoney],
+    ['kpi.ebit', 'ebit', fmtMoney],
+    ['kpi.tax', 'tax', fmtMoney],
     ['kpi.netProfit', 'netProfit', fmtMoney],
     ['kpi.netMargin', 'netMargin', fmtPct],
     ['kpi.cpl', 'cpl', fmtMoney2],

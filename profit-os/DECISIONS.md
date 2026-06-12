@@ -29,6 +29,18 @@ Décisions prises en autonomie pendant le build (consigne : ne jamais bloquer, d
 14. **Table `clubs` non modifiée** : pour ne pas toucher aux policies existantes des autres apps, la liste des 4 clubs est exposée via la RPC `profit_clubs()` (SECURITY DEFINER, filtrée par org + appartenance Profit OS).
 15. **Advisors Supabase** : après la première passe, 3 warnings concernaient Profit OS (search_path mutable sur le trigger, fonctions SECURITY DEFINER exposées) → corrigés dans la migration `profit_os_hardening`. Les warnings restants du projet préexistent à ce build.
 
+## Couche fiscale & comptable suisse (complément)
+
+21. **TVA — périmètre** : seuls les **revenus** sont saisis TTC (consigne) et convertis en HT (`TTC / 1.081`) pour le P&L. Les **charges** (OPEX, acquisition) sont considérées saisies **HT**, la TVA amont étant récupérable pour une société assujettie — pas de retraitement côté coûts.
+22. **Position de l'acquisition dans le P&L** : les coûts d'acquisition (pub, agence, vidéo) sont des charges opérationnelles → inclus **au-dessus de l'EBITDA** (EBITDA = Revenus HT − OPEX − Acquisition). L'EBITDA n'exclut que les amortissements : Revenus HT → − OPEX → = EBITDA → − Amortissements → = EBIT → − Impôt (si EBIT > 0) → = Résultat net.
+23. **KPIs unitaires passés en HT** : LTV = ARPU **HT** × durée, payback = CAC / ARPU **HT**, break-even = ⌈(OPEX + amortissements + acquisition − revenus annexes **HT**) / ARPU **HT**⌉ — cohérent puisque CAC et OPEX sont des coûts HT. À l'équilibre EBIT = 0 donc l'impôt n'affecte pas le break-even. CPL/CAC inchangés.
+24. **Taux stockés en pourcents** (8.1 = 8,1 %) dans `profit_club_settings` : `vat_rate` (défaut 8.1), `employer_charges_rate` (défaut 17), `profit_tax_rate` (défaut 14). Cantons : les 3 clubs genevois (Versoix, La Servette, Grand-Saconnex) à 14 %, **Lausanne (VD) à 13.8 %**. Paramétrable par club dans Réglages.
+25. **Charges sociales** : le champ staff devient « salaires bruts » ; coût réel = bruts × (1 + taux). Les deux lignes (salaires bruts, charges sociales) apparaissent séparément dans le P&L. Pas de retraitement des données démo existantes : les montants saisis sont réinterprétés comme bruts.
+26. **Impôt en consolidation** : appliqué **club par club** (chaque club = entité/canton avec son taux) puis sommé — jamais un taux groupe sur l'EBIT consolidé. Pas de compensation intra-groupe des pertes (un club déficitaire ne réduit pas l'impôt d'un club bénéficiaire) : prudent et conforme à des entités juridiques séparées.
+27. **Pas de report de pertes** : l'impôt est calculé mois par mois sur l'EBIT positif du mois, sans carry-forward fiscal — simplification assumée pour un outil de pilotage (pas un outil comptable).
+28. **Seeds démo ajustés** : avec la couche fiscale, l'ARPU démo de 159 TTC laissait Versoix à peine à l'équilibre (EBITDA ≈ 5 CHF en avril). ARPU démo porté à **179 TTC** (prix réaliste d'un abonnement suisse TTC) → avril : EBITDA 3 890, net 765 CHF ; mai : EBITDA 7 836, net 4 159 CHF. Démo lisible avec deux mois contrastés.
+29. **Simulateur** : porte ses propres taux (TVA, charges, impôt) en sliders — « Partir du réel » les précharge depuis les réglages du club ; les scénarios sauvegardés embarquent les taux dans le jsonb (le scénario démo a été mis à jour).
+
 ## Frontend
 
 16. **JavaScript (JSX) plutôt que TypeScript** : cohérent avec le reste du repo, build plus simple, la logique métier est centralisée et testée dans `src/lib/calc.js` (21 assertions offline).

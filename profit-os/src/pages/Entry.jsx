@@ -79,7 +79,13 @@ export default function Entry() {
       <Card>
         <h3 className="mb-3 font-display text-xl uppercase text-accent">{t('entry.opex')}</h3>
         <div className="grid grid-cols-2 gap-3">
-          <NumField label={t('entry.staff')} value={form.staff_cost} onChange={set('staff_cost')} disabled={readOnly} />
+          <NumField
+            label={t('entry.staff')}
+            value={form.staff_cost}
+            onChange={set('staff_cost')}
+            disabled={readOnly}
+            hint={t('entry.staffHint', { rate: fmtPct(computed.chargesRate) })}
+          />
           <NumField label={t('entry.rent')} value={form.rent} onChange={set('rent')} disabled={readOnly} />
           <NumField label={t('entry.cleaning')} value={form.cleaning} onChange={set('cleaning')} disabled={readOnly} />
           <NumField label={t('entry.insurance')} value={form.insurance} onChange={set('insurance')} disabled={readOnly} />
@@ -97,6 +103,7 @@ export default function Entry() {
 
       <Card>
         <h3 className="mb-3 font-display text-xl uppercase text-accent">{t('entry.revenue')}</h3>
+        <p className="mb-3 text-xs text-muted">{t('entry.ttcNote', { rate: fmtPct(computed.vatRate) })}</p>
         <div className="grid grid-cols-2 gap-3">
           <NumField label={t('entry.activeMembers')} value={form.active_members} onChange={set('active_members')} disabled={readOnly} />
           <NumField
@@ -122,8 +129,14 @@ export default function Entry() {
           <KpiCard label={t('kpi.ltvCac')} value={fmtRatio(computed.ltvCac)} tone="accent" />
           <KpiCard label={t('kpi.payback')} value={fmtMonths(computed.paybackMonths)} />
           <KpiCard label={t('kpi.breakEven')} value={`${fmtNum(computed.breakEvenMembers)} ${t('kpi.breakEvenUnit')}`} />
-          <KpiCard label={t('kpi.revenue')} value={fmtMoney(computed.revenueTotal)} />
-          <KpiCard label={t('kpi.opex')} value={fmtMoney(computed.opexTotal)} />
+          <KpiCard label={t('kpi.revenue')} value={fmtMoney(computed.revenueTotal)} sub={`${t('club.ttc')}: ${fmtMoney(computed.revenueTotalTTC)}`} />
+          <KpiCard label={t('kpi.opex')} value={fmtMoney(computed.opexTotal + computed.equipmentAmort)} />
+          <KpiCard
+            label={t('kpi.ebitda')}
+            value={fmtMoney(computed.ebitda)}
+            tone={computed.ebitda >= 0 ? 'pos' : 'neg'}
+          />
+          <KpiCard label={t('kpi.tax')} value={fmtMoney(computed.tax)} />
           <KpiCard
             label={t('kpi.netProfit')}
             value={fmtMoney(computed.netProfit)}

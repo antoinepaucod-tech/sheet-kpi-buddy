@@ -31,7 +31,8 @@ export default function Club() {
   const chartData = rows.map(({ entry, c }) => ({
     name: monthLabel(entry.month),
     [t('club.totalRevenue')]: Math.round(c.revenueTotal),
-    [t('club.totalOpex')]: Math.round(c.opexTotal + c.acquisitionTotal),
+    [t('club.totalOpex')]: Math.round(c.opexTotal + c.equipmentAmort + c.acquisitionTotal),
+    [t('kpi.ebitda')]: Math.round(c.ebitda),
     [t('kpi.netProfit')]: Math.round(c.netProfit),
   }))
 
@@ -48,6 +49,11 @@ export default function Club() {
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <KpiCard label={t('kpi.revenue')} value={fmtMoney(latest.c.revenueTotal)} sub={monthLabel(latest.entry.month)} />
+            <KpiCard
+              label={t('kpi.ebitda')}
+              value={fmtMoney(latest.c.ebitda)}
+              tone={latest.c.ebitda >= 0 ? 'pos' : 'neg'}
+            />
             <KpiCard
               label={t('kpi.netProfit')}
               value={fmtMoney(latest.c.netProfit)}
@@ -78,6 +84,7 @@ export default function Club() {
                   <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'Inter' }} />
                   <Area dataKey={t('club.totalRevenue')} fill="#F9731633" stroke="#F97316" strokeWidth={2} />
                   <Area dataKey={t('club.totalOpex')} fill="#52525B33" stroke="#52525B" strokeWidth={2} />
+                  <Line dataKey={t('kpi.ebitda')} stroke="#EAB308" strokeWidth={2} dot={{ r: 3 }} />
                   <Line dataKey={t('kpi.netProfit')} stroke="#22C55E" strokeWidth={2} dot={{ r: 3 }} />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -113,12 +120,16 @@ function PnlCard({ entry, c }) {
       </h3>
       <Row label={`${t('club.revenueMembers')} (${entry.active_members} × ${fmtMoney2(c.arpu)})`} value={fmtMoney(c.revenueMembers)} />
       <Row label={t('club.revenueAnnex')} value={fmtMoney(c.revenueAnnex)} />
-      <Row label={t('club.totalRevenue')} value={fmtMoney(c.revenueTotal)} bold />
+      <Row
+        label={`${t('club.totalRevenue')} (${t('club.ttc')}: ${fmtMoney(c.revenueTotalTTC)})`}
+        value={fmtMoney(c.revenueTotal)}
+        bold
+      />
 
       <div className="mt-3" />
-      <Row label={t('club.staff')} value={fmtMoney(entry.staff_cost)} />
+      <Row label={t('club.staffGross')} value={fmtMoney(c.staffGross)} />
+      <Row label={t('club.socialCharges', { rate: fmtPct(c.chargesRate) })} value={fmtMoney(c.socialCharges)} />
       <Row label={t('club.rent')} value={fmtMoney(entry.rent)} />
-      <Row label={t('club.amort')} value={fmtMoney(c.equipmentAmort)} />
       <Row label={t('club.cleaning')} value={fmtMoney(entry.cleaning)} />
       <Row label={t('club.insurance')} value={fmtMoney(entry.insurance)} />
       <Row label={t('club.energy')} value={fmtMoney(entry.energy)} />
@@ -132,6 +143,10 @@ function PnlCard({ entry, c }) {
       <Row label={t('club.totalAcquisition')} value={fmtMoney(c.acquisitionTotal)} bold />
 
       <div className="mt-3" />
+      <Row label={t('club.ebitda')} value={fmtMoney(c.ebitda)} bold tone={c.ebitda >= 0 ? 'pos' : 'neg'} />
+      <Row label={t('club.amort')} value={fmtMoney(-c.equipmentAmort)} />
+      <Row label={t('club.ebit')} value={fmtMoney(c.ebit)} bold tone={c.ebit >= 0 ? 'pos' : 'neg'} />
+      <Row label={t('club.tax', { rate: fmtPct(c.taxRate) })} value={fmtMoney(-c.tax)} />
       <Row
         label={`${t('kpi.netProfit')} (${fmtPct(c.netMargin)})`}
         value={fmtMoney(c.netProfit)}

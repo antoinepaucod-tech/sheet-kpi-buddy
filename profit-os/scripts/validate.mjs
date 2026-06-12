@@ -49,23 +49,21 @@ const owner = createClient(URL, KEY)
   const april = entries.find((e) => e.month === '2026-04-01')
   const c = computeMonth(april, versoixSettings)
 
+  // Fiscal layer: ARPU 179 TTC, VAT 8.1%, employer charges 17%, profit tax 14%
+  const arpuHT = 179 / 1.081
   check('CPL avril = 3500/120 = 29.17', close(c.cpl, 3500 / 120), c.cpl.toFixed(2))
   check('CAC avril = 5500/24 = 229.17', close(c.cac, 5500 / 24), c.cac.toFixed(2))
-  check('LTV = 159 × 30 = 4770', close(c.ltv, 159 * 30), String(c.ltv))
-  check('LTV:CAC = 20.81', close(c.ltvCac, 4770 / (5500 / 24)), c.ltvCac.toFixed(2))
-  check('Payback = 1.44 mois', close(c.paybackMonths, 5500 / 24 / 159), c.paybackMonths.toFixed(2))
+  check('LTV = ARPU HT × 30 = 4967.62', close(c.ltv, arpuHT * 30), c.ltv.toFixed(2))
+  check('Payback = CAC/ARPU HT = 1.38 mois', close(c.paybackMonths, 5500 / 24 / arpuHT), c.paybackMonths.toFixed(2))
   check('Amortissement = 180000/60 = 3000 (lissé)', close(c.equipmentAmort, 3000))
-  const expectedOpex = 18000 + 6500 + 900 + 450 + 1100 + 600 + 3000
-  check(`OPEX total = ${expectedOpex}`, close(c.opexTotal, expectedOpex), String(c.opexTotal))
-  const expectedRevenue = 210 * 159 + 4200 + 850 + 600
-  check(`Revenus = ${expectedRevenue}`, close(c.revenueTotal, expectedRevenue), String(c.revenueTotal))
-  const expectedNet = expectedRevenue - expectedOpex - 5500
-  check(`Résultat net = ${expectedNet}`, close(c.netProfit, expectedNet), String(c.netProfit))
-  check(
-    'Break-even = ceil((30550+5500-5650)/159) = 192',
-    c.breakEvenMembers === Math.ceil((expectedOpex + 5500 - 5650) / 159),
-    String(c.breakEvenMembers)
-  )
+  check('Charges sociales = 18000×17% = 3060', close(c.socialCharges, 3060))
+  check('OPEX hors amort = 30610', close(c.opexTotal, 30610), String(c.opexTotal))
+  check('Revenus HT = 43240/1.081 = 40000', close(c.revenueTotal, 40000), c.revenueTotal.toFixed(2))
+  check('EBITDA = 3890', close(c.ebitda, 3890), c.ebitda.toFixed(2))
+  check('EBIT = 890', close(c.ebit, 890), c.ebit.toFixed(2))
+  check('Impôt = 124.60', close(c.tax, 124.6), c.tax.toFixed(2))
+  check('Résultat net = 765.40', close(c.netProfit, 765.4), c.netProfit.toFixed(2))
+  check('Break-even = 205 membres', c.breakEvenMembers === 205, String(c.breakEvenMembers))
 
   // 4. Consolidated view = exact sum of clubs (April: only Versoix has data)
   const aprilEntries = entries.filter((e) => e.month === '2026-04-01')

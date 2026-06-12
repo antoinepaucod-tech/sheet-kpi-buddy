@@ -54,8 +54,9 @@ export default function Dashboard() {
   const chartData = data.byMonth.map((m) => ({
     name: monthLabel(m.month),
     [t('kpi.revenue')]: Math.round(m.group.revenueTotal),
-    [t('kpi.opex')]: Math.round(m.group.opexTotal),
+    [t('kpi.opex')]: Math.round(m.group.opexTotal + m.group.equipmentAmort),
     [t('kpi.acquisition')]: Math.round(m.group.acquisitionTotal),
+    [t('kpi.ebitda')]: Math.round(m.group.ebitda),
     [t('kpi.netProfit')]: Math.round(m.group.netProfit),
   }))
 
@@ -78,12 +79,21 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <KpiCard label={t('kpi.revenue')} value={fmtMoney(latest.group.revenueTotal)} />
             <KpiCard
+              label={t('kpi.ebitda')}
+              value={fmtMoney(latest.group.ebitda)}
+              tone={latest.group.ebitda >= 0 ? 'pos' : 'neg'}
+            />
+            <KpiCard
               label={t('kpi.netProfit')}
               value={fmtMoney(latest.group.netProfit)}
               tone={latest.group.netProfit >= 0 ? 'pos' : 'neg'}
               sub={`${t('kpi.netMargin')} ${fmtPct(latest.group.netMargin)}`}
             />
-            <KpiCard label={t('kpi.opex')} value={fmtMoney(latest.group.opexTotal)} />
+            <KpiCard
+              label={t('kpi.opex')}
+              value={fmtMoney(latest.group.opexTotal + latest.group.equipmentAmort)}
+              sub={`${t('kpi.tax')}: ${fmtMoney(latest.group.tax)}`}
+            />
             <KpiCard label={t('kpi.acquisition')} value={fmtMoney(latest.group.acquisitionTotal)} />
             <KpiCard label={t('kpi.cac')} value={fmtMoney(latest.group.cac)} sub={`${t('kpi.cpl')} ${fmtMoney(latest.group.cpl)}`} />
             <KpiCard label={t('kpi.ltvCac')} value={fmtRatio(latest.group.ltvCac)} sub={`${t('kpi.ltv')} ${fmtMoney(latest.group.ltv)}`} tone="accent" />
@@ -108,6 +118,7 @@ export default function Dashboard() {
                   <Bar dataKey={t('kpi.revenue')} fill="#F97316" radius={[4, 4, 0, 0]} />
                   <Bar dataKey={t('kpi.opex')} fill="#52525B" radius={[4, 4, 0, 0]} />
                   <Bar dataKey={t('kpi.acquisition')} fill="#A1A1AA" radius={[4, 4, 0, 0]} />
+                  <Line dataKey={t('kpi.ebitda')} stroke="#EAB308" strokeWidth={2} dot={{ r: 3 }} />
                   <Line dataKey={t('kpi.netProfit')} stroke="#22C55E" strokeWidth={2} dot={{ r: 3 }} />
                 </ComposedChart>
               </ResponsiveContainer>
