@@ -91,10 +91,12 @@ const doc = await buildInvestorPdf({
     ebitdaMargin: 'Marge EBITDA',
     occupancy: 'Taux d’occupation',
     revenuePerMember: 'Revenu / membre',
-    revenuePerM2: 'Revenu / m²',
+    revenuePerM2: 'Revenu / m² / an',
     ltvCac: 'LTV:CAC',
     churn: 'Churn',
     byClub: 'Par club',
+    annualizedNote:
+      group.annualMonths && group.annualMonths < 12 ? `annualisé sur ${group.annualMonths} mois` : null,
   },
   fmt,
 })

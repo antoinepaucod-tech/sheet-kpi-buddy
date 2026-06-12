@@ -4,7 +4,7 @@ import {
   useClubs, useSettings, useUpsertSettings, useMyRole,
   useFinancing, useCapex, useAddFinancing, useDeleteFinancing, useAddCapex, useDeleteCapex,
 } from '../hooks/useData'
-import { DEFAULT_SETTINGS, equipmentAmortMonthly, loanPayment } from '../lib/calc'
+import { DEFAULT_SETTINGS, equipmentAmortMonthly, loanPayment, hasAmortDoubleCount, EQUIPMENT_CAPEX_RE } from '../lib/calc'
 import { fmtMoney, fmtMoney2, fmtNum } from '../lib/format'
 import { Card, SectionTitle, ClubSelect, NumField, Button, Spinner } from '../components/ui'
 
@@ -13,6 +13,7 @@ export default function Settings() {
   const { data: clubs, isLoading: l1 } = useClubs()
   const { data: settings, isLoading: l2 } = useSettings()
   const { data: role } = useMyRole()
+  const { data: capex } = useCapex()
   const upsert = useUpsertSettings()
 
   const [clubId, setClubId] = useState(null)
@@ -48,6 +49,11 @@ export default function Settings() {
 
   const set = (key) => (v) => setForm((f) => ({ ...f, [key]: v }))
   const amort = equipmentAmortMonthly(form)
+  // double-count guard: machines CAPEX item + settings equipment value > 0
+  const amortConflict = hasAmortDoubleCount(
+    { equipment_value: form.equipment_value },
+    (capex ?? []).filter((c) => c.club_id === selected)
+  )
 
   async function save() {
     await upsert.mutateAsync({
@@ -91,8 +97,19 @@ export default function Settings() {
           <span className="text-sm text-white/80">{t('settings.amortPreview')}</span>
           <span className="num font-semibold text-accent">{fmtMoney(amort)}</span>
         </div>
+        {amortConflict ? (
+          <div className="rounded-xl border border-neg/50 bg-neg/10 px-3 py-2.5">
+            <p className="text-sm font-semibold text-neg">{t('common.amortConflict')}</p>
+            <p className="mt-1 text-xs text-white/70">{t('settings.amortConflictHint')}</p>
+            {!readOnly ? (
+              <Button variant="danger" onClick={() => set('equipment_value')(0)} className="mt-2 px-3 py-1.5 text-xs">
+                {t('settings.zeroEquipment')}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         {!readOnly ? (
-          <Button onClick={save} disabled={upsert.isPending || !selected}>
+          <Button onClick={save} disabled={upsert.isPending || !selected || amortConflict}>
             {flash ?? t('common.save')}
           </Button>
         ) : null}
@@ -177,6 +194,8 @@ function FinancingCard({ clubId, readOnly }) {
 function CapexCard({ clubId, readOnly }) {
   const { t } = useTranslation()
   const { data: capex } = useCapex()
+  const { data: settings } = useSettings()
+  const upsertSettings = useUpsertSettings()
   const add = useAddCapex()
   const del = useDeleteCapex()
   const [form, setForm] = useState({ label: '', amount: '', date: '', amort_months: '' })
@@ -193,6 +212,16 @@ function CapexCard({ clubId, readOnly }) {
       date: form.date,
       amort_months: Number(form.amort_months),
     })
+    // a machines/equipment CAPEX makes the settings-level equipment value a double count:
+    // offer to zero it right away (recommended path)
+    const current = (settings ?? []).find((s) => s.club_id === clubId)
+    if (
+      EQUIPMENT_CAPEX_RE.test(form.label) &&
+      Number(current?.equipment_value) > 0 &&
+      window.confirm(t('settings.zeroEquipmentConfirm'))
+    ) {
+      await upsertSettings.mutateAsync({ ...current, equipment_value: 0 })
+    }
     setForm({ label: '', amount: '', date: '', amort_months: '' })
   }
 

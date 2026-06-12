@@ -81,6 +81,14 @@ Club **Hybrid Gym Versoix**, avril + mai 2026 (ARPU démo 179 CHF TTC). CAPEX : 
 Avril : revenus 43 240 TTC → **40 000 HT**, OPEX 30 610 (dont salaires bruts 18 000 + charges sociales 3 060), acquisition 5 500 → **EBITDA 3 890** → amortissements 5 083.33 → EBIT −1 193.33 → intérêts 1 090.61 → résultat avant impôt −2 283.95 → impôt 0 → **résultat net −2 283.95**. **Cash flow −280.05** (net + 5 083.33 d'amort non-cash − 3 079.43 de capital) ≠ P&L. Churn 3.33 % (durée déduite 30 mois = paramétrée), break-even 224 membres.
 Mai : EBITDA 7 835.88, net **+1 439.19**, cash flow **+3 431.54**, trésorerie cumulée +3 151.50, churn 5.7 %. ROI club = EBITDA annualisé 70 355 / 430 000 = **16.4 %**.
 
-Investor View (snapshot mai) : marge EBITDA **17.9 %**, MRR 37 754 HT, revenu/membre 191.80, revenu/m² 67.28 (650 m²), occupation **65.1 %** (228/350), **valorisation 351 776 CHF** (EBITDA annualisé 70 355 × 5).
+Investor View (snapshot mai) : marge EBITDA **17.9 %**, MRR 37 754 HT, revenu/membre 191.80, **revenu/m² 772.89 CHF/m²/an** (650 m², même base que l'EBITDA annualisé), occupation **65.1 %** (228/350), **valorisation 351 776 CHF** (EBITDA annualisé 70 355 × 5, badge « annualisé sur 2 mois »).
+
+## Avant déploiement public (checklist pré-prod)
+
+- [ ] **Comptes de test** : désactiver ou changer les mots de passe des 3 comptes `antoine.owner@test.local`, `coach1.member@test.local`, `coach2.viewer@test.local` (mdp partagé `Test1234!` — démo uniquement). Créer les vrais comptes et leurs rôles dans `profit_members`.
+- [ ] **Validation E2E** : exécuter `node scripts/validate.mjs` avec succès depuis une machine ayant accès réseau à Supabase (auth réelle + RLS + roundtrip scénario).
+- [ ] **Secrets** : confirmer qu'aucune service role key n'est dans le repo — seule la clé **anon** (publique par design) est committée dans `.env`. Vérifier : `git grep -i "service_role"` ne doit rien retourner.
+- [ ] Vérifier qu'aucun warning « Amortissement défini deux fois » n'apparaît dans Réglages pour aucun club.
+- [ ] `npm run build` sans erreur et tests `node scripts/calc.test.mjs` au vert.
 
 Voir `DECISIONS.md` pour les choix d'implémentation.

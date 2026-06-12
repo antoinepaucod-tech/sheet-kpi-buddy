@@ -6,7 +6,7 @@ import {
   computeMonth, computeEntryFull, consolidate,
   loanPayment, loanForMonth, capexAmortForMonth, capexPaidInMonth,
   roiForClub, forecastSeries, consolidateForecast,
-  investorMetrics, consolidateInvestorMetrics,
+  investorMetrics, consolidateInvestorMetrics, hasAmortDoubleCount,
 } from '../src/lib/calc.js'
 
 let failures = 0
@@ -162,7 +162,10 @@ const investorSettings = { ...versoixSettings, surface_m2: 650, max_capacity: 35
 const im = investorMetrics(cMay, may, investorSettings, [c, cMay])
 check('Marge EBITDA mai = 7835.88/43729.88 = 17.92%', close(im.ebitdaMargin, 7835.8797 / 43729.8797, 0.0001), (im.ebitdaMargin * 100).toFixed(2) + '%')
 check('Revenu/membre = 43729.88/228 = 191.80', close(im.revenuePerMember, 43729.8797 / 228, 0.01), im.revenuePerMember.toFixed(2))
-check('Revenu/m² = 43729.88/650 = 67.28', close(im.revenuePerM2, 43729.8797 / 650, 0.01), im.revenuePerM2.toFixed(2))
+const annualRevenue = (40000 + 47272 / 1.081) * 6 // 2 mois annualisés ×6
+check('Revenu/m²/AN = (40000+43729.88)×6/650 = 772.89', close(im.revenuePerM2, annualRevenue / 650, 0.01), im.revenuePerM2.toFixed(2))
+check('Revenu/m² mensuel conservé en interne = 67.28', close(im.revenuePerM2Monthly, 43729.8797 / 650, 0.01), im.revenuePerM2Monthly.toFixed(2))
+check('Base d’annualisation = 2 mois (badge n<12)', im.annualMonths === 2)
 check('Occupation = 228/350 = 65.14%', close(im.occupancy, 228 / 350), (im.occupancy * 100).toFixed(2) + '%')
 check('MRR (HT) = 228×179/1.081 = 37753.93', close(im.mrr, (228 * 179) / 1.081, 0.01), im.mrr.toFixed(2))
 check('Churn = 5.70% / LTV:CAC repris du mois', close(im.churnRate, 13 / 228) && close(im.ltvCac, cMay.ltvCac))
@@ -188,7 +191,26 @@ check('EBITDA annualisé groupe = somme', close(ginv.annualEbitda, im.annualEbit
 check('MRR groupe = somme des MRR', close(ginv.mrr, im.mrr + imB.mrr, 0.01))
 check('Occupation groupe = Σ actifs / Σ capacités (clubs avec données)', close(ginv.occupancy, (228 + 228) / (350 + 400)), (ginv.occupancy * 100).toFixed(2) + '%')
 check('Marge EBITDA groupe recalculée depuis les sommes', close(ginv.ebitdaMargin, (cMay.ebitda + clubB.ebitda) / (cMay.revenueTotal + clubB.revenueTotal), 0.0001))
-check('Revenu/m² groupe = Σ revenus / Σ surfaces', close(ginv.revenuePerM2, (cMay.revenueTotal + clubB.revenueTotal) / (650 + 700), 0.01))
+check(
+  'Revenu/m²/an groupe = Σ revenus annualisés / Σ surfaces',
+  close(ginv.revenuePerM2, (im.annualRevenue + imB.annualRevenue) / (650 + 700), 0.01),
+  ginv.revenuePerM2.toFixed(2)
+)
+check('Base d’annualisation groupe = min des clubs (1 mois)', ginv.annualMonths === 1)
+
+// ——— Anti double-comptage amortissements ———
+console.log('\n— Double-comptage amortissements —')
+check('equipment_value=0 + CAPEX machines → pas de conflit', !hasAmortDoubleCount({ equipment_value: 0 }, versoixCapex))
+check('equipment_value>0 + CAPEX machines → CONFLIT', hasAmortDoubleCount({ equipment_value: 180000 }, versoixCapex))
+check(
+  'equipment_value>0 + CAPEX fit-out seul → pas de conflit (label non machines)',
+  !hasAmortDoubleCount({ equipment_value: 180000 }, [versoixCapex[0]])
+)
+check('Détection insensible à la casse/accents (Equipment)', hasAmortDoubleCount({ equipment_value: 1 }, [{ label: 'New Equipment 2027' }]))
+
+// ——— ROI badge ———
+const roiBadge = roiForClub([c, cMay], versoixCapex)
+check('ROI expose monthsUsed = 2 (badge annualisation)', roiBadge.monthsUsed === 2)
 
 console.log(failures === 0 ? '\n🎉 Tous les calculs sont corrects' : `\n💥 ${failures} échec(s)`)
 process.exit(failures === 0 ? 0 : 1)

@@ -111,6 +111,11 @@ export async function buildInvestorPdf(data) {
     61,
     { align: 'right' }
   )
+  if (data.labels.annualizedNote) {
+    body(7)
+    doc.setTextColor(ACCENT)
+    doc.text(data.labels.annualizedNote, W - M - 8, 66, { align: 'right' })
+  }
 
   // — KPI grid (2 rows x 3)
   const kpis = [

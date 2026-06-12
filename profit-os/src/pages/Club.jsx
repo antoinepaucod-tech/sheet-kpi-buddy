@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, ComposedChart, Area, Bar, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid,
 } from 'recharts'
 import { useClubs, useSettings, useEntries, useCapex, useFinancing } from '../hooks/useData'
-import { computeEntryFull, roiForClub, DEFAULT_SETTINGS } from '../lib/calc'
+import { computeEntryFull, roiForClub, hasAmortDoubleCount, DEFAULT_SETTINGS } from '../lib/calc'
 import { fmtMoney, fmtMoney2, fmtPct, fmtRatio, fmtMonths, fmtNum, monthLabel } from '../lib/format'
 import { Card, KpiCard, SectionTitle, ClubSelect, Spinner } from '../components/ui'
 
@@ -18,28 +18,29 @@ export default function Club() {
   const [clubId, setClubId] = useState(null)
 
   const selected = clubId ?? clubs?.[0]?.id ?? null
+  const clubSettings = useMemo(
+    () => (settings ?? []).find((x) => x.club_id === selected) ?? DEFAULT_SETTINGS,
+    [settings, selected]
+  )
+  const clubCapex = useMemo(
+    () => (capex ?? []).filter((x) => x.club_id === selected),
+    [capex, selected]
+  )
+  const amortConflict = hasAmortDoubleCount(clubSettings, clubCapex)
 
   const rows = useMemo(() => {
     if (!entries || !selected) return []
-    const s = (settings ?? []).find((x) => x.club_id === selected) ?? DEFAULT_SETTINGS
     let cumul = 0
     return entries
       .filter((e) => e.club_id === selected)
       .map((e) => {
-        const c = computeEntryFull(e, s, capex ?? [], financing ?? [])
+        const c = computeEntryFull(e, clubSettings, capex ?? [], financing ?? [])
         cumul += c.cashFlow
         return { entry: e, c, cumulativeCash: cumul }
       })
-  }, [entries, settings, selected, capex, financing])
+  }, [entries, clubSettings, selected, capex, financing])
 
-  const roi = useMemo(
-    () =>
-      roiForClub(
-        rows.map((r) => r.c),
-        (capex ?? []).filter((x) => x.club_id === selected)
-      ),
-    [rows, capex, selected]
-  )
+  const roi = useMemo(() => roiForClub(rows.map((r) => r.c), clubCapex), [rows, clubCapex])
 
   if (l1 || l2 || l3) return <Spinner />
 
@@ -100,7 +101,10 @@ export default function Club() {
             <KpiCard
               label={t('kpi.roi')}
               value={fmtPct(roi.roi)}
-              sub={roi.totalInvest ? `CAPEX: ${fmtMoney(roi.totalInvest)}` : null}
+              sub={[
+                roi.totalInvest ? `CAPEX: ${fmtMoney(roi.totalInvest)}` : null,
+                roi.monthsUsed && roi.monthsUsed < 12 ? t('investor.annualizedOn', { n: roi.monthsUsed }) : null,
+              ].filter(Boolean).join(' · ') || null}
               tone="accent"
             />
             <KpiCard
@@ -191,7 +195,7 @@ export default function Club() {
           </Card>
 
           {[...rows].reverse().map(({ entry, c }) => (
-            <PnlCard key={entry.id} entry={entry} c={c} />
+            <PnlCard key={entry.id} entry={entry} c={c} amortConflict={amortConflict} />
           ))}
         </>
       )}
@@ -210,13 +214,18 @@ function Row({ label, value, bold, tone }) {
   )
 }
 
-function PnlCard({ entry, c }) {
+function PnlCard({ entry, c, amortConflict }) {
   const { t } = useTranslation()
   return (
     <Card>
       <h3 className="mb-2 font-display text-xl uppercase text-white/90">
         {t('club.pnl')} — <span className="num">{monthLabel(entry.month)}</span>
       </h3>
+      {amortConflict ? (
+        <p className="mb-2 rounded-xl border border-neg/50 bg-neg/10 px-3 py-2 text-sm font-semibold text-neg">
+          {t('common.amortConflict')}
+        </p>
+      ) : null}
       <Row label={`${t('club.revenueMembers')} (${entry.active_members} × ${fmtMoney2(c.arpu)})`} value={fmtMoney(c.revenueMembers)} />
       <Row label={t('club.revenueAnnex')} value={fmtMoney(c.revenueAnnex)} />
       <Row

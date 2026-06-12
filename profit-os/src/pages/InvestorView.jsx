@@ -85,6 +85,10 @@ export default function InvestorView() {
           ltvCac: t('kpi.ltvCac'),
           churn: t('kpi.churn'),
           byClub: t('investor.byClub'),
+          annualizedNote:
+            group.annualMonths && group.annualMonths < 12
+              ? t('investor.annualizedOn', { n: group.annualMonths })
+              : null,
         },
         fmt: { money: fmtMoney, pct: fmtPct, ratio: fmtRatio, num: fmtNum },
       })
@@ -134,6 +138,9 @@ export default function InvestorView() {
                 : t('investor.valuationBasis', { multiple: `${fmtNum(m?.multiple)}x` })}
               {' · '}
               {t('investor.annualEbitda')}: <span className="text-white">{fmtMoney(m?.annualEbitda)}</span>
+              {m?.annualMonths && m.annualMonths < 12 ? (
+                <span className="text-accent"> · {t('investor.annualizedOn', { n: m.annualMonths })}</span>
+              ) : null}
             </p>
           </Card>
 
@@ -150,7 +157,15 @@ export default function InvestorView() {
               sub={capacity ? t('investor.occupancySub', { active: fmtNum(active), capacity: fmtNum(capacity) }) : null}
             />
             <KpiCard label={t('investor.revenuePerMember')} value={fmtMoney2(m?.revenuePerMember)} />
-            <KpiCard label={t('investor.revenuePerM2')} value={fmtMoney2(m?.revenuePerM2)} />
+            <KpiCard
+              label={t('investor.revenuePerM2')}
+              value={fmtMoney(m?.revenuePerM2)}
+              sub={
+                m?.annualMonths && m.annualMonths < 12
+                  ? `${t('investor.revenuePerM2Unit')} · ${t('investor.annualizedOn', { n: m.annualMonths })}`
+                  : t('investor.revenuePerM2Unit')
+              }
+            />
             <KpiCard
               label={`${t('kpi.ltvCac')} · ${t('kpi.churn')}`}
               value={fmtRatio(m?.ltvCac)}

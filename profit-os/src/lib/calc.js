@@ -252,10 +252,11 @@ export function computeEntryFull(entry, settings, capexList = [], financingList 
 // ROI per club = annualized EBITDA (trailing real months, max 12) / total CAPEX invested
 export function roiForClub(computedMonths, clubCapexList) {
   const totalInvest = capexTotal(clubCapexList)
-  if (!totalInvest || !computedMonths?.length) return { roi: null, totalInvest, annualEbitda: null }
+  if (!totalInvest || !computedMonths?.length)
+    return { roi: null, totalInvest, annualEbitda: null, monthsUsed: null }
   const trailing = computedMonths.slice(-12)
   const annualEbitda = (trailing.reduce((a, c) => a + n(c.ebitda), 0) * 12) / trailing.length
-  return { roi: annualEbitda / totalInvest, totalInvest, annualEbitda }
+  return { roi: annualEbitda / totalInvest, totalInvest, annualEbitda, monthsUsed: trailing.length }
 }
 
 // ——— Forecast (3-5 year projection per club) ———
@@ -403,10 +404,32 @@ export function consolidate(computedList, entries = []) {
 
 // ——— Investor metrics & valuation ———
 
+// A capex row describing machines/equipment conflicts with the legacy
+// settings-level equipment amortization: both would feed the P&L (double count).
+export const EQUIPMENT_CAPEX_RE = /machine|équipement|equipement|equipment|matériel|materiel/i
+
+export function hasAmortDoubleCount(settings, clubCapexList) {
+  return (
+    n(settings?.equipment_value) > 0 &&
+    (clubCapexList ?? []).some((c) => EQUIPMENT_CAPEX_RE.test(c.label ?? ''))
+  )
+}
+
+// number of real months backing an annualized figure (capped at 12)
+export function annualizationMonths(computedMonths) {
+  return Math.min(computedMonths?.length ?? 0, 12)
+}
+
 export function annualizedEbitda(computedMonths) {
   if (!computedMonths?.length) return null
   const trailing = computedMonths.slice(-12)
   return (trailing.reduce((a, c) => a + n(c.ebitda), 0) * 12) / trailing.length
+}
+
+export function annualizedRevenue(computedMonths) {
+  if (!computedMonths?.length) return null
+  const trailing = computedMonths.slice(-12)
+  return (trailing.reduce((a, c) => a + n(c.revenueTotal), 0) * 12) / trailing.length
 }
 
 // Snapshot for one club: latestComputed/latestEntry = the club's most recent real month,
@@ -417,18 +440,24 @@ export function investorMetrics(latestComputed, latestEntry, settings, computedM
   const capacity = n(settings?.max_capacity)
   const multiple = settings?.ebitda_multiple != null ? n(settings.ebitda_multiple) : 5
   const annualEbitda = annualizedEbitda(computedMonths)
+  const annualRevenue = annualizedRevenue(computedMonths)
+  const annualMonths = annualizationMonths(computedMonths) || null
   return {
     ebitdaMargin:
       latestComputed && latestComputed.revenueTotal > 0
         ? latestComputed.ebitda / latestComputed.revenueTotal
         : null,
     revenuePerMember: latestComputed && active > 0 ? latestComputed.revenueTotal / active : null,
-    revenuePerM2: latestComputed && surface > 0 ? latestComputed.revenueTotal / surface : null,
+    // industry standard: ANNUAL revenue per m² (CHF/m²/an), same basis as annualized EBITDA
+    revenuePerM2: annualRevenue != null && surface > 0 ? annualRevenue / surface : null,
+    revenuePerM2Monthly: latestComputed && surface > 0 ? latestComputed.revenueTotal / surface : null,
     occupancy: capacity > 0 && latestEntry ? active / capacity : null,
     mrr: latestComputed ? latestComputed.revenueMembers : null, // HT, recurring membership revenue
     ltvCac: latestComputed?.ltvCac ?? null,
     churnRate: latestComputed?.churnRate ?? null,
     annualEbitda,
+    annualRevenue,
+    annualMonths,
     multiple,
     valuation: annualEbitda != null ? annualEbitda * multiple : null,
   }
@@ -457,16 +486,24 @@ export function consolidateInvestorMetrics(perClub) {
       : 30
   const ltv = blendedArpu * weightedDuration
   const annualEbitda = perClub.reduce((a, p) => a + n(p.metrics.annualEbitda), 0)
+  const annualRevenue = perClub.reduce((a, p) => a + n(p.metrics.annualRevenue), 0)
   const valuation = perClub.reduce((a, p) => a + n(p.metrics.valuation), 0)
+  // most conservative annualization basis across clubs with data
+  const annualMonths = withData.length
+    ? Math.min(...withData.map((p) => p.metrics.annualMonths ?? 12))
+    : null
   return {
     ebitdaMargin: revenue > 0 ? ebitda / revenue : null,
     revenuePerMember: active > 0 ? revenue / active : null,
-    revenuePerM2: surface > 0 ? revenue / surface : null,
+    revenuePerM2: surface > 0 && withData.length ? annualRevenue / surface : null, // CHF/m²/an
+    revenuePerM2Monthly: surface > 0 ? revenue / surface : null,
     occupancy: capacity > 0 ? active / capacity : null,
     mrr,
     ltvCac: cac > 0 ? ltv / cac : null,
     churnRate: active > 0 ? cancellations / active : null,
     annualEbitda: withData.length ? annualEbitda : null,
+    annualRevenue: withData.length ? annualRevenue : null,
+    annualMonths,
     valuation: withData.length ? valuation : null,
     multiple: null, // per-club multiples, no single group figure
     activeMembers: active,

@@ -62,6 +62,13 @@ Décisions prises en autonomie pendant le build (consigne : ne jamais bloquer, d
 43. **Surface/capacité seedées** pour les 4 clubs (Versoix 650 m²/350, La Servette 800/450, Grand-Saconnex 550/300, Lausanne 700/400) — valeurs plausibles à ajuster dans Réglages.
 44. **6e onglet « Investor »** dans la bottom nav (labels 10px uppercase, ça tient sur mobile) plutôt qu'un mode caché — c'est un écran de pilotage de premier rang pour le propriétaire.
 
+## Correctifs review (complément)
+
+45. **Anti double-comptage amortissements** : `profit_capex` n'a pas de colonne « type » — la détection d'un CAPEX machines se fait **par le libellé** (regex insensible à la casse : machine / équipement / equipment / matériel), ce qui évite les faux positifs sur les CAPEX fit-out/acquisition. Conflit = un tel CAPEX existe ET `equipment_value > 0` dans les réglages. « Bloquant » est implémenté comme : bannière rouge dans Réglages **+ bouton Enregistrer désactivé** tant que le conflit persiste (bouton « Mettre la valeur machines à 0 » en un clic), et bannière dans chaque P&L du club concerné. À la création d'un CAPEX machines avec `equipment_value > 0`, une confirmation propose la mise à 0 automatique (recommandé). Les seeds Versoix sont déjà sains (equipment_value = 0 depuis le 2A).
+46. **Badge d'annualisation** : `annualMonths` (n ≤ 12) est exposé par `investorMetrics`/`roiForClub` et affiché en texte secondaire « annualisé sur n mois » quand n < 12 — sur le ROI (vue Club), la valorisation (Investor View) et le PDF. Au niveau groupe, n = **minimum** des clubs avec données (le plus conservateur : c'est la base la plus fragile qui qualifie le chiffre consolidé).
+47. **Revenu/m² en annuel** : libellé « Revenu / m² / an » (CHF/m²/an), calculé sur le **revenu HT annualisé** (même base trailing ≤ 12 mois ×12/n que l'EBITDA annualisé — cohérence entre les deux chiffres du même écran). Le calcul mensuel reste disponible en interne (`revenuePerM2Monthly`). Groupe = Σ revenus annualisés / Σ surfaces des clubs avec données. Versoix : (40 000 + 43 729.88) × 6 / 650 = **772.89 CHF/m²/an**.
+48. **Checklist pré-prod** ajoutée au README : rotation/désactivation des comptes @test.local, exécution de `validate.mjs` depuis une machine avec réseau, vérification d'absence de service role key (`git grep -i service_role`), absence de warning double-comptage, build + tests verts.
+
 ## Frontend
 
 16. **JavaScript (JSX) plutôt que TypeScript** : cohérent avec le reste du repo, build plus simple, la logique métier est centralisée et testée dans `src/lib/calc.js` (21 assertions offline).
