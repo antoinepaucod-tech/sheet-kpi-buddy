@@ -83,20 +83,44 @@ const owner = createClient(URL, KEY)
   check('Consolidé: revenus = somme des clubs', close(group.revenueTotal, sumRev))
   check('Consolidé: résultat net = somme des clubs', close(group.netProfit, sumNet))
 
-  // 5. Scenario save then reload
-  const scenarioData = { active_members: 250, arpu: 165, ad_spend: 5000, base_month: '2026-06' }
+  // 5. Scenario save then reload.
+  // Postgres jsonb canonicalizes objects (keys sorted by length then bytewise,
+  // duplicates removed) — key order is NOT preserved, so comparing JSON.stringify
+  // outputs gives a false negative. Compare field by field instead: every key and
+  // value must match exactly (missing or extra keys are failures), order ignored.
+  const diffJson = (sent, got, path = '') => {
+    const at = path || '(racine)'
+    if (sent === null || got === null || typeof sent !== 'object' || typeof got !== 'object') {
+      return Object.is(sent, got) ? [] : [`${at}: envoyé ${JSON.stringify(sent)} ≠ rechargé ${JSON.stringify(got)}`]
+    }
+    const keys = new Set([...Object.keys(sent), ...Object.keys(got)])
+    return [...keys].flatMap((k) => diffJson(sent[k], got[k], path ? `${path}.${k}` : k))
+  }
+
+  // Mirrors the exact shape the Simulator saves today ({ ...sim, base_month }):
+  // all EMPTY_ENTRY fields + fiscal rates + interest. Includes a decimal (8.1)
+  // to validate numeric fidelity through jsonb.
+  const scenarioData = {
+    ad_spend: 5000, agency_fees: 1100, video_fees: 300, leads_generated: 150,
+    new_members: 30, cancellations: 0, staff_cost: 18500, rent: 6500,
+    cleaning: 900, insurance: 450, energy: 1000, misc_opex: 500,
+    equipment_amort_override: 3000, active_members: 250, arpu: 165,
+    revenue_pt: 4500, revenue_shop: 900, revenue_dropin: 700,
+    avg_membership_months: 30, vat_rate: 8.1, employer_charges_rate: 17,
+    profit_tax_rate: 14, interest: 1090, base_month: '2026-06',
+  }
   const { data: saved, error: saveErr } = await owner
     .from('profit_scenarios')
     .insert({ name: 'Validation auto', club_id: april.club_id, data: scenarioData })
     .select()
     .single()
   check('Scénario sauvegardé', !saveErr, saveErr?.message)
-  const { data: reloaded } = await owner.from('profit_scenarios').select('*').eq('id', saved.id).single()
-  check(
-    'Scénario rechargé identique',
-    reloaded && JSON.stringify(reloaded.data) === JSON.stringify(scenarioData)
-  )
-  await owner.from('profit_scenarios').delete().eq('id', saved.id)
+  const { data: reloaded } = saved
+    ? await owner.from('profit_scenarios').select('*').eq('id', saved.id).single()
+    : { data: null }
+  const scenarioDiffs = reloaded ? diffJson(scenarioData, reloaded.data) : ['(rechargement vide)']
+  check('Scénario rechargé identique (champ par champ, ordre jsonb ignoré)', scenarioDiffs.length === 0, scenarioDiffs.join(' ; '))
+  if (saved) await owner.from('profit_scenarios').delete().eq('id', saved.id)
 }
 
 // 6. Viewer is read-only
