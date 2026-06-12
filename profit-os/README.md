@@ -10,12 +10,21 @@ React 18 · Vite · Tailwind CSS · TanStack React Query · Recharts · i18next 
 
 ```bash
 cd profit-os
+cp .env.example .env   # variables d'environnement (voir ci-dessous)
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # build de production dans dist/
+npm test           # suite de calculs offline (78 vérifications)
 ```
 
-Le `.env` est fourni (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — clé anon publique par design).
+### Variables d'environnement
+
+Le `.env` n'est **pas** committé (`.gitignore`). Copier `.env.example` :
+
+| Variable | Description |
+|---|---|
+| `VITE_SUPABASE_URL` | URL du projet Supabase GROWTH ENGINE |
+| `VITE_SUPABASE_ANON_KEY` | Clé **anon** Supabase (publique par design — c'est la RLS qui protège les données). Jamais de service role key ici. |
 
 ### Comptes de test (mot de passe `Test1234!`)
 
@@ -69,8 +78,8 @@ Migrations dans `supabase/migrations/` (déjà appliquées au projet) :
 
 ## Validation
 
-- `node scripts/calc.test.mjs` — vérifie offline tous les calculs (CPL/CAC/LTV/payback/TVA/charges sociales/EBITDA/EBIT/intérêts/impôt/break-even/churn/échéancier de prêt/amortissements CAPEX/cash flow ≠ P&L/ROI/forecast/métriques investisseur/valorisation/consolidation) contre les valeurs démo seedées. 66/66 ✅
-- `node scripts/export-pdf.mjs` — génère le PDF Investor View depuis les seeds (`/tmp/profit-os-investor-view.pdf`) pour validation visuelle.
+- `npm test` (= `node scripts/calc.test.mjs`) — vérifie offline tous les calculs (CPL/CAC/LTV/payback/TVA/charges sociales/EBITDA/EBIT/intérêts/impôt/break-even/churn/échéancier de prêt/amortissements CAPEX/cash flow ≠ P&L/ROI/forecast/métriques investisseur/valorisation/consolidation) contre les valeurs démo seedées. 78/78 ✅
+- `node scripts/export-pdf.mjs` — génère le PDF Investor View depuis les seeds (`/tmp/profit-os-investor-view.pdf`) pour validation visuelle. Vérifier que Bebas Neue est bien embarquée : `strings /tmp/profit-os-investor-view.pdf | grep Bebas` (la police est auto-hébergée dans `public/fonts/BebasNeue.ttf`, avec fallback gstatic puis helvetica).
 - `node scripts/validate.mjs` — validation end-to-end (auth réelle + RLS + roundtrip scénario) à lancer depuis un environnement avec accès réseau à Supabase.
 - RLS validé en SQL par impersonation des 3 rôles : owner voit 4 clubs / écrit, viewer lit tout / ne peut rien écrire, anon ne voit rien.
 
@@ -83,12 +92,60 @@ Mai : EBITDA 7 835.88, net **+1 439.19**, cash flow **+3 431.54**, trésorerie c
 
 Investor View (snapshot mai) : marge EBITDA **17.9 %**, MRR 37 754 HT, revenu/membre 191.80, **revenu/m² 772.89 CHF/m²/an** (650 m², même base que l'EBITDA annualisé), occupation **65.1 %** (228/350), **valorisation 351 776 CHF** (EBITDA annualisé 70 355 × 5, badge « annualisé sur 2 mois »).
 
-## Avant déploiement public (checklist pré-prod)
+## Déploiement — profit.transform-os.ch
+
+Le dossier `profit-os/` est 100 % autonome (aucune dépendance vers le reste de `sheet-kpi-buddy`) et devient la source de vérité une fois extrait dans son propre repo. Cible : **Netlify** + domaine **https://profit.transform-os.ch**. La config Netlify est dans `netlify.toml` (build `npm run build`, publish `dist/`, redirect SPA `/* → /index.html`).
+
+### 1. Extraction vers le repo GitHub `profit-os` (étape manuelle Antoine)
+
+Créer le repo vide `profit-os` sur GitHub (sans README ni .gitignore), puis en local :
+
+```bash
+# Depuis un clone à jour de sheet-kpi-buddy, branche claude/profit-os-build-1j3g9s
+git clone --branch claude/profit-os-build-1j3g9s https://github.com/antoinepaucod-tech/sheet-kpi-buddy.git
+cd sheet-kpi-buddy/profit-os
+
+# Nouveau repo avec le contenu du dossier à la racine
+git init
+git add .
+git commit -m "Initial commit: Profit OS extrait de sheet-kpi-buddy"
+git branch -M main
+git remote add origin https://github.com/antoinepaucod-tech/profit-os.git
+git push -u origin main
+
+# Recréer le .env local (non committé)
+cp .env.example .env
+```
+
+> Variante si tu veux conserver l'historique git du dossier :
+> `git subtree split --prefix=profit-os -b profit-os-only` depuis la racine de sheet-kpi-buddy, puis push de cette branche vers le nouveau repo.
+
+`profit-os/` peut rester dans `sheet-kpi-buddy` (rien n'y casse), mais le nouveau repo est la source de vérité.
+
+### 2. Netlify
+
+- [ ] **New site from Git** → connecter le repo `profit-os`. `netlify.toml` est détecté automatiquement (build `npm run build`, publish `dist`, Node 20).
+- [ ] **Variables d'environnement** (Site settings → Environment variables) : `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (valeurs dans `.env.example`).
+- [ ] Déployer et vérifier le site sur l'URL `*.netlify.app` (login avec un compte de test).
+
+### 3. Domaine — GoDaddy CNAME
+
+- [ ] Netlify : Domain settings → Add custom domain → `profit.transform-os.ch`.
+- [ ] GoDaddy (zone DNS de `transform-os.ch`) : ajouter un enregistrement **CNAME** `profit` → `<nom-du-site>.netlify.app` (valeur exacte affichée par Netlify).
+- [ ] Attendre la propagation DNS, vérifier que Netlify provisionne le certificat HTTPS (Let's Encrypt, automatique).
+
+### 4. Supabase Auth
+
+- [ ] Dashboard Supabase (projet GROWTH ENGINE `tnmpphysbtoezzjfqxcd`) → Authentication → URL Configuration → **Redirect URLs** : ajouter `https://profit.transform-os.ch` (et `https://profit.transform-os.ch/**`).
+- [ ] Vérifier le login depuis le domaine final.
+
+### 5. Checklist pré-prod
 
 - [ ] **Comptes de test** : désactiver ou changer les mots de passe des 3 comptes `antoine.owner@test.local`, `coach1.member@test.local`, `coach2.viewer@test.local` (mdp partagé `Test1234!` — démo uniquement). Créer les vrais comptes et leurs rôles dans `profit_members`.
 - [ ] **Validation E2E** : exécuter `node scripts/validate.mjs` avec succès depuis une machine ayant accès réseau à Supabase (auth réelle + RLS + roundtrip scénario).
-- [ ] **Secrets** : confirmer qu'aucune service role key n'est dans le repo — seule la clé **anon** (publique par design) est committée dans `.env`. Vérifier : `git grep -i "service_role"` ne doit rien retourner.
+- [ ] **Secrets** : `.env` non committé (`.gitignore`), aucune service role key dans le repo — seule la clé **anon** (publique par design) apparaît dans `.env.example`. Vérifier : `git grep -i "service_role"` ne doit rien retourner.
+- [ ] **Export PDF** : depuis le site déployé, exporter le PDF Investor View et vérifier la typo Bebas Neue (titres condensés, pas d'helvetica).
 - [ ] Vérifier qu'aucun warning « Amortissement défini deux fois » n'apparaît dans Réglages pour aucun club.
-- [ ] `npm run build` sans erreur et tests `node scripts/calc.test.mjs` au vert.
+- [ ] `npm run build` sans erreur et `npm test` au vert (78/78).
 
 Voir `DECISIONS.md` pour les choix d'implémentation.

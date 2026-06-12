@@ -7,7 +7,7 @@ Décisions prises en autonomie pendant le build (consigne : ne jamais bloquer, d
 1. **« Les 4 clubs »** : la table `clubs` contient en réalité **7 lignes**. Les 4 clubs du groupe sont ceux de l'organisation `30400627-1288-4011-bc72-267b8f46b80c` (Hybrid Gym Versoix, La Servette, Grand-Saconnex, Lausanne) ; les 3 autres (WL Club, FitFactory Lausanne, doublon « La Servette, Genève ») sont des données de test d'autres organisations. Le filtre est implémenté dans la fonction `profit_clubs()` (org id en dur, commenté dans la migration) plutôt que dans le client.
 2. **Repo** : la consigne disait « nouveau repo profit-os/ », mais la session est scopée au repo `sheet-kpi-buddy`. L'app vit donc dans le dossier **`profit-os/`** de ce repo, sur la branche `claude/profit-os-build-1j3g9s`, totalement autonome (package.json propre).
 3. **Users de test** : les 3 comptes du pattern Tasks OS (`antoine.owner` / `coach1.member` / `coach2.viewer` @test.local, mdp `Test1234!`) **existaient déjà** dans auth.users — réutilisés tels quels (mot de passe vérifié par hash), mappés vers les rôles Profit OS via la nouvelle table `profit_members`.
-4. **`.env` committé** : il ne contient que l'URL du projet et la clé **anon** (publique par design, déjà committée ailleurs dans le repo). Aucune service role key dans le repo.
+4. **`.env` committé** : il ne contient que l'URL du projet et la clé **anon** (publique par design, déjà committée ailleurs dans le repo). Aucune service role key dans le repo. *(Remplacée par la décision 49 : `.env` désormais exclu de git.)*
 
 ## Modèle de données
 
@@ -68,6 +68,14 @@ Décisions prises en autonomie pendant le build (consigne : ne jamais bloquer, d
 46. **Badge d'annualisation** : `annualMonths` (n ≤ 12) est exposé par `investorMetrics`/`roiForClub` et affiché en texte secondaire « annualisé sur n mois » quand n < 12 — sur le ROI (vue Club), la valorisation (Investor View) et le PDF. Au niveau groupe, n = **minimum** des clubs avec données (le plus conservateur : c'est la base la plus fragile qui qualifie le chiffre consolidé).
 47. **Revenu/m² en annuel** : libellé « Revenu / m² / an » (CHF/m²/an), calculé sur le **revenu HT annualisé** (même base trailing ≤ 12 mois ×12/n que l'EBITDA annualisé — cohérence entre les deux chiffres du même écran). Le calcul mensuel reste disponible en interne (`revenuePerM2Monthly`). Groupe = Σ revenus annualisés / Σ surfaces des clubs avec données. Versoix : (40 000 + 43 729.88) × 6 / 650 = **772.89 CHF/m²/an**.
 48. **Checklist pré-prod** ajoutée au README : rotation/désactivation des comptes @test.local, exécution de `validate.mjs` depuis une machine avec réseau, vérification d'absence de service role key (`git grep -i service_role`), absence de warning double-comptage, build + tests verts.
+
+## Déploiement (préparation extraction → profit.transform-os.ch)
+
+49. **`.env` sorti de git** (`git rm --cached` + `.gitignore`) : même si la clé anon est publique par design, le repo extrait doit suivre la convention standard — `.env.example` committé (avec les valeurs anon, qui ne sont pas des secrets), `.env` local recréé par `cp .env.example .env`. Remplace la décision 4.
+50. **Bebas Neue auto-hébergée** (`public/fonts/BebasNeue.ttf`, licence OFL) : l'URL gstatic versionnée utilisée par l'export PDF (`v15`) renvoie désormais **404** — l'export retombait silencieusement sur helvetica. `tryLoadBebas()` essaie maintenant la copie locale puis l'URL gstatic `v16`, et valide les **magic bytes TTF** (le redirect SPA Netlify renvoie index.html en 200 pour tout chemin inconnu, `res.ok` ne suffit pas). La police UI reste chargée via l'API css2 de Google Fonts (URL stable).
+51. **Netlify** : `netlify.toml` à la racine du dossier (build `npm run build`, publish `dist`, Node 20, redirect SPA `/* → /index.html`, cache immutable sur `/fonts/*`). Variables d'env (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) à saisir dans l'UI Netlify — documentées dans le README.
+52. **Création du repo distant impossible depuis la session** (token GitHub scopé à `sheet-kpi-buddy`, 403 sur la création de repo) : les commandes git d'extraction exactes sont documentées dans le README (init propre à la racine du dossier, variante `git subtree split` pour conserver l'historique). `profit-os/` reste dans `sheet-kpi-buddy` sans rien casser ; le nouveau repo devient la source de vérité.
+53. **Suite de tests à 78 vérifications** (la consigne en mentionnait 75, le README 66 — comptes historiques) : `npm test` ajouté comme alias de `node scripts/calc.test.mjs`. 78/78 ✅ au moment de l'extraction.
 
 ## Frontend
 

@@ -10,27 +10,42 @@ const MUTED = '#9D9DA6'
 const POS = '#22C55E'
 const NEG = '#EF4444'
 
-// Bebas Neue is loaded at runtime (browser) and embedded; falls back to
-// helvetica bold uppercase when the font cannot be fetched (e.g. offline).
-const BEBAS_URL = 'https://fonts.gstatic.com/s/bebasneue/v15/JTUSjIg69CK48gW7PXoo9Wlhyw.ttf'
+// Bebas Neue is loaded at runtime and embedded; falls back to helvetica bold
+// uppercase when no candidate can be fetched (e.g. offline). The self-hosted
+// copy (public/fonts/) is tried first so the export keeps working even if
+// Google rotates the versioned gstatic URL (v15 already 404s).
+const BEBAS_URLS = [
+  '/fonts/BebasNeue.ttf',
+  'https://fonts.gstatic.com/s/bebasneue/v16/JTUSjIg69CK48gW7PXooxW4.ttf',
+]
 let bebasB64 = null
+
+// SPA hosts answer 200 + index.html for any unknown path, so res.ok is not
+// enough: check the TrueType magic bytes before trusting the payload.
+const isTtf = (bytes) =>
+  bytes.length > 4 &&
+  ((bytes[0] === 0 && bytes[1] === 1 && bytes[2] === 0 && bytes[3] === 0) ||
+    (bytes[0] === 0x74 && bytes[1] === 0x72 && bytes[2] === 0x75 && bytes[3] === 0x65))
 
 async function tryLoadBebas() {
   if (bebasB64) return bebasB64
-  try {
-    const res = await fetch(BEBAS_URL)
-    if (!res.ok) return null
-    const buf = await res.arrayBuffer()
-    let bin = ''
-    const bytes = new Uint8Array(buf)
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000))
+  for (const url of BEBAS_URLS) {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) continue
+      const bytes = new Uint8Array(await res.arrayBuffer())
+      if (!isTtf(bytes)) continue
+      let bin = ''
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000))
+      }
+      bebasB64 = btoa(bin)
+      return bebasB64
+    } catch {
+      // try next candidate
     }
-    bebasB64 = btoa(bin)
-    return bebasB64
-  } catch {
-    return null
   }
+  return null
 }
 
 // data: {
