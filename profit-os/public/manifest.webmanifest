@@ -1,0 +1,13 @@
+{
+  "name": "Profit OS",
+  "short_name": "Profit OS",
+  "description": "Rentabilité multi-club — simulateur et suivi mensuel",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090B",
+  "theme_color": "#09090B",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
